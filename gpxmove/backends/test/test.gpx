@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" creator="OruxMaps v.6.5.10" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<name><![CDATA[2016-09-04 07:56]]></name>
+<desc><![CDATA[]]></desc>
+<link href="http://www.oruxmaps.com">
+<text>OruxMaps</text>
+</link>
+<time>2016-09-04T05:56:53Z</time><bounds maxlat="52.5493442" maxlon="13.3860810" minlat="52.5168438" minlon="13.2123302"/>
+</metadata>
+<wpt lat="52.5468688" lon="13.2125601">
+<ele>36.50</ele>
+<time>2016-09-04T05:57:04Z</time>
+<name><![CDATA[0004075]]></name>
+<desc><![CDATA[]]></desc>
+<sym>Waypoint</sym>
+<type>Startpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">38</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<wpt lat="52.5467469" lon="13.2128041">
+<ele>34.50</ele>
+<time>2016-09-04T06:04:56Z</time>
+<name><![CDATA[0004076]]></name>
+<desc><![CDATA[<br /><h3>Name: Segment 1</h3><br /><p>Startzeit: 09/04/2016 07:57</p><p>Zielzeit: 09/04/2016 08:00</p><p>Strecke: 0,1km (00:02)</p><p>Bewegungszeit: 00:-03</p><p>Ø-Geschwindigkeit: 1,29km/h</p><p>Netto-Geschwindigkeit: 8,53km/h</p><p>Max. Geschwindigkeit: 1,29km/h</p><p>Minimale Höhe: 33m</p><p>Maximale Höhe: 54m</p><p>Aufstieg: 0m</p><p>Abstieg: 0m</p><p>Steigzeit: 00:00</p><p>Sinkzeit: 00:00</p>]]></desc>
+<sym>Waypoint</sym>
+<type>Endpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">15</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<wpt lat="52.5468089" lon="13.2125762">
+<ele>29.50</ele>
+<time>2016-09-04T06:06:34Z</time>
+<name><![CDATA[0004077]]></name>
+<desc><![CDATA[]]></desc>
+<sym>Waypoint</sym>
+<type>Startpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">38</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<wpt lat="52.5434092" lon="13.3227052">
+<ele>36.50</ele>
+<time>2016-09-04T06:45:24Z</time>
+<name><![CDATA[0004078]]></name>
+<desc><![CDATA[<br /><h3>Name: Segment 2</h3><br /><p>Startzeit: 09/04/2016 08:06</p><p>Zielzeit: 09/04/2016 08:43</p><p>Strecke: 9,1km (00:36)</p><p>Bewegungszeit: 00:24</p><p>Ø-Geschwindigkeit: 14,88km/h</p><p>Netto-Geschwindigkeit: 20,43km/h</p><p>Max. Geschwindigkeit: 33,93km/h</p><p>Minimale Höhe: 20m</p><p>Maximale Höhe: 51m</p><p>Steig-Geschw.: 536m/h</p><p>Sink-Geschw.: -646,8m/h</p><p>Aufstieg: 173m</p><p>Abstieg: -166m</p><p>Steigzeit: 00:19</p><p>Sinkzeit: 00:15</p>]]></desc>
+<sym>Waypoint</sym>
+<type>Endpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">15</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<wpt lat="52.5433726" lon="13.3226993">
+<ele>37.50</ele>
+<time>2016-09-04T06:46:58Z</time>
+<name><![CDATA[0004079]]></name>
+<desc><![CDATA[]]></desc>
+<sym>Waypoint</sym>
+<type>Startpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">38</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<wpt lat="52.5378832" lon="13.3269760">
+<ele>43.50</ele>
+<time>2016-09-04T07:15:30Z</time>
+<name><![CDATA[0004080]]></name>
+<desc><![CDATA[<br /><h3>Name: Segment 3</h3><br /><p>Startzeit: 09/04/2016 08:47</p><p>Zielzeit: 09/04/2016 09:09</p><p>Strecke: 2km (00:22)</p><p>Bewegungszeit: 00:08</p><p>Ø-Geschwindigkeit: 5,22km/h</p><p>Netto-Geschwindigkeit: 8,87km/h</p><p>Max. Geschwindigkeit: 23,97km/h</p><p>Minimale Höhe: 26m</p><p>Maximale Höhe: 48m</p><p>Steig-Geschw.: 148,2m/h</p><p>Sink-Geschw.: -396,9m/h</p><p>Aufstieg: 31m</p><p>Abstieg: -28m</p><p>Steigzeit: 00:12</p><p>Sinkzeit: 00:04</p>]]></desc>
+<sym>Waypoint</sym>
+<type>Endpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">15</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<wpt lat="52.5377129" lon="13.3269667">
+<ele>36.50</ele>
+<time>2016-09-04T07:21:20Z</time>
+<name><![CDATA[0004081]]></name>
+<desc><![CDATA[]]></desc>
+<sym>Waypoint</sym>
+<type>Startpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">38</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<wpt lat="52.5210390" lon="13.3860810">
+<ele>28.50</ele>
+<time>2016-09-04T08:16:32Z</time>
+<name><![CDATA[0004082]]></name>
+<desc><![CDATA[<br /><h3>Name: Segment 4</h3><br /><p>Startzeit: 09/04/2016 09:21</p><p>Zielzeit: 09/04/2016 10:16</p><p>Strecke: 9,3km (00:55)</p><p>Bewegungszeit: 00:53</p><p>Ø-Geschwindigkeit: 10,08km/h</p><p>Netto-Geschwindigkeit: 10,47km/h</p><p>Max. Geschwindigkeit: 15,06km/h</p><p>Minimale Höhe: 13m</p><p>Maximale Höhe: 42m</p><p>Steig-Geschw.: 370,3m/h</p><p>Sink-Geschw.: -351,9m/h</p><p>Aufstieg: 136m</p><p>Abstieg: -152m</p><p>Steigzeit: 00:22</p><p>Sinkzeit: 00:25</p>]]></desc>
+<sym>Waypoint</sym>
+<type>Endpunkt</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="ICON" subtype="0">15</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+</wpt>
+<trk>
+<name><![CDATA[2016-09-04 07:56]]></name>
+<desc><![CDATA[<p>Startzeit: 09/04/2016 07:57</p><p>Zielzeit: 09/04/2016 10:16</p><p>Strecke: 20,4 km (01:57)</p><p>Bewegungszeit: 01:33</p><p>Ø-Geschwindigkeit: 10,42 km/h</p><p>Netto-Geschwindigkeit: 13,08 km/h</p><p>Max. Geschwindigkeit: 33,93km/h</p><p>Minimale Höhe: 13 m</p><p>Maximale Höhe: 54 m</p><p>Steig-Geschw.: 378,1 m/h</p><p>Sink-Geschw.: -455,8 m/h</p><p>Aufstieg: 340 m</p><p>Abstieg: -346 m</p><p>Steigzeit: 00:53</p><p>Sinkzeit: 00:45</p><hr align="center" width="480" style="height: 2px; width: 517px"/>]]></desc>
+<type>Fahrrad/ Strasse</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="TYPE" subtype="0">8</om:ext>
+<om:ext type="DIFFICULTY">0</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+<trkseg>
+<trkpt lat="52.5192692" lon="13.3803910">
+<ele>42.50</ele>
+<time>2016-09-04T08:13:15Z</time>
+</trkpt>
+<trkpt lat="52.5192573" lon="13.3807420">
+<ele>36.50</ele>
+<time>2016-09-04T08:13:23Z</time>
+</trkpt>
+<trkpt lat="52.5192179" lon="13.3810478">
+<ele>31.50</ele>
+<time>2016-09-04T08:13:31Z</time>
+</trkpt>
+<trkpt lat="52.5192684" lon="13.3813805">
+<ele>34.50</ele>
+<time>2016-09-04T08:13:41Z</time>
+</trkpt>
+<trkpt lat="52.5192907" lon="13.3817099">
+<ele>35.50</ele>
+<time>2016-09-04T08:13:53Z</time>
+</trkpt>
+<trkpt lat="52.5193747" lon="13.3820191">
+<ele>32.50</ele>
+<time>2016-09-04T08:14:05Z</time>
+</trkpt>
+<trkpt lat="52.5194572" lon="13.3823083">
+<ele>32.50</ele>
+<time>2016-09-04T08:14:13Z</time>
+</trkpt>
+<trkpt lat="52.5195474" lon="13.3825679">
+<ele>33.50</ele>
+<time>2016-09-04T08:14:25Z</time>
+</trkpt>
+<trkpt lat="52.5196577" lon="13.3828772">
+<ele>29.50</ele>
+<time>2016-09-04T08:14:37Z</time>
+</trkpt>
+<trkpt lat="52.5197712" lon="13.3831474">
+<ele>30.50</ele>
+<time>2016-09-04T08:14:45Z</time>
+</trkpt>
+<trkpt lat="52.5198570" lon="13.3834406">
+<ele>31.50</ele>
+<time>2016-09-04T08:14:55Z</time>
+</trkpt>
+<trkpt lat="52.5199207" lon="13.3837365">
+<ele>34.50</ele>
+<time>2016-09-04T08:15:11Z</time>
+</trkpt>
+<trkpt lat="52.5199735" lon="13.3840328">
+<ele>36.50</ele>
+<time>2016-09-04T08:15:23Z</time>
+</trkpt>
+<trkpt lat="52.5200396" lon="13.3843764">
+<ele>36.50</ele>
+<time>2016-09-04T08:15:35Z</time>
+</trkpt>
+<trkpt lat="52.5201681" lon="13.3846172">
+<ele>33.50</ele>
+<time>2016-09-04T08:15:49Z</time>
+</trkpt>
+<trkpt lat="52.5202793" lon="13.3848678">
+<ele>31.50</ele>
+<time>2016-09-04T08:15:59Z</time>
+</trkpt>
+<trkpt lat="52.5203957" lon="13.3851160">
+<ele>33.50</ele>
+<time>2016-09-04T08:16:09Z</time>
+</trkpt>
+<trkpt lat="52.5205752" lon="13.3852786">
+<ele>31.50</ele>
+<time>2016-09-04T08:16:23Z</time>
+</trkpt>
+<trkpt lat="52.5207711" lon="13.3855352">
+<ele>20.50</ele>
+<time>2016-09-04T08:16:29Z</time>
+</trkpt>
+<trkpt lat="52.5208639" lon="13.3858283">
+<ele>27.50</ele>
+<time>2016-09-04T08:16:35Z</time>
+</trkpt>
+<trkpt lat="52.5210390" lon="13.3860810">
+<ele>28.50</ele>
+<time>2016-09-04T08:16:43Z</time>
+</trkpt>
+</trkseg>
+</trk>
+</gpx>
