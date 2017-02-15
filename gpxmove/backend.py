@@ -61,8 +61,6 @@ class Backend:
         auth (tuple(str, str)): (username, password)
         cleanup (bool): If true, destroy() will remove all activities.
     """
-
-    prefix = None
     supported = dict()
 
     skip_test = False
@@ -80,12 +78,6 @@ class Backend:
             self.url += '/'
         self.auth = auth
         self.cleanup = cleanup
-
-    @classmethod
-    def short_class_name(cls):
-        """used for unittests"""
-        parts = cls.__name__.split('.')
-        return parts[-1]
 
     @classmethod
     def _set_supported(cls, name: str, value: bool):
