@@ -8,7 +8,7 @@ implements test classes for all backends
 """
 
 from .basic import BasicTest
-from ...backends import *
+from ...backends import DirectoryBackend
 
 # pylint: disable=attribute-defined-outside-init
 
