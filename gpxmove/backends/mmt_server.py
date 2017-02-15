@@ -11,13 +11,13 @@ This implements :class:`gpxmove.backends.MMTServerStorage`
 
 import datetime
 
-from .fs import LocalStorage
+from .directory import DirectoryBackend
 
 __all__ = ['MMTServerStorage']
 __all__ = []
 
 
-class MMTServerStorage(LocalStorage):
+class MMTServerStorage(DirectoryBackend):
     """The implementation for a server emulating MapMyTracks.
     The activity ident is the number given by us.
     """

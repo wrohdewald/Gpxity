@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxmove -->
-<!-- Saved: 2017-02-15, 00:36:53 -->
+<!-- Saved: 2017-02-15, 02:59:58 -->
 <!-- Copyright (C) 2017 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
@@ -17,10 +17,14 @@
     <Source>bin/test</Source>
     <Source>gpxmove/__init__.py</Source>
     <Source>gpxmove/activity.py</Source>
+    <Source>gpxmove/auth.py</Source>
     <Source>gpxmove/backend.py</Source>
-    <Source>gpxmove/backends/fs.py</Source>
+    <Source>gpxmove/backends/__init__.py</Source>
+    <Source>gpxmove/backends/directory.py</Source>
     <Source>gpxmove/backends/mmt.py</Source>
     <Source>gpxmove/backends/mmt_server.py</Source>
+    <Source>gpxmove/backends/test/__init__.py</Source>
+    <Source>gpxmove/backends/test/basic.py</Source>
     <Source>gpxmove/backends/test/test_backends.py</Source>
   </Sources>
   <Forms/>

@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxmove.backends.MMTClientStorage`
+This implements :class:`gpxmove.backends.MMTBackend`
 """
 
 
@@ -17,10 +17,10 @@ import requests
 
 from gpxpy.gpx import GPXTrackPoint
 
-from .. import Storage, Activity
+from .. import Backend, Activity
 
 
-__all__ = ['MMTClientStorage']
+__all__ = ['MMTBackend']
 
 
 
@@ -28,11 +28,11 @@ class MMTSession:
     """Helps execute commands while logged in"""
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, storage):
+    def __init__(self, backend):
         self.session = requests.Session()
         # I have no idea what ACT=9 does but it seems to be needed
-        payload = {'username': storage.auth[0], 'password': storage.auth[1], 'ACT':'9'}
-        base_url = storage.base_url().replace('http:', 'https:')
+        payload = {'username': backend.auth[0], 'password': backend.auth[1], 'ACT':'9'}
+        base_url = backend.base_url().replace('http:', 'https:')
         login_url = '{}/login'.format(base_url)
         response = self.session.post(login_url, data=payload)
         if not 'You are now logged in.' in response.text:
@@ -112,14 +112,14 @@ class MMTRawActivity:
     def __init__(self, xml):
         self.activity_id = xml.find('id').text
         self.title = xml.find('title').text
-        self.time = MMTClientStorage.convert_time(xml.find('date').text)
+        self.time = MMTBackend.convert_time(xml.find('date').text)
         self.what = xml.find('activity_type').text
 
 
-class MMTClientStorage(Storage):
+class MMTBackend(Backend):
     """The implementation for MapMyTracks.
     The activity ident is the number given by MapMYTracks.
-    cleanup: if True, remove storage in __exit__ and in destroy()
+    cleanup: if True, remove backend in __exit__ and in destroy()
 
     Mapping GPX 1.1  - Activity attribute -  mapmytracks:
     name                    title                           title
@@ -131,7 +131,7 @@ class MMTClientStorage(Storage):
     def __init__(self, url=None, auth=None, cleanup=True):
         if url is None:
             url = 'http://www.mapmytracks.com/api'
-        super(MMTClientStorage, self).__init__(url, auth, cleanup)
+        super(MMTBackend, self).__init__(url, auth, cleanup)
         self.remote_known_whats = None
 
     def __post(self, request, session=None, **kwargs):
@@ -180,7 +180,7 @@ class MMTClientStorage(Storage):
                 '<usr>{}</usr><uid>{}</uid>' \
                 '<title>{}</title></message>'.format(
                     attribute,
-                    activity.id_in_storage, self.auth[0],
+                    activity.id_in_backend, self.auth[0],
                     session.cookies['exp_uniqueid'], getattr(activity, attribute)).encode('utf-8')
             response = session.post(url, data=data)
             if 'success' not in response.text:
@@ -202,7 +202,7 @@ class MMTClientStorage(Storage):
             return
         with MMTSession(self) as session:
             url = self.base_url() + '/handler/change_activity'
-            data = {'eid': activity.id_in_storage, 'activity': activity.what}
+            data = {'eid': activity.id_in_backend, 'activity': activity.what}
             response = session.post(url, data=data)
             if 'ok' not in response.text:
                 raise requests.exceptions.HTTPError()
@@ -270,11 +270,11 @@ class MMTClientStorage(Storage):
         try:
             with MMTSession(self) as session:
                 response = session.get('{}/assets/php/gpx.php?tid={}'.format(
-                    self.base_url(), activity.id_in_storage))
+                    self.base_url(), activity.id_in_backend))
                 activity.parse(response.text)
                 # but this does not give us activity type and other things.
                 response = session.get('{}/explore/activity/{}'.format(
-                    self.base_url(), activity.id_in_storage))
+                    self.base_url(), activity.id_in_backend))
                 page_parser = ParseMMTActivity()
                 page_parser.feed(response.text)
                 # if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
@@ -299,7 +299,7 @@ class MMTClientStorage(Storage):
         old_from_time = -1
         from_time = 0
         while from_time != old_from_time:
-            chunk = self.__post('get_activity', activity_id=activity.id_in_storage, from_time=from_time, timeout=5)
+            chunk = self.__post('get_activity', activity_id=activity.id_in_backend, from_time=from_time, timeout=5)
             old_from_time = from_time
             from_time = self.__import_xml(activity, chunk)
             if from_time == 0:
@@ -310,9 +310,9 @@ class MMTClientStorage(Storage):
                 activity, self))
         activity.loaded = True
 
-    def _remove_activity_in_storage(self, activity):
+    def _remove_activity_in_backend(self, activity):
         """remove on the server"""
-        act_id = activity.id_in_storage
+        act_id = activity.id_in_backend
         response = self.__post('delete_activity', activity_id=act_id)
         type_xml = response.find('type')
         if type_xml is None or type_xml.text != 'activity_deleted':
@@ -329,7 +329,7 @@ class MMTClientStorage(Storage):
         response = self.__post(
             'upload_activity', gpx_file=activity.to_xml(),
             status=status, description=activity.description, activity=activity.what)
-        activity.id_in_storage = response.find('id').text
+        activity.id_in_backend = response.find('id').text
         self.change_title(activity)
 
     def destroy(self):
@@ -338,11 +338,11 @@ class MMTClientStorage(Storage):
             self.remove_all()
 
     def update(self, activity, points):
-        """append points in the storage. activity already has them.
+        """append points in the backend. activity already has them.
         points are GPXTrackPoint"""
         activity.add_points(points)
         self.__post(
-            'update_activity', activity_id=activity.id_in_storage,
+            'update_activity', activity_id=activity.id_in_backend,
             points=points)
 
     @staticmethod

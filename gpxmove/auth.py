@@ -10,7 +10,7 @@ This module defines :class:`~gpxmove.Authenticate`
 from pkgutil import get_data
 from configparser import ConfigParser
 
-from gpxmove import Storage
+from gpxmove import Backend
 
 __all__ = ['Authenticate']
 
@@ -21,7 +21,7 @@ class Authenticate:
     useable, set them to None
 
     Args:
-        cls (Storage): The class of the backend
+        cls (Backend): The class of the backend
         sub_name (str): Be more specific. This can be used to define different data for some tests.
 
     Attributes:
@@ -40,7 +40,7 @@ class Authenticate:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, cls: Storage, sub_name: str=None):
+    def __init__(self, cls: Backend, sub_name: str=None):
 
         self.cls = cls
         self.sub_name = sub_name

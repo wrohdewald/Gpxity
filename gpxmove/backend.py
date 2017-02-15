@@ -5,20 +5,20 @@
 # See LICENSE for details.
 
 """
-This module defines :class:`~gpxmove.Storage`
+This module defines :class:`~gpxmove.Backend`
 """
 
 import datetime
 from inspect import getmembers, ismethod
 
-__all__ = ['Storage']
+__all__ = ['Backend']
 
 
 class _ActivityList(list):
 
-    """A list of all activities in a storage,
+    """A list of all activities in a backend,
     allowing activity id as index like in
-    storage.activities['12345']
+    backend.activities['12345']
 
     Args:
         content (list(Activity): Initial list of activities
@@ -35,21 +35,21 @@ class _ActivityList(list):
     def __getitem__(self, index):
         """Allows accesses like alist[a_id]"""
         for _ in self:
-            if _.id_in_storage == index:
+            if _.id_in_backend == index:
                 return _
-        if isinstance(index,  int) and 0 <= index < len(self):
+        if isinstance(index, int) and 0 <= index < len(self):
             return list.__getitem__(self, index)
 
 
-class Storage:
+class Backend:
     """A place where activities live. Something like the filesystem or MMT
 
     This can be used as a context manager. At termination, all activities
     may be removed automatically, if cleanup=True. Some concrete
-    implementations may also remove the storage itself.
+    implementations may also remove the backend itself.
 
     Arguments:
-        url (str): the address. May be a real URL or a directory, depending on the storage implementation.
+        url (str): the address. May be a real URL or a directory, depending on the backend implementation.
         auth (tuple(str, str)): (username, password)
         cleanup (bool): If true, destroy() will remove all activities.
     """
@@ -62,7 +62,7 @@ class Storage:
     supports_keywords = True
 
     def __init__(self, url=None, auth=None, cleanup=False):
-        super(Storage, self).__init__()
+        super(Backend, self).__init__()
         self.supports_methods.add(self.clone)
 
         self.activities = _ActivityList()
@@ -80,12 +80,12 @@ class Storage:
         return parts[-1]
 
     def _supports_all(self):
-        """this marks all methods as suppported. If a storage supports most,
+        """this marks all methods as suppported. If a backend supports most,
         we can first call this and the unset unsupported methods again."""
         self.supports_methods = set(getmembers(self.__class__, ismethod))
 
     def supports(self, method):
-        """bool: does this storage support method?
+        """bool: does this backend support method?
         method may be a string or a method"""
         lookup = method
         if isinstance(lookup, str):
@@ -103,11 +103,11 @@ class Storage:
         return self.__class__(self.url, self.auth)
 
     def get_time(self) ->datetime.datetime:
-        """get time from the server where storage is located as a Linux timestamp"""
+        """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
 
     def new_id(self, activity) ->str:
-        """defines an id for activity in this storage
+        """defines an id for activity in this backend
 
         Args:
             activity: The activity requesting an id"""
@@ -138,7 +138,7 @@ class Storage:
 
     def list_activities(self):
         """A generator returning all activities. If all have already been listed,
-        return their cached list. For rescanning, allocate a new Storage object.
+        return their cached list. For rescanning, allocate a new Backend object.
 
         Yields:
             the next activity"""
@@ -159,30 +159,30 @@ class Storage:
 
         Args:
             activity (Activity): The activity we want to save. It can be associated
-            with an arbitrary storage.
+            with an arbitrary backend.
 
         Returns:
             The saved activity. If the original activity lives in a different
-            storage, a new activity living in this storage will be created.
+            backend, a new activity living in this backend will be created.
         """
-        if activity.storage is not None and activity.storage is not self:
+        if activity.backend is not None and activity.backend is not self:
             activity = activity.clone()
         self._save(activity)
         if activity not in self.activities:
             self.activities.append(activity)
         return activity
 
-    def _save(self,  activity):
-        """the actual implementation for the concrete Storage"""
+    def _save(self, activity):
+        """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 
     def remove(self, activity) ->None:
-        """remove activity from storage"""
-        self._remove_activity_in_storage(activity)
+        """remove activity from backend"""
+        self._remove_activity_in_backend(activity)
         self.activities.remove(activity)
 
-    def _remove_activity_in_storage(self, activity) ->None:
-        """storage dependent implementation"""
+    def _remove_activity_in_backend(self, activity) ->None:
+        """backend dependent implementation"""
         raise NotImplementedError()
 
     def update(self, activity, points): # pylint: disable=no-self-use
@@ -191,15 +191,15 @@ class Storage:
         raise NotImplementedError()
 
     def change_title(self, activity):
-        """change title in storage, activity already has the new title"""
+        """change title in backend, activity already has the new title"""
         raise NotImplementedError()
 
     def change_description(self, activity):
-        """changes description in storage, activity already has the new description"""
+        """changes description in backend, activity already has the new description"""
         raise NotImplementedError()
 
     def change_what(self, activity):
-        """change what in storage, activity already has the new type"""
+        """change what in backend, activity already has the new type"""
         raise NotImplementedError()
 
     def remove_all(self):
@@ -207,22 +207,22 @@ class Storage:
         for activity in list(self.list_activities()):
             self.remove(activity)
 
-    def copy_all_from(self, from_storage):
-        """copy all activities into this storage.activities
+    def copy_all_from(self, from_backend):
+        """copy all activities into this backend.activities
 
         Args:
-            from_storage (Storage): The source of the activities
+            from_backend (Backend): The source of the activities
 
         Returns:
-            (list) all new activities in this storage
+            (list) all new activities in this backend
         """
         result = list()
-        for activity in from_storage.list_all(load_full=True):
+        for activity in from_backend.list_all(load_full=True):
             result.append(self.save(activity))
         return result
 
     def destroy(self):
-        """removes all traces of this storage ONLY if we created it in __init__"""
+        """removes all traces of this backend ONLY if we created it in __init__"""
         if self.cleanup:
             self.remove_all()
 
@@ -231,7 +231,7 @@ class Storage:
         return id(self)
 
     def has_same_activities(self, other):
-        """True if both storages have the same activities"""
+        """True if both backends have the same activities"""
         return set(x.key() for x in self.activities) == set(x.key() for x in other.activities)
 
     def __repr__(self):
@@ -246,5 +246,5 @@ class Storage:
         self.destroy()
 
     def __eq__(self, other):
-        """compares activities in both storages. Used for testing."""
+        """compares activities in both backends. Used for testing."""
         return self.has_same_activities(other)

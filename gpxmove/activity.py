@@ -25,22 +25,22 @@ class Activity:
 
     """Represents an activity.
 
-    If it is assigned to a storage, all changes will be written directly to the storage.
-    Not all storages support everything, you could get the exception NotImplementedError.
+    If it is assigned to a backend, all changes will be written directly to the backend.
+    Not all backends support everything, you could get the exception NotImplementedError.
 
     Args:
-        storage (Storage): The Storage where this Activity lives in. If
-            it was constructed in memory, storage is None.
+        backend (Backend): The Backend where this Activity lives in. If
+            it was constructed in memory, backend is None.
         gpx (GPX): Initial content.
 
-    At least one of **storage** or **gpx** must be None.
+    At least one of **backend** or **gpx** must be None.
 
     Attributes:
         legal_what (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
             as default value.
-        id_in_storage (str): Every storage has its own scheme for unique activity ids.
-        loading (bool): True while the activity loads from storage. Do not change this unless
-            you implement a new storage.
+        id_in_backend (str): Every backend has its own scheme for unique activity ids.
+        loading (bool): True while the activity loads from backend. Do not change this unless
+            you implement a new backend.
 
     Todo:
         strictly separate special keywords like what and public from general
@@ -62,38 +62,38 @@ class Activity:
         'Paragliding', 'Hot air ballooning', 'Nordic walking', 'Snowshoeing', 'Jet skiing', 'Powerboating',
         'Miscellaneous')
 
-    def __init__(self, storage=None, id_in_storage=None, gpx=None):
-        # TODO: do we need id_in_storage? Could we get it from storage?
-        self.__storage = None
-        if storage is not None:
+    def __init__(self, backend=None, id_in_backend=None, gpx=None):
+        # TODO: do we need id_in_backend? Could we get it from backend?
+        self.__backend = None
+        if backend is not None:
             assert gpx is None
         if gpx is not None:
-            assert storage is None
-        self.storage = storage
-        self.id_in_storage = id_in_storage
+            assert backend is None
+        self.backend = backend
+        self.id_in_backend = id_in_backend
         super(Activity, self).__init__()
         self.__gpx = gpx or GPX()
         self.loading = False
         self._loaded = gpx is not None
 
     @property
-    def storage(self):
-        """The storage this activity lives in. It is not possible to move the activity to
-        a different storage by changing this. Use :meth:`~gpxmove.backends.Storage.save()` instead."""
-        return self.__storage
+    def backend(self):
+        """The backend this activity lives in. It is not possible to move the activity to
+        a different backend by changing this. Use :meth:`~gpxmove.backends.Backend.save()` instead."""
+        return self.__backend
 
-    @storage.setter
-    def storage(self, value):
-        if value is not self.__storage:
-            if self.__storage is not None:
+    @backend.setter
+    def backend(self, value):
+        if value is not self.__backend:
+            if self.__backend is not None:
                 raise Exception(
-                    'You cannot assign the activity to a different storage this way. '
-                    'Please use Storage.save(activity).')
-            self.__storage = value
-            self.__storage.activities.append(self)
+                    'You cannot assign the activity to a different backend this way. '
+                    'Please use Backend.save(activity).')
+            self.__backend = value
+            self.__backend.activities.append(self)
 
     def clone(self):
-        """Create a new activity with the same content but without storage
+        """Create a new activity with the same content but without backend
 
         Returns:
             the new activity
@@ -123,7 +123,7 @@ class Activity:
 
     @property
     def title(self) -> str:
-        """str: The title. Internally stored in gpx.title, but every storage
+        """str: The title. Internally stored in gpx.title, but every backend
             may actually store this differently. But this is transparent to the user.
         """
         return self.__gpx.name
@@ -132,12 +132,12 @@ class Activity:
     def title(self, value: str):
         if value != self.__gpx.name:
             self.__gpx.name = value
-            if self.storage:
-                self.storage.change_title(self)
+            if self.backend:
+                self.backend.change_title(self)
 
     @property
     def description(self) ->str:
-        """str: The description. Internally stored in gpx.description, but every storage
+        """str: The description. Internally stored in gpx.description, but every backend
             may actually store this differently. But this is transparent to the user.
         """
         return self.__gpx.description
@@ -146,8 +146,8 @@ class Activity:
     def description(self, value: str):
         if value != self.__gpx.description:
             self.__gpx.description = value
-            if self.storage:
-                self.storage.change_description(self)
+            if self.backend:
+                self.backend.change_description(self)
 
     @property
     def what(self) ->str:
@@ -179,8 +179,8 @@ class Activity:
                 if _.startswith('What:'):
                     self.remove_keyword(_)
             self.add_keyword('What:{}'.format(value))
-            if self.storage:
-                self.storage.change_what(self)
+            if self.backend:
+                self.backend.change_what(self)
 
     def point_count(self) ->int:
         """
@@ -194,9 +194,9 @@ class Activity:
         return result
 
     def _load_full(self) ->None:
-        """load the full track from source_storage if not yet loaded."""
-        if self.storage and not self._loaded and not self.loading:
-            self.storage.load_full(self)
+        """load the full track from source_backend if not yet loaded."""
+        if self.backend and not self._loaded and not self.loading:
+            self.backend.load_full(self)
 
     def add_points(self, points) ->None:
         """adds points to last segment in the last track. If no track
@@ -350,9 +350,9 @@ class Activity:
 
     def __repr__(self):
         parts = []
-        if self.storage:
-            parts.append(repr(self.storage))
-            parts.append(' id:{}'.format(self.id_in_storage))
+        if self.backend:
+            parts.append(repr(self.backend))
+            parts.append(' id:{}'.format(self.id_in_backend))
         if self.__gpx:
             parts.append(self.what)
             if self.__gpx.name:

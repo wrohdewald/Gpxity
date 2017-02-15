@@ -4,6 +4,6 @@
 
 # pylint:disable=wildcard-import, missing-docstring
 
-from .fs import *
+from .directory import *
 from .mmt import *
 

@@ -22,7 +22,7 @@ from gpxpy.gpx import GPXTrackPoint
 
 from ...activity import Activity
 from ...auth import Authenticate
-from ...backend import Storage
+from ...backend import Backend
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -63,31 +63,31 @@ class BasicTest(unittest.TestCase):
             time=last_points[-1].time + datetime.timedelta(hours=10, seconds=idx))
         new_point.move(movement)
         gpx.tracks[-1].segments[-1].points.append(new_point)
-        result = Activity(storage=None, gpx=gpx)
+        result = Activity(backend=None, gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(gpx.name)
         result.what = what or random.choice(Activity.legal_what)
         return result
 
-    def assertSameActivities(self, storage1, storage2): # pylint: disable=invalid-name
-        """both storages must hold identical activities"""
-        self.assertEqual(storage1, storage2, 'storage1:{} storage2:{}'.format(
-            list(x.key() for x in storage1.activities),
-            list(x.key() for x in storage2.activities)))
+    def assertSameActivities(self, backend1, backend2): # pylint: disable=invalid-name
+        """both backends must hold identical activities"""
+        self.assertEqual(backend1, backend2, 'backend1:{} backend2:{}'.format(
+            list(x.key() for x in backend1.activities),
+            list(x.key() for x in backend2.activities)))
 
-    def setup_storage(self, cls_, url=None, count=0, cleanup=True, clear_first=True, sub_name=None):
+    def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True, sub_name=None):
         """sets up an instance of a backend with count activities
 
         Args:
-            cls_ (Storage): the class of the storage to be created
-            url (str): the url for the storage
+            cls_ (Backend): the class of the backend to be created
+            url (str): the url for the backend
             count (int): how many random activities should be inserted?
-            cleanup (bool): If True, remve all activities when done. Passed to the storage.
+            cleanup (bool): If True, remve all activities when done. Passed to the backend.
             clear_first (bool): if True, first remove all existing activities
             sub_name (str): use this to get specific username/passwords from Authenticate
 
         Returns:
-            the prepared Storage
+            the prepared Backend
         """
 
         self.setup_auth(cls_,  sub_name)
@@ -103,7 +103,7 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def _findStorageClasses():
-        """finds all storage classes. Those will be tested."""
+        """finds all backend classes. Those will be tested."""
         backends_directory = __file__
         while not backends_directory.endswith('backends'):
             backends_directory = os.path.dirname(backends_directory)
@@ -120,7 +120,7 @@ class BasicTest(unittest.TestCase):
             try:
                 imported = importlib.__import__(mod, globals(), locals(), level=2)
                 for name, cls in getmembers(imported, isclass):
-                    if Storage in getmro(cls)[1:]:
+                    if Backend in getmro(cls)[1:]:
                         # isinstance and is do not work here
                         result.append(cls)
             except ImportError:

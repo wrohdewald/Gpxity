@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-Defines :class:`gpxmove.backends.LocalStorage`
+Defines :class:`gpxmove.backends.DirectoryBackend`
 """
 
 
@@ -14,11 +14,11 @@ import datetime
 import tempfile
 
 
-from .. import Storage, Activity
+from .. import Backend, Activity
 
-__all__ = ['LocalStorage']
+__all__ = ['DirectoryBackend']
 
-class LocalStorage(Storage):
+class DirectoryBackend(Backend):
     """The local source. url is an existing directory. If url
     is not given, allocate a temporary directory and remove
     it in destroy().
@@ -33,7 +33,7 @@ class LocalStorage(Storage):
         self.url_given = bool(url)
         if not self.url_given:
             url = tempfile.mkdtemp(prefix='gpxmove.')
-        super(LocalStorage, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
+        super(DirectoryBackend, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         self._supports_all()
         if not os.path.exists(self.url):
             os.makedirs(self.url)
@@ -41,8 +41,8 @@ class LocalStorage(Storage):
 
     def new_id(self, activity):
         """a not yet existant file name"""
-        if activity.storage is self and activity.id_in_storage:
-            value = activity.id_in_storage
+        if activity.backend is self and activity.id_in_backend:
+            value = activity.id_in_backend
         elif activity.title:
             value = activity.title
         else:
@@ -55,16 +55,16 @@ class LocalStorage(Storage):
         return unique_value
 
     def destroy(self):
-        """remove the entire storage IF we created it in __init__, otherwise only empty it"""
-        super(LocalStorage, self).destroy()
+        """remove the entire backend IF we created it in __init__, otherwise only empty it"""
+        super(DirectoryBackend, self).destroy()
         if self.cleanup and not self.url_given:
             os.rmdir(self.url)
 
     def gpx_path(self, activity):
         """The full path name for the local copy of an activity"""
-        if not activity.id_in_storage:
-            activity.id_in_storage = self.new_id(activity)
-        base_name = '{}.gpx'.format(activity.id_in_storage)
+        if not activity.id_in_backend:
+            activity.id_in_backend = self.new_id(activity)
+        base_name = '{}.gpx'.format(activity.id_in_backend)
         return os.path.join(self.url, base_name)
 
     def list_gpx(self):
@@ -91,11 +91,11 @@ class LocalStorage(Storage):
             activity.loading = False
 
     def exists(self, activity):
-        """is the full activity permanently in this storage?"""
+        """is the full activity permanently in this backend?"""
         return os.path.exists(self.gpx_path(activity))
 
-    def _remove_activity_in_storage(self, activity):
-        """remove all data about it in this storage"""
+    def _remove_activity_in_backend(self, activity):
+        """remove all data about it in this backend"""
         os.remove(self.gpx_path(activity))
 
     def change_title(self, activity):
