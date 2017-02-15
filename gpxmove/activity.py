@@ -16,7 +16,6 @@ import datetime
 import gpxpy
 from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment
 
-from .backend import Storage
 
 
 __all__ = ['Activity']
@@ -26,20 +25,22 @@ class Activity:
 
     """Represents an activity.
 
+    If it is assigned to a storage, all changes will be written directly to the storage.
+    Not all storages support everything, you could get the exception NotImplementedError.
+
     Args:
-        storage (Storage): The Storage where this Activity is _loaded from. If
+        storage (Storage): The Storage where this Activity lives in. If
             it was constructed in memory, storage is None.
-        gpx (GPX): Initial content. At least one of storage or gpx must be None.
+        gpx (GPX): Initial content.
+
+    At least one of **storage** or **gpx** must be None.
 
     Attributes:
         legal_what (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
             as default value.
-        storage_ids (dict(Storage, str)): Defines an id for this activity in a storage. An
-            activity can be in several storages (like after
-            :meth:`Storage.save <gpxmove.backend.Storage.save()>`), and every
-            storage has its own scheme for unique ids.
-        source_storage (Storage): The initial storage where Activity is loaded from.
-            Is None if we constructed a new Activity in memory.
+        id_in_storage (str): Every storage has its own scheme for unique activity ids.
+        loading (bool): True while the activity loads from storage. Do not change this unless
+            you implement a new storage.
 
     Todo:
         strictly separate special keywords like what and public from general
@@ -61,19 +62,43 @@ class Activity:
         'Paragliding', 'Hot air ballooning', 'Nordic walking', 'Snowshoeing', 'Jet skiing', 'Powerboating',
         'Miscellaneous')
 
-    def __init__(self, storage, id_in_storage=None, gpx=None):
+    def __init__(self, storage=None, id_in_storage=None, gpx=None):
+        # TODO: do we need id_in_storage? Could we get it from storage?
+        self.__storage = None
         if storage is not None:
             assert gpx is None
         if gpx is not None:
             assert storage is None
+        self.storage = storage
+        self.id_in_storage = id_in_storage
         super(Activity, self).__init__()
-        self.storage_ids = dict()
         self.__gpx = gpx or GPX()
         self.loading = False
         self._loaded = gpx is not None
-        self.source_storage = storage
-        if id_in_storage:
-            self.add_to_storage(storage, id_in_storage)
+
+    @property
+    def storage(self):
+        """The storage this activity lives in. It is not possible to move the activity to
+        a different storage by changing this. Use :meth:`~gpxmove.backends.Storage.save()` instead."""
+        return self.__storage
+
+    @storage.setter
+    def storage(self, value):
+        if value is not self.__storage:
+            if self.__storage is not None:
+                raise Exception(
+                    'You cannot assign the activity to a different storage this way. '
+                    'Please use Storage.save(activity).')
+            self.__storage = value
+            self.__storage.activities.append(self)
+
+    def clone(self):
+        """Create a new activity with the same content but without storage
+
+        Returns:
+            the new activity
+        """
+        return Activity(gpx=self.__gpx)
 
     @property
     def time(self) ->datetime.datetime:
@@ -107,8 +132,8 @@ class Activity:
     def title(self, value: str):
         if value != self.__gpx.name:
             self.__gpx.name = value
-            for storage in self.storage_ids:
-                storage.change_title(self)
+            if self.storage:
+                self.storage.change_title(self)
 
     @property
     def description(self) ->str:
@@ -121,8 +146,8 @@ class Activity:
     def description(self, value: str):
         if value != self.__gpx.description:
             self.__gpx.description = value
-            for storage in self.storage_ids:
-                storage.change_description(self)
+            if self.storage:
+                self.storage.change_description(self)
 
     @property
     def what(self) ->str:
@@ -154,8 +179,8 @@ class Activity:
                 if _.startswith('What:'):
                     self.remove_keyword(_)
             self.add_keyword('What:{}'.format(value))
-            for storage in self.storage_ids:
-                storage.change_what(self)
+            if self.storage:
+                self.storage.change_what(self)
 
     def point_count(self) ->int:
         """
@@ -168,31 +193,17 @@ class Activity:
                 result += len(segment.points)
         return result
 
-    def add_to_storage(self, storage: Storage, id_in_storage: str) ->None:
-        """makes activity known in storage, does not yet save/upload"""
-        assert isinstance(id_in_storage, str)
-        self.storage_ids[storage] = id_in_storage
-        storage.activities.append(self)
-        if self.source_storage is None:
-            # newly constructed in memory
-            self.source_storage = storage
-
     def _load_full(self) ->None:
         """load the full track from source_storage if not yet loaded."""
-        if self.source_storage and not self._loaded and not self.loading:
-            self.source_storage.load_full(self)
+        if self.storage and not self._loaded and not self.loading:
+            self.storage.load_full(self)
 
     def add_points(self, points) ->None:
         """adds points to last segment in the last track. If no track
-        is allocated yet, do so. This only adds to this Activity instance.
-        If you want to update the storage, first do this and then
-        storage.update(activity).
+        is allocated yet, do so.
 
         Args:
             points (list(GPXTrackPoint): The points to be added
-            upload: If False, only add to this Activity instance.
-                If True, also add in the storage if the storage supports
-                this action. If it does not, raise NotImplemented.
         """
         if self.__gpx.tracks:
             # make sure the same points are not added twice
@@ -338,7 +349,10 @@ class Activity:
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
 
     def __repr__(self):
-        parts = [','.join(sorted(set(self.storage_ids.values())))]
+        parts = []
+        if self.storage:
+            parts.append(repr(self.storage))
+            parts.append(' id:{}'.format(self.id_in_storage))
         if self.__gpx:
             parts.append(self.what)
             if self.__gpx.name:

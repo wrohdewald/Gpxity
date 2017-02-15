@@ -21,15 +21,13 @@ class _ActivityList(list):
     storage.activities['12345']
 
     Args:
-        storage (:class:`gpxmove.backend.Storage`): The storage holding this list
         content (list(Activity): Initial list of activities
     """
 
-    def __init__(self, storage, content=None):
+    def __init__(self, content=None):
         super(_ActivityList, self).__init__()
         if content is not None:
             self.extend(content)
-        self.storage = storage
 
     def __contains__(self, index) ->bool:
         return self.__getitem__(index) is not None
@@ -37,9 +35,9 @@ class _ActivityList(list):
     def __getitem__(self, index):
         """Allows accesses like alist[a_id]"""
         for _ in self:
-            if _.storage_ids[self.storage] == index:
+            if _.id_in_storage == index:
                 return _
-        if 0 <= index < len(self):
+        if isinstance(index,  int) and 0 <= index < len(self):
             return list.__getitem__(self, index)
 
 
@@ -67,7 +65,7 @@ class Storage:
         super(Storage, self).__init__()
         self.supports_methods.add(self.clone)
 
-        self.activities = _ActivityList(self)
+        self.activities = _ActivityList()
         self._activities_fully_listed = False
         self.url = url or ''
         if self.url and not self.url.endswith('/'):
@@ -156,8 +154,26 @@ class Storage:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
 
-    def save(self, activity) ->None:
-        """save full activity"""
+    def save(self, activity):
+        """save full activity.
+
+        Args:
+            activity (Activity): The activity we want to save. It can be associated
+            with an arbitrary storage.
+
+        Returns:
+            The saved activity. If the original activity lives in a different
+            storage, a new activity living in this storage will be created.
+        """
+        if activity.storage is not None and activity.storage is not self:
+            activity = activity.clone()
+        self._save(activity)
+        if activity not in self.activities:
+            self.activities.append(activity)
+        return activity
+
+    def _save(self,  activity):
+        """the actual implementation for the concrete Storage"""
         raise NotImplementedError()
 
     def remove(self, activity) ->None:
@@ -192,9 +208,18 @@ class Storage:
             self.remove(activity)
 
     def copy_all_from(self, from_storage):
-        """copy all activities into this storage"""
+        """copy all activities into this storage.activities
+
+        Args:
+            from_storage (Storage): The source of the activities
+
+        Returns:
+            (list) all new activities in this storage
+        """
+        result = list()
         for activity in from_storage.list_all(load_full=True):
-            self.save(activity)
+            result.append(self.save(activity))
+        return result
 
     def destroy(self):
         """removes all traces of this storage ONLY if we created it in __init__"""

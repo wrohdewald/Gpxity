@@ -40,7 +40,5 @@ class MMTServerStorage(LocalStorage):
 
     def save(self, activity):
         """save full gpx, generate an id if needed"""
-        if self not in activity.storage_ids:
-            activity.add_to_storage(self, self.new_id(activity))
         super(MMTServerStorage, self).save(activity)
 

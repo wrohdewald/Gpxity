@@ -41,13 +41,12 @@ class LocalStorage(Storage):
 
     def new_id(self, activity):
         """a not yet existant file name"""
-        try:
-            value = activity.storage_ids[activity.source_storage]
-        except KeyError:
-            if activity.title:
-                value = activity.title
-            else:
-                value = tempfile.NamedTemporaryFile(dir=self.url).name
+        if activity.storage is self and activity.id_in_storage:
+            value = activity.id_in_storage
+        elif activity.title:
+            value = activity.title
+        else:
+            value = tempfile.NamedTemporaryFile(dir=self.url).name
         ctr = 0
         unique_value = value
         while os.path.exists(os.path.join(self.url, unique_value + '.gpx')):
@@ -63,10 +62,9 @@ class LocalStorage(Storage):
 
     def gpx_path(self, activity):
         """The full path name for the local copy of an activity"""
-        if self not in activity.storage_ids:
-            activity.add_to_storage(self, self.new_id(activity))
-        value = activity.storage_ids[self]
-        base_name = '{}.gpx'.format(value)
+        if not activity.id_in_storage:
+            activity.id_in_storage = self.new_id(activity)
+        base_name = '{}.gpx'.format(activity.id_in_storage)
         return os.path.join(self.url, base_name)
 
     def list_gpx(self):
@@ -112,7 +110,7 @@ class LocalStorage(Storage):
         """We simply rewrite the entire local .gpx file"""
         self.save(activity)
 
-    def save(self, activity):
+    def _save(self, activity):
         """save full gpx track"""
         gpx_path = self.gpx_path(activity)
         try:

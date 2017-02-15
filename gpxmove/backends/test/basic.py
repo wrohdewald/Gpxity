@@ -42,8 +42,8 @@ class BasicTest(unittest.TestCase):
         self.auth = Authenticate(cls_, sub_name).auth
 
     @staticmethod
-    def create_unique_activity(storage, count, idx, what=None):
-        """creates a unique activity in storage and returns it.
+    def create_unique_activity(count, idx, what=None):
+        """creates a unique activity and returns it.
         test.gpx is used as a template.
         The last trackpoint will be placed at first_point + 50km + angle(idx * 360 / count)
         """
@@ -67,8 +67,6 @@ class BasicTest(unittest.TestCase):
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(gpx.name)
         result.what = what or random.choice(Activity.legal_what)
-        if storage:
-            storage.save(result)
         return result
 
     def assertSameActivities(self, storage1, storage2): # pylint: disable=invalid-name
@@ -78,8 +76,20 @@ class BasicTest(unittest.TestCase):
             list(x.key() for x in storage2.activities)))
 
     def setup_storage(self, cls_, url=None, count=0, cleanup=True, clear_first=True, sub_name=None):
-        """sets up an instance of a backend with count activities"""
-        # TODO: document/rename sub_name
+        """sets up an instance of a backend with count activities
+
+        Args:
+            cls_ (Storage): the class of the storage to be created
+            url (str): the url for the storage
+            count (int): how many random activities should be inserted?
+            cleanup (bool): If True, remve all activities when done. Passed to the storage.
+            clear_first (bool): if True, first remove all existing activities
+            sub_name (str): use this to get specific username/passwords from Authenticate
+
+        Returns:
+            the prepared Storage
+        """
+
         self.setup_auth(cls_,  sub_name)
         result = cls_(url, auth=self.auth, cleanup=cleanup)
         if clear_first:
@@ -87,7 +97,8 @@ class BasicTest(unittest.TestCase):
         else:
             result.list_all()
         while count > len(result.activities):
-            self.create_unique_activity(result, count, len(result.activities))
+            activity = self.create_unique_activity(count, len(result.activities))
+            result.save(activity)
         return result
 
     @staticmethod

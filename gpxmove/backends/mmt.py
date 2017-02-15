@@ -180,7 +180,7 @@ class MMTClientStorage(Storage):
                 '<usr>{}</usr><uid>{}</uid>' \
                 '<title>{}</title></message>'.format(
                     attribute,
-                    activity.storage_ids[self], self.auth[0],
+                    activity.id_in_storage, self.auth[0],
                     session.cookies['exp_uniqueid'], getattr(activity, attribute)).encode('utf-8')
             response = session.post(url, data=data)
             if 'success' not in response.text:
@@ -202,7 +202,7 @@ class MMTClientStorage(Storage):
             return
         with MMTSession(self) as session:
             url = self.base_url() + '/handler/change_activity'
-            data = {'eid': activity.storage_ids[self], 'activity': activity.what}
+            data = {'eid': activity.id_in_storage, 'activity': activity.what}
             response = session.post(url, data=data)
             if 'ok' not in response.text:
                 raise requests.exceptions.HTTPError()
@@ -270,11 +270,11 @@ class MMTClientStorage(Storage):
         try:
             with MMTSession(self) as session:
                 response = session.get('{}/assets/php/gpx.php?tid={}'.format(
-                    self.base_url(), activity.storage_ids[self]))
+                    self.base_url(), activity.id_in_storage))
                 activity.parse(response.text)
                 # but this does not give us activity type and other things.
                 response = session.get('{}/explore/activity/{}'.format(
-                    self.base_url(), activity.storage_ids[self]))
+                    self.base_url(), activity.id_in_storage))
                 page_parser = ParseMMTActivity()
                 page_parser.feed(response.text)
                 # if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
@@ -299,7 +299,7 @@ class MMTClientStorage(Storage):
         old_from_time = -1
         from_time = 0
         while from_time != old_from_time:
-            chunk = self.__post('get_activity', activity_id=activity.storage_ids[self], from_time=from_time, timeout=5)
+            chunk = self.__post('get_activity', activity_id=activity.id_in_storage, from_time=from_time, timeout=5)
             old_from_time = from_time
             from_time = self.__import_xml(activity, chunk)
             if from_time == 0:
@@ -312,13 +312,13 @@ class MMTClientStorage(Storage):
 
     def _remove_activity_in_storage(self, activity):
         """remove on the server"""
-        act_id = activity.storage_ids[self]
+        act_id = activity.id_in_storage
         response = self.__post('delete_activity', activity_id=act_id)
         type_xml = response.find('type')
         if type_xml is None or type_xml.text != 'activity_deleted':
             raise Exception('{}: Could not delete activity {}: {}'.format(self, activity, response.text))
 
-    def save(self, activity):
+    def _save(self, activity):
         """save full gpx track on the MMT server.
         We must upload the title separately.
         Because we cannot upload the time, we set the activity time to the time
@@ -329,8 +329,7 @@ class MMTClientStorage(Storage):
         response = self.__post(
             'upload_activity', gpx_file=activity.to_xml(),
             status=status, description=activity.description, activity=activity.what)
-        new_id = response.find('id').text
-        activity.add_to_storage(self, new_id)
+        activity.id_in_storage = response.find('id').text
         self.change_title(activity)
 
     def destroy(self):
@@ -343,7 +342,7 @@ class MMTClientStorage(Storage):
         points are GPXTrackPoint"""
         activity.add_points(points)
         self.__post(
-            'update_activity', activity_id=activity.storage_ids[self],
+            'update_activity', activity_id=activity.id_in_storage,
             points=points)
 
     @staticmethod
