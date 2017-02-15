@@ -90,10 +90,6 @@ class DirectoryBackend(Backend):
         finally:
             activity.loading = False
 
-    def exists(self, activity):
-        """is the full activity permanently in this backend?"""
-        return os.path.exists(self.gpx_path(activity))
-
     def _remove_activity_in_backend(self, activity):
         """remove all data about it in this backend"""
         os.remove(self._gpx_path(activity))
