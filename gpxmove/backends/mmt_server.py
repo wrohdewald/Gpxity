@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxmove.backends.MMTServerStorage`
+This implements :class:`gpxmove.backends.MMTServer`
 """
 
 
@@ -13,11 +13,11 @@ import datetime
 
 from .directory import Directory
 
-__all__ = ['MMTServerStorage']
+__all__ = ['MMTServer']
 __all__ = []
 
 
-class MMTServerStorage(Directory):
+class MMTServer(Directory):
     """The implementation for a server emulating MapMyTracks.
     The activity ident is the number given by us.
     """
@@ -27,7 +27,7 @@ class MMTServerStorage(Directory):
     skip_test = True
 
     def __init__(self, url=None, auth=None, cleanup=False):
-        super(MMTServerStorage, self).__init__(url, auth=auth, cleanup=cleanup)
+        super(MMTServer, self).__init__(url, auth=auth, cleanup=cleanup)
 
     def get_time(self):
         """get MMT server time as a Linux timestamp"""
@@ -42,5 +42,5 @@ class MMTServerStorage(Directory):
 
     def save(self, activity):
         """save full gpx, generate an id if needed"""
-        super(MMTServerStorage, self).save(activity)
+        super(MMTServer, self).save(activity)
 
