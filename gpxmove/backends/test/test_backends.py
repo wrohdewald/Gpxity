@@ -3,6 +3,9 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
+"""
+implements test classes for all backends
+"""
 
 from .basic import BasicTest
 from ...backends import *
