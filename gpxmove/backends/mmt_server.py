@@ -34,7 +34,7 @@ class MMTServerStorage(DirectoryBackend):
     def new_id(self, activity):
         """gives the activity a unique id"""
         try:
-            return str(max(int(x) for x in self.list_gpx()) + 1)
+            return str(max(int(x) for x in self._list_gpx()) + 1)
         except ValueError:
             return 1
 

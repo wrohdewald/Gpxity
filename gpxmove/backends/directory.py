@@ -60,21 +60,21 @@ class DirectoryBackend(Backend):
         if self.cleanup and not self.url_given:
             os.rmdir(self.url)
 
-    def gpx_path(self, activity):
+    def _gpx_path(self, activity):
         """The full path name for the local copy of an activity"""
         if not activity.id_in_backend:
             activity.id_in_backend = self.new_id(activity)
         base_name = '{}.gpx'.format(activity.id_in_backend)
         return os.path.join(self.url, base_name)
 
-    def list_gpx(self):
+    def _list_gpx(self):
         """returns a generator of all gpx files, with .gpx removed"""
         gpx_names = (x for x in os.listdir(self.url) if x.endswith('.gpx'))
         return (x.replace('.gpx', '') for x in gpx_names)
 
     def _yield_activities(self):
         self.activities.clear()
-        for _ in self.list_gpx():
+        for _ in self._list_gpx():
             yield Activity(self, _)
 
     def get_time(self):
@@ -85,7 +85,7 @@ class DirectoryBackend(Backend):
         """fills the activity with all its data from source."""
         activity.loading = True
         try:
-            with open(self.gpx_path(activity)) as in_file:
+            with open(self._gpx_path(activity)) as in_file:
                 activity.parse(in_file)
         finally:
             activity.loading = False
@@ -96,7 +96,7 @@ class DirectoryBackend(Backend):
 
     def _remove_activity_in_backend(self, activity):
         """remove all data about it in this backend"""
-        os.remove(self.gpx_path(activity))
+        os.remove(self._gpx_path(activity))
 
     def change_title(self, activity):
         """We simply rewrite the entire local .gpx file"""
@@ -112,13 +112,13 @@ class DirectoryBackend(Backend):
 
     def _save(self, activity):
         """save full gpx track"""
-        gpx_path = self.gpx_path(activity)
+        _gpx_path = self._gpx_path(activity)
         try:
-            with open(gpx_path, 'w') as out_file:
+            with open(_gpx_path, 'w') as out_file:
                 out_file.write(activity.to_xml())
             time = activity.time
             if time:
-                os.utime(gpx_path, (time.timestamp(), time.timestamp()))
+                os.utime(_gpx_path, (time.timestamp(), time.timestamp()))
             link_name = activity.title
             if not link_name and time:
                 link_name = '{:02}_{:02}:{:02}:{:02}'.format(
@@ -130,10 +130,10 @@ class DirectoryBackend(Backend):
                     os.makedirs(by_month_dir)
                 if os.path.lexists(by_month_path):
                     os.remove(by_month_path)
-                os.symlink(gpx_path, by_month_path)
+                os.symlink(_gpx_path, by_month_path)
         except BaseException as exc:
             print(exc)
-            os.remove(gpx_path)
+            os.remove(_gpx_path)
             raise
 
     def __repr__(self):
