@@ -11,6 +11,6 @@ test "$parentdir/$currentdir" != Gpxmove/doc && (
 	exit 2
 )
 
-sphinx-apidoc -f -o source  ../gpxmove 
+sphinx-apidoc -M -f -o source  ../gpxmove
 
 make html
