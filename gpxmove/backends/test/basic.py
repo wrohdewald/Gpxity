@@ -32,7 +32,7 @@ __all__ = ['BasicTest']
 class BasicTest(unittest.TestCase):
     """define some helpers"""
 
-    allStorageClasses = None
+    all_backend_classes = None
 
  #   def __init__(self):
     #    super(BasicTest, self).__init__()
@@ -47,8 +47,8 @@ class BasicTest(unittest.TestCase):
         test.gpx is used as a template.
         The last trackpoint will be placed at first_point + 50km + angle(idx * 360 / count)
         """
-        if BasicTest.allStorageClasses is None:
-            BasicTest.allStorageClasses = BasicTest._find_storage_classes()
+        if BasicTest.all_backend_classes is None:
+            BasicTest.all_backend_classes = BasicTest._find_backend_classes()
         gpx_test_file = os.path.join(os.path.dirname(__file__), 'test.gpx')
         if not os.path.exists(gpx_test_file):
             raise Exception('MMTTests needs a GPX file named test.gpx for testing in {}'.format(
@@ -102,7 +102,7 @@ class BasicTest(unittest.TestCase):
         return result
 
     @staticmethod
-    def _find_storage_classes():
+    def _find_backend_classes():
         """finds all backend classes. Those will be tested."""
         backends_directory = __file__
         while not backends_directory.endswith('backends'):

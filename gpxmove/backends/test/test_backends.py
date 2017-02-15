@@ -12,14 +12,14 @@ from .basic import BasicTest
 # pylint: disable=attribute-defined-outside-init
 
 class Supported(BasicTest):
-    """Are the supported_ attributes set correctly?"""
+    """Are the :literal:`supported_` attributes set correctly?"""
 
     def test_supported(self):
         """check values supports_* for all backends"""
         expect_unsupported = dict()
         expect_unsupported['Directory'] = ('update', )
         expect_unsupported['MMT'] = ('allocate', 'deallocate', 'new_id')
-        for cls in self._find_storage_classes():
+        for cls in self._find_backend_classes():
             if not cls.skip_test:
                 self.assertIn(cls.__name__, expect_unsupported)
                 expect_cls_unsupported = expect_unsupported[cls.__name__]
@@ -37,15 +37,13 @@ class Supported(BasicTest):
                             self.assertTrue(getattr(backend, name))
 
 
-class CreateStorage(BasicTest):
+class CreateBackend(BasicTest):
     """Can we create a backend?"""
 
-    #def __init__(self):
-       # super(CreateStorage, self).__init__()
 
     def test_create_localbackend(self):
         """test creation of a local backend"""
-        for cls in self._find_storage_classes():
+        for cls in self._find_backend_classes():
             if not cls.skip_test:
                 with self.subTest(' {}'.format(cls.__class__.__name__)):
                     backend = self.setup_backend(cls, count=3, clear_first=True)
