@@ -208,9 +208,9 @@ class MMT(Backend):
             if 'ok' not in response.text:
                 raise requests.exceptions.HTTPError()
 
-    def get_time(self):
-        """get MMT server time as a Linux timestamp"""
-        return int(self.__post('get_time').find('server_time').text)
+    def get_time(self) ->datetime.datetime:
+        """get MMT server time"""
+        return self.convert_time(self.__post('get_time').find('server_time').text)
 
     def _yield_activities(self):
         """get all activities for this user. If we do not use the generator
@@ -357,4 +357,4 @@ class MMT(Backend):
         Args:
             raw_time (int): The linux timestamp from the MMT server
         """
-        return datetime.datetime.utcfromtimestamp(int(raw_time))
+        return datetime.datetime.utcfromtimestamp(float(raw_time))
