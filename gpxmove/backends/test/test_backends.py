@@ -17,8 +17,8 @@ class Supported(BasicTest):
     def test_supported(self):
         """check values supports_* for all backends"""
         expect_unsupported = dict()
-        expect_unsupported['DirectoryBackend'] = ('update', )
-        expect_unsupported['MMTBackend'] = ('allocate', 'deallocate', 'new_id')
+        expect_unsupported['Directory'] = ('update', )
+        expect_unsupported['MMT'] = ('allocate', 'deallocate', 'new_id')
         for cls in self._find_storage_classes():
             if not cls.skip_test:
                 self.assertIn(cls.__name__, expect_unsupported)

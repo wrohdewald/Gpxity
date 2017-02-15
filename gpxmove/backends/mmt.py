@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxmove.backends.MMTBackend`
+This implements :class:`gpxmove.backends.MMT`
 """
 
 
@@ -20,7 +20,7 @@ from gpxpy.gpx import GPXTrackPoint
 from .. import Backend, Activity
 
 
-__all__ = ['MMTBackend']
+__all__ = ['MMT']
 
 
 
@@ -112,11 +112,11 @@ class MMTRawActivity:
     def __init__(self, xml):
         self.activity_id = xml.find('id').text
         self.title = xml.find('title').text
-        self.time = MMTBackend.convert_time(xml.find('date').text)
+        self.time = MMT.convert_time(xml.find('date').text)
         self.what = xml.find('activity_type').text
 
 
-class MMTBackend(Backend):
+class MMT(Backend):
     """The implementation for MapMyTracks.
     The activity ident is the number given by MapMyTracks.
 
@@ -132,7 +132,7 @@ class MMTBackend(Backend):
     def __init__(self, url=None, auth=None, cleanup=True):
         if url is None:
             url = 'http://www.mapmytracks.com/api'
-        super(MMTBackend, self).__init__(url, auth, cleanup)
+        super(MMT, self).__init__(url, auth, cleanup)
         self.remote_known_whats = None
 
     def __post(self, request, session=None, **kwargs):

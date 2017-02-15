@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-Defines :class:`gpxmove.backends.DirectoryBackend`
+Defines :class:`gpxmove.backends.Directory`
 """
 
 
@@ -15,9 +15,9 @@ import tempfile
 
 from .. import Backend, Activity
 
-__all__ = ['DirectoryBackend']
+__all__ = ['Directory']
 
-class DirectoryBackend(Backend):
+class Directory(Backend):
     """Uses a directory for storage.
 
     Args:
@@ -34,7 +34,7 @@ class DirectoryBackend(Backend):
         self.url_given = bool(url)
         if not self.url_given:
             url = tempfile.mkdtemp(prefix='gpxmove.')
-        super(DirectoryBackend, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
+        super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
             self.allocate()
 
@@ -63,7 +63,7 @@ class DirectoryBackend(Backend):
 
     def destroy(self):
         """remove the entire backend IF we created it in __init__, otherwise only empty it"""
-        super(DirectoryBackend, self).destroy()
+        super(Directory, self).destroy()
         if self.cleanup and not self.url_given:
             self.deallocate()
 
