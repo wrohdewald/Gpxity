@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-Tests for gpxmove.backends
+Tests for gpxity.backends
 """
 
 import unittest
@@ -47,7 +47,7 @@ class BasicTest(unittest.TestCase):
 
         Args:
             cls_ (Backend): The backend class
-            sub_name: for more specific username/passwords, see :class:`gpxmove.auth.Authenticate`
+            sub_name: for more specific username/passwords, see :class:`gpxity.auth.Authenticate`
         """
         self.auth = Authenticate(cls_, sub_name).auth
 

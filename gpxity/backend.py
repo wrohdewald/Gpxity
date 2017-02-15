@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This module defines :class:`~gpxmove.backend.Backend`
+This module defines :class:`~gpxity.backend.Backend`
 """
 
 import datetime
@@ -100,14 +100,14 @@ class Backend:
     def allocate(self):
         """allocates a backend. This might be creating a directory
         (example: :class:`gxmove.backends.Directory`) or creating an account on
-        a remote server (example: :class:`gpxmove.backends.MMT`).
+        a remote server (example: :class:`gpxity.backends.MMT`).
         """
         raise NotImplementedError()
 
     def deallocate(self):
         """deallocates a backend. This might be removing a directory
         (example: :class:`gxmove.backends.Directory`) or deleting an account on
-        a remote server (example: :class:`gpxmove.backends.MMT`).
+        a remote server (example: :class:`gpxity.backends.MMT`).
         """
         raise NotImplementedError()
 

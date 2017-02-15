@@ -5,12 +5,12 @@ set -e
 parentdir=$(basename $(dirname $(pwd -P)))
 currentdir=$(basename $(pwd -P))
 
-test "$parentdir/$currentdir" != Gpxmove/doc && (
-	echo you must be in Gpxmove/doc
+test "$parentdir/$currentdir" != Gpxity/doc && (
+	echo you must be in Gpxity/doc
 	echo you are in "$parentdir/$currentdir"
 	exit 2
 )
 
-sphinx-apidoc -M -f -o source  ../gpxmove
+sphinx-apidoc -M -f -o source  ../gpxity
 
 make html

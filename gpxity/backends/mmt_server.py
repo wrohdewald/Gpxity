@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxmove.backends.MMTServer`
+This implements :class:`gpxity.backends.MMTServer`
 """
 
 

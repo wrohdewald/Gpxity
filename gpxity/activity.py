@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This module defines :class:`~gpxmove.Activity`
+This module defines :class:`~gpxity.Activity`
 """
 
 import io
@@ -27,7 +27,7 @@ class Activity:
 
     An activity is essentially a GPX file. If a backend supports attributes not directly
     supported by the GPX format like the MapMyTracks activity type, they will
-    transparently be encodeded in existing GPX fields like keywords, see :class:`~gpxmove.activity.Activity`.
+    transparently be encodeded in existing GPX fields like keywords, see :class:`~gpxity.activity.Activity`.
 
     If an activity is assigned to a backend, all changes will be written directly to the backend.
     Not all backends support everything, you could get the exception NotImplementedError.
@@ -79,7 +79,7 @@ class Activity:
     @property
     def backend(self):
         """The backend this activity lives in. It is not possible to move the activity to
-        a different backend by changing this. Use :meth:`~gpxmove.backends.Backend.save()` instead."""
+        a different backend by changing this. Use :meth:`~gpxity.backends.Backend.save()` instead."""
         return self.__backend
 
     @backend.setter

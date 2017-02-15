@@ -1,10 +1,10 @@
-.. Gpxmove documentation master file, created by
+.. Gpxity documentation master file, created by
    sphinx-quickstart on Tue Feb 14 09:25:08 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Gpxmove's documentation!
-===================================
+Welcome to Gpxity's documentation!
+==================================
 
 .. include:: ../../README.rst
 

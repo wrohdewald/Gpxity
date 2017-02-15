@@ -4,13 +4,13 @@
 # See LICENSE for details.
 
 """
-This module defines :class:`~gpxmove.Authenticate`
+This module defines :class:`~gpxity.Authenticate`
 """
 
 from pkgutil import get_data
 from configparser import ConfigParser
 
-from gpxmove import Backend
+from gpxity import Backend
 
 __all__ = ['Authenticate']
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Gpxmove documentation build configuration file, created by
+# Gpxity documentation build configuration file, created by
 # sphinx-quickstart on Tue Feb 14 09:25:08 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Gpxmove'
+project = 'Gpxity'
 copyright = '2017, Wolfgang Rohdewald'
 author = 'Wolfgang Rohdewald'
 
@@ -109,7 +109,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Gpxmovedoc'
+htmlhelp_basename = 'Gpxitydoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -136,7 +136,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Gpxmove.tex', 'Gpxmove Documentation',
+    (master_doc, 'Gpxity.tex', 'Gpxity Documentation',
      'Wolfgang Rohdewald', 'manual'),
 ]
 
@@ -146,7 +146,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'gpxmove', 'Gpxmove Documentation',
+    (master_doc, 'gpxity', 'Gpxity Documentation',
      [author], 1)
 ]
 
@@ -157,8 +157,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Gpxmove', 'Gpxmove Documentation',
-     author, 'Gpxmove', 'One line description of project.',
+    (master_doc, 'Gpxity', 'Gpxity Documentation',
+     author, 'Gpxity', 'One line description of project.',
      'Miscellaneous'),
 ]
 
