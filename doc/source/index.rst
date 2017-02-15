@@ -23,5 +23,3 @@ Indices and tables
 * :ref:`search`
 
 License: GPL v2
-
-Test: ``Status:Public``
