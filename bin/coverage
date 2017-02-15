@@ -1,0 +1,5 @@
+#!/bin/bash
+
+python3.5-coverage run bin/test
+mv .coverage bin/test.coverage
+
