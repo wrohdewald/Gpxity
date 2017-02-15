@@ -25,7 +25,11 @@ class Activity:
 
     """Represents an activity.
 
-    If it is assigned to a backend, all changes will be written directly to the backend.
+    An activity is essentially a GPX file. If a backend supports attributes not directly
+    supported by the GPX format like the MapMyTracks activity type, they will
+    transparently be encodeded in existing GPX fields like keywords, see :class:`~gpxmove.activity.Activity`.
+
+    If an activity is assigned to a backend, all changes will be written directly to the backend.
     Not all backends support everything, you could get the exception NotImplementedError.
 
     Args:

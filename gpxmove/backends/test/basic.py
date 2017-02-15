@@ -30,7 +30,12 @@ __all__ = ['BasicTest']
 
 
 class BasicTest(unittest.TestCase):
-    """define some helpers"""
+    """define some helpers
+
+    Attributes:
+        all_backend_classes: a list of all backend implementations
+        auth (tuple(str, str)): username/password
+    """
 
     all_backend_classes = None
 
@@ -38,7 +43,12 @@ class BasicTest(unittest.TestCase):
     #    super(BasicTest, self).__init__()
 
     def setup_auth(self, cls_, sub_name=None):
-        """get auth data"""
+        """get auth data. Save it in self.auth
+
+        Args:
+            cls_ (Backend): The backend class
+            sub_name: for more specific username/passwords, see :class:`gpxmove.auth.Authenticate`
+        """
         self.auth = Authenticate(cls_, sub_name).auth
 
     @staticmethod
