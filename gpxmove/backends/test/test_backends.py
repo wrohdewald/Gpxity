@@ -21,7 +21,7 @@ class CreateStorage(BasicTest):
 
     def test_create_localbackend(self):
         """test creation of a local backend"""
-        for cls in self._findStorageClasses():
+        for cls in self._find_storage_classes():
             if not cls.skip_test:
                 print('testing', cls.short_class_name())
                 with self.subTest(' {}'.format(cls.__class__.__name__)):

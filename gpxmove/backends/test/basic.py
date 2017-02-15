@@ -48,7 +48,7 @@ class BasicTest(unittest.TestCase):
         The last trackpoint will be placed at first_point + 50km + angle(idx * 360 / count)
         """
         if BasicTest.allStorageClasses is None:
-            BasicTest.allStorageClasses = BasicTest._findStorageClasses()
+            BasicTest.allStorageClasses = BasicTest._find_storage_classes()
         gpx_test_file = os.path.join(os.path.dirname(__file__), 'test.gpx')
         if not os.path.exists(gpx_test_file):
             raise Exception('MMTTests needs a GPX file named test.gpx for testing in {}'.format(
@@ -90,7 +90,7 @@ class BasicTest(unittest.TestCase):
             the prepared Backend
         """
 
-        self.setup_auth(cls_,  sub_name)
+        self.setup_auth(cls_, sub_name)
         result = cls_(url, auth=self.auth, cleanup=cleanup)
         if clear_first:
             result.remove_all()
@@ -102,7 +102,7 @@ class BasicTest(unittest.TestCase):
         return result
 
     @staticmethod
-    def _findStorageClasses():
+    def _find_storage_classes():
         """finds all backend classes. Those will be tested."""
         backends_directory = __file__
         while not backends_directory.endswith('backends'):
@@ -119,11 +119,11 @@ class BasicTest(unittest.TestCase):
                 continue
             try:
                 imported = importlib.__import__(mod, globals(), locals(), level=2)
-                for name, cls in getmembers(imported, isclass):
+                for _, cls in getmembers(imported, isclass):
                     if Backend in getmro(cls)[1:]:
                         # isinstance and is do not work here
                         result.append(cls)
             except ImportError:
                 pass
         #sort because we want things reproducibly
-        return sorted(set(result), key=lambda x:x.__class__.__name__)
+        return sorted(set(result), key=lambda x: x.__class__.__name__)
