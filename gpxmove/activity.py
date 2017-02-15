@@ -48,10 +48,6 @@ class Activity:
 
     """
 
-    class DuplicateKeyword(Exception):
-        """All our special keywords like Status:* or What:* may only appear once in gpx.keywords"""
-        pass
-
 
     legal_what = (
         'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
@@ -166,7 +162,7 @@ class Activity:
                 if value in Activity.legal_what:
                     found.append(value)
         if len(found) > 1:
-            raise Activity.DuplicateKeyword('What:' + ','.join(found))
+            raise Exception('Duplicate: What:' + ','.join(found))
         if found:
             return found[0]
 
@@ -331,7 +327,7 @@ class Activity:
             return
         if value.startswith('What:'):
             if self._get_what_from_keywords():
-                raise Activity.DuplicateKeyword('What:{}, {}'.format(
+                raise Exception('Duplicate: What:{}, {}'.format(
                     self._get_what_from_keywords(), value.split(':')[1]))
         if value not in have_keywords:
             if self.__gpx.keywords:
