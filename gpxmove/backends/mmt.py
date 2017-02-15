@@ -32,7 +32,7 @@ class MMTSession:
         self.session = requests.Session()
         # I have no idea what ACT=9 does but it seems to be needed
         payload = {'username': backend.auth[0], 'password': backend.auth[1], 'ACT':'9'}
-        base_url = backend.base_url().replace('http:', 'https:')
+        base_url = backend.url.replace('http:', 'https:').replace('/api/', '')
         login_url = '{}/login'.format(base_url)
         response = self.session.post(login_url, data=payload)
         if not 'You are now logged in.' in response.text:
@@ -118,15 +118,16 @@ class MMTRawActivity:
 
 class MMTBackend(Backend):
     """The implementation for MapMyTracks.
-    The activity ident is the number given by MapMYTracks.
-    cleanup: if True, remove backend in __exit__ and in destroy()
+    The activity ident is the number given by MapMyTracks.
 
-    Mapping GPX 1.1  - Activity attribute -  mapmytracks:
-    name                    title                           title
-    desc                    description                 description
-    time                    time                               date
-    keywords            public, what   status, what
+    Args:
+        url (str): The Url of the server. Default is http://mapmytracks.com/api
+        auth (tuple(str, str)): Username and password
+        cleanup (bool): If True, destroy() will remove all activities but not
+            :meth:`~gpxmove.backend.deallocate` the user account.
     """
+
+    # pylint: disable=abstract-method
 
     def __init__(self, url=None, auth=None, cleanup=True):
         if url is None:
@@ -174,7 +175,7 @@ class MMTBackend(Backend):
         if activity.loading:
             return
         with MMTSession(self) as session:
-            url = self.base_url() + '/assets/php/interface.php'
+            url = self._base_url() + '/assets/php/interface.php'
             data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
                 '<message><nature>update_{}</nature><eid>{}</eid>' \
                 '<usr>{}</usr><uid>{}</uid>' \
@@ -201,7 +202,7 @@ class MMTBackend(Backend):
         if activity.loading:
             return
         with MMTSession(self) as session:
-            url = self.base_url() + '/handler/change_activity'
+            url = self._base_url() + '/handler/change_activity'
             data = {'eid': activity.id_in_backend, 'activity': activity.what}
             response = session.post(url, data=data)
             if 'ok' not in response.text:
@@ -260,7 +261,7 @@ class MMTBackend(Backend):
         print('import chunk: when in range', min_when, max_when)
         return max_when
 
-    def base_url(self):
+    def _base_url(self):
         """the url without subdirectories"""
         return self.url.replace('/api/', '')
 
@@ -270,11 +271,11 @@ class MMTBackend(Backend):
         try:
             with MMTSession(self) as session:
                 response = session.get('{}/assets/php/gpx.php?tid={}'.format(
-                    self.base_url(), activity.id_in_backend))
+                    self._base_url(), activity.id_in_backend))
                 activity.parse(response.text)
                 # but this does not give us activity type and other things.
                 response = session.get('{}/explore/activity/{}'.format(
-                    self.base_url(), activity.id_in_backend))
+                    self._base_url(), activity.id_in_backend))
                 page_parser = ParseMMTActivity()
                 page_parser.feed(response.text)
                 # if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
@@ -333,19 +334,27 @@ class MMTBackend(Backend):
         self.change_title(activity)
 
     def destroy(self):
-        """We do not want to remove the account on mapmytracks!"""
+        """We do not remove the account on mapmytracks!"""
         if self.cleanup:
             self.remove_all()
 
     def update(self, activity, points):
         """append points in the backend. activity already has them.
-        points are GPXTrackPoint"""
+        points are GPXTrackPoint"
+
+        Todo:
+            Doc is wrong, must rethink this.
+        """
         activity.add_points(points)
         self.__post(
             'update_activity', activity_id=activity.id_in_backend,
             points=points)
 
     @staticmethod
-    def convert_time(raw_time):
-        """MMT uses Linux timestamps. Converts that into datetime"""
+    def convert_time(raw_time) ->datetime.datetime:
+        """MMT uses Linux timestamps. Converts that into datetime
+
+        Args:
+            raw_time (int): The linux timestamp from the MMT server
+        """
         return datetime.datetime.utcfromtimestamp(int(raw_time))

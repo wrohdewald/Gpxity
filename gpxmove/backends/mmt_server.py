@@ -22,6 +22,8 @@ class MMTServerStorage(DirectoryBackend):
     The activity ident is the number given by us.
     """
 
+    # pylint: disable=abstract-method
+
     skip_test = True
 
     def __init__(self, url=None, auth=None, cleanup=False):

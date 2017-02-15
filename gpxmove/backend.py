@@ -5,11 +5,12 @@
 # See LICENSE for details.
 
 """
-This module defines :class:`~gpxmove.Backend`
+This module defines :class:`~gpxmove.backend.Backend`
 """
 
 import datetime
-from inspect import getmembers, ismethod
+from inspect import getmembers, isfunction
+import dis
 
 __all__ = ['Backend']
 
@@ -48,22 +49,29 @@ class Backend:
     may be removed automatically, if cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
-    Arguments:
+    Not all backends support all methods. The unsupported methods
+    will raise NotImplementedError. As a convenience a backend has attributes
+    for all methods like **supports_X** where X is the method name,
+    example: **backend.supports_update**.
+    And every backend also has a dict **supported** to be used like :literal:`if backend.supports['update']:`
+
+    Args:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
+            Every implementation may define its own default for url.
         auth (tuple(str, str)): (username, password)
         cleanup (bool): If true, destroy() will remove all activities.
     """
 
     prefix = None
+    supported = dict()
 
     skip_test = False
-
-    supports_methods = set()
-    supports_keywords = True
+    _defined_supports = False
 
     def __init__(self, url=None, auth=None, cleanup=False):
         super(Backend, self).__init__()
-        self.supports_methods.add(self.clone)
+        if not self._defined_supports:
+            self._define_support()
 
         self.activities = _ActivityList()
         self._activities_fully_listed = False
@@ -79,24 +87,37 @@ class Backend:
         parts = cls.__name__.split('.')
         return parts[-1]
 
-    def _supports_all(self):
-        """this marks all methods as suppported. If a backend supports most,
-        we can first call this and the unset unsupported methods again."""
-        self.supports_methods = set(getmembers(self.__class__, ismethod))
+    @classmethod
+    def _set_supported(cls, name: str, value: bool):
+        """sets support flag for method "name"""""
+        setattr(cls, 'supports_{}'.format(name), value)
+        cls.supported[name] = value
 
-    def supports(self, method):
-        """bool: does this backend support method?
-        method may be a string or a method"""
-        lookup = method
-        if isinstance(lookup, str):
-            lookup = getattr(self, lookup)
-        return lookup in self.supports_methods
+    @classmethod
+    def _define_support(cls):
+        """If the first thing a method does is raising NotImplementedError, it is
+        marked as unsupported. Those are the default values, the implementations
+        will have to refine the results.
+        """
+        for name, _ in getmembers(cls, isfunction):
+            if not name.startswith('_'):
+                first_instruction = next(dis.get_instructions(_.__code__))
+                supported = first_instruction is None or first_instruction.argval != 'NotImplementedError'
+                cls._set_supported(name, supported)
 
     def allocate(self):
-        """allocates a backend.
-        By default, this does nothing - we expect the account in the
-        backend to exist. FSStorage is one example which does something:
-        it allocates a directory."""
+        """allocates a backend. This might be creating a directory
+        (example: :class:`gxmove.backends.DirectoryBackend`) or creating an account on
+        a remote server (example: :class:`gpxmove.backends.MMTBackend`).
+        """
+        raise NotImplementedError()
+
+    def deallocate(self):
+        """deallocates a backend. This might be removing a directory
+        (example: :class:`gxmove.backends.DirectoryBackend`) or deleting an account on
+        a remote server (example: :class:`gpxmove.backends.MMTBackend`).
+        """
+        raise NotImplementedError()
 
     def clone(self):
         """returns a clone with nothing listed or loaded"""

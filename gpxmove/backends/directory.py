@@ -13,31 +13,38 @@ import os
 import datetime
 import tempfile
 
-
 from .. import Backend, Activity
 
 __all__ = ['DirectoryBackend']
 
 class DirectoryBackend(Backend):
-    """The local source. url is an existing directory. If url
-    is not given, allocate a temporary directory and remove
-    it in destroy().
-    Those are GPX files not coming from an external source
-    but created locally or copied manually from somewhere
-    else. They may have arbitrary file names.
-    The activity ident is the file name without .gpx
+    """Uses a directory for storage.
 
+    Args:
+        url (str): a directory. If not given, allocate a temporary directory and remove
+            it in destroy().
+            if url is given but the directory does not exist it is allocated.
+        auth (tuple(str, str)): Unused.
+        cleanup (bool): If True and Url is Non, destroy() will deallocate the directory.
     """
+
+    # pylint: disable=abstract-method
 
     def __init__(self, url=None, auth=None, cleanup=False):
         self.url_given = bool(url)
         if not self.url_given:
             url = tempfile.mkdtemp(prefix='gpxmove.')
         super(DirectoryBackend, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
-        self._supports_all()
         if not os.path.exists(self.url):
-            os.makedirs(self.url)
-            self.created = True
+            self.allocate()
+
+    def allocate(self):
+        """create the directory as specified by self.url"""
+        os.makedirs(self.url)
+
+    def deallocate(self):
+        """deletes the entire directory. Since this is dangerous, all activities must be removed first."""
+        os.rmdir(self.url)
 
     def new_id(self, activity):
         """a not yet existant file name"""
@@ -58,7 +65,7 @@ class DirectoryBackend(Backend):
         """remove the entire backend IF we created it in __init__, otherwise only empty it"""
         super(DirectoryBackend, self).destroy()
         if self.cleanup and not self.url_given:
-            os.rmdir(self.url)
+            self.deallocate()
 
     def _gpx_path(self, activity):
         """The full path name for the local copy of an activity"""
@@ -77,8 +84,8 @@ class DirectoryBackend(Backend):
         for _ in self._list_gpx():
             yield Activity(self, _)
 
-    def get_time(self):
-        """get MMT server time as a Linux timestamp"""
+    def get_time(self) ->datetime.datetime:
+        """get server time as a Linux timestamp"""
         return datetime.datetime.now()
 
     def load_full(self, activity):
