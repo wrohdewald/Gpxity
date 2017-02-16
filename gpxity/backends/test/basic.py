@@ -52,10 +52,19 @@ class BasicTest(unittest.TestCase):
         self.auth = Authenticate(cls_, sub_name).auth
 
     @staticmethod
-    def create_unique_activity(count, idx, what=None):
-        """creates a unique activity and returns it.
-        test.gpx is used as a template.
-        The last trackpoint will be placed at first_point + 50km + angle(idx * 360 / count)
+    def create_unique_activity(count=1, idx=0, what=None):
+        """creates a unique activity. It starts off with **test.gpx** and appends a unique
+        last track point, it also gives it a unique time stamp. This is done using **count**
+        and **idx**: The last point is set such that looking at the tracks, they all go in a different
+        direction clockwise, with an angle in degrees of :literal:`360 * idx / count`.
+
+        Args:
+            count (int): See above. Using 1 as default if not given.
+            idx (int): See above. Using 0 as default if not given.
+            what (str): The wanted value for the activity, default is the default value for what.
+
+        Returns:
+            (Activity): A new activity not bound to a backend
         """
         if BasicTest.all_backend_classes is None:
             BasicTest.all_backend_classes = BasicTest._find_backend_classes()
@@ -73,7 +82,7 @@ class BasicTest(unittest.TestCase):
             time=last_points[-1].time + datetime.timedelta(hours=10, seconds=idx))
         new_point.move(movement)
         gpx.tracks[-1].segments[-1].points.append(new_point)
-        result = Activity(backend=None, gpx=gpx)
+        result = Activity(gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(gpx.name)
         result.what = what or random.choice(Activity.legal_what)
@@ -84,6 +93,18 @@ class BasicTest(unittest.TestCase):
         self.assertEqual(backend1, backend2, 'backend1:{} backend2:{}'.format(
             list(x.key() for x in backend1.activities),
             list(x.key() for x in backend2.activities)))
+
+    def assertEqualActivities(self, activity1, activity2): # pylint: disable=invalid-name
+        """both activities must be identical. We test more than necessary for better test coverage."""
+        self.assertEqual(activity1.key(), activity2.key())
+        self.assertTrue(activity1.points_equal(activity2))
+        self.assertEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
+
+    def assertNotEqualActivities(self, activity1, activity2): # pylint: disable=invalid-name
+        """both activities must be identical. We test more than necessary for better test coverage."""
+        self.assertNotEqual(activity1.key(), activity2.key())
+        self.assertFalse(activity1.points_equal(activity2))
+        self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
     def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True, sub_name=None):
         """sets up an instance of a backend with count activities

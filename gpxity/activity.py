@@ -47,11 +47,11 @@ class Activity:
             you implement a new backend.
 
     Todo:
-        strictly separate special keywords like what and public from general
-        keywords: property keywords should not return them and not accept them.
+        loading: make that a context manager
 
     """
 
+    # pylint: disable = too-many-instance-attributes
 
     legal_what = (
         'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
@@ -74,6 +74,8 @@ class Activity:
         self.__gpx = gpx or GPX()
         self.loading = False
         self._loaded = gpx is not None
+        self.__what = self.legal_what[0]
+        self.__public = False
 
     @property
     def backend(self):
@@ -165,31 +167,15 @@ class Activity:
         Returns:
             The current value or the default value (see `legal_what`)
         """
-        return self._get_what_from_keywords() or Activity.legal_what[0]
-
-    def _get_what_from_keywords(self) ->str:
-        """no default value here"""
-        found = list()
-        for keyword in self.keywords:
-            if keyword.startswith('What:'):
-                value = keyword.split(':')[1]
-                if value in Activity.legal_what:
-                    found.append(value)
-        if len(found) > 1:
-            raise Exception('Duplicate: What:' + ','.join(found))
-        if found:
-            return found[0]
+        return self.__what
 
     @what.setter
     def what(self, value: str):
-        if value != self._get_what_from_keywords():
+        if value != self.__what:
             if value not in Activity.legal_what and value is not None:
                 raise Exception('What {} is not known'.format(value))
-            for _ in self.keywords:
-                if _.startswith('What:'):
-                    self.remove_keyword(_)
-            self.add_keyword('What:{}'.format(value))
-            if self.backend:
+            self.__what = value if value else self.legal_what[0]
+            if self.backend and not self.loading:
                 self.backend.change_what(self)
 
     def point_count(self) ->int:
@@ -226,6 +212,19 @@ class Activity:
             self.__gpx.tracks[0].segments.append(GPXTrackSegment())
         self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
+    def _parse_keywords(self):
+        """self.keywords is 1:1 as parsed from xml. Here we extract
+        our special keywords What: and Status:"""
+        new_keywords = list()
+        for keyword in self.keywords:
+            if keyword.startswith('What:'):
+                self.what = keyword.split(':')[1]
+            elif keyword.startswith('Status:'):
+                self.public = keyword.split(':')[1] == 'public'
+            else:
+                new_keywords.append(keyword)
+        self.keywords = new_keywords
+
     def parse(self, infile):
         """parse GPX.
         title, description and what from infile have precedence.
@@ -234,61 +233,62 @@ class Activity:
         Args:
             infile: may be a file descriptor or str
         """
-        isLoading = self.loading
-        self.Loading = True
+        is_loading = self.loading
+        self.loading = True
         try:
             old_gpx = self.__gpx
-            old_keywords = self.keywords
-            old_what = self.what
             old_public = self.public
             if isinstance(infile, str):
                 self.__gpx = gpxpy.parse(io.StringIO(infile))
             else:
                 self.__gpx = gpxpy.parse(infile)
-            for keyword in old_keywords:
-                if keyword.startswith('What:') or keyword == 'public':
-                    continue
-                if keyword not in self.keywords:
-                    self.add_keyword(keyword)
+            self._parse_keywords()
             self.public = self.public or old_public
-            if not self._get_what_from_keywords():
-                self.what = old_what
             if old_gpx.name and not self.__gpx.name:
                 self.__gpx.name = old_gpx.name
             if old_gpx.description and not self.__gpx.description:
                 self.__gpx.description = old_gpx.description
             self._loaded = True
         finally:
-            self.loading = isLoading
+            self.loading = is_loading
 
     def to_xml(self):
         """Produce exactly one line per trackpoint for easier editing
         (like removal of unwanted points).
         """
         self._load_full()
-        result = self.__gpx.to_xml()
-        result = result.replace('</trkpt><', '</trkpt>\n<')
-        result = result.replace('<link ></link>', '')   # and remove those empty <link> tags
-        result = result.replace('\n</trkpt>', '</trkpt>')
-        result = result.replace('\n\n', '\n')
+        new_keywords = self.keywords
+        new_keywords.append('What:{}'.format(self.what))
+        if self.public:
+            new_keywords.append('Status:public')
+        old_keywords = self.__gpx.keywords
+        try:
+            self.__gpx.keywords = ', '.join(new_keywords)
+
+            result = self.__gpx.to_xml()
+            result = result.replace('</trkpt><', '</trkpt>\n<')
+            result = result.replace('<link ></link>', '')   # and remove those empty <link> tags
+            result = result.replace('\n</trkpt>', '</trkpt>')
+            result = result.replace('\n\n', '\n')
+        finally:
+            self.__gpx.keywords = old_keywords
         return result
 
     @property
     def public(self):
         """
-        bool: True if :literal:`Status:public` in self.keywords.
-            Is this a private activity (can only be seen by the account holder) or
+        bool: Is this a private activity (can only be seen by the account holder) or
             is it public?
         """
-        return 'Status:public' in self.keywords
+        return self.__public
 
     @public.setter
     def public(self, value):
         """stores this flag as keyword 'public'"""
-        if value:
-            self.add_keyword('Status:public')
-        else:
-            self.remove_keyword('Status:public')
+        if value != self.public:
+            self.__public = value
+            if self.backend:
+                self.backend.change_public(self)
 
     @property
     def gpx(self) ->GPX:
@@ -311,11 +311,16 @@ class Activity:
     @property
     def keywords(self):
         """list(str): represent them as a list - in GPX they are comma separated.
-            Content is whatever you want. Because the GPX format does not have attributes
-            for everything used by all backends, we encode some of the backend arguments
-            in keywords. Example for mapmytracks: keywords = 'Status:public, What:Cycling'.
-            You can set those special attributes manually with add_keyword() and remove_keyword()
-            but the preferred way is to use the corresponding properties like what or public."""
+            Content is whatever you want.
+
+            Because the GPX format does not have attributes for everything used by all backends,
+            we encode some of the backend arguments in keywords.
+
+            Example for mapmytracks: keywords = 'Status:public, What:Cycling'.
+
+            However this is transparent for you. When parsing the XML, those are removed
+            from keywords, and the are re-added in Activity.to_xml().
+        """
         self._load_full()
         if self.__gpx.keywords:
             return list(x.strip() for x in self.__gpx.keywords.split(','))
@@ -328,39 +333,42 @@ class Activity:
 
         Args:
             value (list(str)): a list of keywords
-
-        Todo:
-            ensure our special keywords are unique
         """
-        self.__gpx.keywords = ', '.join(value)
+        self.__gpx.keywords = ''
+        for keyword in value:
+            # add_keyword ensures we do not get unwanted things like What:
+            self.add_keyword(keyword)
+
+    @staticmethod
+    def _check_keyword(keyword):
+        """must not be What: or Status:"""
+        if keyword.startswith('What:'):
+            raise Exception('Do not use this directly,  use Activity.what')
+        if keyword.startswith('Status:'):
+            raise Exception('Do not use this directly,  use Activity.public')
 
     def add_keyword(self, value: str) ->None:
-        """adds to the comma separated keywords. Special logic for our special
-        keywords like Status:public or What:Cycling.
+        """adds to the comma separated keywords. Duplicate keywords are forbidden.
 
         Args:
             value: the keyword
         """
+        self._check_keyword(value)
         self._load_full()
-        have_keywords = self.keywords
-        if value == 'Status:public' and 'Status:public' in have_keywords:
-            return
-        if value.startswith('What:'):
-            if self._get_what_from_keywords():
-                raise Exception('Duplicate: What:{}, {}'.format(
-                    self._get_what_from_keywords(), value.split(':')[1]))
-        if value not in have_keywords:
-            if self.__gpx.keywords:
-                self.__gpx.keywords += ', {}'.format(value)
-            else:
-                self.__gpx.keywords = value
+        if value in self.keywords:
+            raise Exception('Keywords may not be duplicate: {}'.format(value))
+        if self.__gpx.keywords:
+            self.__gpx.keywords += ', {}'.format(value)
+        else:
+            self.__gpx.keywords = value
 
-    def remove_keyword(self, value: str):
+    def remove_keyword(self, value: str) ->None:
         """removes from the keywords.
 
         Args:
             value: the keyword to be removed
         """
+        self._check_keyword(value)
         self._load_full()
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
 
@@ -390,9 +398,9 @@ class Activity:
             a string with selected attributes in printable form
         """
         self._load_full()
-        return 'title:{} description:{} keywords:{} hash:{} angle:{} points:{}'.format(
+        return 'title:{} description:{} keywords:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.x__hash__(), self.angle(), self.point_count())
+            ','.join(self.keywords), self.last_time(), self.angle(), self.point_count())
 
     def angle(self) ->float:
         """For me, the earth is flat.
