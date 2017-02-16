@@ -100,6 +100,12 @@ class Activity:
         """
         return Activity(gpx=self.__gpx.clone())
 
+    def save(self):
+        """save this activity in the associated backend."""
+        if not self.backend:
+            raise Exception('Please assign a backend before saving')
+        self.backend.save(self)
+
     @property
     def time(self) ->datetime.datetime:
         """datetime.datetime: start time of activity.
