@@ -85,12 +85,14 @@ class Activity:
     @backend.setter
     def backend(self, value):
         if value is not self.__backend:
-            if self.__backend is not None:
+            if value is not None and self.__backend is not None:
                 raise Exception(
                     'You cannot assign the activity to a different backend this way. '
                     'Please use Backend.save(activity).')
             self.__backend = value
             self.__backend.activities.append(self)
+            if value is None:
+                self.id_in_backend = None
 
     def clone(self):
         """Create a new activity with the same content but without backend
