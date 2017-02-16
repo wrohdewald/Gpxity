@@ -393,10 +393,11 @@ class Activity:
 
         Returns:
             the angle in degrees 0..360 between start and end.
+            If we have no track, return 0
         """
         self._load_full()
         if not self.__gpx.tracks:
-            return None
+            return 0
         first_point = self.__gpx.tracks[0].segments[0].points[0]
         last_point = self.__gpx.tracks[-1].segments[-1].points[-1]
         delta_lat = first_point.latitude - last_point.latitude
