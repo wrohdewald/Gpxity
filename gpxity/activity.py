@@ -386,15 +386,7 @@ class Activity:
         self._load_full()
         return 'title:{} description:{} keywords:{} hash:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.__hash__(), self.angle(), self.point_count())
-
-    def __hash__(self) ->int:
-        """does not  have to be unique. Using the time of the last point"""
-        self._load_full()
-        if not self.__gpx.tracks:
-            return 0
-        last_time = self.__gpx.tracks[-1].segments[-1].points[-1].time
-        return int(last_time.timestamp())
+            ','.join(self.keywords), self.x__hash__(), self.angle(), self.point_count())
 
     def angle(self) ->float:
         """For me, the earth is flat.
