@@ -57,18 +57,21 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.seeing_what = False
         self.seeing_title = False
         self.seeing_description = False
+        self.seeing_status = False
         self.result['title'] = None
         self.result['description'] = None
         self.result['legal_whats'] = list()
         self.result['what'] = None
         self.result['what_from_title'] = None
         self.result['what_3'] = None
+        self.result['status'] = None
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser"""
         self.seeing_title = False
         self.seeing_description = False
         self.seeing_what = False
+        self.seeing_status = False
         if tag == 'input' and len(attrs) == 4:
             if attrs[0] == ('id', 'activity_type'):
                 if attrs[1] == ('type', 'hidden'):
@@ -82,6 +85,8 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         elif tag == 'div' and attrs and attrs[0] == ('class', 'panel') and attrs[1][0] == 'data-activity':
             # sometime this says Miscellaneous instead of the correct value like Swimming
             self.result['what'] = attrs[1][1]
+        elif tag == 'span' and attrs and attrs[0] == ('class', 'privacy-status'):
+            self.seeing_status = True
         elif tag == 'title':
             self.seeing_what = True
         elif tag == 'h2' and attrs and attrs[0] == ('id', 'track-title'):
@@ -91,17 +96,21 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
 
     def handle_data(self, data):
         """data from the parser"""
-        if self.seeing_title and data.strip():
+        if not data.strip():
+            return
+        if self.seeing_title:
             self.result['title'] = data.strip()
-        if self.seeing_description and data.strip():
+        if self.seeing_description:
             self.result['description'] = data.strip()
-        if self.seeing_what and data.strip():
+        if self.seeing_what:
             try:
                 _ = data.split('|')[1].split('@')[0].strip()
                 self.result['what_from_title'] = ' '.join(_.split(' ')[:-2])
             except BaseException:
                 print('cannot parse', data)
                 self.result['what_from_title'] = ''
+        if self.seeing_status:
+            self.result['status'] = data.strip() == 'Only you can see this activity'
 
 
 class MMTRawActivity:
@@ -195,12 +204,31 @@ class MMT(Backend):
         """changes description on remote server"""
         self._change_attribute(activity, 'description')
 
+    def change_public(self, activity):
+        """changes public/private on remote server"""
+        if activity.loading:
+            return
+        with MMTSession(self) as session:
+            url = self._base_url() + '/assets/php/interface.php'
+            data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
+                '<message><nature>toggle_status</nature><eid>{}</eid>' \
+                '<usr>{}</usr><uid>{}</uid>' \
+                '</message>'.format(
+                    activity.id_in_backend, self.auth[0],
+                    session.cookies['exp_uniqueid']).encode('utf-8')
+            response = session.post(url, data=data)
+            if 'success' not in response.text:
+                raise requests.exceptions.HTTPError()
+            wanted_public = activity.public
+            # should reall be only in unittest:
+            self._load_page_in_session(activity, session)
+            assert activity.public == wanted_public
+
     def change_what(self, activity):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        if activity.loading:
-            return
+        assert not activity.loading
         with MMTSession(self) as session:
             url = self._base_url() + '/handler/change_activity'
             data = {'eid': activity.id_in_backend, 'activity': activity.what}
@@ -265,6 +293,40 @@ class MMT(Backend):
         """the url without subdirectories"""
         return self.url.replace('/api/', '')
 
+    def _load_page_in_session(self, activity, session):
+        """The MMT api does not deliver all attributes we want.
+        This gets some more by scanning the web page."""
+        old_loading = activity.loading
+        activity.loading = True
+        try:
+            response = session.get('{}/explore/activity/{}'.format(
+                self._base_url(), activity.id_in_backend))
+            page_parser = ParseMMTActivity()
+            page_parser.feed(response.text)
+            # if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
+            # while the home page says "Cycling activity". We prefer the value from the home page
+            # and silently ignore this inconsistency.
+            if self.remote_known_whats is None:
+                self.remote_known_whats = page_parser.result['legal_whats']
+            if page_parser.result['title']:
+                activity.title = page_parser.result['title']
+            if page_parser.result['description']:
+                activity.description = page_parser.result['description']
+            # MMT sends different values of the current activity type, hopefully what_3 is always the
+            # correct one.
+            if page_parser.result['what_3']:
+                activity.what = page_parser.result['what_3']
+            if page_parser.result['status'] is not None:
+                activity.public = page_parser.result['status']
+        finally:
+            activity.loading = old_loading
+
+    def _load_attr_from_webpage(self, activity):
+        """The MMT api does not deliver all attributes we want.
+        This gets some more by scanning the web page."""
+        with MMTSession(self) as session:
+            self._load_page_in_session(activity, session)
+
     def load_full(self, activity):
         """get the entire activity"""
         activity.loading = True
@@ -274,23 +336,7 @@ class MMT(Backend):
                     self._base_url(), activity.id_in_backend))
                 activity.parse(response.text)
                 # but this does not give us activity type and other things.
-                response = session.get('{}/explore/activity/{}'.format(
-                    self._base_url(), activity.id_in_backend))
-                page_parser = ParseMMTActivity()
-                page_parser.feed(response.text)
-                # if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
-                # while the home page says "Cycling activity". We prefer the value from the home page
-                # and silently ignore this inconsistency.
-                if self.remote_known_whats is None:
-                    self.remote_known_whats = page_parser.result['legal_whats']
-                if page_parser.result['title']:
-                    activity.title = page_parser.result['title']
-                if page_parser.result['description']:
-                    activity.description = page_parser.result['description']
-                # MMT sends different values of the current activity type, hopefully what_3 is always the
-                # correct one.
-                if page_parser.result['what_3']:
-                    activity.what = page_parser.result['what_3']
+                self._load_page_in_session(activity, session)
         finally:
             activity.loading = False
 

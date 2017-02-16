@@ -215,6 +215,10 @@ class Backend:
         """change what in backend, activity already has the new type"""
         raise NotImplementedError()
 
+    def change_public(self, activity):
+        """change public/private in backend, activity already has the new type"""
+        raise NotImplementedError()
+
     def remove_all(self):
         """removes all activities"""
         for activity in list(self.list_activities()):

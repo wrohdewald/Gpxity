@@ -113,6 +113,10 @@ class Directory(Backend):
         """We simply rewrite the entire local .gpx file"""
         self.save(activity)
 
+    def change_public(self, activity):
+        """We simply rewrite the entire local .gpx file"""
+        self.save(activity)
+
     def _save(self, activity):
         """save full gpx track"""
         _gpx_path = self._gpx_path(activity)
