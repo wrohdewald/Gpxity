@@ -98,7 +98,7 @@ class Activity:
         Returns:
             the new activity
         """
-        return Activity(gpx=self.__gpx)
+        return Activity(gpx=self.__gpx.clone())
 
     @property
     def time(self) ->datetime.datetime:
