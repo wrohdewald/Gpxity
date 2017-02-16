@@ -11,6 +11,7 @@ import time
 import requests
 
 from .basic import BasicTest
+from .. import Directory
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -40,6 +41,22 @@ class Supported(BasicTest):
                             self.assertTrue(backend.supported[short_name])
                             self.assertTrue(getattr(backend, name))
 
+
+class ActivityBackend(BasicTest):
+    """test manipulation of Activity.backend"""
+
+    def test_backend(self):
+        """manipulate backend"""
+        activity = self.create_unique_activity()
+        directory1 = Directory()
+        directory2 = Directory()
+
+        saved = directory1.save(activity)
+        self.assertEqual(saved.backend, directory1)
+        with self.assertRaises(Exception):
+            activity.backend = directory2
+        with self.assertRaises(Exception):
+            activity.backend = None
 
 class WrongAuth(BasicTest):
     """what happens with a wrong password?"""

@@ -7,9 +7,11 @@
 implements test classes for Activity
 """
 
+import os
 import datetime
 import io
 import unittest
+import filecmp
 
 from gpxpy.gpx import GPX
 
@@ -27,8 +29,11 @@ class Init(unittest.TestCase):
     def test_init(self):
         """test initialisation"""
         Activity()
-        with self.assertRaises(AssertionError):
-            Activity(backend=Directory(), gpx=GPX())
+        backend = Directory()
+        with self.assertRaises(Exception):
+            Activity(backend, gpx=GPX())
+        Activity(backend)
+        self.assertEqual(len(backend.activities), 1)
 
 
 class Clone(BasicTest):
@@ -199,3 +204,43 @@ class Xml(BasicTest):
         activity2.parse(xml)
         self.assertTrue(activity2.public)
 
+
+class Save(BasicTest):
+    """test Activity.save but only in Directory, the rest is in the backend tests"""
+
+    def test_save(self):
+        """save locally"""
+        directory = Directory()
+        dir2 = directory.clone()
+        activity = self.create_unique_activity()
+        activity.backend = directory
+
+        self.assertEqual(len(dir2.activities), 0)
+        dir2.list_all()
+        self.assertEqual(len(dir2.activities), 1)
+
+        activity2 = activity.clone()
+        self.assertEqualActivities(activity, activity2)
+        activity2.backend = directory
+        with self.assertRaises(Exception):
+            activity2.backend = dir2
+        with self.assertRaises(Exception):
+            activity2.backend = None
+        activity3 = dir2.save(activity2)
+        self.assertEqualActivities(activity, activity3)
+        self.assertEqualActivities(activity2, activity3)
+        self.assertIs(activity.backend, directory)
+        self.assertIs(activity2.backend, directory)
+        self.assertIs(activity3.backend, dir2)
+        self.assertEqual(len(directory.activities), 2)
+        self.assertEqual(len(dir2.activities), 2)
+        directory.list_all()
+        self.assertEqual(len(directory.activities), 3)
+        files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
+        self.assertEqual(len(files), 3)
+        filecmp.clear_cache()
+        for idx1, idx2 in ((0, 1), (0, 2)):
+            file1 = files[idx1]
+            file2 = files[idx2]
+            self.assertTrue(filecmp.cmp(file1, file2),
+                            'Files are different: {} and {}'.format(file1, file2))

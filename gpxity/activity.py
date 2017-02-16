@@ -34,7 +34,9 @@ class Activity:
 
     Args:
         backend (Backend): The Backend where this Activity lives in. If
-            it was constructed in memory, backend is None.
+            it was constructed in memory, backend is None. backend will not be modifiable, even
+            if initialized as None.
+            Instead, use :literal:`new_activity = backend.save(activity)`.
         gpx (GPX): Initial content.
 
     At least one of **backend** or **gpx** must be None.
@@ -63,38 +65,45 @@ class Activity:
         'Miscellaneous')
 
     def __init__(self, backend=None, id_in_backend=None, gpx=None):
-        self.__backend = None
-        if backend is not None:
-            assert gpx is None
-        if gpx is not None:
-            assert backend is None
-        self.backend = backend
-        self.id_in_backend = id_in_backend
-        super(Activity, self).__init__()
-        self.__gpx = gpx or GPX()
         self.loading = False
-        self._loaded = gpx is not None
+        self._loaded = backend is None
         self.__what = self.legal_what[0]
         self.__public = False
+        self.id_in_backend = id_in_backend
+        self.__gpx = gpx or GPX()
+        self.__backend = None
+        if backend is not None:
+            if gpx is not None:
+                raise Exception('Cannot accept backend and gpx')
+        self.__backend = backend
+        if backend and self not in backend.activities:
+            backend.activities.append(self)
 
     @property
     def backend(self):
-        """The backend this activity lives in. It is not possible to move the activity to
-        a different backend by changing this. Use :meth:`~gpxity.backends.Backend.save()` instead."""
+        """The backend this activity lives in.
+        If you change it from None to a backend, this activity is automatically saved in that backend.
+
+        It is not possible to decouple an activity from its backend, use :meth:`~gpxity.activity.Activity.clone()`.
+
+        It is not possible to move the activity to a different backend by changing this.
+        Use :meth:`Backend.save() <gpxity.backend.Backend.save()>` instead.
+        """
         return self.__backend
 
     @backend.setter
     def backend(self, value):
-        # TODO: a in backend, b=a.clone(), b in dasselbe backend setzen. Sollte nicht gehen.
+        """TODO: a in backend, b=a.clone(), b in dasselbe backend setzen. Sollte nicht gehen."""
         if value is not self.__backend:
-            if value is not None and self.__backend is not None:
+            if value is None:
+                raise Exception('You cannot decouple an activity from its backend. Use clone().')
+            elif self.__backend is not None:
                 raise Exception(
                     'You cannot assign the activity to a different backend this way. '
                     'Please use Backend.save(activity).')
-            self.__backend = value
-            self.__backend.activities.append(self)
-            if value is None:
-                self.id_in_backend = None
+            else:
+                self.__backend = value
+                self.__backend.save(self)
 
     def clone(self):
         """Create a new activity with the same content but without backend

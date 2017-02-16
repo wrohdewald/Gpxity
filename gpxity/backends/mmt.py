@@ -251,9 +251,10 @@ class MMT(Backend):
 
         with MMTSession(self) as session:
             while True:
+                old_len = len(self.activities)
                 response = self.__post(
                     'get_activities', author=self.auth[0],
-                    offset=len(self.activities), session=session)
+                    offset=old_len, session=session)
                 chunk = response.find('activities')
                 if not chunk:
                     return
@@ -268,6 +269,7 @@ class MMT(Backend):
                     finally:
                         activity.loading = False
                     yield activity
+                assert len(self.activities) > old_len
 
     def __import_xml(self, activity, xml):
         """imports points and other data. Currently unused and unusable

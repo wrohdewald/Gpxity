@@ -171,15 +171,20 @@ class Backend:
         """save full activity.
 
         Args:
-            activity (Activity): The activity we want to save. It can be associated
-            with an arbitrary backend.
+            activity (Activity): The activity we want to save in this backend.
+                It may be associated with an arbitrary backend.
 
         Returns:
-            The saved activity. If the original activity lives in a different
-            backend, a new activity living in this backend will be created.
+            Activity: The saved activity. If the original activity lives in a different
+            backend, a new activity living in this backend will be created
+            and returned.
         """
-        if activity.backend is not None and activity.backend is not self:
+        if activity.backend is not self:
             activity = activity.clone()
+        if activity.backend is None:
+            activity.backend = self
+            # this calls us again!
+            return activity
         self._save(activity)
         if activity not in self.activities:
             self.activities.append(activity)
@@ -231,7 +236,7 @@ class Backend:
             from_backend (Backend): The source of the activities
 
         Returns:
-            (list) all new activities in this backend
+            list all new activities in this backend
         """
         result = list()
         for activity in from_backend.list_all(load_full=True):
