@@ -63,7 +63,6 @@ class Activity:
         'Miscellaneous')
 
     def __init__(self, backend=None, id_in_backend=None, gpx=None):
-        # TODO: do we need id_in_backend? Could we get it from backend?
         self.__backend = None
         if backend is not None:
             assert gpx is None
@@ -84,6 +83,7 @@ class Activity:
 
     @backend.setter
     def backend(self, value):
+        # TODO: a in backend, b=a.clone(), b in dasselbe backend setzen. Sollte nicht gehen.
         if value is not self.__backend:
             if value is not None and self.__backend is not None:
                 raise Exception(
@@ -159,7 +159,9 @@ class Activity:
 
     @property
     def what(self) ->str:
-        """str: What is this activity doing?
+        """str: What is this activity doing? If we have no current value,
+        return the default.
+
         Returns:
             The current value or the default value (see `legal_what`)
         """
@@ -210,6 +212,8 @@ class Activity:
         """adds points to last segment in the last track. If no track
         is allocated yet, do so.
 
+        UNFINISHED
+
         Args:
             points (list(GPXTrackPoint): The points to be added
         """
@@ -224,10 +228,8 @@ class Activity:
 
     def parse(self, infile):
         """parse GPX.
-        public, title, description and what may already be set, and the may
-        be redefined by infile.
-        public will be or-ed from both sources and "what" will be overridden
-        by infile values, if present.
+        title, description and what from infile have precedence.
+        public will be or-ed
 
         Args:
             infile: may be a file descriptor or str
