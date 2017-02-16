@@ -232,28 +232,32 @@ class Activity:
         Args:
             infile: may be a file descriptor or str
         """
-        assert self.loading
-        old_gpx = self.__gpx
-        old_keywords = self.keywords
-        old_what = self.what
-        old_public = self.public
-        if isinstance(infile, str):
-            self.__gpx = gpxpy.parse(io.StringIO(infile))
-        else:
-            self.__gpx = gpxpy.parse(infile)
-        for keyword in old_keywords:
-            if keyword.startswith('What:') or keyword == 'public':
-                continue
-            if keyword not in self.keywords:
-                self.add_keyword(keyword)
-        self.public = self.public or old_public
-        if not self._get_what_from_keywords():
-            self.what = old_what
-        if old_gpx.name and not self.__gpx.name:
-            self.__gpx.name = old_gpx.name
-        if old_gpx.description and not self.__gpx.description:
-            self.__gpx.description = old_gpx.description
-        self._loaded = True
+        isLoading = self.loading
+        self.Loading = True
+        try:
+            old_gpx = self.__gpx
+            old_keywords = self.keywords
+            old_what = self.what
+            old_public = self.public
+            if isinstance(infile, str):
+                self.__gpx = gpxpy.parse(io.StringIO(infile))
+            else:
+                self.__gpx = gpxpy.parse(infile)
+            for keyword in old_keywords:
+                if keyword.startswith('What:') or keyword == 'public':
+                    continue
+                if keyword not in self.keywords:
+                    self.add_keyword(keyword)
+            self.public = self.public or old_public
+            if not self._get_what_from_keywords():
+                self.what = old_what
+            if old_gpx.name and not self.__gpx.name:
+                self.__gpx.name = old_gpx.name
+            if old_gpx.description and not self.__gpx.description:
+                self.__gpx.description = old_gpx.description
+            self._loaded = True
+        finally:
+            self.loading = isLoading
 
     def to_xml(self):
         """Produce exactly one line per trackpoint for easier editing
