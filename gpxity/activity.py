@@ -285,13 +285,15 @@ class Activity:
             self.remove_keyword('Status:public')
 
     @property
-    def tracks(self):
+    def gpx(self) ->GPX:
         """
+        Direct access to the GPX object.If you use it to change its content,
+        remember to save the activity.
         Returns:
-            the list of all gpx tracks, readonly
+            the GPX object, readonly.
         """
         self._load_full()
-        return self.__gpx.tracks
+        return self.__gpx
 
     def last_time(self) ->datetime.datetime:
         """
