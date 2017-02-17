@@ -4,7 +4,7 @@
 # See LICENSE for details.
 
 """
-implements test classes for all backends
+implements :class:`gpxpy.backends.test.test_backends.TestBackends` for all backends
 """
 
 import time
@@ -16,7 +16,7 @@ from .. import Directory
 # pylint: disable=attribute-defined-outside-init
 
 
-class Supported(BasicTest):
+class TestBackends(BasicTest):
     """Are the :literal:`supported_` attributes set correctly?"""
 
     def test_supported(self):
@@ -41,7 +41,6 @@ class Supported(BasicTest):
                             self.assertTrue(backend.supported[short_name])
                             self.assertTrue(getattr(backend, name))
 
-
     def test_backend(self):
         """manipulate backend"""
         activity = self.create_unique_activity()
@@ -50,13 +49,11 @@ class Supported(BasicTest):
 
         saved = directory1.save(activity)
         self.assertEqual(saved.backend, directory1)
+        activity.backend = directory1
         with self.assertRaises(Exception):
             activity.backend = directory2
         with self.assertRaises(Exception):
             activity.backend = None
-
-class WrongAuth(BasicTest):
-    """what happens with a wrong password?"""
 
     def test_open_wrong_auth(self):
         """open backends with wrong password"""
@@ -68,12 +65,6 @@ class WrongAuth(BasicTest):
                     else:
                         with self.assertRaises(requests.exceptions.HTTPError):
                             self.setup_backend(cls, sub_name='wrong')
-
-
-# Now the more expensive tests:
-
-class CreateBackend(BasicTest):
-    """Can we create a backend and connect with it?"""
 
     def test_create_backend(self):
         """test creation of a backend"""
@@ -88,11 +79,6 @@ class CreateBackend(BasicTest):
                     total_seconds = (second_time - first_time).total_seconds()
                     self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
                         2, second_time, first_time, second_time - first_time))
-
-
-class PageParser(BasicTest):
-
-    """page parsing, actually needed only for mmt"""
 
     def test_change_remote_attributes(self):
         """if we change title, description, public, what in activity, is the backend updated?"""
