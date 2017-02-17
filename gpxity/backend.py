@@ -36,6 +36,8 @@ class _ActivityList(list):
     def __getitem__(self, index):
         """Allows accesses like alist[a_id]"""
         for _ in self:
+            if _ is index:
+                return _
             if _.id_in_backend == index:
                 return _
         if isinstance(index, int) and 0 <= index < len(self):
