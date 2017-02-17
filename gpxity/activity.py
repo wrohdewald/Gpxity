@@ -217,7 +217,7 @@ class Activity:
         """
         if self.__gpx.tracks:
             # make sure the same points are not added twice
-            assert points != self.__gpx.tracks[-1].segments[-1][-len(points):]
+            assert points != self.__gpx.tracks[-1].segments[-1].points[-len(points):]
         self._load_full()
         if not self.__gpx.tracks:
             self.__gpx.tracks.append(GPXTrack())
