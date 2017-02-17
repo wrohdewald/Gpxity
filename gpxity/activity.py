@@ -111,7 +111,10 @@ class Activity:
         Returns:
             the new activity
         """
-        return Activity(gpx=self.__gpx.clone())
+        result = Activity(gpx=self.__gpx.clone())
+        result.what = self.what
+        result.public = self.public
+        return result
 
     def save(self):
         """save this activity in the associated backend."""
@@ -407,9 +410,9 @@ class Activity:
             a string with selected attributes in printable form
         """
         self._load_full()
-        return 'title:{} description:{} keywords:{} last_time:{} angle:{} points:{}'.format(
+        return 'title:{} description:{} keywords:{} what{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.last_time(), self.angle(), self.point_count())
+            ','.join(self.keywords), self.what, self.public, self.last_time(), self.angle(), self.point_count())
 
     def angle(self) ->float:
         """For me, the earth is flat.
