@@ -52,7 +52,7 @@ class Backend:
     Not all backends support all methods. The unsupported methods
     will raise NotImplementedError. As a convenience a backend has attributes
     for all methods like **supports_X** where X is the method name,
-    example: **backend.supports_update**.
+    example: :literal:`backend.supports_update`.
     And every backend also has a dict **supported** to be used like :literal:`if backend.supports['update']:`
 
     Args:

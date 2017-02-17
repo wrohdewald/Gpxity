@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
-<!-- eric project file for project Gpxity -->
-<!-- Saved: 2017-02-15, 02:59:58 -->
+<!-- eric project file for project gpxity -->
+<!-- Saved: 2017-02-16, 21:11:39 -->
 <!-- Copyright (C) 2017 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
@@ -25,6 +25,7 @@
     <Source>gpxity/backends/mmt_server.py</Source>
     <Source>gpxity/backends/test/__init__.py</Source>
     <Source>gpxity/backends/test/basic.py</Source>
+    <Source>gpxity/backends/test/test_activity.py</Source>
     <Source>gpxity/backends/test/test_backends.py</Source>
   </Sources>
   <Forms/>

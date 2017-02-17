@@ -25,7 +25,7 @@ class Directory(Backend):
             it in destroy().
             if url is given but the directory does not exist it is allocated.
         auth (tuple(str, str)): Unused.
-        cleanup (bool): If True and Url is Non, destroy() will deallocate the directory.
+        cleanup (bool): If True and Url is None, destroy() will deallocate the directory.
     """
 
     # pylint: disable=abstract-method
