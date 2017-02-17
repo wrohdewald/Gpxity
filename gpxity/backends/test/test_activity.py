@@ -22,9 +22,9 @@ from .. import Directory
 # pylint: disable=attribute-defined-outside-init
 
 
-class Init(unittest.TestCase):
+class ActivityTests(BasicTest):
 
-    """Test Activity.__init__"""
+    """activity tests"""
 
     def test_init(self):
         """test initialisation"""
@@ -35,10 +35,6 @@ class Init(unittest.TestCase):
         Activity(backend)
         self.assertEqual(len(backend.activities), 1)
 
-
-class Clone(BasicTest):
-
-    """equality tests"""
 
     def test_clone(self):
         """is the clone identical?"""
@@ -65,11 +61,6 @@ class Clone(BasicTest):
         activity1.gpx.tracks.clear()
         activity2.gpx.tracks.clear()
         self.assertEqualActivities(activity1, activity2)
-
-
-class What(BasicTest):
-
-    """test manipulations on Activity.what"""
 
     def test_no_what(self):
         """what must return default value if not present in gpx.keywords"""
@@ -103,10 +94,6 @@ class What(BasicTest):
         activity.what = None
         self.assertEqual(activity.what, what_default)
 
-
-class Public(unittest.TestCase):
-    """test manipulations on Activity.public"""
-
     def test_no_public(self):
         """public must return False if not present in gpx.keywords"""
         activity = Activity()
@@ -131,10 +118,6 @@ class Public(unittest.TestCase):
             activity.add_keyword('Status:public')
         self.assertTrue(activity.public)
 
-class Time(BasicTest):
-
-    """test server time"""
-
     def test_first_time(self):
         """about activity.time"""
         activity = self.create_unique_activity()
@@ -150,35 +133,30 @@ class Time(BasicTest):
         gpx_last_time = activity.gpx.tracks[-1].segments[-1].points[-1].time
         self.assertEqual(activity.last_time(), gpx_last_time)
 
-
-class Xml(BasicTest):
-
-    """xml related tests"""
-
-    def setUp(self):
-        self.activity = self.create_unique_activity()
-
     def test_xml(self):
         """roughly check if we have one line per trackpoint"""
-        xml = self.activity.to_xml()
+        activity = self.create_unique_activity()
+        xml = activity.to_xml()
         self.assertNotIn('<link ></link>', xml)
         lines = xml.split('\n')
-        self.assertTrue(len(lines) >= self.activity.point_count())
+        self.assertTrue(len(lines) >= activity.point_count())
 
     def test_parse(self):
         """does Activity parse xml correctly"""
-        xml = self.activity.to_xml()
+        activity = self.create_unique_activity()
+        xml = activity.to_xml()
         activity2 = Activity()
         activity2.parse(xml)
-        self.assertEqualActivities(self.activity, activity2)
+        self.assertEqualActivities(activity, activity2)
         activity2 = Activity()
         activity2.parse(io.StringIO(xml))
-        self.assertEqualActivities(self.activity, activity2)
+        self.assertEqualActivities(activity, activity2)
 
     def test_combine(self):
         """combine values in activity with newly parsed"""
-        xml = self.activity.to_xml()
-        if self.activity.what == 'Cycling':
+        activity = self.create_unique_activity()
+        xml = activity.to_xml()
+        if activity.what == 'Cycling':
             other_what = 'Running'
         else:
             other_what = 'Cycling'
@@ -189,13 +167,13 @@ class Xml(BasicTest):
         activity2.what = other_what
         activity2.public = True
         activity2.parse(xml)
-        self.assertEqual(activity2.title, self.activity.title)
-        self.assertEqual(activity2.description, self.activity.description)
-        self.assertEqual(activity2.what, self.activity.what)
+        self.assertEqual(activity2.title, activity.title)
+        self.assertEqual(activity2.description, activity.description)
+        self.assertEqual(activity2.what, activity.what)
         self.assertTrue(activity2.public)
         self.assertEqual(activity2.keywords, list())
 
-        self.activity.public = True
+        activity.public = True
         xml = activity2.to_xml()
         self.assertIn('Status:public', xml)
         activity2 = Activity()
@@ -203,10 +181,6 @@ class Xml(BasicTest):
         activity2.public = False
         activity2.parse(xml)
         self.assertTrue(activity2.public)
-
-
-class Save(BasicTest):
-    """test Activity.save but only in Directory, the rest is in the backend tests"""
 
     def test_save(self):
         """save locally"""

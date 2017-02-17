@@ -42,9 +42,6 @@ class Supported(BasicTest):
                             self.assertTrue(getattr(backend, name))
 
 
-class ActivityBackend(BasicTest):
-    """test manipulation of Activity.backend"""
-
     def test_backend(self):
         """manipulate backend"""
         activity = self.create_unique_activity()
