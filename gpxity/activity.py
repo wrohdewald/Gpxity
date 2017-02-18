@@ -8,7 +8,6 @@
 This module defines :class:`~gpxity.Activity`
 """
 
-import io
 from math import asin, sqrt, degrees
 import datetime
 
@@ -237,23 +236,25 @@ class Activity:
                 new_keywords.append(keyword)
         self.keywords = new_keywords
 
-    def parse(self, infile):
+    def parse(self, indata):
         """parse GPX.
-        title, description and what from infile have precedence.
+        title, description and what from indata have precedence.
         public will be or-ed
 
         Args:
-            infile: may be a file descriptor or str
+            indata: may be a file descriptor or str
         """
+        if hasattr(indata, 'read'):
+            indata = indata.read()
+        if not indata:
+            # ignore empty file
+            return
         is_loading = self.loading
         self.loading = True
         try:
             old_gpx = self.__gpx
             old_public = self.public
-            if isinstance(infile, str):
-                self.__gpx = gpxpy.parse(io.StringIO(infile))
-            else:
-                self.__gpx = gpxpy.parse(infile)
+            self.__gpx = gpxpy.parse(indata)
             self._parse_keywords()
             self.public = self.public or old_public
             if old_gpx.name and not self.__gpx.name:
