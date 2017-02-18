@@ -10,6 +10,7 @@ This module defines :class:`~gpxity.Activity`
 
 from math import asin, sqrt, degrees
 import datetime
+from contextlib import contextmanager
 
 
 import gpxpy
@@ -29,7 +30,12 @@ class Activity:
     transparently be encodeded in existing GPX fields like keywords, see :class:`~gpxity.activity.Activity`.
 
     If an activity is assigned to a backend, all changes will be written directly to the backend.
+
+    You can use the context manager :meth:`batch_changes`. This holds back updating the backend until
+    the context is exiting.
+
     Not all backends support everything, you could get the exception NotImplementedError.
+
 
     Args:
         backend (Backend): The Backend where this Activity lives in. If
@@ -66,6 +72,7 @@ class Activity:
     def __init__(self, backend=None, id_in_backend=None, gpx=None):
         self.loading = False
         self._loaded = backend is None
+        self._batch_changes = False
         self.__what = self.legal_what[0]
         self.__public = False
         self.id_in_backend = id_in_backend
@@ -153,7 +160,7 @@ class Activity:
     def title(self, value: str):
         if value != self.__gpx.name:
             self.__gpx.name = value
-            if self.backend:
+            if self.write_direct():
                 self.backend.change_title(self)
 
     @property
@@ -163,11 +170,32 @@ class Activity:
         """
         return self.__gpx.description
 
+    @contextmanager
+    def batch_changes(self):
+        """This context manager disables  the direct update in the backend
+        and saves the entire activity when done.
+        """
+        prev_batch_changes = self._batch_changes
+        self._batch_changes = True
+        yield
+        self._batch_changes = prev_batch_changes
+        if self.write_direct():
+            self.save()
+
+    def write_direct(self):
+        """True if changes are applied directly to the backend
+        which is default. False if:
+        - we are currently loading from backend: Avoid recursion
+        - _batch_changes is active
+        - we have no backend
+        """
+        return self.backend and not self.loading and not self._batch_changes
+
     @description.setter
     def description(self, value: str):
         if value != self.__gpx.description:
             self.__gpx.description = value
-            if self.backend:
+            if self.write_direct():
                 self.backend.change_description(self)
 
     @property
@@ -186,7 +214,7 @@ class Activity:
             if value not in Activity.legal_what and value is not None:
                 raise Exception('What {} is not known'.format(value))
             self.__what = value if value else self.legal_what[0]
-            if self.backend and not self.loading:
+            if self.write_direct():
                 self.backend.change_what(self)
 
     def point_count(self) ->int:
@@ -300,7 +328,7 @@ class Activity:
         """stores this flag as keyword 'public'"""
         if value != self.public:
             self.__public = value
-            if self.backend:
+            if self.write_direct():
                 self.backend.change_public(self)
 
     @property
@@ -347,10 +375,11 @@ class Activity:
         Args:
             value (list(str)): a list of keywords
         """
-        self.__gpx.keywords = ''
-        for keyword in value:
-            # add_keyword ensures we do not get unwanted things like What:
-            self.add_keyword(keyword)
+        with self.batch_changes():
+            self.__gpx.keywords = ''
+            for keyword in value:
+                # add_keyword ensures we do not get unwanted things like What:
+                self.add_keyword(keyword)
 
     @staticmethod
     def _check_keyword(keyword):
@@ -374,6 +403,8 @@ class Activity:
             self.__gpx.keywords += ', {}'.format(value)
         else:
             self.__gpx.keywords = value
+        if self.write_direct():
+            self.save()
 
     def remove_keyword(self, value: str) ->None:
         """removes from the keywords.
@@ -384,6 +415,8 @@ class Activity:
         self._check_keyword(value)
         self._load_full()
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
+        if self.write_direct():
+            self.save()
 
     def __repr__(self):
         parts = []
