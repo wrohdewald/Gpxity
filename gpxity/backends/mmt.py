@@ -360,7 +360,6 @@ class MMT(Backend):
         if not activity.point_count():
             raise Exception('{} from {} is empty'.format(
                 activity, self))
-        activity.loaded = True
 
     def _remove_activity_in_backend(self, activity):
         """remove on the server"""
