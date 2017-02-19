@@ -233,9 +233,11 @@ class Activity:
         """
         prev_batch_changes = self._batch_changes
         self._batch_changes = True
-        yield
-        self._batch_changes = prev_batch_changes
-        self._save()
+        try:
+            yield
+            self._save()
+        finally:
+            self._batch_changes = prev_batch_changes
 
     @description.setter
     def description(self, value: str):
