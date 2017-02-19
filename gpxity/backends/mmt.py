@@ -393,4 +393,3 @@ class MMT(Backend):
         self.__post(
             'update_activity', activity_id=activity.id_in_backend,
             points=points)
-

@@ -40,7 +40,7 @@ class Authenticate:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, cls: Backend, sub_name: str=None):
+    def __init__(self, cls: Backend, sub_name: str = None):
 
         self.cls = cls
         self.sub_name = sub_name

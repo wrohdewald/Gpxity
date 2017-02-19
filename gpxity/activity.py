@@ -77,7 +77,7 @@ class Activity:
         'Paragliding', 'Hot air ballooning', 'Nordic walking', 'Snowshoeing', 'Jet skiing', 'Powerboating',
         'Miscellaneous')
 
-    def __init__(self, backend=None, id_in_backend: str=None, gpx=None):
+    def __init__(self, backend=None, id_in_backend: str = None, gpx=None):
         self._loading = False
         self._loaded = backend is None or id_in_backend is None
         self.__dirty = set()
@@ -425,8 +425,7 @@ class Activity:
         self._load_full()
         if self.__gpx.keywords:
             return list(x.strip() for x in self.__gpx.keywords.split(','))
-        else:
-            return list()
+        return list()
 
     @keywords.setter
     def keywords(self, value):
@@ -529,8 +528,7 @@ class Activity:
             return 0
         if norm_lat >= 0.0:
             return (360.0 + result) % 360.0
-        else:
-            return 180.0 - result
+        return 180.0 - result
 
     def all_points(self):
         """
