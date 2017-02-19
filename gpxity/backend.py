@@ -12,8 +12,6 @@ import datetime
 from inspect import getmembers, isfunction
 import dis
 
-from typing import List
-
 from .activity import Activity
 
 __all__ = ['Backend']
@@ -110,7 +108,7 @@ class Backend:
         """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
 
-    def list_all(self) ->List[Activity]:
+    def list_all(self):
         """list all activities for this user
 
         Returns:
