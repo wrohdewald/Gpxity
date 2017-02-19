@@ -27,7 +27,7 @@ class Activity:
 
     An activity is essentially a GPX file. If a backend supports attributes not directly
     supported by the GPX format like the MapMyTracks activity type, they will
-    transparently be encodeded in existing GPX fields like keywords, see :class:`~gpxity.activity.Activity`.
+    transparently be encodeded in existing GPX fields like keywords, see :attr:`keywords`.
 
     If an activity is assigned to a backend, all changes will by default be written directly to the backend.
     Some backends are able to change only one attribute with little time overhead, others always have
@@ -40,11 +40,8 @@ class Activity:
 
 
     Args:
-        backend (Backend): The Backend where this Activity lives in. If
-            it was constructed in memory, backend is None. backend will not be modifiable, even
-            if initialized as None.
-            Instead, use :literal:`new_activity = backend.save(activity)`.
-        id_in_backend (str): The identifier of this activity in backend.
+        backend (Backend): The Backend where this Activity lives in. See :attr:`backend`.
+        id_in_backend (str): The identifier of this activity in the backend. See :attr:`id_in_backend`.
         gpx (GPX): Initial content.
 
     At least one of **backend** or **gpx** must be None. If backend is None and this
@@ -103,7 +100,7 @@ class Activity:
 
     @property
     def backend(self):
-        """The backend this activity lives in.
+        """The backend this activity lives in. If it was constructed in memory, backend is None.
         If you change it from None to a backend, this activity is automatically saved in that backend.
 
         It is not possible to decouple an activity from its backend, use :meth:`~gpxity.activity.Activity.clone()`.
@@ -132,12 +129,12 @@ class Activity:
         """
         Is the activity in sync with the backend?
 
-        If you directly manipulate :attr:`gpx`, set dirty to True.
+        After directly manipulating :attr:`gpx`, set dirty to True.
         See also :meth:`~gpxity.activity.Activity.gpx`.
 
         Setting dirty to True will directly call :meth:`~gpxity.activity.Activity._save`.
 
-        Setting dirty to False is illegal.
+        Setting dirty to False is not allowed.
 
         Returns:
             bool: True if the activity is not in sync with the backend. If no backend is
@@ -199,7 +196,7 @@ class Activity:
             self.__gpx.time = value
 
     def adjust_time(self):
-        """sets gpx.time to the time of the first trackpoint.
+        """Sets gpx.time to the time of the first trackpoint.
 
         We must do this for mapmytracks because it does
         not support uploading the time, it computes the time
@@ -275,12 +272,12 @@ class Activity:
         return result
 
     def _load_full(self) ->None:
-        """load the full track from source_backend if not yet loaded."""
+        """Loads the full track from source_backend if not yet loaded."""
         if self.backend and self.id_in_backend and not self._loaded and not self.loading:
             self.backend.load_full(self)
 
     def add_points(self, points) ->None:
-        """adds points to last segment in the last track. If no track
+        """Adds points to last segment in the last track. If no track
         is allocated yet, do so.
 
         UNFINISHED
@@ -311,7 +308,7 @@ class Activity:
         self.keywords = new_keywords
 
     def parse(self, indata):
-        """parse GPX.
+        """Parses GPX.
 
         :attr:`title`, :attr:`description` and :attr:`what` from indata have precedence over the current values.
         :attr:`public` will be or-ed
@@ -341,7 +338,7 @@ class Activity:
             self.loading = is_loading
 
     def to_xml(self) ->str:
-        """Produce exactly one line per trackpoint for easier editing
+        """Produces exactly one line per trackpoint for easier editing
         (like removal of unwanted points).
         """
         self._load_full()
@@ -373,7 +370,7 @@ class Activity:
 
     @public.setter
     def public(self, value):
-        """stores this flag as keyword 'public'"""
+        """Stores this flag as keyword 'public'."""
         if value != self.public:
             self.__public = value
             self.dirty = 'public'
@@ -382,7 +379,7 @@ class Activity:
     def gpx(self) ->GPX:
         """
         Direct access to the GPX object. If you use it to change its content,
-        remember to set :attr:`dirty` to True.
+        remember to set :attr:`dirty` to True afterwards..
 
         Returns:
             the GPX object
@@ -418,7 +415,7 @@ class Activity:
 
     @keywords.setter
     def keywords(self, value):
-        """replace all keywords with a new list.
+        """Replaces all keywords with a new list.
 
         Args:
             value (list(str)): a list of keywords
@@ -432,14 +429,14 @@ class Activity:
 
     @staticmethod
     def _check_keyword(keyword):
-        """must not be What: or Status:"""
+        """Must not be What: or Status:"""
         if keyword.startswith('What:'):
             raise Exception('Do not use this directly,  use Activity.what')
         if keyword.startswith('Status:'):
             raise Exception('Do not use this directly,  use Activity.public')
 
     def add_keyword(self, value: str) ->None:
-        """adds to the comma separated keywords. Duplicate keywords are forbidden.
+        """Adds to the comma separated keywords. Duplicate keywords are not allowed.
 
         Args:
             value: the keyword
@@ -455,7 +452,7 @@ class Activity:
         self.dirty = 'keywords'
 
     def remove_keyword(self, value: str) ->None:
-        """removes from the keywords.
+        """Removes from the keywords.
 
         Args:
             value: the keyword to be removed
@@ -485,7 +482,7 @@ class Activity:
         return self.__repr__()
 
     def key(self) ->str:
-        """for speed optimized equality checks, not granted to be exact
+        """For speed optimized equality checks, not granted to be exact.
 
         Returns:
             a string with selected attributes in printable form
