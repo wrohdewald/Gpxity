@@ -379,11 +379,6 @@ class MMT(Backend):
         activity.id_in_backend = response.find('id').text
         self._write_title(activity)
 
-    def destroy(self):
-        """We do not remove the account on mapmytracks!"""
-        if self.cleanup:
-            self.remove_all()
-
     def update(self, activity, points):
         """append points in the backend. activity already has them.
         points are GPXTrackPoint"

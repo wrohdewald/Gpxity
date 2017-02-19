@@ -22,8 +22,8 @@ class TestBackends(BasicTest):
     def test_supported(self):
         """Check values in supported for all backends"""
         expect_unsupported = dict()
-        expect_unsupported['Directory'] = ('update', )
-        expect_unsupported['MMT'] = ('allocate', 'deallocate')
+        expect_unsupported['Directory'] = set(['update'])
+        expect_unsupported['MMT'] = set()
         for cls in self._find_backend_classes():
             if not cls.skip_test:
                 with self.subTest(' {}'.format(cls.__name__)):

@@ -44,7 +44,7 @@ class Directory(Backend):
             url = tempfile.mkdtemp(prefix='gpxity.')
         super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
-            self.allocate()
+            os.makedirs(self.url)
         self._symlinks = self._load_symlinks()
 
     def _load_symlinks(self):
@@ -61,14 +61,6 @@ class Directory(Backend):
                 except OSError:
                     pass
         return result
-
-    def allocate(self):
-        """create the directory as specified by self.url"""
-        os.makedirs(self.url)
-
-    def deallocate(self):
-        """deletes the entire directory. Since this is dangerous, all activities must be removed first."""
-        os.rmdir(self.url)
 
     def _set_new_id(self, activity):
         """a not yet existant file name"""
@@ -89,7 +81,8 @@ class Directory(Backend):
         """remove the entire backend IF we created it in __init__, otherwise only empty it"""
         super(Directory, self).destroy()
         if self.cleanup and not self.url_given:
-            self.deallocate()
+            self.remove_all()
+            os.rmdir(self.url)
 
     def _gpx_path(self, activity):
         """The full path name for the local copy of an activity"""

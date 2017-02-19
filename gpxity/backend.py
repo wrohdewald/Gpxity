@@ -102,20 +102,6 @@ class Backend:
                 if supported:
                     cls.supported.add(name)
 
-    def allocate(self):
-        """allocates a backend. This might be creating a directory
-        (example: :class:`gxmove.backends.Directory`) or creating an account on
-        a remote server (example: :class:`gpxity.backends.MMT`).
-        """
-        raise NotImplementedError()
-
-    def deallocate(self):
-        """deallocates a backend. This might be removing a directory
-        (example: :class:`gxmove.backends.Directory`) or deleting an account on
-        a remote server (example: :class:`gpxity.backends.MMT`).
-        """
-        raise NotImplementedError()
-
     def clone(self) ->Activity:
         """returns a clone with nothing listed or loaded"""
         return self.__class__(self.url, self.auth)
