@@ -116,7 +116,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def clone(self):
+    def clone(self) ->Activity:
         """returns a clone with nothing listed or loaded"""
         return self.__class__(self.url, self.auth)
 
@@ -159,7 +159,7 @@ class Backend:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
 
-    def save(self, activity, attributes=None):
+    def save(self, activity, attributes=None) ->None:
         """save full activity.
 
         Args:
@@ -217,7 +217,7 @@ class Backend:
         """backend dependent implementation"""
         raise NotImplementedError()
 
-    def update(self, activity, points): # pylint: disable=no-self-use
+    def update(self, activity, points) ->None: # pylint: disable=no-self-use
         """Appends to the remove activity. points are already
         added to activity
 
