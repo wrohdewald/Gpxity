@@ -12,13 +12,20 @@ Defines :class:`gpxity.backends.Directory`
 import os
 import datetime
 import tempfile
+from collections import defaultdict
 
 from .. import Backend, Activity
 
 __all__ = ['Directory']
 
 class Directory(Backend):
-    """Uses a directory for storage.
+    """Uses a directory for storage. The filename minus the .gpx ending is used as the storage id.
+    If the activity has a title, use the title as storage id, making it unique by attaching a number if needed.
+    An activity without title gets a random name.
+
+    The main directory (given by :attr:`~gpxity.backends.directory.Directory.url`) will have
+    subdirectories YYYY/MM (year/month) with only the activities for one month.
+    Those are symbolic links to the main file and have the same file name.
 
     Args:
         url (str): a directory. If not given, allocate a temporary directory and remove
@@ -37,6 +44,22 @@ class Directory(Backend):
         super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
             self.allocate()
+        self._symlinks = self._load_symlinks()
+
+    def _load_symlinks(self):
+        """scan the subdirectories with the symlinks. If the content of an
+        actiivty changes, the symlinks might have to be adapted. But
+        we do not know the name of the existing symlink anymore. So
+        just scan them all and assign them to id_in_backend."""
+        result = defaultdict(list)
+        for dirpath, _, filenames in os.walk(self.url):
+            for filename in filenames:
+                full_name = os.path.join(dirpath, filename)
+                try:
+                    result[os.readlink(full_name)].append(full_name)
+                except OSError:
+                    pass
+        return result
 
     def allocate(self):
         """create the directory as specified by self.url"""
@@ -117,8 +140,41 @@ class Directory(Backend):
         """We simply rewrite the entire local .gpx file"""
         self.save(activity)
 
+    def _remove_activity_file(self, activity):
+        """remove the file, its symlinks and empty symlink parent directories"""
+        for symlink in self._symlinks[activity.id_in_backend]:
+            os.remove(symlink)
+            symlink_dir = os.path.split(symlink)[0]
+            try:
+                os.removedirs(symlink_dir)
+            except OSError:
+                pass
+        self._symlinks[activity.id_in_backend] = list()
+        gpx_file = self._gpx_path(activity)
+        if os.path.exists(gpx_file):
+            os.remove(gpx_file)
+
+    def _symlink_path(self, activity):
+        """The path for the speaking symbolic link: YYYY/MM/title.gpx.
+        Missing directories YYYY/MM are created.
+        activity.time must be set."""
+        time = activity.time
+        by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
+        if not os.path.exists(by_month_dir):
+            os.makedirs(by_month_dir)
+        link_name = activity.id_in_backend
+        if not link_name:
+            link_name = '{:02}_{:02}:{:02}:{:02}'.format(
+                time.day, time.hour, time.minute, time.second)
+        return os.path.join(by_month_dir, link_name)
+
     def _save(self, activity):
-        """save full gpx track"""
+        """save full gpx track. Since the file name uses title and title may have changed,
+        compute new file name and remove the old files. We also adapt activity.id_in_backend."""
+        self._remove_activity_file(activity)
+        if activity.title:
+            # enforce new id_in_backend using title
+            activity.id_in_backend = None
         _gpx_path = self._gpx_path(activity)
         try:
             with open(_gpx_path, 'w') as out_file:
@@ -126,18 +182,9 @@ class Directory(Backend):
             time = activity.time
             if time:
                 os.utime(_gpx_path, (time.timestamp(), time.timestamp()))
-            link_name = activity.title
-            if not link_name and time:
-                link_name = '{:02}_{:02}:{:02}:{:02}'.format(
-                    time.day, time.hour, time.minute, time.second)
-            if link_name:
-                by_month_dir = '{}{}/{:02}/'.format(self.url, time.year, time.month)
-                by_month_path = by_month_dir + link_name
-                if not os.path.exists(by_month_dir):
-                    os.makedirs(by_month_dir)
-                if os.path.lexists(by_month_path):
-                    os.remove(by_month_path)
-                os.symlink(_gpx_path, by_month_path)
+                link_name = self._symlink_path(activity)
+                os.symlink(_gpx_path, link_name)
+                self._symlinks[activity.id_in_backend].append(link_name)
         except BaseException as exc:
             print(exc)
             os.remove(_gpx_path)
