@@ -33,12 +33,12 @@ class MMTServer(Directory):
         """get MMT server time as a Linux timestamp"""
         return int(datetime.datetime.now().timestamp())
 
-    def new_id(self, activity):
+    def _set_new_id(self, activity):
         """gives the activity a unique id"""
         try:
-            return str(max(int(x) for x in self._list_gpx()) + 1)
+            activity.id_in_backend = str(max(int(x) for x in self._list_gpx()) + 1)
         except ValueError:
-            return 1
+            activity.id_in_backend = '1'
 
     def save(self, activity):
         """save full gpx, generate an id if needed"""

@@ -119,13 +119,6 @@ class Backend:
         """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
 
-    def new_id(self, activity) ->str:
-        """defines an id for activity in this backend
-
-        Args:
-            activity: The activity requesting an id"""
-        raise NotImplementedError()
-
     def list_all(self, load_full: bool=False):
         """list all activities for this user
 

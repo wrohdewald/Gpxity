@@ -46,7 +46,7 @@ class Directory(Backend):
         """deletes the entire directory. Since this is dangerous, all activities must be removed first."""
         os.rmdir(self.url)
 
-    def new_id(self, activity):
+    def _set_new_id(self, activity):
         """a not yet existant file name"""
         if activity.backend is self and activity.id_in_backend:
             value = activity.id_in_backend
@@ -59,7 +59,7 @@ class Directory(Backend):
         while os.path.exists(os.path.join(self.url, unique_value + '.gpx')):
             ctr += 1
             unique_value = '{}.{}'.format(value, ctr)
-        return unique_value
+        activity.id_in_backend = unique_value
 
     def destroy(self):
         """remove the entire backend IF we created it in __init__, otherwise only empty it"""
@@ -70,7 +70,7 @@ class Directory(Backend):
     def _gpx_path(self, activity):
         """The full path name for the local copy of an activity"""
         if not activity.id_in_backend:
-            activity.id_in_backend = self.new_id(activity)
+            self._set_new_id(activity)
         base_name = '{}.gpx'.format(activity.id_in_backend)
         return os.path.join(self.url, base_name)
 
