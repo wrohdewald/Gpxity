@@ -225,22 +225,6 @@ class Backend:
             should not be exposed."""
         raise NotImplementedError()
 
-    def _write_title(self, activity):
-        """Changes title in backend, activity already has the new title."""
-        raise NotImplementedError()
-
-    def _write_description(self, activity):
-        """Changes description in backend, activity already has the new description."""
-        raise NotImplementedError()
-
-    def _write_what(self, activity):
-        """Changes what in backend, activity already has the new what."""
-        raise NotImplementedError()
-
-    def _write_public(self, activity):
-        """Changes public/private in backend, activity already has the new status."""
-        raise NotImplementedError()
-
     def remove_all(self):
         """Removes all activities."""
         for activity in list(self.list_activities()):
