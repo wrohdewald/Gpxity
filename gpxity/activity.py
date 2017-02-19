@@ -69,7 +69,7 @@ class Activity:
         'Paragliding', 'Hot air ballooning', 'Nordic walking', 'Snowshoeing', 'Jet skiing', 'Powerboating',
         'Miscellaneous')
 
-    def __init__(self, backend=None, id_in_backend=None, gpx=None):
+    def __init__(self, backend=None, id_in_backend: str=None, gpx=None):
         self.loading = False
         self._loaded = backend is None
         self._batch_changes = False
@@ -293,7 +293,7 @@ class Activity:
         finally:
             self.loading = is_loading
 
-    def to_xml(self):
+    def to_xml(self) ->str:
         """Produce exactly one line per trackpoint for easier editing
         (like removal of unwanted points).
         """
