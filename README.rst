@@ -22,3 +22,6 @@ Backends might change their behaviour, and Gpxity will have to be updated.
 Gpxity supports unicode characters, encoding them as UTF-8. All non-unicode
 character sets like ISO8859-1 are considered obsolete. They may work or not.
 Do not report bugs about those, I will not fix that.
+
+Todo: Write all class references in the shortest form how an application could
+import them.
