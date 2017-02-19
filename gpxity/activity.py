@@ -211,11 +211,12 @@ class Activity:
     def title(self) -> str:
         """str: The title.
         """
+        self._load_full()
         return self.__gpx.name
 
     @title.setter
     def title(self, value: str):
-        if value != self.__gpx.name:
+        if value != self.title:
             self.__gpx.name = value
             self.dirty = 'title'
 
@@ -223,6 +224,7 @@ class Activity:
     def description(self) ->str:
         """str: The description.
         """
+        self._load_full()
         return self.__gpx.description
 
     @contextmanager
@@ -238,7 +240,7 @@ class Activity:
 
     @description.setter
     def description(self, value: str):
-        if value != self.__gpx.description:
+        if value != self.description:
             self.__gpx.description = value
             self.dirty = 'description'
 
@@ -250,11 +252,12 @@ class Activity:
         Returns:
             The current value or the default value (see :attr:`legal_what`)
         """
+        self._load_full()
         return self.__what
 
     @what.setter
     def what(self, value: str):
-        if value != self.__what:
+        if value != self.what:
             if value not in Activity.legal_what and value is not None:
                 raise Exception('What {} is not known'.format(value))
             self.__what = value if value else self.legal_what[0]
@@ -365,6 +368,7 @@ class Activity:
         bool: Is this a private activity (can only be seen by the account holder) or
             is it public?
         """
+        self._load_full()
         return self.__public
 
     @public.setter
@@ -419,6 +423,7 @@ class Activity:
         Args:
             value (list(str)): a list of keywords
         """
+        self._load_full()
         with self.batch_changes():
             self.__gpx.keywords = ''
             for keyword in value:

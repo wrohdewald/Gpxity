@@ -209,8 +209,6 @@ class MMT(Backend):
 
     def change_public(self, activity):
         """changes public/private on remote server"""
-        if activity.loading:
-            return
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
             data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \

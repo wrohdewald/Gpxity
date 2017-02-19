@@ -119,19 +119,13 @@ class Backend:
         """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
 
-    def list_all(self, load_full: bool=False):
+    def list_all(self):
         """list all activities for this user
-
-        Args:
-            load_full: load the full activities including all GPX data
 
         Returns:
             list(Activity): all activities
         """
-        for _ in self._yield_activities():
-            if load_full:
-                self.load_full(_)
-        return self.activities
+        return list(self._yield_activities())
 
     def _yield_activities(self):
         """A generator for all activities. It yields the next found and appends it to activities.
@@ -252,7 +246,7 @@ class Backend:
             list all new activities in this backend
         """
         result = list()
-        for activity in from_backend.list_all(load_full=True):
+        for activity in from_backend.list_all():
             result.append(self.save(activity))
         return result
 
