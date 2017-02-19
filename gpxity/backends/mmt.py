@@ -71,7 +71,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.result['what'] = None
         self.result['what_from_title'] = None
         self.result['what_3'] = None
-        self.result['status'] = None
+        self.result['public'] = None
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser"""
@@ -117,7 +117,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
                 print('cannot parse', data)
                 self.result['what_from_title'] = ''
         if self.seeing_status:
-            self.result['status'] = data.strip() == 'Only you can see this activity'
+            self.result['public'] = data.strip() == 'Only you can see this activity'
 
 
 class MMTRawActivity:
@@ -160,25 +160,26 @@ class MMT(Backend):
         """helper for the real function"""
         data = kwargs.copy()
         data['request'] = request
-        result = (session or requests).post(self.url, data=data, auth=self.auth, timeout=(5, 300))
+        response = (session or requests).post(self.url, data=data, auth=self.auth, timeout=(5, 300))
         try:
-            result.content.decode(result.encoding)
+            response.content.decode(response.encoding)
         except  UnicodeDecodeError:
             # As of February 2017, the xml always says it is encoded as utf-8 but it is not!
             # It looks like iso8859-1
-            result.encoding = result.apparent_encoding
-        if result.status_code != requests.codes.ok: # pylint: disable=no-member
-            self.__handle_post_error(request, result)
+            response.encoding = response.apparent_encoding
+        if response.status_code != requests.codes.ok: # pylint: disable=no-member
+            self.__handle_post_error(request, response)
             return
         try:
-            result = ElementTree.fromstring(result.text)
+            result = ElementTree.fromstring(response.text)
         except ElementTree.ParseError:
             print('POST {} has parse error: {}'.format(request, result.text))
             raise
         assert result.text != 'error' # should have raise_for_status
         result_type = result.find('type')
         if result_type is not None and result_type.text == 'error':
-            raise requests.exceptions.HTTPError(result.find('reason').text)
+            reason = result.find('reason').text if result.find('reason') else 'no reason given'
+            raise requests.exceptions.HTTPError('{}: {}'.format(data, reason))
         return result
 
     def __handle_post_error(self, request, result):
@@ -322,8 +323,8 @@ class MMT(Backend):
             # correct one.
             if page_parser.result['what_3']:
                 activity.what = page_parser.result['what_3']
-            if page_parser.result['status'] is not None:
-                activity.public = page_parser.result['status']
+            if page_parser.result['public'] is not None:
+                activity.public = page_parser.result['public']
 
     def _load_attr_from_webpage(self, activity):
         """The MMT api does not deliver all attributes we want.
@@ -371,11 +372,13 @@ class MMT(Backend):
         Because we cannot upload the time, we set the activity time to the time
         of the first trackpoint."""
 
+        if not activity.point_count():
+            raise Exception('MMT does not accept an activity without trackpoints:{}'.format(activity))
         activity.adjust_time()
-        status = 'public' if activity.public else 'private'
+        mmt_status = 'public' if activity.public else 'private'
         response = self.__post(
             'upload_activity', gpx_file=activity.to_xml(),
-            status=status, description=activity.description, activity=activity.what)
+            status=mmt_status, description=activity.description, activity=activity.what)
         activity.id_in_backend = response.find('id').text
         self._write_title(activity)
 
