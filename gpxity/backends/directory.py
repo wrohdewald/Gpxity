@@ -124,22 +124,6 @@ class Directory(Backend):
         """remove all data about it in this backend"""
         os.remove(self._gpx_path(activity))
 
-    def change_title(self, activity):
-        """We simply rewrite the entire local .gpx file"""
-        self.save(activity)
-
-    def change_description(self, activity):
-        """We simply rewrite the entire local .gpx file"""
-        self.save(activity)
-
-    def change_what(self, activity):
-        """We simply rewrite the entire local .gpx file"""
-        self.save(activity)
-
-    def change_public(self, activity):
-        """We simply rewrite the entire local .gpx file"""
-        self.save(activity)
-
     def _remove_activity_file(self, activity):
         """remove the file, its symlinks and empty symlink parent directories"""
         for symlink in self._symlinks[activity.id_in_backend]:
@@ -168,7 +152,7 @@ class Directory(Backend):
                 time.day, time.hour, time.minute, time.second)
         return os.path.join(by_month_dir, link_name)
 
-    def _save(self, activity):
+    def _save_full(self, activity):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
         self._remove_activity_file(activity)

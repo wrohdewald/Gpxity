@@ -160,30 +160,50 @@ class Backend:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
 
-    def save(self, activity):
+    def save(self, activity, attributes=None):
         """save full activity.
 
         Args:
             activity (Activity): The activity we want to save in this backend.
                 It may be associated with an arbitrary backend.
+            attributes set(str): If given and the backend supports specific saving for all given attributes,
+                save only those.
+                Otherwise, save the entire activity.
 
         Returns:
             Activity: The saved activity. If the original activity lives in a different
             backend, a new activity living in this backend will be created
             and returned.
         """
+
         if activity.backend is not self:
             activity = activity.clone()
         if activity.backend is None:
             activity.backend = self
             # this calls us again!
             return activity
-        self._save(activity)
+
+        fully = False
+        if attributes is None or attributes == set(['all']):
+            fully = True
+        else:
+            for attribute in attributes:
+                change_name = 'change_{}'.format(attribute)
+                if change_name not in self.supported:
+                    fully = True
+                    break
+
+        if fully:
+            self._save_full(activity)
+        else:
+            for attribute in attributes:
+                change_name = 'change_{}'.format(attribute)
+                getattr(self, change_name)(activity)
         if activity not in self.activities:
             self.activities.append(activity)
         return activity
 
-    def _save(self, activity):
+    def _save_full(self, activity):
         """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 

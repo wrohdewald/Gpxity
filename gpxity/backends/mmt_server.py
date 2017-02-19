@@ -40,7 +40,7 @@ class MMTServer(Directory):
         except ValueError:
             activity.id_in_backend = '1'
 
-    def save(self, activity):
+    def save(self, activity, attribute=None):
         """save full gpx, generate an id if needed"""
-        super(MMTServer, self).save(activity)
+        super(MMTServer, self).save(activity, attribute)
 

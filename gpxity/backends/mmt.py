@@ -369,7 +369,7 @@ class MMT(Backend):
         if type_xml is None or type_xml.text != 'activity_deleted':
             raise Exception('{}: Could not delete activity {}: {}'.format(self, activity, response.text))
 
-    def _save(self, activity):
+    def _save_full(self, activity):
         """save full gpx track on the MMT server.
         We must upload the title separately.
         Because we cannot upload the time, we set the activity time to the time

@@ -29,7 +29,9 @@ class Activity:
     supported by the GPX format like the MapMyTracks activity type, they will
     transparently be encodeded in existing GPX fields like keywords, see :class:`~gpxity.activity.Activity`.
 
-    If an activity is assigned to a backend, all changes will be written directly to the backend.
+    If an activity is assigned to a backend, all changes will by default be written directly to the backend.
+    Some backends are able to change only one attribute with little time overhead, others always have
+    to rewrite the entire activity.
 
     You can use the context manager :meth:`batch_changes`. This holds back updating the backend until
     the context is exiting.
@@ -85,6 +87,7 @@ class Activity:
     def __init__(self, backend=None, id_in_backend: str=None, gpx=None):
         self.loading = False
         self._loaded = backend is None
+        self.__dirty = set()
         self._batch_changes = False
         self.__what = self.legal_what[0]
         self.__public = False
@@ -123,6 +126,37 @@ class Activity:
                 self.__backend = value
                 self.__backend.save(self)
 
+    @property
+    def dirty(self) ->bool:
+        """
+        Is the activity in sync with the backend?
+
+        If you directly manipulate :attr:`gpx`, set dirty to True.
+        See also :meth:`~gpxity.activity.Activity.gpx`.
+
+        Setting dirty to True will directly call :meth:`~gpxity.activity.Activity._save`.
+
+        Setting dirty to False is illegal.
+
+        Returns:
+            bool: True if the activity is not in sync with the backend. If no backend is
+            associated, False stands for an empty activity.
+        """
+        return bool(self.__dirty)
+
+    @dirty.setter
+    def dirty(self, value):
+        if not value:
+            raise Exception('You may not set dirty to False. Instead use _save().')
+        if self.loading:
+            return
+
+        if isinstance(value, bool):
+            self.__dirty = set(['all'])
+        else:
+            self.__dirty.add(value)
+        self._save()
+
     def clone(self):
         """Creates a new activity with the same content but without backend.
 
@@ -134,7 +168,7 @@ class Activity:
         result.public = self.public
         return result
 
-    def save(self):
+    def _save(self):
         """Saves all changes in the associated backend.
 
         If any of those conditions is met, do nothing:
@@ -144,8 +178,11 @@ class Activity:
         - we have no backend
 
         Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.backend.Backend.save>`.
-
         """
+        if self.__dirty:
+            if self.backend and not self.loading and not self._batch_changes:
+                self.backend.save(self, self.__dirty)
+                self.__dirty = set()
 
     @property
     def time(self) ->datetime.datetime:
@@ -179,8 +216,7 @@ class Activity:
     def title(self, value: str):
         if value != self.__gpx.name:
             self.__gpx.name = value
-            if self.write_direct():
-                self.backend.change_title(self)
+            self.dirty = 'title'
 
     @property
     def description(self) ->str:
@@ -197,24 +233,13 @@ class Activity:
         self._batch_changes = True
         yield
         self._batch_changes = prev_batch_changes
-        if self.write_direct():
-            self.save()
-
-    def write_direct(self):
-        """True if changes are applied directly to the backend
-        which is default. False if:
-        - we are currently loading from backend: Avoid recursion
-        - _batch_changes is active
-        - we have no backend
-        """
-        return self.backend and not self.loading and not self._batch_changes
+        self._save()
 
     @description.setter
     def description(self, value: str):
         if value != self.__gpx.description:
             self.__gpx.description = value
-            if self.write_direct():
-                self.backend.change_description(self)
+            self.dirty = 'description'
 
     @property
     def what(self) ->str:
@@ -232,8 +257,7 @@ class Activity:
             if value not in Activity.legal_what and value is not None:
                 raise Exception('What {} is not known'.format(value))
             self.__what = value if value else self.legal_what[0]
-            if self.write_direct():
-                self.backend.change_what(self)
+            self.dirty = 'what'
 
     def point_count(self) ->int:
         """
@@ -347,14 +371,13 @@ class Activity:
         """stores this flag as keyword 'public'"""
         if value != self.public:
             self.__public = value
-            if self.write_direct():
-                self.backend.change_public(self)
+            self.dirty = 'public'
 
     @property
     def gpx(self) ->GPX:
         """
         Direct access to the GPX object. If you use it to change its content,
-        remember to save the activity.
+        remember to set :attr:`dirty` to True.
 
         Returns:
             the GPX object
@@ -423,8 +446,7 @@ class Activity:
             self.__gpx.keywords += ', {}'.format(value)
         else:
             self.__gpx.keywords = value
-        if self.write_direct():
-            self.save()
+        self.dirty = 'keywords'
 
     def remove_keyword(self, value: str) ->None:
         """removes from the keywords.
@@ -435,8 +457,7 @@ class Activity:
         self._check_keyword(value)
         self._load_full()
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
-        if self.write_direct():
-            self.save()
+        self.dirty = 'keywords'
 
     def __repr__(self):
         parts = []
