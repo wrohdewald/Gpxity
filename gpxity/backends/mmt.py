@@ -181,7 +181,7 @@ class MMT(Backend):
         except BaseException as exc:
             raise type(exc)('{}: {} {} {}'.format(exc, self.url, request, result.text))
 
-    def _change_attribute(self, activity, attribute):
+    def _write_attribute(self, activity, attribute):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
@@ -200,15 +200,15 @@ class MMT(Backend):
             if 'success' not in response.text:
                 raise requests.exceptions.HTTPError()
 
-    def change_title(self, activity):
+    def write_title(self, activity):
         """changes title on remote server"""
-        self._change_attribute(activity, 'title')
+        self._write_attribute(activity, 'title')
 
-    def change_description(self, activity):
+    def write_description(self, activity):
         """changes description on remote server"""
-        self._change_attribute(activity, 'description')
+        self._write_attribute(activity, 'description')
 
-    def change_public(self, activity):
+    def write_public(self, activity):
         """changes public/private on remote server"""
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
@@ -226,13 +226,13 @@ class MMT(Backend):
             self._load_page_in_session(activity, session)
             assert activity.public == wanted_public
 
-    def change_what(self, activity):
+    def write_what(self, activity):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
         assert not activity.loading
         with MMTSession(self) as session:
-            url = self._base_url() + '/handler/change_activity'
+            url = self._base_url() + '/handler/write_activity'
             data = {'eid': activity.id_in_backend, 'activity': activity.what}
             response = session.post(url, data=data)
             if 'ok' not in response.text:
@@ -380,7 +380,7 @@ class MMT(Backend):
             'upload_activity', gpx_file=activity.to_xml(),
             status=status, description=activity.description, activity=activity.what)
         activity.id_in_backend = response.find('id').text
-        self.change_title(activity)
+        self.write_title(activity)
 
     def destroy(self):
         """We do not remove the account on mapmytracks!"""

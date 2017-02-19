@@ -182,8 +182,8 @@ class Backend:
             fully = True
         else:
             for attribute in attributes:
-                change_name = 'change_{}'.format(attribute)
-                if change_name not in self.supported:
+                write_name = 'write_{}'.format(attribute)
+                if write_name not in self.supported:
                     fully = True
                     break
 
@@ -191,8 +191,8 @@ class Backend:
             self._save_full(activity)
         else:
             for attribute in attributes:
-                change_name = 'change_{}'.format(attribute)
-                getattr(self, change_name)(activity)
+                write_name = 'write_{}'.format(attribute)
+                getattr(self, write_name)(activity)
         if activity not in self.activities:
             self.activities.append(activity)
         return activity
@@ -215,19 +215,19 @@ class Backend:
         added to activity"""
         raise NotImplementedError()
 
-    def change_title(self, activity):
+    def write_title(self, activity):
         """Changes title in backend, activity already has the new title."""
         raise NotImplementedError()
 
-    def change_description(self, activity):
+    def write_description(self, activity):
         """Changes description in backend, activity already has the new description."""
         raise NotImplementedError()
 
-    def change_what(self, activity):
+    def write_what(self, activity):
         """Changes what in backend, activity already has the new what."""
         raise NotImplementedError()
 
-    def change_public(self, activity):
+    def write_public(self, activity):
         """Changes public/private in backend, activity already has the new status."""
         raise NotImplementedError()
 

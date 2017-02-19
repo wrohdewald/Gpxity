@@ -69,7 +69,7 @@ class TestBackends(BasicTest):
                     self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
                         2, second_time, first_time, second_time - first_time))
 
-    def test_change_remote_attributes(self):
+    def test_write_remote_attributes(self):
         """If we change title, description, public, what in activity, is the backend updated?"""
         for cls in self._find_backend_classes():
             if not cls.skip_test:
