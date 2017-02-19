@@ -120,10 +120,6 @@ class Directory(Backend):
         finally:
             activity.loading = False
 
-    def _remove_activity_in_backend(self, activity):
-        """remove all data about it in this backend"""
-        os.remove(self._gpx_path(activity))
-
     def _remove_activity_file(self, activity):
         """remove the file, its symlinks and empty symlink parent directories"""
         for symlink in self._symlinks[activity.id_in_backend]:
