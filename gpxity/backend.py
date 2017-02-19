@@ -52,25 +52,27 @@ class Backend:
     implementations may also remove the backend itself.
 
     Not all backends support all methods. The unsupported methods
-    will raise NotImplementedError. As a convenience a backend has attributes
-    for all methods like **supports_X** where X is the method name,
-    example: :literal:`backend.supports_update`.
-    And every backend also has a dict **supported** to be used like :literal:`if backend.supports['update']:`
+    will raise NotImplementedError. As a convenience every backend
+    has a list **supported** to be used like :literal:`if 'update' in backend.supported:`
+    where `update` is the name of the method.
 
     Args:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
         auth (tuple(str, str)): (username, password)
         cleanup (bool): If true, destroy() will remove all activities.
+
+    Attributes:
+        supported (set(str)): The names of all supported methods. Creating the first instance of
+            the backend initializes this.
     """
-    supported = dict()
+    supported = None
 
     skip_test = False
-    _defined_supports = False
 
     def __init__(self, url=None, auth=None, cleanup=False):
         super(Backend, self).__init__()
-        if not self._defined_supports:
+        if not self.supported:
             self._define_support()
 
         self.activities = _ActivityList()
@@ -82,22 +84,18 @@ class Backend:
         self.cleanup = cleanup
 
     @classmethod
-    def _set_supported(cls, name: str, value: bool):
-        """sets support flag for method "name"""""
-        setattr(cls, 'supports_{}'.format(name), value)
-        cls.supported[name] = value
-
-    @classmethod
     def _define_support(cls):
         """If the first thing a method does is raising NotImplementedError, it is
         marked as unsupported. Those are the default values, the implementations
         will have to refine the results.
         """
+        cls.supported = set()
         for name, _ in getmembers(cls, isfunction):
             if not name.startswith('_'):
                 first_instruction = next(dis.get_instructions(_.__code__))
                 supported = first_instruction is None or first_instruction.argval != 'NotImplementedError'
-                cls._set_supported(name, supported)
+                if supported:
+                    cls.supported.add(name)
 
     def allocate(self):
         """allocates a backend. This might be creating a directory
