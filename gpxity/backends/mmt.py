@@ -117,7 +117,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
                 print('cannot parse', data)
                 self.result['what_from_title'] = ''
         if self.seeing_status:
-            self.result['public'] = data.strip() == 'Only you can see this activity'
+            self.result['public'] = data.strip() != 'Only you can see this activity'
 
 
 class MMTRawActivity:
