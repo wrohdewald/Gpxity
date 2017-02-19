@@ -273,7 +273,7 @@ class Activity:
 
     def _load_full(self) ->None:
         """load the full track from source_backend if not yet loaded."""
-        if self.backend and not self._loaded and not self.loading:
+        if self.backend and self.id_in_backend and not self._loaded and not self.loading:
             self.backend.load_full(self)
 
     def add_points(self, points) ->None:
