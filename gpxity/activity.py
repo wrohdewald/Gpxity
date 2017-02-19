@@ -86,7 +86,7 @@ class Activity:
 
     def __init__(self, backend=None, id_in_backend: str=None, gpx=None):
         self.loading = False
-        self._loaded = backend is None
+        self._loaded = backend is None or id_in_backend is None
         self.__dirty = set()
         self._batch_changes = False
         self.__what = self.legal_what[0]
@@ -124,6 +124,7 @@ class Activity:
                     'Please use Backend.save(activity).')
             else:
                 self.__backend = value
+                self._loaded = True
                 self.__backend.save(self)
 
     @property
