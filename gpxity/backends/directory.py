@@ -28,11 +28,11 @@ class Directory(Backend):
     Those are symbolic links to the main file and have the same file name.
 
     Args:
-        url (str): a directory. If not given, allocate a temporary directory and remove
-            it in destroy().
-            if url is given but the directory does not exist it is allocated.
+        url (str): a directory. If not given, use a unique temporary directory named
+            gpxpy.X where X are some random characters.
+            If the directory does not exist, it is created.
         auth (tuple(str, str)): Unused.
-        cleanup (bool): If True and Url is None, destroy() will deallocate the directory.
+        cleanup (bool): If True and Url is None, destroy() will remove all activities.
     """
 
    # skip_test = True

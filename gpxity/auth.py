@@ -17,8 +17,8 @@ __all__ = ['Authenticate']
 class Authenticate:
 
     """
-    get username and password from auth.cfg. If nothing is
-    useable, set them to None
+    Get username and password from auth.cfg. If nothing is
+    useable, sets them to None.
 
     Args:
         cls (Backend): The class of the backend
@@ -28,11 +28,11 @@ class Authenticate:
         auth (tuple(str,str)): (username, password). Both are either str or None.
 
     auth.cfg has sections
-      [default]             most general fallback
-      [ClassName]           the class name of a backend like MMT
-      [ClassName.sub_name]  can be used for a specific test
+      * [default]             most general fallback
+      * [ClassName]           the class name of a backend like MMT
+      * [ClassName.sub_name]  can be used for a specific test
 
-    those sections are tried from most specific to default until
+    Those sections are tried from most specific to default until
     both username and password are known. It is legal if a more
     specific section only defines username or password.
 

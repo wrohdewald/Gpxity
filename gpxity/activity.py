@@ -29,6 +29,8 @@ class Activity:
     supported by the GPX format like the MapMyTracks activity type, they will
     transparently be encodeded in existing GPX fields like keywords, see :attr:`keywords`.
 
+    The GPX part is done by https://github.com/tkrajina/gpxpy.
+
     If an activity is assigned to a backend, all changes will by default be written directly to the backend.
     Some backends are able to change only one attribute with little time overhead, others always have
     to rewrite the entire activity.
@@ -379,7 +381,7 @@ class Activity:
     def gpx(self) ->GPX:
         """
         Direct access to the GPX object. If you use it to change its content,
-        remember to set :attr:`dirty` to True afterwards..
+        remember to set :attr:`dirty` to True afterwards.
 
         Returns:
             the GPX object
@@ -390,7 +392,7 @@ class Activity:
     def last_time(self) ->datetime.datetime:
         """
         Returns:
-            the last timestamp we received so far"""
+            the last timestamp we received so far."""
         self._load_full()
         return self.__gpx.get_time_bounds().end_time
 
@@ -485,7 +487,7 @@ class Activity:
         """For speed optimized equality checks, not granted to be exact.
 
         Returns:
-            a string with selected attributes in printable form
+            a string with selected attributes in printable form.
         """
         self._load_full()
         return 'title:{} description:{} keywords:{} what{}: public:{} last_time:{} angle:{} points:{}'.format(
@@ -519,8 +521,6 @@ class Activity:
 
     def all_points(self):
         """
-        First, this fully loads the activity if not yet done.
-
         Yields:
             GPXTrackPoint: all points in all tracks and segments
         """

@@ -21,7 +21,6 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-print('sys.path:', sys.path)
 
 #autoclass_content = 'both' # this also includes the __init__ docstring
 
@@ -163,4 +162,23 @@ texinfo_documents = [
 ]
 
 
+#autodoc_default_flags = ['members', 'private-members', 'special-members',
+#    #'undoc-members',
+#    'show-inheritance']
 
+
+
+"""
+this should work - why doesn't it?
+
+def autodoc_skip_member(app, what, name, obj, skip, option):
+    try:
+        if obj.__qualname__ == 'Activity.loading':
+            return True
+    except Exception:
+        pass
+    return skip #or exclude
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)
+"""

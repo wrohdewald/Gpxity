@@ -11,6 +11,11 @@ test "$parentdir/$currentdir" != Gpxity/doc && (
 	exit 2
 )
 
-sphinx-apidoc -M -f -o source  ../gpxity
+# if you rebuild them, add this to gpxity.activity module:
+#	        :exclude-members: loading, isloading
+
+#rm -f build/html/_sources/gpxity*rst.txt
+#
+#sphinx-apidoc -M -f -o source  ../gpxity
 
 make html

@@ -132,8 +132,8 @@ class MMT(Backend):
     Args:
         url (str): The Url of the server. Default is http://mapmytracks.com/api
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, destroy() will remove all activities but not
-            :meth:`~gpxity.backend.deallocate` the user account.
+        cleanup (bool): If True, destroy() will remove all activities in the
+            user account.
     """
 
     # pylint: disable=abstract-method

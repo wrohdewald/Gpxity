@@ -12,6 +12,10 @@ import datetime
 from inspect import getmembers, isfunction
 import dis
 
+from typing import List
+
+from .activity import Activity
+
 __all__ = ['Backend']
 
 
@@ -45,7 +49,8 @@ class _ActivityList(list):
 
 
 class Backend:
-    """A place where activities live. Something like the filesystem or MMT
+    """A place where activities live. Something like the filesystem or
+    http://mapmytracks.com.
 
     This can be used as a context manager. At termination, all activities
     may be removed automatically, if cleanup=True. Some concrete
@@ -119,7 +124,7 @@ class Backend:
         """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
 
-    def list_all(self):
+    def list_all(self) ->List[Activity]:
         """list all activities for this user
 
         Returns:
@@ -160,7 +165,7 @@ class Backend:
         Args:
             activity (Activity): The activity we want to save in this backend.
                 It may be associated with an arbitrary backend.
-            attributes set(str): If given and the backend supports specific saving for all given attributes,
+            attributes (set(str)): If given and the backend supports specific saving for all given attributes,
                 save only those.
                 Otherwise, save the entire activity.
 
@@ -197,12 +202,12 @@ class Backend:
             self.activities.append(activity)
         return activity
 
-    def _save_full(self, activity):
+    def _save_full(self, activity) ->None:
         """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 
     def remove(self, activity) ->None:
-        """Removes activity from backend."""
+        """Removes activity."""
         self._remove_activity_in_backend(activity)
         self.activities.remove(activity)
 
@@ -212,7 +217,10 @@ class Backend:
 
     def update(self, activity, points): # pylint: disable=no-self-use
         """Appends to the remove activity. points are already
-        added to activity"""
+        added to activity
+
+        Todo:
+            should not be exposed."""
         raise NotImplementedError()
 
     def _write_title(self, activity):
@@ -237,13 +245,13 @@ class Backend:
             self.remove(activity)
 
     def copy_all_from(self, from_backend):
-        """Copies all activities into this backend.activities.
+        """Copies all activities into this backend.
 
         Args:
             from_backend (Backend): The source of the activities
 
         Returns:
-            list all new activities in this backend
+            List of all new activities in this backend
         """
         result = list()
         for activity in from_backend.list_all():
@@ -255,7 +263,7 @@ class Backend:
         if self.cleanup:
             self.remove_all()
 
-    def has_same_activities(self, other):
+    def has_same_activities(self, other) ->bool:
         """True if both backends have the same activities."""
         return set(x.key() for x in self.activities) == set(x.key() for x in other.activities)
 
