@@ -9,8 +9,6 @@ This implements :class:`gpxity.backends.MMTServer`
 """
 
 
-import datetime
-
 from .directory import Directory
 
 __all__ = ['MMTServer']
@@ -28,10 +26,6 @@ class MMTServer(Directory):
 
     def __init__(self, url=None, auth=None, cleanup=False):
         super(MMTServer, self).__init__(url, auth=auth, cleanup=cleanup)
-
-    def get_time(self):
-        """get MMT server time as a Linux timestamp"""
-        return int(datetime.datetime.now().timestamp())
 
     def _set_new_id(self, activity):
         """gives the activity a unique id"""
