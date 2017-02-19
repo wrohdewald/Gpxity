@@ -200,15 +200,15 @@ class MMT(Backend):
             if 'success' not in response.text:
                 raise requests.exceptions.HTTPError()
 
-    def write_title(self, activity):
+    def _write_title(self, activity):
         """changes title on remote server"""
         self._write_attribute(activity, 'title')
 
-    def write_description(self, activity):
+    def _write_description(self, activity):
         """changes description on remote server"""
         self._write_attribute(activity, 'description')
 
-    def write_public(self, activity):
+    def _write_public(self, activity):
         """changes public/private on remote server"""
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
@@ -226,7 +226,7 @@ class MMT(Backend):
             self._load_page_in_session(activity, session)
             assert activity.public == wanted_public
 
-    def write_what(self, activity):
+    def _write_what(self, activity):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
@@ -380,7 +380,7 @@ class MMT(Backend):
             'upload_activity', gpx_file=activity.to_xml(),
             status=status, description=activity.description, activity=activity.what)
         activity.id_in_backend = response.find('id').text
-        self.write_title(activity)
+        self._write_title(activity)
 
     def destroy(self):
         """We do not remove the account on mapmytracks!"""
