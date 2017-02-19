@@ -64,12 +64,6 @@ class Activity:
             This should eventually become more flexible.
         id_in_backend (str): Every backend has its own scheme for unique activity ids. Some
             backends may change the id if the activity data changes.
-        loading (bool): True while the activity loads from backend. Do not change this unless
-            you implement a new backend.
-
-    Todo:
-        loading: make that a context manager
-
     """
 
     # pylint: disable = too-many-instance-attributes
@@ -84,7 +78,7 @@ class Activity:
         'Miscellaneous')
 
     def __init__(self, backend=None, id_in_backend: str=None, gpx=None):
-        self.loading = False
+        self._loading = False
         self._loaded = backend is None or id_in_backend is None
         self.__dirty = set()
         self._batch_changes = False
@@ -148,7 +142,7 @@ class Activity:
     def dirty(self, value):
         if not value:
             raise Exception('You may not set dirty to False. Instead use _save().')
-        if self.loading:
+        if self._loading:
             return
 
         if isinstance(value, bool):
@@ -180,7 +174,7 @@ class Activity:
         Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.backend.Backend.save>`.
         """
         if self.__dirty:
-            if self.backend and not self.loading and not self._batch_changes:
+            if self.backend and not self._loading and not self._batch_changes:
                 self.backend.save(self, self.__dirty)
                 self.__dirty = set()
 
@@ -225,6 +219,26 @@ class Activity:
         """
         self._load_full()
         return self.__gpx.description
+
+    @contextmanager
+    def loading(self):
+        """This context manager marks the activity as being loaded. In
+        that state, automatic writes of changes into the backend are
+        disabled.
+
+        You should never need this unless you write a new backend.
+        """
+        prev_loading = self._loading
+        self._loading = True
+        try:
+            yield
+        finally:
+            self._loading = prev_loading
+
+    @property
+    def is_loading(self):
+        """True if we are currently loading. See :meth:`loading`."""
+        return self._loading
 
     @contextmanager
     def batch_changes(self):
@@ -279,6 +293,7 @@ class Activity:
         """Loads the full track from source_backend if not yet loaded."""
         if self.backend and self.id_in_backend and not self._loaded and not self.loading:
             self.backend.load_full(self)
+            self._loaded = True
 
     def add_points(self, points) ->None:
         """Adds points to last segment in the last track. If no track
@@ -325,9 +340,7 @@ class Activity:
         if not indata:
             # ignore empty file
             return
-        is_loading = self.loading
-        self.loading = True
-        try:
+        with self.loading():
             old_gpx = self.__gpx
             old_public = self.public
             self.__gpx = gpxpy.parse(indata)
@@ -338,8 +351,6 @@ class Activity:
             if old_gpx.description and not self.__gpx.description:
                 self.__gpx.description = old_gpx.description
             self._loaded = True
-        finally:
-            self.loading = is_loading
 
     def to_xml(self) ->str:
         """Produces exactly one line per trackpoint for easier editing

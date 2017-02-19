@@ -114,12 +114,9 @@ class Directory(Backend):
 
     def load_full(self, activity):
         """fills the activity with all its data from source."""
-        activity.loading = True
-        try:
+        with activity.loading():
             with open(self._gpx_path(activity)) as in_file:
                 activity.parse(in_file)
-        finally:
-            activity.loading = False
 
     def _remove_activity_file(self, activity):
         """remove the file, its symlinks and empty symlink parent directories"""

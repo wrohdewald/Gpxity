@@ -192,7 +192,7 @@ class MMT(Backend):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        if activity.loading:
+        if activity.is_loading:
             return
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
@@ -237,7 +237,6 @@ class MMT(Backend):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        assert not activity.loading
         with MMTSession(self) as session:
             url = self._base_url() + '/handler/write_activity'
             data = {'eid': activity.id_in_backend, 'activity': activity.what}
@@ -267,13 +266,10 @@ class MMT(Backend):
                 for _ in chunk:
                     raw_data = MMTRawActivity(_)
                     activity = Activity(self, raw_data.activity_id)
-                    activity.loading = True
-                    try:
+                    with activity.loading():
                         activity.title = raw_data.title
                         activity.time = raw_data.time
                         activity.what = raw_data.what
-                    finally:
-                        activity.loading = False
                     yield activity
                 assert len(self.activities) > old_len
 
@@ -308,9 +304,7 @@ class MMT(Backend):
     def _load_page_in_session(self, activity, session):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page."""
-        old_loading = activity.loading
-        activity.loading = True
-        try:
+        with activity.loading():
             response = session.get('{}/explore/activity/{}'.format(
                 self._base_url(), activity.id_in_backend))
             page_parser = ParseMMTActivity()
@@ -330,8 +324,6 @@ class MMT(Backend):
                 activity.what = page_parser.result['what_3']
             if page_parser.result['status'] is not None:
                 activity.public = page_parser.result['status']
-        finally:
-            activity.loading = old_loading
 
     def _load_attr_from_webpage(self, activity):
         """The MMT api does not deliver all attributes we want.
@@ -341,16 +333,13 @@ class MMT(Backend):
 
     def load_full(self, activity):
         """get the entire activity"""
-        activity.loading = True
-        try:
+        with activity.loading():
             with MMTSession(self) as session:
                 response = session.get('{}/assets/php/gpx.php?tid={}'.format(
                     self._base_url(), activity.id_in_backend))
                 activity.parse(response.text)
                 # but this does not give us activity type and other things.
                 self._load_page_in_session(activity, session)
-        finally:
-            activity.loading = False
 
     def __load_points_with_api(self, activity):
         """"First, it only imported 100 points starting at from_time. Now (Feb 2017), it always imports
