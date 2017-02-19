@@ -22,6 +22,13 @@ from .. import Backend, Activity
 
 __all__ = ['MMT']
 
+def _convert_time(raw_time) ->datetime.datetime:
+    """MMT uses Linux timestamps. Converts that into datetime
+
+    Args:
+        raw_time (int): The linux timestamp from the MMT server
+    """
+    return datetime.datetime.utcfromtimestamp(float(raw_time))
 
 
 class MMTSession:
@@ -121,7 +128,7 @@ class MMTRawActivity:
     def __init__(self, xml):
         self.activity_id = xml.find('id').text
         self.title = xml.find('title').text
-        self.time = MMT.convert_time(xml.find('date').text)
+        self.time = _convert_time(xml.find('date').text)
         self.what = xml.find('activity_type').text
 
 
@@ -240,7 +247,7 @@ class MMT(Backend):
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
-        return self.convert_time(self.__post('get_time').find('server_time').text)
+        return _convert_time(self.__post('get_time').find('server_time').text)
 
     def _yield_activities(self):
         """get all activities for this user. If we do not use the generator
@@ -270,7 +277,8 @@ class MMT(Backend):
                     yield activity
                 assert len(self.activities) > old_len
 
-    def __import_xml(self, activity, xml):
+    @staticmethod
+    def __import_xml(activity, xml):
         """imports points and other data. Currently unused and unusable
         see __load_points_with_api."""
         xml_points = xml.find('points')
@@ -281,7 +289,7 @@ class MMT(Backend):
                 when, latitude, longitude, elevation = raw_point.split(',')
                 min_when = min(min_when, int(when))
                 max_when = max(max_when, int(when))
-                when = self.convert_time(when)
+                when = _convert_time(when)
                 activity.add_points([
                     GPXTrackPoint(
                         latitude, longitude,
@@ -399,11 +407,3 @@ class MMT(Backend):
             'update_activity', activity_id=activity.id_in_backend,
             points=points)
 
-    @staticmethod
-    def convert_time(raw_time) ->datetime.datetime:
-        """MMT uses Linux timestamps. Converts that into datetime
-
-        Args:
-            raw_time (int): The linux timestamp from the MMT server
-        """
-        return datetime.datetime.utcfromtimestamp(float(raw_time))
