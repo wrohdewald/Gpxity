@@ -138,6 +138,8 @@ class MMT(Backend):
 
     # pylint: disable=abstract-method
 
+   #  skip_test = True
+
     def __init__(self, url=None, auth=None, cleanup=True):
         if url is None:
             url = 'http://www.mapmytracks.com/api'
@@ -178,7 +180,6 @@ class MMT(Backend):
             result.raise_for_status()
         except BaseException as exc:
             raise type(exc)('{}: {} {} {}'.format(exc, self.url, request, result.text))
-
 
     def _change_attribute(self, activity, attribute):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but

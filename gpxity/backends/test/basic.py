@@ -88,6 +88,19 @@ class BasicTest(unittest.TestCase):
         result.what = what or random.choice(Activity.legal_what)
         return result
 
+    @staticmethod
+    def some_random_points(count=10):
+        """
+
+        Returns:
+            A list with count points
+        """
+        result = list()
+        for _ in range(count):
+            point = GPXTrackPoint(latitude=50 + _/10.0, longitude=40 + _/10, elevation=_)
+            result.append(point)
+        return result
+
     def assertSameActivities(self, backend1, backend2): # pylint: disable=invalid-name
         """both backends must hold identical activities"""
         self.assertEqual(backend1, backend2, 'backend1:{} backend2:{}'.format(

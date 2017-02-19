@@ -10,7 +10,6 @@ implements test classes for Activity
 import os
 import datetime
 import io
-import unittest
 import filecmp
 
 from gpxpy.gpx import GPX
@@ -29,12 +28,22 @@ class ActivityTests(BasicTest):
     def test_init(self):
         """test initialisation"""
         Activity()
-        backend = Directory()
-        with self.assertRaises(Exception):
-            Activity(backend, gpx=GPX())
-        Activity(backend)
-        self.assertEqual(len(backend.activities), 1)
+        with Directory() as backend:
+            with self.assertRaises(Exception):
+                Activity(backend, gpx=GPX())
+            Activity(backend)
+            self.assertEqual(len(backend.activities), 1)
 
+    def test_activity_list(self):
+        """test ActivityList"""
+        with Directory() as directory: # we have no direct access to class ActivityList
+            ali = directory.activities
+            self.assertEqual(len(ali), 0)
+            activity1 = Activity(backend=directory)
+            self.assertIn(activity1, ali)
+            self.assertEqual(activity1.id_in_backend, None)
+            activity1.description = 'x'
+            self.assertNotEqual(activity1.id_in_backend, None)
 
     def test_clone(self):
         """is the clone identical?"""
@@ -83,6 +92,21 @@ class ActivityTests(BasicTest):
         activity.what = what_other
         with self.assertRaises(Exception):
             activity.add_keyword('What:{}'.format(what_other))
+
+    def test_keywords(self):
+        """save and load keywords. TODO: Also in test_backend for all backends"""
+        with Directory() as directory:
+            activity = Activity(backend=directory)
+            activity.keywords = (['a', 'b', 'c'])
+            with self.assertRaises(Exception):
+                activity.add_keyword('b')
+            activity.remove_keyword('b')
+            self.assertEqual(activity.keywords, (['a', 'c']))
+            with self.assertRaises(Exception):
+                activity.add_keyword('What:whatever')
+            activity.add_keyword('e')
+            self.assertEqual(activity.keywords, (['a', 'c', 'e']))
+
 
     def test_remove_what(self):
         """remove what from Activity"""
@@ -184,10 +208,15 @@ class ActivityTests(BasicTest):
 
     def test_save(self):
         """save locally"""
+        # TODO: fuer die ganzen Directory) with machen oder destroy rufen, nach dem Test soll /tmp sauber sein
         directory = Directory()
         dir2 = directory.clone()
         activity = self.create_unique_activity()
         activity.backend = directory
+        self.assertEqual(len(directory.activities), 1)
+        self.assertEqual(len(directory.activities), 1)
+        aclone = activity.clone()
+        self.assertEqualActivities(activity, aclone)
 
         self.assertEqual(len(dir2.activities), 0)
         dir2.list_all()
@@ -196,6 +225,7 @@ class ActivityTests(BasicTest):
         activity2 = activity.clone()
         self.assertEqualActivities(activity, activity2)
         activity2.backend = directory
+        self.assertEqual(len(directory.activities), 2)
         with self.assertRaises(Exception):
             activity2.backend = dir2
         with self.assertRaises(Exception):
@@ -218,3 +248,15 @@ class ActivityTests(BasicTest):
             file2 = files[idx2]
             self.assertTrue(filecmp.cmp(file1, file2),
                             'Files are different: {} and {}'.format(file1, file2))
+
+    def test_add_points(self):
+        """test Activity.add_points"""
+        point_count = 11
+        activity = Activity()
+        points = self.some_random_points(count=point_count)
+        activity.add_points(points)
+        self.assertEqual(activity.point_count(), point_count)
+        with self.assertRaises(Exception):
+            activity.add_points(points)
+        activity.add_points(points[:-1])
+        self.assertEqual(activity.point_count(), point_count * 2 - 1)

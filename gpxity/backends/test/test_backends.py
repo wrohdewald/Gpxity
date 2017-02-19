@@ -75,13 +75,14 @@ class TestBackends(BasicTest):
             if not cls.skip_test:
                 with self.subTest(' {}'.format(cls.__name__)):
                     backend = self.setup_backend(cls, count=1, clear_first=True)
-                    activity = backend.list_all(load_full=True)[0]
+                    activity = backend.list_all()[0]
                     first_public = activity.public
                     first_title = activity.title
                     first_description = activity.description
                     first_what = activity.what
                     activity.public = not activity.public
                     activity.title = 'A new title'
+                    self.assertEqual(activity.title, 'A new title')
                     activity.description = 'A new description'
                     if activity.what == 'Cycling':
                         activity.what = 'Running'
@@ -89,7 +90,7 @@ class TestBackends(BasicTest):
                         activity.what = 'Cycling'
                     # make sure there is no cache in the way
                     backend2 = backend.clone()
-                    activity2 = backend2.list_all(load_full=True)[0]
+                    activity2 = backend2.list_all()[0]
                     self.assertNotEqual(first_public, activity2.public)
                     self.assertNotEqual(first_title, activity2.title)
                     self.assertNotEqual(first_description, activity2.description)

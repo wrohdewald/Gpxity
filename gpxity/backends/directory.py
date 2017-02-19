@@ -35,6 +35,7 @@ class Directory(Backend):
         cleanup (bool): If True and Url is None, destroy() will deallocate the directory.
     """
 
+   # skip_test = True
     # pylint: disable=abstract-method
 
     def __init__(self, url=None, auth=None, cleanup=False):
