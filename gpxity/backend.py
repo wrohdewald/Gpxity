@@ -188,7 +188,7 @@ class Backend:
         raise NotImplementedError()
 
     def remove(self, activity) ->None:
-        """remove activity from backend"""
+        """Removes activity from backend."""
         self._remove_activity_in_backend(activity)
         self.activities.remove(activity)
 
@@ -197,33 +197,33 @@ class Backend:
         raise NotImplementedError()
 
     def update(self, activity, points): # pylint: disable=no-self-use
-        """append to the remove activity. points are already
+        """Appends to the remove activity. points are already
         added to activity"""
         raise NotImplementedError()
 
     def change_title(self, activity):
-        """change title in backend, activity already has the new title"""
+        """Changes title in backend, activity already has the new title."""
         raise NotImplementedError()
 
     def change_description(self, activity):
-        """changes description in backend, activity already has the new description"""
+        """Changes description in backend, activity already has the new description."""
         raise NotImplementedError()
 
     def change_what(self, activity):
-        """change what in backend, activity already has the new type"""
+        """Changes what in backend, activity already has the new what."""
         raise NotImplementedError()
 
     def change_public(self, activity):
-        """change public/private in backend, activity already has the new type"""
+        """Changes public/private in backend, activity already has the new status."""
         raise NotImplementedError()
 
     def remove_all(self):
-        """removes all activities"""
+        """Removes all activities."""
         for activity in list(self.list_activities()):
             self.remove(activity)
 
     def copy_all_from(self, from_backend):
-        """copy all activities into this backend.activities
+        """Copies all activities into this backend.activities.
 
         Args:
             from_backend (Backend): The source of the activities
@@ -237,12 +237,12 @@ class Backend:
         return result
 
     def destroy(self):
-        """removes all traces of this backend ONLY if we created it in __init__"""
+        """Removes all traces of this backend ONLY if we created it in __init__."""
         if self.cleanup:
             self.remove_all()
 
     def has_same_activities(self, other):
-        """True if both backends have the same activities"""
+        """True if both backends have the same activities."""
         return set(x.key() for x in self.activities) == set(x.key() for x in other.activities)
 
     def __repr__(self):

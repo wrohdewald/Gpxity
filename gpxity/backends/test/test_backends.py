@@ -31,7 +31,7 @@ class TestBackends(BasicTest):
                     self.assertTrue(cls.supported & expect_unsupported[cls.__name__] == set())
 
     def test_backend(self):
-        """manipulate backend"""
+        """Manipulate backend"""
         activity = self.create_unique_activity()
         directory1 = Directory()
         directory2 = Directory()
@@ -45,7 +45,7 @@ class TestBackends(BasicTest):
             activity.backend = None
 
     def test_open_wrong_auth(self):
-        """open backends with wrong password"""
+        """Open backends with wrong password"""
         for cls in self._find_backend_classes():
             if not cls.skip_test:
                 with self.subTest(' {}'.format(cls.__name__)):
@@ -56,7 +56,7 @@ class TestBackends(BasicTest):
                             self.setup_backend(cls, sub_name='wrong')
 
     def test_create_backend(self):
-        """test creation of a backend"""
+        """Test creation of a backend"""
         for cls in self._find_backend_classes():
             if not cls.skip_test:
                 with self.subTest(' {}'.format(cls.__name__)):
@@ -70,7 +70,7 @@ class TestBackends(BasicTest):
                         2, second_time, first_time, second_time - first_time))
 
     def test_change_remote_attributes(self):
-        """if we change title, description, public, what in activity, is the backend updated?"""
+        """If we change title, description, public, what in activity, is the backend updated?"""
         for cls in self._find_backend_classes():
             if not cls.skip_test:
                 with self.subTest(' {}'.format(cls.__name__)):

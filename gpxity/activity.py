@@ -42,14 +42,27 @@ class Activity:
             it was constructed in memory, backend is None. backend will not be modifiable, even
             if initialized as None.
             Instead, use :literal:`new_activity = backend.save(activity)`.
+        id_in_backend (str): The identifier of this activity in backend.
         gpx (GPX): Initial content.
 
-    At least one of **backend** or **gpx** must be None.
+    At least one of **backend** or **gpx** must be None. If backend is None and this
+    activity is later coupled with a backend, it is silently assumed that the activity did
+    not yet exist in that backend. That makes a difference when loading data from
+    the backend: If data is expected, an exception is raised, if no data is expected,
+    loading just does nothing.
+
+    The data will only be loaded from the backend when it is needed. Some backends
+    might support loading some attributes separately, but for now, we always load
+    everything as soon as anything is needed.
 
     Attributes:
         legal_what (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
             as default value.
-        id_in_backend (str): Every backend has its own scheme for unique activity ids.
+
+            Currently those are the values as defined by mapmytracks.
+            This should eventually become more flexible.
+        id_in_backend (str): Every backend has its own scheme for unique activity ids. Some
+            backends may change the id if the activity data changes.
         loading (bool): True while the activity loads from backend. Do not change this unless
             you implement a new backend.
 
@@ -99,7 +112,6 @@ class Activity:
 
     @backend.setter
     def backend(self, value):
-        """TODO: a in backend, b=a.clone(), b in dasselbe backend setzen. Sollte nicht gehen."""
         if value is not self.__backend:
             if value is None:
                 raise Exception('You cannot decouple an activity from its backend. Use clone().')
@@ -112,7 +124,7 @@ class Activity:
                 self.__backend.save(self)
 
     def clone(self):
-        """Create a new activity with the same content but without backend
+        """Creates a new activity with the same content but without backend.
 
         Returns:
             the new activity
@@ -123,10 +135,17 @@ class Activity:
         return result
 
     def save(self):
-        """save this activity in the associated backend."""
-        if not self.backend:
-            raise Exception('Please assign a backend before saving')
-        self.backend.save(self)
+        """Saves all changes in the associated backend.
+
+        If any of those conditions is met, do nothing:
+
+        - we are currently loading from backend: Avoid recursion
+        - batch_changes is active
+        - we have no backend
+
+        Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.backend.Backend.save>`.
+
+        """
 
     @property
     def time(self) ->datetime.datetime:
@@ -142,7 +161,8 @@ class Activity:
             self.__gpx.time = value
 
     def adjust_time(self):
-        """set gpx.time to the time of the first trackpoint.
+        """sets gpx.time to the time of the first trackpoint.
+
         We must do this for mapmytracks because it does
         not support uploading the time, it computes the time
         from the first trackpoint. We want to be synchronous."""
@@ -151,8 +171,7 @@ class Activity:
 
     @property
     def title(self) -> str:
-        """str: The title. Internally stored in gpx.title, but every backend
-            may actually store this differently. But this is transparent to the user.
+        """str: The title.
         """
         return self.__gpx.name
 
@@ -165,8 +184,7 @@ class Activity:
 
     @property
     def description(self) ->str:
-        """str: The description. Internally stored in gpx.description, but every backend
-            may actually store this differently. But this is transparent to the user.
+        """str: The description.
         """
         return self.__gpx.description
 
@@ -204,7 +222,7 @@ class Activity:
         return the default.
 
         Returns:
-            The current value or the default value (see `legal_what`)
+            The current value or the default value (see :attr:`legal_what`)
         """
         return self.__what
 
@@ -266,8 +284,9 @@ class Activity:
 
     def parse(self, indata):
         """parse GPX.
-        title, description and what from indata have precedence.
-        public will be or-ed
+
+        :attr:`title`, :attr:`description` and :attr:`what` from indata have precedence over the current values.
+        :attr:`public` will be or-ed
 
         Args:
             indata: may be a file descriptor or str
@@ -334,10 +353,11 @@ class Activity:
     @property
     def gpx(self) ->GPX:
         """
-        Direct access to the GPX object.If you use it to change its content,
+        Direct access to the GPX object. If you use it to change its content,
         remember to save the activity.
+
         Returns:
-            the GPX object, readonly.
+            the GPX object
         """
         self._load_full()
         return self.__gpx
@@ -351,7 +371,7 @@ class Activity:
 
     @property
     def keywords(self):
-        """list(str): represent them as a list - in GPX they are comma separated.
+        """list(str): represents them as a list - in GPX they are comma separated.
             Content is whatever you want.
 
             Because the GPX format does not have attributes for everything used by all backends,
@@ -359,8 +379,8 @@ class Activity:
 
             Example for mapmytracks: keywords = 'Status:public, What:Cycling'.
 
-            However this is transparent for you. When parsing the XML, those are removed
-            from keywords, and the are re-added in Activity.to_xml().
+            However this is transparent for you. When parsing theGPX file, those are removed
+            from keywords, and the are re-added in when exporting in :meth:`to_xml`.
         """
         self._load_full()
         if self.__gpx.keywords:
@@ -488,10 +508,10 @@ class Activity:
 
     def points_equal(self, other, verbose=False) ->bool:
         """
-        First, this fully loads the activity if not yet done.
-
         Returns:
-            True if both have identical points. All points of all tracks and segments are combined.
+            True if both activities have identical points.
+
+        All points of all tracks and segments are combined.
         """
         self._load_full()
         if self.point_count() != other.point_count():

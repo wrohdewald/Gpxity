@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-Defines :class:`gpxity.backends.Directory`
+Defines :class:`gpxity.backends.directory.Directory`
 """
 
 
