@@ -32,7 +32,8 @@ class Directory(Backend):
             gpxpy.X where X are some random characters.
             If the directory does not exist, it is created.
         auth (tuple(str, str)): Unused.
-        cleanup (bool): If True and Url is None, destroy() will remove all activities.
+        cleanup (bool): If True, :meth:`destroy` will remove all activities. If True and :any:`url` was
+            not given, it will also remove the directory.
     """
 
    # skip_test = True
@@ -78,11 +79,13 @@ class Directory(Backend):
         activity.id_in_backend = unique_value
 
     def destroy(self):
-        """remove the entire backend IF we created it in __init__, otherwise only empty it"""
+        """If `cleanup` was set at init time, removes all activities. If :any:`url` was set at init time,
+        also removes the directory."""
         super(Directory, self).destroy()
-        if self.cleanup and not self.url_given:
+        if self._cleanup:
             self.remove_all()
-            os.rmdir(self.url)
+            if not self.url_given:
+                os.rmdir(self.url)
 
     def _gpx_path(self, activity):
         """The full path name for the local copy of an activity"""

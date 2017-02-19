@@ -84,7 +84,7 @@ class Backend:
         if self.url and not self.url.endswith('/'):
             self.url += '/'
         self.auth = auth
-        self.cleanup = cleanup
+        self._cleanup = cleanup
 
     @classmethod
     def _define_support(cls):
@@ -229,8 +229,10 @@ class Backend:
         return result
 
     def destroy(self):
-        """Removes all traces of this backend ONLY if we created it in __init__."""
-        if self.cleanup:
+        """If `cleanup` was set at init time, removes all activities. Some backends
+       (example: :class:`Directory <gpxity.backends.directory.Directory.destroy>`)
+       may also remove the account (or directory)."""
+        if self._cleanup:
             self.remove_all()
 
     def has_same_activities(self, other) ->bool:
