@@ -248,10 +248,6 @@ class Backend:
         if self.cleanup:
             self.remove_all()
 
-    def __hash__(self):
-        """dict needs hashable keys"""
-        return id(self)
-
     def has_same_activities(self, other):
         """True if both backends have the same activities"""
         return set(x.key() for x in self.activities) == set(x.key() for x in other.activities)
