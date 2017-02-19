@@ -126,7 +126,7 @@ class BasicTest(unittest.TestCase):
             cls_ (Backend): the class of the backend to be created
             url (str): the url for the backend
             count (int): how many random activities should be inserted?
-            cleanup (bool): If True, remve all activities when done. Passed to the backend.
+            cleanup (bool): If True, remove all activities when done. Passed to the backend.
             clear_first (bool): if True, first remove all existing activities
             sub_name (str): use this to get specific username/passwords from Authenticate
 
