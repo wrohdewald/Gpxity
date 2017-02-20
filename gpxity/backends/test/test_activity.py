@@ -47,7 +47,7 @@ class ActivityTests(BasicTest):
 
     def test_clone(self):
         """is the clone identical?"""
-        activity1 = self.create_unique_activity()
+        activity1 = self.create_test_activity()
         activity2 = activity1.clone()
         self.assertEqualActivities(activity1, activity2)
         count1 = activity1.point_count()
@@ -144,7 +144,7 @@ class ActivityTests(BasicTest):
 
     def test_first_time(self):
         """about activity.time"""
-        activity = self.create_unique_activity()
+        activity = self.create_test_activity()
         first_time = activity.gpx.get_time_bounds()[0]
         activity.time = None
         self.assertEqual(activity.time, first_time)
@@ -153,13 +153,13 @@ class ActivityTests(BasicTest):
 
     def test_last_time(self):
         """Activity.last_time()"""
-        activity = self.create_unique_activity()
+        activity = self.create_test_activity()
         gpx_last_time = activity.gpx.tracks[-1].segments[-1].points[-1].time
         self.assertEqual(activity.last_time(), gpx_last_time)
 
     def test_xml(self):
         """roughly check if we have one line per trackpoint"""
-        activity = self.create_unique_activity()
+        activity = self.create_test_activity()
         xml = activity.to_xml()
         self.assertNotIn('<link ></link>', xml)
         lines = xml.split('\n')
@@ -167,7 +167,7 @@ class ActivityTests(BasicTest):
 
     def test_parse(self):
         """does Activity parse xml correctly"""
-        activity = self.create_unique_activity()
+        activity = self.create_test_activity()
         xml = activity.to_xml()
         activity2 = Activity()
         activity2.parse(xml)
@@ -178,7 +178,7 @@ class ActivityTests(BasicTest):
 
     def test_combine(self):
         """combine values in activity with newly parsed"""
-        activity = self.create_unique_activity()
+        activity = self.create_test_activity()
         xml = activity.to_xml()
         if activity.what == 'Cycling':
             other_what = 'Running'
@@ -211,7 +211,7 @@ class ActivityTests(BasicTest):
         # TODO: fuer die ganzen Directory) with machen oder destroy rufen, nach dem Test soll /tmp sauber sein
         directory = Directory()
         dir2 = directory.clone()
-        activity = self.create_unique_activity()
+        activity = self.create_test_activity()
         activity.backend = directory
         self.assertEqual(len(directory.activities), 1)
         self.assertEqual(len(directory.activities), 1)

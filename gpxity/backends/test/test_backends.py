@@ -32,7 +32,7 @@ class TestBackends(BasicTest):
 
     def test_backend(self):
         """Manipulate backend"""
-        activity = self.create_unique_activity()
+        activity = self.create_test_activity()
         directory1 = Directory()
         directory2 = Directory()
 

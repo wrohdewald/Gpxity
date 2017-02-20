@@ -52,7 +52,7 @@ class BasicTest(unittest.TestCase):
         self.auth = Authenticate(cls_, sub_name).auth
 
     @staticmethod
-    def create_unique_activity(count=1, idx=0, what=None):
+    def create_test_activity(count=1, idx=0, what=None):
         """creates a unique activity. It starts off with **test.gpx** and appends a unique
         last track point, it also gives it a unique time stamp. This is done using **count**
         and **idx**: The last point is set such that looking at the tracks, they all go in a different
@@ -141,7 +141,7 @@ class BasicTest(unittest.TestCase):
         else:
             result.list_all()
         while count > len(result.activities):
-            activity = self.create_unique_activity(count, len(result.activities))
+            activity = self.create_test_activity(count, len(result.activities))
             result.save(activity)
         return result
 
