@@ -94,7 +94,7 @@ ignore-mixin-members=yes
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamicaly set).
-ignored-classes=SQLObject,Message,Ruleset,Move,twisted.internet.reactor
+# ignored-classes=
 
 # List of members which are usually get through zope's acquisition mecanism and
 # so shouldn't trigger E0201 when accessed (need zope=yes to be considered).
