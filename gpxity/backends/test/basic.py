@@ -53,10 +53,11 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def create_test_activity(count=1, idx=0, what=None):
-        """creates a unique activity. It starts off with **test.gpx** and appends a unique
-        last track point, it also gives it a unique time stamp. This is done using **count**
-        and **idx**: The last point is set such that looking at the tracks, they all go in a different
-        direction clockwise, with an angle in degrees of :literal:`360 * idx / count`.
+        """creates an activity. It starts off with **test.gpx** and appends a
+        last track point, it also changes the time stamp of the last point.
+        This is done using **count** and **idx**: The last point is set such that
+        looking at the tracks, they all go in a different direction clockwise, with an angle
+        in degrees of :literal:`360 * idx / count`.
 
         Args:
             count (int): See above. Using 1 as default if not given.
