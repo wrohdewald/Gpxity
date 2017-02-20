@@ -86,7 +86,7 @@ class TestBackends(BasicTest):
                 else:
                     activity.what = 'Cycling'
                 # make sure there is no cache in the way
-                backend2 = backend.clone()
+                backend2 = self.clone_backend(backend)
                 activity2 = backend2.list_all()[0]
                 self.assertNotEqual(first_public, activity2.public)
                 self.assertNotEqual(first_title, activity2.title)
@@ -113,7 +113,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 backend = self.setup_backend(cls, count=1, clear_first=True)
-                backend2 = backend.clone()
+                backend2 = self.clone_backend(backend)
                 try:
                     activity = backend.list_all()[0]
                     activity.title = 'Title with utf-8 char ß (unicode szlig)'

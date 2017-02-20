@@ -207,7 +207,7 @@ class ActivityTests(BasicTest):
         """save locally"""
         # TODO: fuer die ganzen Directory) with machen oder destroy rufen, nach dem Test soll /tmp sauber sein
         directory = Directory()
-        dir2 = directory.clone()
+        dir2 = self.clone_backend(directory)
         activity = self.create_test_activity()
         activity.backend = directory
         self.assertEqual(len(directory.activities), 1)

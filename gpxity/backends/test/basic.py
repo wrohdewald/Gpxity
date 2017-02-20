@@ -161,6 +161,12 @@ class BasicTest(unittest.TestCase):
         return result
 
     @staticmethod
+    def clone_backend(backend):
+        """returns a clone of backend with nothing listed or loaded
+        """
+        return backend.__class__(backend.url, backend.auth)
+
+    @staticmethod
     def _find_backend_classes(with_skip: bool = False):
         """Finds all backend classes. Those will be tested.
 

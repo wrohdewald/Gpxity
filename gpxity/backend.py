@@ -12,8 +12,6 @@ import datetime
 from inspect import getmembers, isfunction
 import dis
 
-from .activity import Activity
-
 __all__ = ['Backend']
 
 
@@ -99,10 +97,6 @@ class Backend:
                 supported = first_instruction is None or first_instruction.argval != 'NotImplementedError'
                 if supported:
                     cls.supported.add(name)
-
-    def clone(self) ->Activity:
-        """returns a clone with nothing listed or loaded"""
-        return self.__class__(self.url, self.auth)
 
     def get_time(self) ->datetime.datetime:
         """get time from the server where backend is located as a Linux timestamp"""
