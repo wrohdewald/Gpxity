@@ -173,7 +173,7 @@ class MMT(Backend):
         try:
             result = ElementTree.fromstring(response.text)
         except ElementTree.ParseError:
-            print('POST {} has parse error: {}'.format(request, result.text))
+            print('POST {} has parse error in {}: {}'.format(data, request, response.text))
             raise
         assert result.text != 'error' # should have raise_for_status
         result_type = result.find('type')
