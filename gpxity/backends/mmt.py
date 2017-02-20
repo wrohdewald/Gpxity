@@ -288,7 +288,6 @@ class MMT(Backend):
                     activity = Activity(self, raw_data.activity_id)
                     with activity.loading():
                         activity.title = raw_data.title
-                        activity.time = raw_data.time
                         activity.what = raw_data.what
                     yield activity
                 assert len(self.activities) > old_len
@@ -393,7 +392,6 @@ class MMT(Backend):
 
         if not activity.point_count():
             raise Exception('MMT does not accept an activity without trackpoints:{}'.format(activity))
-        activity.adjust_time()
         mmt_status = 'public' if activity.public else 'private'
         if activity.id_in_backend:
             # we cannot change an MMT activity in-place, we need to re-upload and then

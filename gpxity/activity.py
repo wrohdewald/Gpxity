@@ -181,24 +181,13 @@ class Activity:
     @property
     def time(self) ->datetime.datetime:
         """datetime.datetime: start time of activity.
-        If gpx.time is undefined, use the first time from track points."""
-        if not self.__gpx.time:
-            self.__gpx.time = self.__gpx.get_time_bounds()[0]
-        return self.__gpx.time
+        For a simpler implementation of backends, notably MMT, we ignore
+        gpx.time. Instead we return the time of the earliest track point.
+        Only if there is no track point, return gpx.time.
 
-    @time.setter
-    def time(self, value: datetime.datetime):
-        if value != self.time:
-            self.__gpx.time = value
-
-    def adjust_time(self):
-        """Sets gpx.time to the time of the first trackpoint.
-
-        We must do this for mapmytracks because it does
-        not support uploading the time, it computes the time
-        from the first trackpoint. We want to be synchronous."""
-        self._load_full()
-        self.__gpx.time = self.__gpx.get_time_bounds()[0]
+        For the same reason time is readonly.
+        """
+        return self.__gpx.get_time_bounds()[0] or self.__gpx.time
 
     @property
     def title(self) -> str:

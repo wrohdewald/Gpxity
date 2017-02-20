@@ -146,10 +146,7 @@ class ActivityTests(BasicTest):
         """about activity.time"""
         activity = self.create_test_activity()
         first_time = activity.gpx.get_time_bounds()[0]
-        activity.time = None
         self.assertEqual(activity.time, first_time)
-        activity.time += datetime.timedelta(days=1)
-        self.assertNotEqual(activity.time, first_time)
 
     def test_last_time(self):
         """Activity.last_time()"""
