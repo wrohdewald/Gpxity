@@ -179,7 +179,11 @@ class MMT(Backend):
         """helper for the real function"""
         data = kwargs.copy()
         data['request'] = request
-        response = (session or requests).post(self.url, data=data, auth=self.auth, timeout=(5, 300))
+        try:
+            response = (session or requests).post(self.url, data=data, auth=self.auth, timeout=(5, 300))
+        except requests.exceptions.ReadTimeout:
+            print('timeout for', data)
+            raise
         try:
             response.content.decode(response.encoding)
         except  UnicodeDecodeError:
