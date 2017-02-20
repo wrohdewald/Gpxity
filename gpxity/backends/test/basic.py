@@ -146,8 +146,12 @@ class BasicTest(unittest.TestCase):
         return result
 
     @staticmethod
-    def _find_backend_classes():
-        """finds all backend classes. Those will be tested."""
+    def _find_backend_classes(with_skip: bool = False):
+        """Finds all backend classes. Those will be tested.
+
+        Args:
+            with_skip: if True, also finds those with skip_test=False
+        """
         backends_directory = __file__
         while not backends_directory.endswith('backends'):
             backends_directory = os.path.dirname(backends_directory)
@@ -166,7 +170,8 @@ class BasicTest(unittest.TestCase):
                 for _, cls in getmembers(imported, isclass):
                     if Backend in getmro(cls)[1:]:
                         # isinstance and is do not work here
-                        result.append(cls)
+                        if with_skip or not cls.skip_test:
+                            result.append(cls)
             except ImportError:
                 pass
         #sort because we want things reproducibly
