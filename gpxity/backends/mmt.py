@@ -5,9 +5,28 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.backends.MMT`
-"""
+This implements :class:`gpxity.backends.MMT` for http://www.mapmytracks.com
 
+There are many problems with the server running at mapmytracks.com:
+    * has problems with character sets, see MMT.__post
+    * does not support GPX very well. One problem is that it does not support gpx.time,
+      it ignores it in uploads and uses the time of the earliest trackpoint.
+    * do not know yet - does it support multiple tracks, multiple segments, waypoints?
+      I doubt it.
+    * there is an official description of an API at https://github.com/MapMyTracks
+      but this does not implement everything needed. For the missing parts we
+      simulate what a web browser would do, see MMT.load_full(). Of course that
+      could fail if MMT changes its site. Which is true for the api itself,it can
+      and does get incompatible changes at any time without notice to users or
+      deprecation periods.
+    * downloading activities with that abi is very slow and hangs forever for big activities
+      (at least this was so in Feb 2017, maybe have to test again occasionally).
+    * abi: upload_activity does not handle charsets correctly. It must accept UTF-8
+      (see https://url.spec.whatwg.org/#urlencoded-parsing). However mapmytracks.com
+      only decodes correctly if the client encodes everything as ISO8859-1.
+    * not all parts of MMT data are supported like tags (would be nice to have) or
+      images.
+"""
 
 from xml.etree import ElementTree
 from html.parser import HTMLParser
