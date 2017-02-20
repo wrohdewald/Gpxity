@@ -196,6 +196,7 @@ class Backend:
         """Removes activity."""
         self._remove_activity_in_backend(activity)
         self.activities.remove(activity)
+        activity.id_in_backend = None
 
     def _remove_activity_in_backend(self, activity) ->None:
         """backend dependent implementation"""
