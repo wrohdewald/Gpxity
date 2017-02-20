@@ -61,7 +61,10 @@ class BasicTest(unittest.TestCase):
         Args:
             count (int): See above. Using 1 as default if not given.
             idx (int): See above. Using 0 as default if not given.
-            what (str): The wanted value for the activity, default is the default value for what.
+            what (str): The wanted value for the activity.
+                Default: if count == len(:attr:`Activity.legal_what <gpxity.activity.Activity.legal_what>`),
+                the default value will be legal_what[idx].
+                Otherwise a random value will be applied.
 
         Returns:
             (Activity): A new activity not bound to a backend
@@ -85,7 +88,12 @@ class BasicTest(unittest.TestCase):
         result = Activity(gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(gpx.name)
-        result.what = what or random.choice(Activity.legal_what)
+        if what:
+            result.what = what
+        elif count == len(Activity.legal_what):
+            result.what = Activity.legal_what[idx]
+        else:
+            result.what = random.choice(Activity.legal_what)
         return result
 
     @staticmethod
@@ -122,7 +130,11 @@ class BasicTest(unittest.TestCase):
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
     def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True, sub_name=None):
-        """sets up an instance of a backend with count activities
+        """sets up an instance of a backend with count activities.
+
+        If count == len(:attr:`Activity.legal_what <gpxity.activity.Activity.legal_what>`),
+        the list of activities will always be identical. For an example
+        see :meth:`TestBackends.test_all_what <gpxity.backends.test.test_backends.TestBackends.test_all_what>`.
 
         Args:
             cls_ (Backend): the class of the backend to be created
