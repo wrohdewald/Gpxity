@@ -12,6 +12,7 @@ import requests
 
 from .basic import BasicTest
 from .. import Directory
+from ... import Activity
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -91,3 +92,38 @@ class TestBackends(BasicTest):
                 self.assertNotEqual(first_title, activity2.title)
                 self.assertNotEqual(first_description, activity2.description)
                 self.assertNotEqual(first_what, activity2.what)
+
+    def test_all_what(self):
+        """can we up- and download all values for :attr:`Activity.what`?"""
+        what_count = len(Activity.legal_what)
+        backends = list(
+            self.setup_backend(x, count=what_count, clear_first=True)
+            for x in self._find_backend_classes())
+        copies = list(
+            self.setup_backend(x, count=what_count, clear_first=True)
+            for x in self._find_backend_classes())
+        first_backend = copies[0]
+        for other in copies[1:]:
+            self.assertSameActivities(first_backend, other)
+        for backend in backends:
+            backend.destroy()
+
+    def test_unicode(self):
+        """Can we up- and download unicode characters in all text attributes?"""
+        for cls in self._find_backend_classes():
+            with self.subTest(' {}'.format(cls.__name__)):
+                backend = self.setup_backend(cls, count=1, clear_first=True)
+                backend2 = backend.clone()
+                try:
+                    activity = backend.list_all()[0]
+                    activity.title = 'Title with utf-8 char ß (unicode szlig)'
+                    backend2.list_all()
+                    activity2 = backend2.activities[0]
+                    self.assertEqualActivities(activity, activity2)
+                    activity.description = 'DESCRIPTION with utf-8 char ß (unicode szlig)'
+                    backend2.list_all()
+                    activity2 = backend2.activities[0]
+                    self.assertEqualActivities(activity, activity2)
+                finally:
+                    backend.destroy()
+                    backend2.destroy()
