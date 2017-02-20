@@ -114,7 +114,7 @@ class Directory(Backend):
             with open(self._gpx_path(activity)) as in_file:
                 activity.parse(in_file)
 
-    def _remove_activity_file(self, activity):
+    def _remove_activity_in_backend(self, activity):
         """remove the file, its symlinks and empty symlink parent directories"""
         for symlink in self._symlinks[activity.id_in_backend]:
             os.remove(symlink)
@@ -145,7 +145,7 @@ class Directory(Backend):
     def _save_full(self, activity):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
-        self._remove_activity_file(activity)
+        self._remove_activity_in_backend(activity)
         if activity.title:
             # enforce new id_in_backend using title
             activity.id_in_backend = None
