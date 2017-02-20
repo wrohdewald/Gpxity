@@ -175,7 +175,7 @@ class Activity:
         """
         if self.__dirty:
             if self.backend and not self._loading and not self._batch_changes:
-                self.backend.save(self, self.__dirty)
+                self.backend.save(self, self.__dirty) # pylint: disable=no-member
                 self.__dirty = set()
 
     @property
@@ -292,7 +292,7 @@ class Activity:
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
         if self.backend and self.id_in_backend and not self._loaded and not self._loading:
-            self.backend.load_full(self)
+            self.backend.load_full(self) # pylint: disable=no-member
             self._loaded = True
 
     def add_points(self, points) ->None:
