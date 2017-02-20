@@ -49,8 +49,8 @@ class Activity:
     At least one of **backend** or **gpx** must be None. If backend is None and this
     activity is later coupled with a backend, it is silently assumed that the activity did
     not yet exist in that backend. That makes a difference when loading data from
-    the backend: If data is expected, an exception is raised, if no data is expected,
-    loading just does nothing.
+    the backend: If data is expected in the backend but not found, an exception is raised. If
+    no data is expected, we do not try to load data.
 
     The data will only be loaded from the backend when it is needed. Some backends
     might support loading some attributes separately, but for now, we always load
