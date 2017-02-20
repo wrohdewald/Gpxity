@@ -364,7 +364,8 @@ class MMT(Backend):
                 response = session.get('{}/assets/php/gpx.php?tid={}'.format(
                     self._base_url(), activity.id_in_backend))
                 activity.parse(response.text)
-                # but this does not give us activity type and other things.
+                # but this does not give us activity type and other things,
+                # get them from the web page.
                 self._load_page_in_session(activity, session)
 
     def __load_points_with_api(self, activity):
