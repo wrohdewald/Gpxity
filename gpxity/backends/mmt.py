@@ -376,6 +376,10 @@ class MMT(Backend):
             raise Exception('MMT does not accept an activity without trackpoints:{}'.format(activity))
         activity.adjust_time()
         mmt_status = 'public' if activity.public else 'private'
+        if activity.id_in_backend:
+            # we cannot change an MMT activity in-place, we need to re-upload and then
+            # remove the previous instance.
+            self._remove_activity_in_backend(activity)
         response = self.__post(
             'upload_activity', gpx_file=activity.to_xml(),
             status=mmt_status, description=activity.description, activity=activity.what)
