@@ -127,10 +127,13 @@ class Backend:
 
     def list_activities(self):
         """A generator returning all activities. If all have already been listed,
-        return their cached list. For rescanning, allocate a new Backend object.
+        return their cached list. For rescanning:
+        :any:`Backend.activities.clear()`
 
         Yields:
             the next activity"""
+        if not self.activities:
+            self._activities_fully_listed = False
         if self._activities_fully_listed:
             for _ in self.activities:
                 yield _
