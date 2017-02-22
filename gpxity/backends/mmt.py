@@ -249,12 +249,12 @@ class MMT(Backend):
         """changes public/private on remote server"""
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
-            data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
+            data = '<?xml version="1.0"?>' \
                 '<message><nature>toggle_status</nature><eid>{}</eid>' \
                 '<usr>{}</usr><uid>{}</uid>' \
                 '</message>'.format(
                     activity.id_in_backend, self.auth[0],
-                    session.cookies['exp_uniqueid']).encode('utf-8')
+                    session.cookies['exp_uniqueid']).encode('ascii')
             response = session.post(url, data=data)
             if 'success' not in response.text:
                 raise requests.exceptions.HTTPError()
