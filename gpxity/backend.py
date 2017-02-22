@@ -121,8 +121,8 @@ class Backend:
 
     def list_activities(self):
         """A generator returning all activities. If all have already been listed,
-        return their cached list. For rescanning:
-        :any:`Backend.activities.clear()`
+        return their cached list. For rescanning first call
+        :meth:`self.activities.clear()`.
 
         Yields:
             the next activity"""
@@ -208,7 +208,11 @@ class Backend:
         raise NotImplementedError()
 
     def remove_all(self):
-        """Removes all activities."""
+        """Removes all activities we know about. If their :attr:`id_in_backend`
+        has meanwhile been changed through another backend instance
+        or another process, we cannot find it anymore. We do **not**
+        relist all activities in the backend. If you want to make shure it
+        will be empty, call :meth:`self.activities.clear` before :meth:`remove_all`."""
         for activity in list(self.list_activities()):
             self.remove(activity)
 
@@ -229,7 +233,7 @@ class Backend:
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities. Some backends
        (example: :class:`Directory <gpxity.backends.directory.Directory.destroy>`)
-       may also remove the account (or directory)."""
+       may also remove the account (or directory). See also :meth:`remove_all`."""
         if self._cleanup:
             self.remove_all()
 

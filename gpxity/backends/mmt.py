@@ -9,6 +9,9 @@ This implements :class:`gpxity.backends.MMT` for http://www.mapmytracks.com
 
 There are many problems with the server running at mapmytracks.com:
     * has problems with character sets, see MMT.__post
+    * it is not possible to change an existing activity - if the track changes, the
+      activity must be re-uploaded and gets a new activity id This invalididates
+      references held by other backend instances (maybe on other clients).
     * does not support GPX very well. One problem is that it does not support gpx.time,
       it ignores it in uploads and uses the time of the earliest trackpoint.
     * do not know yet - does it support multiple tracks, multiple segments, waypoints?
@@ -389,6 +392,9 @@ class MMT(Backend):
         act_id = activity.id_in_backend
         response = self.__post('delete_activity', activity_id=act_id)
         type_xml = response.find('type')
+        if type_xml is not None and type_xml.text == 'invalid_activity_id':
+            # does not exist anymore, silently ignore this.
+            return
         if type_xml is None or type_xml.text != 'activity_deleted':
             raise Exception('{}: Could not delete activity {}: {}'.format(self, activity, response.text))
 
