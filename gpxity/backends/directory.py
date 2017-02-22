@@ -32,7 +32,7 @@ class Directory(Backend):
             gpxpy.X where X are some random characters.
             If the directory does not exist, it is created.
         auth (tuple(str, str)): Unused.
-        cleanup (bool): If True, :meth:`destroy` will remove all activities. If True and :any:`url` was
+        cleanup (bool): If True, :meth:`destroy` will remove all activities. If True
             not given, it will also remove the directory.
     """
 
@@ -79,7 +79,7 @@ class Directory(Backend):
         activity.id_in_backend = unique_value
 
     def destroy(self):
-        """If `cleanup` was set at init time, removes all activities. If :any:`url` was set at init time,
+        """If `cleanup` was set at init time, removes all activities. If :attr:`~gpxity.backends.directory.Directory.url` was set at init time,
         also removes the directory."""
         super(Directory, self).destroy()
         if self._cleanup:
