@@ -239,7 +239,7 @@ class MMT(Backend):
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
         with MMTSession(self) as session:
-            url = self._base_url() + '/handler/write_activity'
+            url = self._base_url() + '/handler/change_activity'
             data = {'eid': activity.id_in_backend, 'activity': activity.what}
             response = session.post(url, data=data)
             if 'ok' not in response.text:
