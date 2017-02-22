@@ -242,7 +242,7 @@ class MMT(Backend):
                     uid=session.cookies['exp_uniqueid']).encode('utf-8')
             response = session.post(url, data=data)
             if 'success' not in response.text:
-                raise requests.exceptions.HTTPError()
+                raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
 
     def _write_title(self, activity):
         """changes title on remote server"""
@@ -279,7 +279,7 @@ class MMT(Backend):
             data = {'eid': activity.id_in_backend, 'activity': activity.what}
             response = session.post(url, data=data)
             if 'ok' not in response.text:
-                raise requests.exceptions.HTTPError()
+                raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
