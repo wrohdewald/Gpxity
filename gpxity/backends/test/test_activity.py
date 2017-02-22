@@ -198,7 +198,7 @@ class ActivityTests(BasicTest):
         xml = activity2.to_xml()
         self.assertIn('Status:public', xml)
         activity2 = Activity()
-        activity2.what = 'Kayaking'
+        activity2.what = Activity.legal_what[3]
         activity2.public = False
         activity2.parse(xml)
         self.assertTrue(activity2.public)
