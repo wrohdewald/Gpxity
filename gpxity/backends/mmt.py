@@ -227,12 +227,14 @@ class MMT(Backend):
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
             data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
-                '<message><nature>update_{}</nature><eid>{}</eid>' \
-                '<usr>{}</usr><uid>{}</uid>' \
-                '<title>{}</title></message>'.format(
-                    attribute,
-                    activity.id_in_backend, self.auth[0],
-                    session.cookies['exp_uniqueid'], getattr(activity, attribute)).encode('utf-8')
+                '<message><nature>update_{attr}</nature><eid>{eid}</eid>' \
+                '<usr>{usrid}</usr><uid>{uid}</uid>' \
+                '<{attr}>{value}</{attr}></message>'.format(
+                    attr=attribute,
+                    eid=activity.id_in_backend,
+                    usrid=self.auth[0],
+                    value=getattr(activity, attribute),
+                    uid=session.cookies['exp_uniqueid']).encode('utf-8')
             response = session.post(url, data=data)
             if 'success' not in response.text:
                 raise requests.exceptions.HTTPError()
