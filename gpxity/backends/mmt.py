@@ -226,11 +226,6 @@ class MMT(Backend):
             return
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
-            headers = {'Content-Type': 'text/plain;charset=UTF-8',
-                'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:51.0) Gecko/20100101 Firefox/51.0',
-                'Referer':'http://www.mapmytracks.com/explore/activity/{}'.format(activity.id_in_backend),
-                'DNT': '1',
-                'Accept-Language': 'de-DE,de;q=0.8,en-US;q=0.6,nl;q=0.4,en;q=0.2'}
             data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
                 '<message><nature>update_{attr}</nature><eid>{eid}</eid>' \
                 '<usr>{usrid}</usr><uid>{uid}</uid>' \
@@ -239,7 +234,7 @@ class MMT(Backend):
                     eid=activity.id_in_backend,
                     usrid=self.auth[0],
                     value=getattr(activity, attribute),
-                    uid=session.cookies['exp_uniqueid']).encode('utf-8')
+                    uid=session.cookies['exp_uniqueid']).encode('ascii', 'xmlcharrefreplace')
             response = session.post(url, data=data)
             if 'success' not in response.text:
                 raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
