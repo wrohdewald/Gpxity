@@ -99,17 +99,18 @@ class TestBackends(BasicTest):
         backends = list(
             self.setup_backend(x, count=what_count, clear_first=True)
             for x in self._find_backend_classes())
-        copies = list(
-            self.setup_backend(x, count=what_count, clear_first=True)
-            for x in self._find_backend_classes())
+        copies = list(self.clone_backend(x) for x in backends)
         first_backend = copies[0]
         for other in copies[1:]:
             self.assertSameActivities(first_backend, other)
+        for backend in copies:
+            backend.destroy()
         for backend in backends:
             backend.destroy()
 
     def test_unicode(self):
         """Can we up- and download unicode characters in all text attributes?"""
+        tstdescr = 'DESCRIPTION with utf-8 char ß (unicode szlig) and something japanese:の諸問題'
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 backend = self.setup_backend(cls, count=1, clear_first=True)
@@ -120,9 +121,12 @@ class TestBackends(BasicTest):
                     backend2.list_all()
                     activity2 = backend2.activities[0]
                     self.assertEqualActivities(activity, activity2)
-                    activity.description = 'DESCRIPTION with utf-8 char ß (unicode szlig)'
+                    activity.description = tstdescr
+                    self.assertEqual(activity.description, tstdescr)
+                    backend2.activities.clear()
                     backend2.list_all()
                     activity2 = backend2.activities[0]
+                    self.assertEqual(activity2.description, tstdescr)
                     self.assertEqualActivities(activity, activity2)
                 finally:
                     backend.destroy()
