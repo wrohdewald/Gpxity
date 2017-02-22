@@ -25,10 +25,6 @@ buggy or too slow for real-life use.
 
 Backends might change their behaviour, and Gpxity will have to be updated.
 
-Gpxity supports unicode characters, encoding them as UTF-8. All non-unicode
-character sets like ISO8859-1 are considered obsolete. They may work or not.
-Do not report bugs about those, I will not fix that.
-
 This documentation is meant for the user of this library. If you want to add
 a new backend, you will need to know more - please read the source code or
 remove the lines like :literal:`:exclude-members:` in :literal:`doc/source/*.rst` and
