@@ -182,9 +182,6 @@ class MMT(Backend):
         """helper for the real function"""
         data = kwargs.copy()
         data['request'] = request
-        if request == 'upload_activity':
-            # see https://github.com/MapMyTracks/api/issues/21
-            data['description'] = data['description'].encode('ISO8859-1')
         try:
             response = (session or requests).post(self.url, data=data, auth=self.auth, timeout=(5, 300))
         except requests.exceptions.ReadTimeout:
