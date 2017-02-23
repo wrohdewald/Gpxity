@@ -60,7 +60,13 @@ class Directory(Backend):
                 full_name = os.path.join(dirpath, filename)
                 if os.path.islink(full_name):
                     try:
-                        self._symlinks[os.readlink(full_name)].append(full_name)
+                        # all our symlinks have the form ../../gpx_name
+                        target = os.readlink(full_name)
+                        gpx_target = os.path.basename(target)
+                        if gpx_target.endswith('.gpx'):
+                            # it really should ...
+                            gpx_target = gpx_target[:-4]
+                        self._symlinks[gpx_target].append(full_name)
                     except OSError:
                         os.remove(full_name)
                         raise Exception('{}: removed dead symbolic link {}'.format(
@@ -160,7 +166,8 @@ class Directory(Backend):
             if time:
                 os.utime(_gpx_path, (time.timestamp(), time.timestamp()))
                 link_name = self._symlink_path(activity)
-                os.symlink(_gpx_path, link_name)
+                link_target = os.path.join('..', '..', '{}.gpx'.format(activity.id_in_backend))
+                os.symlink(link_target, link_name)
                 self._symlinks[activity.id_in_backend].append(link_name)
         except BaseException as exc:
             print(exc)
