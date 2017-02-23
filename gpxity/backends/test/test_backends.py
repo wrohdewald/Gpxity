@@ -27,29 +27,31 @@ class TestBackends(BasicTest):
         expect_unsupported['MMT'] = set()
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                cls() # only this initializes supported
-                self.assertTrue(cls.supported & expect_unsupported[cls.__name__] == set())
+                with cls(cleanup=True) as cls_obj:  # only this initializes supported
+                    self.assertTrue(cls_obj.supported & expect_unsupported[cls.__name__] == set())
 
     def test_backend(self):
         """Manipulate backend"""
         activity = self.create_test_activity()
-        directory1 = Directory()
-        directory2 = Directory()
-
-        saved = directory1.save(activity)
-        self.assertEqual(saved.backend, directory1)
-        activity.backend = directory1
-        with self.assertRaises(Exception):
-            activity.backend = directory2
-        with self.assertRaises(Exception):
-            activity.backend = None
+        with Directory(cleanup=True) as directory1:
+            with Directory(cleanup=True) as directory2:
+                saved = directory1.save(activity)
+                self.assertEqual(saved.backend, directory1)
+                activity.backend = directory1
+                with self.assertRaises(Exception):
+                    activity.backend = directory2
+                with self.assertRaises(Exception):
+                    activity.backend = None
 
     def test_open_wrong_auth(self):
         """Open backends with wrong password"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 if cls.__name__ == 'Directory':
-                    self.setup_backend(cls, sub_name='wrong')
+                    try:
+                        backend = self.setup_backend(cls, sub_name='wrong', cleanup=True)
+                    finally:
+                        backend.destroy()
                 else:
                     with self.assertRaises(requests.exceptions.HTTPError):
                         self.setup_backend(cls, sub_name='wrong')
@@ -58,40 +60,46 @@ class TestBackends(BasicTest):
         """Test creation of a backend"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, count=3, clear_first=True)
-                self.assertEqual(len(backend.list_all()), 3)
-                first_time = backend.get_time()
-                time.sleep(2)
-                second_time = backend.get_time()
-                total_seconds = (second_time - first_time).total_seconds()
-                self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
-                    2, second_time, first_time, second_time - first_time))
+                backend = self.setup_backend(cls, count=3, clear_first=True, cleanup=True)
+                try:
+                    self.assertEqual(len(backend.list_all()), 3)
+                    first_time = backend.get_time()
+                    time.sleep(2)
+                    second_time = backend.get_time()
+                    total_seconds = (second_time - first_time).total_seconds()
+                    self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
+                        2, second_time, first_time, second_time - first_time))
+                finally:
+                    backend.destroy()
 
     def test_write_remote_attributes(self):
         """If we change title, description, public, what in activity, is the backend updated?"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, count=1, clear_first=True)
-                activity = backend.list_all()[0]
-                first_public = activity.public
-                first_title = activity.title
-                first_description = activity.description
-                first_what = activity.what
-                activity.public = not activity.public
-                activity.title = 'A new title'
-                self.assertEqual(activity.title, 'A new title')
-                activity.description = 'A new description'
-                if activity.what == 'Cycling':
-                    activity.what = 'Running'
-                else:
-                    activity.what = 'Cycling'
-                # make sure there is no cache in the way
-                backend2 = self.clone_backend(backend)
-                activity2 = backend2.list_all()[0]
-                self.assertNotEqual(first_public, activity2.public)
-                self.assertNotEqual(first_title, activity2.title)
-                self.assertNotEqual(first_description, activity2.description)
-                self.assertNotEqual(first_what, activity2.what)
+                backend = self.setup_backend(cls, count=1, clear_first=True, cleanup=True)
+                try:
+                    activity = backend.list_all()[0]
+                    first_public = activity.public
+                    first_title = activity.title
+                    first_description = activity.description
+                    first_what = activity.what
+                    activity.public = not activity.public
+                    activity.title = 'A new title'
+                    self.assertEqual(activity.title, 'A new title')
+                    activity.description = 'A new description'
+                    if activity.what == 'Cycling':
+                        activity.what = 'Running'
+                    else:
+                        activity.what = 'Cycling'
+                    # make sure there is no cache in the way
+                    backend2 = self.clone_backend(backend)
+                    activity2 = backend2.list_all()[0]
+                    self.assertNotEqual(first_public, activity2.public)
+                    self.assertNotEqual(first_title, activity2.title)
+                    self.assertNotEqual(first_description, activity2.description)
+                    self.assertNotEqual(first_what, activity2.what)
+                finally:
+                    backend.destroy()
 
     def test_all_what(self):
         """can we up- and download all values for :attr:`Activity.what`?"""

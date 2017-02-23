@@ -8,7 +8,6 @@ implements test classes for Activity
 """
 
 import os
-import datetime
 import io
 import filecmp
 
@@ -28,7 +27,7 @@ class ActivityTests(BasicTest):
     def test_init(self):
         """test initialisation"""
         Activity()
-        with Directory() as backend:
+        with Directory(cleanup=True) as backend:
             with self.assertRaises(Exception):
                 Activity(backend, gpx=GPX())
             Activity(backend)
@@ -36,7 +35,7 @@ class ActivityTests(BasicTest):
 
     def test_activity_list(self):
         """test ActivityList"""
-        with Directory() as directory: # we have no direct access to class ActivityList
+        with Directory(cleanup=True) as directory: # we have no direct access to class ActivityList
             ali = directory.activities
             self.assertEqual(len(ali), 0)
             activity1 = Activity(backend=directory)
@@ -95,7 +94,7 @@ class ActivityTests(BasicTest):
 
     def test_keywords(self):
         """save and load keywords. TODO: Also in test_backend for all backends"""
-        with Directory() as directory:
+        with Directory(cleanup=True) as directory:
             activity = Activity(backend=directory)
             activity.keywords = (['a', 'b', 'c'])
             with self.assertRaises(Exception):
@@ -205,46 +204,46 @@ class ActivityTests(BasicTest):
 
     def test_save(self):
         """save locally"""
-        # TODO: fuer die ganzen Directory) with machen oder destroy rufen, nach dem Test soll /tmp sauber sein
-        directory = Directory()
-        dir2 = self.clone_backend(directory)
-        activity = self.create_test_activity()
-        activity.backend = directory
-        self.assertEqual(len(directory.activities), 1)
-        self.assertEqual(len(directory.activities), 1)
-        aclone = activity.clone()
-        self.assertEqualActivities(activity, aclone)
+        with Directory(cleanup=True) as directory:
+            dir2 = self.clone_backend(directory)
+            activity = self.create_test_activity()
+            activity.backend = directory
+            self.assertEqual(len(directory.activities), 1)
+            self.assertEqual(len(directory.activities), 1)
+            aclone = activity.clone()
+            self.assertEqualActivities(activity, aclone)
 
-        self.assertEqual(len(dir2.activities), 0)
-        dir2.list_all()
-        self.assertEqual(len(dir2.activities), 1)
+            self.assertEqual(len(dir2.activities), 0)
+            dir2.list_all()
+            self.assertEqual(len(dir2.activities), 1)
 
-        activity2 = activity.clone()
-        self.assertEqualActivities(activity, activity2)
-        activity2.backend = directory
-        self.assertEqual(len(directory.activities), 2)
-        with self.assertRaises(Exception):
-            activity2.backend = dir2
-        with self.assertRaises(Exception):
-            activity2.backend = None
-        activity3 = dir2.save(activity2)
-        self.assertEqualActivities(activity, activity3)
-        self.assertEqualActivities(activity2, activity3)
-        self.assertIs(activity.backend, directory)
-        self.assertIs(activity2.backend, directory)
-        self.assertIs(activity3.backend, dir2)
-        self.assertEqual(len(directory.activities), 2)
-        self.assertEqual(len(dir2.activities), 2)
-        directory.list_all()
-        self.assertEqual(len(directory.activities), 3)
-        files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
-        self.assertEqual(len(files), 3)
-        filecmp.clear_cache()
-        for idx1, idx2 in ((0, 1), (0, 2)):
-            file1 = files[idx1]
-            file2 = files[idx2]
-            self.assertTrue(filecmp.cmp(file1, file2),
-                            'Files are different: {} and {}'.format(file1, file2))
+            activity2 = activity.clone()
+            self.assertEqualActivities(activity, activity2)
+            activity2.backend = directory
+            self.assertEqual(len(directory.activities), 2)
+            with self.assertRaises(Exception):
+                activity2.backend = dir2
+            with self.assertRaises(Exception):
+                activity2.backend = None
+            activity3 = dir2.save(activity2)
+            self.assertEqualActivities(activity, activity3)
+            self.assertEqualActivities(activity2, activity3)
+            self.assertIs(activity.backend, directory)
+            self.assertIs(activity2.backend, directory)
+            self.assertIs(activity3.backend, dir2)
+            self.assertEqual(len(directory.activities), 2)
+            self.assertEqual(len(dir2.activities), 2)
+            directory.list_all()
+            self.assertEqual(len(directory.activities), 3)
+            files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
+            self.assertEqual(len(files), 3)
+            filecmp.clear_cache()
+            for idx1, idx2 in ((0, 1), (0, 2)):
+                file1 = files[idx1]
+                file2 = files[idx2]
+                self.assertTrue(filecmp.cmp(file1, file2),
+                                'Files are different: {} and {}'.format(file1, file2))
+
 
     def test_add_points(self):
         """test Activity.add_points"""
