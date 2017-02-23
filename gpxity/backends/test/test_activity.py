@@ -93,19 +93,17 @@ class ActivityTests(BasicTest):
             activity.add_keyword('What:{}'.format(what_other))
 
     def test_keywords(self):
-        """save and load keywords. TODO: Also in test_backend for all backends"""
-        with Directory(cleanup=True) as directory:
-            activity = Activity(backend=directory)
-            activity.keywords = (['a', 'b', 'c'])
-            with self.assertRaises(Exception):
-                activity.add_keyword('b')
-            activity.remove_keyword('b')
-            self.assertEqual(activity.keywords, (['a', 'c']))
-            with self.assertRaises(Exception):
-                activity.add_keyword('What:whatever')
-            activity.add_keyword('e')
-            self.assertEqual(activity.keywords, (['a', 'c', 'e']))
-
+        """save and load keywords"""
+        activity = Activity()
+        activity.keywords = (['a', 'b', 'c'])
+        with self.assertRaises(Exception):
+            activity.add_keyword('b')
+        activity.remove_keyword('b')
+        self.assertEqual(activity.keywords, (['a', 'c']))
+        with self.assertRaises(Exception):
+            activity.add_keyword('What:whatever')
+        activity.add_keyword('e')
+        self.assertEqual(activity.keywords, (['a', 'c', 'e']))
 
     def test_remove_what(self):
         """remove what from Activity"""
