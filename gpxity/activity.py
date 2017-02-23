@@ -530,7 +530,7 @@ class Activity:
                 for point in segment.points:
                     yield point
 
-    def points_equal(self, other, verbose=False) ->bool:
+    def points_equal(self, other) ->bool:
         """
         Returns:
             True if both activities have identical points.
@@ -539,29 +539,16 @@ class Activity:
         """
         self._load_full()
         if self.point_count() != other.point_count():
-            if verbose:
-                print('Activities {} and {} have different # of points'.format(self, other))
             return False
         if self.angle() != other.angle():
-            if verbose:
-                print('Activities {} and {} have different angle'.format(self, other))
             return False
         for idx, (point1, point2) in enumerate(zip(self.all_points(), other.all_points())):
             # GPXTrackPoint has no __eq__ and no working hash()
             # those are only the most important attributes:
             if point1.longitude != point2.longitude:
-                if verbose:
-                    print('{} and {}: Points #{} have different longitude: {}, {}'.format(
-                        self, other, idx, point1, point2))
                 return False
             if point1.latitude != point2.latitude:
-                if verbose:
-                    print('{} and {}: Points #{} have different latitude: {}, {}'.format(
-                        self, other, idx, point1, point2))
                 return False
             if point1.elevation != point2.elevation:
-                if verbose:
-                    print('{} and {}: Points #{} have different elevation: {}, {}'.format(
-                        self, other, idx, point1, point2))
                 return False
         return True
