@@ -27,8 +27,7 @@ class TestBackends(BasicTest):
         expect_unsupported['MMT'] = set()
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                with cls(cleanup=True) as cls_obj:  # only this initializes supported
-                    self.assertTrue(cls_obj.supported & expect_unsupported[cls.__name__] == set())
+                self.assertTrue(cls.supported & expect_unsupported[cls.__name__] == set())
 
     def test_backend(self):
         """Manipulate backend"""

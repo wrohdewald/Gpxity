@@ -178,3 +178,5 @@ class Directory(Backend):
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, self.url)
+
+Directory._define_support() # pylint: disable=protected-access

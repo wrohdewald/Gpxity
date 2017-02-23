@@ -33,3 +33,5 @@ class MMTServer(Directory):
             activity.id_in_backend = str(max(int(x) for x in self._list_gpx()) + 1)
         except ValueError:
             activity.id_in_backend = '1'
+
+MMTServer._define_support() # pylint: disable=protected-access

@@ -73,9 +73,6 @@ class Backend:
 
     def __init__(self, url=None, auth=None, cleanup=False):
         super(Backend, self).__init__()
-        if not self.supported:
-            self._define_support()
-
         self.activities = _ActivityList()
         self._activities_fully_listed = False
         self.url = url or ''
