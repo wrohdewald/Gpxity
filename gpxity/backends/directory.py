@@ -46,22 +46,22 @@ class Directory(Backend):
         super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
             os.makedirs(self.url)
-        self._symlinks = self._load_symlinks()
+        self._symlinks = None
+        self._load_symlinks()
 
     def _load_symlinks(self):
         """scan the subdirectories with the symlinks. If the content of an
         actiivty changes, the symlinks might have to be adapted. But
         we do not know the name of the existing symlink anymore. So
         just scan them all and assign them to id_in_backend."""
-        result = defaultdict(list)
+        self._symlinks = defaultdict(list)
         for dirpath, _, filenames in os.walk(self.url):
             for filename in filenames:
                 full_name = os.path.join(dirpath, filename)
                 try:
-                    result[os.readlink(full_name)].append(full_name)
+                    self._symlinks[os.readlink(full_name)].append(full_name)
                 except OSError:
                     pass
-        return result
 
     def _set_new_id(self, activity):
         """a not yet existant file name"""
