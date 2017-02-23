@@ -88,7 +88,8 @@ class Directory(Backend):
         activity.id_in_backend = unique_value
 
     def destroy(self):
-        """If `cleanup` was set at init time, removes all activities. If :attr:`~gpxity.backends.directory.Directory.url` was set at init time,
+        """If `cleanup` was set at init time, removes all activities.
+        If :attr:`~gpxity.backends.directory.Directory.url` was set at init time,
         also removes the directory."""
         super(Directory, self).destroy()
         if self._cleanup:
