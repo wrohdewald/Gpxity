@@ -110,6 +110,7 @@ class Directory(Backend):
 
     def _yield_activities(self):
         self.activities.clear()
+        self._load_symlinks()
         for _ in self._list_gpx():
             yield Activity(self, _)
 
