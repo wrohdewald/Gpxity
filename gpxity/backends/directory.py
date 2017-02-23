@@ -58,10 +58,13 @@ class Directory(Backend):
         for dirpath, _, filenames in os.walk(self.url):
             for filename in filenames:
                 full_name = os.path.join(dirpath, filename)
-                try:
-                    self._symlinks[os.readlink(full_name)].append(full_name)
-                except OSError:
-                    pass
+                if os.path.islink(full_name):
+                    try:
+                        self._symlinks[os.readlink(full_name)].append(full_name)
+                    except OSError:
+                        os.remove(full_name)
+                        raise Exception('{}: removed dead symbolic link {}'.format(
+                            self, full_name))
 
     def _set_new_id(self, activity):
         """a not yet existant file name"""
