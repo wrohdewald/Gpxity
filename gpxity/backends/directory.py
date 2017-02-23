@@ -32,7 +32,7 @@ class Directory(Backend):
             gpxpy.X where X are some random characters.
             If the directory does not exist, it is created.
         auth (tuple(str, str)): Unused.
-        cleanup (bool): If True, :meth:`destroy` will remove all activities. If True
+        cleanup (bool): If True, :meth:`destroy` will remove all activities. If url was
             not given, it will also remove the directory.
     """
 
@@ -125,7 +125,7 @@ class Directory(Backend):
                 activity.parse(in_file)
 
     def _remove_activity_in_backend(self, activity):
-        """remove the file, its symlinks and empty symlink parent directories"""
+        """Removes its symlinks, empty symlink parent directories  and the file, in this order."""
         for symlink in self._symlinks[activity.id_in_backend]:
             os.remove(symlink)
             symlink_dir = os.path.split(symlink)[0]
