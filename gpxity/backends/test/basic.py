@@ -110,7 +110,17 @@ class BasicTest(unittest.TestCase):
         return result
 
     @staticmethod
-    def some_random_points(count=10):
+    def _random_datetime():
+        """random datetime between now() - 10 days and now()"""
+        end = datetime.datetime.now()
+        start = end - datetime.timedelta(days=10)
+        delta = end - start
+        int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
+        random_second = random.randrange(int_delta)
+        return start + datetime.timedelta(seconds=random_second)
+
+    @classmethod
+    def some_random_points(cls, count=10):
         """
 
         Returns:
@@ -118,7 +128,10 @@ class BasicTest(unittest.TestCase):
         """
         result = list()
         for _ in range(count):
-            point = GPXTrackPoint(latitude=50 + _/10.0, longitude=40 + _/10, elevation=_)
+            point = GPXTrackPoint(
+                latitude=random.uniform(0.0, 90.0),
+                longitude=random.uniform(0.0, 180.0), elevation=_,
+                time=cls._random_datetime() + datetime.timedelta(seconds=10))
             result.append(point)
         return result
 
