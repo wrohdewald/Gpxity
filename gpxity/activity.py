@@ -267,17 +267,6 @@ class Activity:
             self.__what = value if value else self.legal_what[0]
             self.dirty = 'what'
 
-    def point_count(self) ->int:
-        """
-        Returns:
-          total count over all tracks and segments"""
-        self._load_full()
-        result = 0
-        for track in self.__gpx.tracks:
-            for segment in track.segments:
-                result += len(segment.points)
-        return result
-
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
         if self.backend and self.id_in_backend and not self._loaded and not self._loading:
@@ -476,7 +465,7 @@ class Activity:
                 parts.append(self.__gpx.name)
             if self.__gpx.get_time_bounds()[0]:
                 parts.append('{}-{}'.format(*self.__gpx.get_time_bounds()))
-            parts.append('{} points'.format(self.point_count()))
+            parts.append('{} points'.format(self.gpx.get_track_points_no()))
             if self.angle():
                 parts.append('angle={}'.format(self.angle()))
         return 'Activity({})'.format(' '.join(parts))
@@ -493,7 +482,8 @@ class Activity:
         self._load_full()
         return 'title:{} description:{} keywords:{} what{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.what, self.public, self.last_time(), self.angle(), self.point_count())
+            ','.join(self.keywords), self.what, self.public, self.last_time(),
+            self.angle(), self.gpx.get_track_points_no())
 
     def angle(self) ->float:
         """For me, the earth is flat.
@@ -538,11 +528,11 @@ class Activity:
         All points of all tracks and segments are combined.
         """
         self._load_full()
-        if self.point_count() != other.point_count():
+        if self.gpx.get_track_points_no() != other.gpx.get_track_points_no():
             return False
         if self.angle() != other.angle():
             return False
-        for idx, (point1, point2) in enumerate(zip(self.all_points(), other.all_points())):
+        for _, (point1, point2) in enumerate(zip(self.all_points(), other.all_points())):
             # GPXTrackPoint has no __eq__ and no working hash()
             # those are only the most important attributes:
             if point1.longitude != point2.longitude:

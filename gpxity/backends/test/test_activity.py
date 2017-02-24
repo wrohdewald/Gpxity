@@ -49,9 +49,9 @@ class ActivityTests(BasicTest):
         activity1 = self.create_test_activity()
         activity2 = activity1.clone()
         self.assertEqualActivities(activity1, activity2)
-        count1 = activity1.point_count()
+        count1 = activity1.gpx.get_track_points_no()
         del activity1.gpx.tracks[0].segments[0].points[0]
-        self.assertEqual(count1, activity1.point_count() + 1)
+        self.assertEqual(count1, activity1.gpx.get_track_points_no() + 1)
         self.assertNotEqualActivities(activity1, activity2)
         activity2 = activity1.clone()
         activity2.gpx.tracks[-1].segments[-1].points[-1].latitude = 5
@@ -157,7 +157,7 @@ class ActivityTests(BasicTest):
         xml = activity.to_xml()
         self.assertNotIn('<link ></link>', xml)
         lines = xml.split('\n')
-        self.assertTrue(len(lines) >= activity.point_count())
+        self.assertTrue(len(lines) >= activity.gpx.get_track_points_no())
 
     def test_parse(self):
         """does Activity parse xml correctly"""
@@ -242,15 +242,14 @@ class ActivityTests(BasicTest):
                 self.assertTrue(filecmp.cmp(file1, file2),
                                 'Files are different: {} and {}'.format(file1, file2))
 
-
     def test_add_points(self):
         """test Activity.add_points"""
         point_count = 11
         activity = Activity()
         points = self.some_random_points(count=point_count)
         activity.add_points(points)
-        self.assertEqual(activity.point_count(), point_count)
+        self.assertEqual(activity.gpx.get_track_points_no(), point_count)
         with self.assertRaises(Exception):
             activity.add_points(points)
         activity.add_points(points[:-1])
-        self.assertEqual(activity.point_count(), point_count * 2 - 1)
+        self.assertEqual(activity.gpx.get_track_points_no(), point_count * 2 - 1)

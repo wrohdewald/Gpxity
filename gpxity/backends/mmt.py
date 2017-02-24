@@ -381,7 +381,7 @@ class MMT(Backend):
             if from_time == 0:
                 # this activity has no trackpoints!
                 break
-        if not activity.point_count():
+        if not activity.gpx.get_track_points_no():
             raise Exception('{} from {} is empty'.format(
                 activity, self))
 
@@ -402,7 +402,7 @@ class MMT(Backend):
         Because we cannot upload the time, we set the activity time to the time
         of the first trackpoint."""
 
-        if not activity.point_count():
+        if not activity.gpx.get_track_points_no():
             raise Exception('MMT does not accept an activity without trackpoints:{}'.format(activity))
         mmt_status = 'public' if activity.public else 'private'
         if activity.id_in_backend:
