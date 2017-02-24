@@ -166,9 +166,7 @@ class Directory(Backend):
                 link_target = os.path.join('..', '..', '{}.gpx'.format(activity.id_in_backend))
                 os.symlink(link_target, link_name)
                 self._symlinks[activity.id_in_backend].append(link_name)
-        except BaseException as exc:
-            print(exc)
-            os.remove(_gpx_path)
+        except BaseException:
             raise
 
     def __repr__(self):
