@@ -75,9 +75,7 @@ class Directory(Backend):
 
     def _set_new_id(self, activity):
         """a not yet existant file name"""
-        if activity.backend is self and activity.id_in_backend:
-            value = activity.id_in_backend
-        elif activity.title:
+        if activity.title:
             value = activity.title
         else:
             value = tempfile.NamedTemporaryFile(dir=self.url).name
@@ -148,11 +146,7 @@ class Directory(Backend):
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
-        link_name = activity.id_in_backend
-        if not link_name:
-            link_name = '{:02}_{:02}:{:02}:{:02}'.format(
-                time.day, time.hour, time.minute, time.second)
-        return os.path.join(by_month_dir, link_name)
+        return os.path.join(by_month_dir, activity.id_in_backend)
 
     def _save_full(self, activity):
         """save full gpx track. Since the file name uses title and title may have changed,
