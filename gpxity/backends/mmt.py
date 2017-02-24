@@ -173,9 +173,6 @@ class MMT(Backend):
             url = 'http://www.mapmytracks.com/api'
         super(MMT, self).__init__(url, auth, cleanup)
         self.remote_known_whats = None
-        # MMT is racy. After uploading we need to wait for an unknown time, otherwise
-        # the next download will still return the old values.
-        self._last_upload = None
 
     def __post(self, request, session=None, **kwargs):
         """helper for the real function"""
