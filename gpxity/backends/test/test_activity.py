@@ -4,7 +4,9 @@
 # See LICENSE for details.
 
 """
-implements test classes for Activity
+implements test classes for Activity. They only use backend Directory,
+so there is no network traffic involved (unless Directory is a network
+file system, of course).
 """
 
 import os

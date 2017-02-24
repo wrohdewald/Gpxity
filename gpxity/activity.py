@@ -458,7 +458,7 @@ class Activity:
         parts = []
         if self.backend:
             parts.append(repr(self.backend))
-            parts.append(' id:{}'.format(self.id_in_backend))
+            parts.append('id:{}'.format(self.id_in_backend))
         if self.__gpx:
             parts.append(self.what)
             if self.__gpx.name:
@@ -480,7 +480,7 @@ class Activity:
             a string with selected attributes in printable form.
         """
         self._load_full()
-        return 'title:{} description:{} keywords:{} what{}: public:{} last_time:{} angle:{} points:{}'.format(
+        return 'title:{} description:{} keywords:{} what:{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
             ','.join(self.keywords), self.what, self.public, self.last_time(),
             self.angle(), self.gpx.get_track_points_no())
