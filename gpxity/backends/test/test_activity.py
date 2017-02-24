@@ -255,3 +255,16 @@ class ActivityTests(BasicTest):
             activity.add_points(points)
         activity.add_points(points[:-1])
         self.assertEqual(activity.gpx.get_track_points_no(), point_count * 2 - 1)
+
+    def test_symlinks(self):
+        """Directory symlinks"""
+        with Directory(cleanup=True) as directory:
+            source = os.path.join(directory.url,  'deadlink')
+            target = 'deadtarget'
+            target_path = os.path.join(directory.url,  target)
+            with open(target_path, 'w') as target_file:
+                target_file.write(' ')
+            os.symlink('deadtarget', source)
+            os.remove(target_path)
+            with self.assertRaises(Exception):
+                directory.list_all() # this loads symlinks

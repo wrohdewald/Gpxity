@@ -61,15 +61,14 @@ class Directory(Backend):
             for filename in filenames:
                 full_name = os.path.join(dirpath, filename)
                 if os.path.islink(full_name):
-                    try:
-                        # all our symlinks have the form ../../gpx_name
+                    if os.path.exists(full_name):
                         target = os.readlink(full_name)
                         gpx_target = os.path.basename(target)
                         if gpx_target.endswith('.gpx'):
                             # it really should ...
                             gpx_target = gpx_target[:-4]
                         self._symlinks[gpx_target].append(full_name)
-                    except OSError:
+                    else:
                         os.remove(full_name)
                         raise Exception('{}: removed dead symbolic link {}'.format(
                             self, full_name))
