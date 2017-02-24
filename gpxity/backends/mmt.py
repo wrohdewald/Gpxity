@@ -160,7 +160,7 @@ class MMT(Backend):
     Args:
         url (str): The Url of the server. Default is http://mapmytracks.com/api
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, destroy() will remove all activities in the
+        cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all activities in the
             user account.
     """
 

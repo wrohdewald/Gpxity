@@ -61,7 +61,7 @@ class Backend:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
         auth (tuple(str, str)): (username, password)
-        cleanup (bool): If true, destroy() will remove all activities.
+        cleanup (bool): If true, :meth:`destroy` will remove all activities.
 
     Attributes:
         supported (set(str)): The names of all supported methods. Creating the first instance of
