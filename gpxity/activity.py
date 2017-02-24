@@ -241,6 +241,7 @@ class Activity:
             self._save()
         finally:
             self._batch_changes = prev_batch_changes
+            self._save()
 
     @description.setter
     def description(self, value: str):
