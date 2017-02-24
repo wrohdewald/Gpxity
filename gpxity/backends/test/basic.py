@@ -16,6 +16,7 @@ import datetime
 import random
 from inspect import getmembers, isclass, getmro
 from pkgutil import get_data
+import tempfile
 
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
@@ -28,6 +29,7 @@ from ...backend import Backend
 
 __all__ = ['BasicTest']
 
+from .. import Directory
 
 class BasicTest(unittest.TestCase):
     """define some helpers
@@ -41,6 +43,16 @@ class BasicTest(unittest.TestCase):
 
  #   def __init__(self):
     #    super(BasicTest, self).__init__()
+
+    def setUp(self):
+        """defines test specific Directory.prefix"""
+        Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '/'
+        os.mkdir(os.path.join(tempfile.gettempdir(), Directory.prefix))
+
+    def tearDown(self):
+        """Check if there are still /tmp/gpxitytest.* directories"""
+        must_be_empty = os.path.join(tempfile.gettempdir(), Directory.prefix)
+        os.rmdir(must_be_empty)
 
     def setup_auth(self, cls_, sub_name=None):
         """get auth data. Save it in self.auth
