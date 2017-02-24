@@ -138,3 +138,9 @@ class TestBackends(BasicTest):
                 finally:
                     backend.destroy()
                     backend2.destroy()
+
+    def test_change_points(self):
+        """Can we change the points of a track?
+
+        For MMT this means re-uploading and removing the previous instance, so this
+        is not always as trivial as it should be."""
