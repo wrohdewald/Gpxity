@@ -34,6 +34,9 @@ class Directory(Backend):
         auth (tuple(str, str)): Unused.
         cleanup (bool): If True, :meth:`destroy` will remove all activities. If url was
             not given, it will also remove the directory.
+
+    Attributes:
+        prefix (str): The prefix for temporary directories.
     """
 
    # skip_test = True
