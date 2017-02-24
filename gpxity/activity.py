@@ -502,7 +502,7 @@ class Activity:
         norm_lat = delta_lat / 90.0
         norm_long = delta_long / 180.0
         try:
-            result = int(degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long **2))))
+            result = degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long **2)))
         except ZeroDivisionError:
             return 0
         if norm_lat >= 0.0:
