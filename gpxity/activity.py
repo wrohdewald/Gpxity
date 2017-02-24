@@ -116,9 +116,13 @@ class Activity:
                     'You cannot assign the activity to a different backend this way. '
                     'Please use Backend.save(activity).')
             else:
-                self.__backend = value
                 self._loaded = True
-                self.__backend.save(self)
+                self.__backend = value
+                try:
+                    self.__backend.save(self)
+                except BaseException:
+                    self.__backend = None
+                    raise
 
     @property
     def dirty(self) ->bool:
