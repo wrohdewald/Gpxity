@@ -39,10 +39,12 @@ class Directory(Backend):
    # skip_test = True
     # pylint: disable=abstract-method
 
+    prefix = 'gpxity.'
+
     def __init__(self, url=None, auth=None, cleanup=False):
         self.url_given = bool(url)
         if not self.url_given:
-            url = tempfile.mkdtemp(prefix='gpxity.')
+            url = tempfile.mkdtemp(prefix=self.prefix)
         super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
             os.makedirs(self.url)
