@@ -291,30 +291,6 @@ class MMT(Backend):
                     yield activity
                 assert len(self.activities) > old_len
 
-    @staticmethod
-    def __import_xml(activity, xml):
-        """imports points and other data. Currently unused and unusable
-        see __load_points_with_api."""
-        xml_points = xml.find('points')
-        min_when = 100000000000000
-        max_when = 0
-        if xml_points is not None and xml_points.text:
-            for raw_point in xml_points.text.split(' '):
-                when, latitude, longitude, elevation = raw_point.split(',')
-                min_when = min(min_when, int(when))
-                max_when = max(max_when, int(when))
-                when = _convert_time(when)
-                activity.add_points([
-                    GPXTrackPoint(
-                        latitude, longitude,
-                        elevation=elevation,
-                        time=when)])
-        complete_tag = xml.find('complete')
-        if complete_tag:
-            activity.complete = complete_tag.text == 'Yes'
-        print('import chunk: when in range', min_when, max_when)
-        return max_when
-
     def _base_url(self):
         """the url without subdirectories"""
         return self.url.replace('/api/', '')
@@ -353,22 +329,6 @@ class MMT(Backend):
                 # but this does not give us activity type and other things,
                 # get them from the web page.
                 self._load_page_in_session(activity, session)
-
-    def __load_points_with_api(self, activity):
-        """"First, it only imported 100 points starting at from_time. Now (Feb 2017), it always imports
-        the full track but hangs forever for very large tracks."""
-        old_from_time = -1
-        from_time = 0
-        while from_time != old_from_time:
-            chunk = self.__post('get_activity', activity_id=activity.id_in_backend, from_time=from_time, timeout=5)
-            old_from_time = from_time
-            from_time = self.__import_xml(activity, chunk)
-            if from_time == 0:
-                # this activity has no trackpoints!
-                break
-        if not activity.gpx.get_track_points_no():
-            raise Exception('{} from {} is empty'.format(
-                activity, self))
 
     def _remove_activity_in_backend(self, activity):
         """remove on the server"""
