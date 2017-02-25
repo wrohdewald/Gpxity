@@ -1,0 +1,15 @@
+python3 setup.py sdist
+python3 setup.py bdist_wheel
+
+twine upload dist/* -r pypi
+
+cd doc
+make html
+
+cd build/html
+
+python -m zipfile -c /tmp/gpxitydoc.zip *
+
+echo upload: /tmp/gpxitydoc.zip
+
+firefox 'https://pypi.python.org/pypi?%3Aaction=pkg_edit&name=Gpxity'
