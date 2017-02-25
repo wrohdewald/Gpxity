@@ -343,12 +343,6 @@ class MMT(Backend):
             if page_parser.result['public'] is not None:
                 activity.public = page_parser.result['public']
 
-    def _load_attr_from_webpage(self, activity):
-        """The MMT api does not deliver all attributes we want.
-        This gets some more by scanning the web page."""
-        with MMTSession(self) as session:
-            self._load_page_in_session(activity, session)
-
     def load_full(self, activity):
         """get the entire activity"""
         with activity.loading():
