@@ -183,12 +183,6 @@ class MMT(Backend):
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise
-        try:
-            response.content.decode(response.encoding)
-        except  UnicodeDecodeError:
-            # As of February 2017, the xml always says it is encoded as utf-8 but it is not!
-            # It looks like iso8859-1
-            response.encoding = response.apparent_encoding
         if response.status_code != requests.codes.ok: # pylint: disable=no-member
             self.__handle_post_error(request, response)
             return
