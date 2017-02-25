@@ -69,9 +69,9 @@ class ActivityTests(BasicTest):
             self.assertEqual(len(ali), 0)
             activity1 = Activity(backend=directory)
             self.assertIn(activity1, ali)
-            self.assertEqual(activity1.id_in_backend, None)
+            self.assertIsNone(activity1.id_in_backend)
             activity1.description = 'x'
-            self.assertNotEqual(activity1.id_in_backend, None)
+            self.assertIsNotNone(activity1.id_in_backend)
 
     def test_clone(self):
         """is the clone identical?"""
