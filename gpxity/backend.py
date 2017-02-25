@@ -137,7 +137,7 @@ class Backend:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
 
-    def save(self, activity, attributes=None) ->None:
+    def save(self, activity, attributes=None):
         """save full activity.
 
         Args:
