@@ -11,7 +11,7 @@ import time
 import requests
 
 from .basic import BasicTest
-from .. import Directory
+from .. import Directory, MMT
 from ... import Activity
 
 # pylint: disable=attribute-defined-outside-init
@@ -28,6 +28,21 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 self.assertTrue(cls.supported & expect_unsupported[cls.__name__] == set())
+
+    def test_save_empty(self):
+        """Save empty activity"""
+        for cls in self._find_backend_classes():
+            with self.subTest(' {}'.format(cls.__name__)):
+                backend = self.setup_backend(cls, cleanup=True)
+                try:
+                    activity = Activity()
+                    if cls is MMT:
+                        with self.assertRaises(Exception):
+                            backend.save(activity)
+                    else:
+                        self.assertIsNotNone(backend.save(activity))
+                finally:
+                    backend.destroy()
 
     def test_backend(self):
         """Manipulate backend"""
@@ -144,3 +159,9 @@ class TestBackends(BasicTest):
 
         For MMT this means re-uploading and removing the previous instance, so this
         is not always as trivial as it should be."""
+
+    def test_download_many(self):
+        """download many activities"""
+        many = 100
+        backend = self.setup_backend(MMT, count=many, cleanup=False, clear_first=False, sub_name='many')
+        self.assertEqual(len(backend.list_all()), many)
