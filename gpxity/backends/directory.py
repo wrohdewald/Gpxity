@@ -81,7 +81,7 @@ class Directory(Backend):
         if activity.title:
             value = activity.title
         else:
-            value = tempfile.NamedTemporaryFile(dir=self.url).name
+            value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
         ctr = 0
         unique_value = value
         while os.path.exists(os.path.join(self.url, unique_value + '.gpx')):

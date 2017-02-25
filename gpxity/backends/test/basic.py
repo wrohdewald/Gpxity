@@ -47,7 +47,9 @@ class BasicTest(unittest.TestCase):
     def setUp(self):
         """defines test specific Directory.prefix"""
         Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '/'
-        os.mkdir(os.path.join(tempfile.gettempdir(), Directory.prefix))
+        path = os.path.join(tempfile.gettempdir(), Directory.prefix)
+        if not os.path.exists(path):
+            os.mkdir(path)
 
     def tearDown(self):
         """Check if there are still /tmp/gpxitytest.* directories"""
