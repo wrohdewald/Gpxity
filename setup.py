@@ -45,7 +45,7 @@ setup(
         'Topic :: Communications',
         'Topic :: Internet :: WWW/HTTP',
         ],
-    packages=find_packages(exclude=['doc', 'test', 'bin']),
+    packages=find_packages(exclude=['doc', 'test', 'bin', '.gitignore']),
     install_requires=['requests', 'gpxpy'],
     extras_require={
         'test': ['coverage'],
