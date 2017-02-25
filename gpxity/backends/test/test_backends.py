@@ -130,6 +130,26 @@ class TestBackends(BasicTest):
         for backend in backends:
             backend.destroy()
 
+    def test_keywords(self):
+        """save and load keywords"""
+        for cls in self._find_backend_classes():
+            with self.subTest(' {}'.format(cls.__name__)):
+                backend = self.setup_backend(cls, count=1, clear_first=True, cleanup=True)
+                try:
+                    activity = Activity(backend)
+                    activity.add_points(self.some_random_points(5))
+                    activity.keywords = (['a', 'b', 'c'])
+                    with self.assertRaises(Exception):
+                        activity.add_keyword('b')
+                    activity.remove_keyword('b')
+                    self.assertEqual(activity.keywords, (['a', 'c']))
+                    with self.assertRaises(Exception):
+                        activity.add_keyword('What:whatever')
+                    activity.add_keyword('e')
+                    self.assertEqual(activity.keywords, (['a', 'c', 'e']))
+                finally:
+                    backend.destroy()
+
     def test_unicode(self):
         """Can we up- and download unicode characters in all text attributes?"""
         tstdescr = 'DESCRIPTION with utf-8 char ß (unicode szlig) and something japanese:の諸問題'
