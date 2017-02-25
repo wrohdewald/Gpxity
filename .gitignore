@@ -1,2 +1,5 @@
+.eggs
 __pycache__
 .eric6project
+build
+dist
