@@ -6,9 +6,22 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(here, 'README.rst')) as readme_file:
-    long_description = readme_file.read()
+long_description = """
+Gpxity is a Python - library making it easy to move activities between different backends.
+In this context, a backend is a place where activities can be stored.
 
+Implemented backends are:
+
+  * Directory    for .gpx files on an accessible file system
+  * MMT          for activities on http://mapmytracks.com
+
+Sometimes you might just change a harmless thing like the description but
+the backend does not allow changing this separately, so we have to re-upload
+the whole activity. If it is is big and the remote server slow, this might
+take 10 minutes or more. Right now this library has no asynchronous interface,
+so it can really take some time until your program continues.
+
+"""
 
 setup(
     name='Gpxity',

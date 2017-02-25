@@ -6,9 +6,8 @@ Implemented backends are:
   * :class:`~gpxity.backends.directory`: Directory for .gpx files on an accessible file system
   * :class:`~gpxity.backends.mmt`: For activities on http://mapmytracks.com
 
-Some backends do not support everything we would like to have, you might get the
-exception NotImplementedError(). Some backends simply do not offer everything we
-want.
+Some backends might not support everything Gxpity wants and you will get the
+exception NotImplementedError().
 
 Sometimes you might just change a harmless thing like the description but
 the backend does not allow changing this separately, so we have to re-upload
@@ -21,14 +20,3 @@ when there is no documented way or when the official API implementation is
 buggy or too slow for real-life use.
 
 Backends might change their behaviour, and Gpxity will have to be updated.
-
-There is no installer yet. If you want to read the documentation, download
-from here, go into Gpxity/doc, say "make html" and browse Gpxity/doc/build/html/index.html.
-
-This documentation is meant for the user of this library. If you want to add
-a new backend, you will need to know more - please read the source code or
-remove the lines like :literal:`:exclude-members:` in :literal:`doc/source/*.rst` and
-rebuild the documentation.
-
-Todo: Write all class references in the shortest form how an application could
-import them.
