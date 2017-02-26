@@ -25,8 +25,8 @@ There are some problems with the server running at mapmytracks.com:
     * downloading activities with that abi is very slow and hangs forever for big activities
       (at least this was so in Feb 2017, maybe have to test again occasionally).
     * not all parts of MMT data are supported like tags (would be nice to have.
-    Download is implemented but no upload) or images (not interesting for me,
-    at least not now).
+      Download is implemented but no upload) or images (not interesting for me,
+      at least not now).
 
 """
 
