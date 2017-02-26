@@ -294,8 +294,10 @@ class ActivityTests(BasicTest):
             self.assertEqual(len(dir2.activities), 2)
             directory.list_all()
             self.assertEqual(len(directory.activities), 3)
+            trunk = os.path.join(directory.url, 'Random GPX # 0')
+            expected_names = list(trunk + x for x in ('.gpx', '.1.gpx', '.2.gpx'))
             files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
-            self.assertEqual(len(files), 3)
+            self.assertEqual(files, expected_names)
             filecmp.clear_cache()
             for idx1, idx2 in ((0, 1), (0, 2)):
                 file1 = files[idx1]
