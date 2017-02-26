@@ -215,8 +215,8 @@ class BasicTest(unittest.TestCase):
                 continue
             try:
                 imported = importlib.__import__(mod, globals(), locals(), level=2)
-                for _, cls in getmembers(imported, isclass):
-                    if Backend in getmro(cls)[1:]:
+                for name, cls in getmembers(imported, isclass):
+                    if name in imported.__all__ and Backend in getmro(cls)[1:]:
                         # isinstance and is do not work here
                         if with_skip or not cls.skip_test:
                             result.append(cls)
