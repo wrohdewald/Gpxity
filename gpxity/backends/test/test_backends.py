@@ -23,11 +23,11 @@ class TestBackends(BasicTest):
     def test_supported(self):
         """Check values in supported for all backends"""
         expect_unsupported = dict()
-        expect_unsupported['Directory'] = set(['update'])
-        expect_unsupported['MMT'] = set()
+        expect_unsupported[Directory] = set(['update'])
+        expect_unsupported[MMT] = set()
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                self.assertTrue(cls.supported & expect_unsupported[cls.__name__] == set())
+                self.assertTrue(cls.supported & expect_unsupported[cls] == set())
 
     def test_save_empty(self):
         """Save empty activity"""
@@ -61,7 +61,7 @@ class TestBackends(BasicTest):
         """Open backends with wrong password"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                if cls.__name__ == 'Directory':
+                if issubclass(cls, Directory):
                     try:
                         backend = self.setup_backend(cls, sub_name='wrong', cleanup=True)
                     finally:
