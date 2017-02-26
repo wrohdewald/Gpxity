@@ -11,7 +11,7 @@ import time
 import requests
 
 from .basic import BasicTest
-from .. import Directory, MMT
+from .. import Directory, MMT, ServerDirectory
 from ... import Activity
 
 # pylint: disable=attribute-defined-outside-init
@@ -24,6 +24,7 @@ class TestBackends(BasicTest):
         """Check values in supported for all backends"""
         expect_unsupported = dict()
         expect_unsupported[Directory] = set(['update'])
+        expect_unsupported[ServerDirectory] = set(['update'])
         expect_unsupported[MMT] = set()
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):

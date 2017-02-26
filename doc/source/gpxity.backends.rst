@@ -34,10 +34,10 @@ gpxity.backends.mmt module
     :show-inheritance:
     :exclude-members: load_full
 
-gpxity.backends.mmt_server module
----------------------------------
+gpxity.backends.server_directory module
+---------------------------------------
 
-.. automodule:: gpxity.backends.mmt_server
+.. automodule:: gpxity.backends.server_directory
     :members:
     :undoc-members:
     :show-inheritance:
