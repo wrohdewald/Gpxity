@@ -185,3 +185,15 @@ class TestBackends(BasicTest):
         many = 100
         backend = self.setup_backend(MMT, count=many, cleanup=False, clear_first=False, sub_name='many')
         self.assertEqual(len(backend.list_all()), many)
+
+    def test_duplicate_title(self):
+        """two activities having the same title"""
+        for cls in self._find_backend_classes():
+            with self.subTest(' {}'.format(cls.__name__)):
+                backend = self.setup_backend(cls, count=2, clear_first=True)
+                activity1, activity2 = backend.list_all()
+                try:
+                    activity1.title = 'TITLE'
+                    activity2.title = 'TITLE'
+                finally:
+                    backend.destroy()

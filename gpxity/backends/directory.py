@@ -158,7 +158,8 @@ class Directory(Backend):
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
-        return os.path.join(by_month_dir, activity.id_in_backend)
+        name = activity.title or activity.id_in_backend
+        return self._make_path_unique(os.path.join(by_month_dir, name))
 
     def _save_full(self, activity):
         """save full gpx track. Since the file name uses title and title may have changed,
