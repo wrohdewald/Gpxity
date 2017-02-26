@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.1.1
+-----
+Released 2017-02-26
+  * Added Changelog
+
 1.1.0  
 -----
 Released 2017-02-26 
