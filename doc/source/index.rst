@@ -8,12 +8,16 @@ Welcome to Gpxity's documentation!
 
 .. include:: ../../README.rst
 
+
 .. include:: modules.rst
 
+
+.. include:: ../../CHANGELOG.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
 
 Indices and tables
 ==================

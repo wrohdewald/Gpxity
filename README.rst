@@ -4,7 +4,7 @@ In this context, a backend is a place where activities can be stored.
 Implemented backends are:
 
   * :class:`~gpxity.backends.directory`: Directory for .gpx files on an accessible file system
-  * :class:`~gpxity.backends.server_directory`: ServerDirectory suited for server implementations
+  * :class:`~gpxity.backends.server_directory`: Directory suited for server implementations
   * :class:`~gpxity.backends.mmt`: For activities on http://mapmytracks.com
 
 Some backends might not support everything Gxpity wants and you will get the
