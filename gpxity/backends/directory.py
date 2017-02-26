@@ -27,6 +27,9 @@ class Directory(Backend):
     subdirectories YYYY/MM (year/month) with only the activities for one month.
     Those are symbolic links to the main file and have the same file name.
 
+    This backend uses activity.title for the id. If an activity has no title, it uses a random
+    sequence of characters. Changing the title also changes the id.
+
     Args:
         url (str): a directory. If not given, use a unique temporary directory named
             gpxpy.X where X are some random characters.
