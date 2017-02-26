@@ -89,7 +89,7 @@ class Backend:
         """
         cls.supported = set()
         for name, _ in getmembers(cls, isfunction):
-            if not name.startswith('_')  or name.startswith('_write_'):
+            if not name.startswith('_')  or (name.startswith('_write_') and name != '_write_attribute'):
                 first_instruction = next(dis.get_instructions(_.__code__))
                 supported = first_instruction is None or first_instruction.argval != 'NotImplementedError'
                 if supported:

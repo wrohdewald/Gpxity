@@ -23,7 +23,7 @@ gpxity.backends.directory module
     :members:
     :undoc-members:
     :show-inheritance:
-    :exclude-members: load_full, prefix
+    :exclude-members: load_full, prefix, skip_test
 
 gpxity.backends.mmt module
 --------------------------
@@ -32,7 +32,7 @@ gpxity.backends.mmt module
     :members:
     :undoc-members:
     :show-inheritance:
-    :exclude-members: load_full
+    :exclude-members: load_full, skip_test
 
 gpxity.backends.server_directory module
 ---------------------------------------
@@ -41,5 +41,4 @@ gpxity.backends.server_directory module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
+    :exclude-members: load_full, skip_test
