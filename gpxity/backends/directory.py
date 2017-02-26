@@ -82,12 +82,21 @@ class Directory(Backend):
             value = activity.title
         else:
             value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
+        path = self._make_path_unique(os.path.join(self.url, value + '.gpx'))
+        activity.id_in_backend = os.path.basename(path)[:-4]
+
+    @staticmethod
+    def _make_path_unique(value):
+        """if the file name already exists, append a serial number"""
         ctr = 0
         unique_value = value
-        while os.path.exists(os.path.join(self.url, unique_value + '.gpx')):
+        while os.path.exists(unique_value):
             ctr += 1
-            unique_value = '{}.{}'.format(value, ctr)
-        activity.id_in_backend = unique_value
+            if value.endswith('.gpx'):
+                unique_value = '{}.{}.gpx'.format(value[:-4], ctr)
+            else:
+                unique_value = '{}.{}'.format(value, ctr)
+        return unique_value
 
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities.
