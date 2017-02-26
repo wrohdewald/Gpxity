@@ -259,7 +259,7 @@ class ActivityTests(BasicTest):
             with self.assertRaises(OSError):
                 activity.backend = directory
             self.assertIsNone(activity.backend)
-            os.chmod(directory.url,  0o755)
+            os.chmod(directory.url, 0o755)
             activity.backend = directory
             self.assertIsNotNone(activity.backend)
 
@@ -430,9 +430,9 @@ class ActivityTests(BasicTest):
     def test_symlinks(self):
         """Directory symlinks"""
         with Directory(cleanup=True) as directory:
-            source = os.path.join(directory.url,  'deadlink')
+            source = os.path.join(directory.url, 'deadlink')
             target = 'deadtarget'
-            target_path = os.path.join(directory.url,  target)
+            target_path = os.path.join(directory.url, target)
             with open(target_path, 'w') as target_file:
                 target_file.write(' ')
             os.symlink('deadtarget', source)

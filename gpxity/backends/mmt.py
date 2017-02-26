@@ -36,8 +36,6 @@ import datetime
 
 import requests
 
-from gpxpy.gpx import GPXTrackPoint
-
 from .. import Backend, Activity
 
 
