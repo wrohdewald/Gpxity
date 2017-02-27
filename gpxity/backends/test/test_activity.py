@@ -441,7 +441,7 @@ class ActivityTests(BasicTest):
                 activity.title = title
                 self.assertEqual(activity.title, title)
                 self.assertEqual(activity.id_in_backend, title.replace('/', '_'))
-            for title in ('a/b', '//', 'Ä/Ü', '.', '..'):
+            for title in ('a/b', '//', 'Ä/Ü'):
                 activity.title = title
                 self.assertEqual(activity.title, title)
                 self.assertNotEqual(activity.id_in_backend, title)

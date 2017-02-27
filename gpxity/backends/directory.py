@@ -93,9 +93,7 @@ class Directory(Backend):
             raise Exception('No support for fs_encoding={}'.format(self.fs_encoding))
         value = None
         if activity.title:
-            value = activity.title.replace('/', '_')
-        if value in ('.', '..'):
-            value = None
+            value = self._sanitize_name(activity.title)
         if not value:
             value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
         path = self._make_path_unique(os.path.join(self.url, value + '.gpx'))
@@ -103,7 +101,9 @@ class Directory(Backend):
 
     @staticmethod
     def _make_path_unique(value):
-        """if the file name already exists, append a serial number"""
+        """If the file name already exists, apply a serial number. If value
+        ends with .gpx, put the serial number in front of that.
+        """
         ctr = 0
         unique_value = value
         while os.path.exists(unique_value):
@@ -113,6 +113,12 @@ class Directory(Backend):
             else:
                 unique_value = '{}.{}'.format(value, ctr)
         return unique_value
+
+    def _sanitize_name(self, value):
+        """Change it to legal file name characters"""
+        if self.fs_encoding is not None:
+            raise Exception('No support for fs_encoding={}'.format(self.fs_encoding))
+        return value.replace('/', '_')
 
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities.
@@ -175,7 +181,7 @@ class Directory(Backend):
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
         name = activity.title or activity.id_in_backend
-        return self._make_path_unique(os.path.join(by_month_dir, name))
+        return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
     def _save_full(self, activity):
         """save full gpx track. Since the file name uses title and title may have changed,
