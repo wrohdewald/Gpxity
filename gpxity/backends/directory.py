@@ -19,7 +19,7 @@ from .. import Backend, Activity
 __all__ = ['Directory']
 
 class Directory(Backend):
-    """Uses a directory for storage. The filename minus the .gpx ending is used as the storage id.
+    """Uses a directory for storage. The filename minus the .gpx ending is used as the activity id.
     If the activity has a title, use the title as storage id, making it unique by attaching a number if needed.
     An activity without title gets a random name.
 
@@ -40,12 +40,20 @@ class Directory(Backend):
 
     Attributes:
         prefix (str): The prefix for temporary directories.
+        fs_encoding (str): The encoding for file system names. By default, we
+            expect the file system being able to handle arbitrary UTF-8 encoded names
+            except character '/' and special names '.' and '..'. If needed, we will introduce
+            new possible values for fs_encoding like perhaps 'windows'. Gpxity will **never**
+            support any other character set but UTF-8.
+            Note that :attr:`fs_encoding` is independent of the platform we are running on - we
+            might use a network file system.
     """
 
    # skip_test = True
     # pylint: disable=abstract-method
 
     prefix = 'gpxity.'
+    fs_encoding = None
 
     def __init__(self, url=None, auth=None, cleanup=False):
         self.url_given = bool(url)
@@ -81,9 +89,14 @@ class Directory(Backend):
 
     def _set_new_id(self, activity):
         """a not yet existant file name"""
+        if self.fs_encoding is not None:
+            raise Exception('No support for fs_encoding={}'.format(self.fs_encoding))
+        value = None
         if activity.title:
-            value = activity.title
-        else:
+            value = activity.title.replace('/', '_')
+        if value in ('.', '..'):
+            value = None
+        if not value:
             value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
         path = self._make_path_unique(os.path.join(self.url, value + '.gpx'))
         activity.id_in_backend = os.path.basename(path)[:-4]

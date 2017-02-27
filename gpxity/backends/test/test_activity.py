@@ -428,3 +428,27 @@ class ActivityTests(BasicTest):
             os.remove(target_path)
             with self.assertRaises(Exception):
                 directory.list_all() # this loads symlinks
+
+    def test_fs_encoding(self):
+        """fs_encoding"""
+        with Directory(cleanup=True) as directory:
+            activity = Activity(directory)
+            for title in ('TITLE', 'Tätel'):
+                activity.title = title
+                self.assertEqual(activity.title, title)
+                self.assertEqual(activity.id_in_backend, title)
+            for title in ('a/b', '//', 'Ä/Ü', '...'):
+                activity.title = title
+                self.assertEqual(activity.title, title)
+                self.assertEqual(activity.id_in_backend, title.replace('/', '_'))
+            for title in ('a/b', '//', 'Ä/Ü', '.', '..'):
+                activity.title = title
+                self.assertEqual(activity.title, title)
+                self.assertNotEqual(activity.id_in_backend, title)
+            prev_encoding = Directory.fs_encoding
+            Directory.fs_encoding = 'whatever'
+            try:
+                with self.assertRaises(Exception):
+                    activity.title = 'TITLE'
+            finally:
+                Directory.fs_encoding = prev_encoding

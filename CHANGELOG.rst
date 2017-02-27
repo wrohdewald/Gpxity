@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.1.2
+-----
+  * Directory tries not to use illegal file names for symlinks
+
 1.1.1
 -----
 Released 2017-02-26
