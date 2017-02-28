@@ -80,6 +80,7 @@ class Backend:
             self.url += '/'
         self.auth = auth
         self._cleanup = cleanup
+        self._next_id = None # this is a hack, see save()
 
     @classmethod
     def _define_support(cls):
@@ -137,12 +138,14 @@ class Backend:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
 
-    def save(self, activity, attributes=None):
+    def save(self, activity, ident: str = None, attributes=None):
         """save full activity.
 
         Args:
             activity (Activity): The activity we want to save in this backend.
                 It may be associated with an arbitrary backend.
+            ident: If given, a backend may use this as id_in_backend.
+                :class:`~gpxity.backends.directory.Directory` does.
             attributes (set(str)): If given and the backend supports specific saving for all given attributes,
                 save only those.
                 Otherwise, save the entire activity.
@@ -158,12 +161,13 @@ class Backend:
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
         if activity.backend is None:
+            self._next_id = ident
             activity.backend = self
             # this calls us again!
             return activity
 
         fully = False
-        if attributes is None or attributes == set(['all']):
+        if attributes is None or attributes == set(['all']) or self._next_id:
             fully = True
         else:
             for attribute in attributes:
@@ -173,7 +177,7 @@ class Backend:
                     break
 
         if fully:
-            self._save_full(activity)
+            self._save_full(activity, ident or self._next_id)
         else:
             for attribute in attributes:
                 write_name = '_write_{}'.format(attribute)
@@ -182,7 +186,7 @@ class Backend:
             self.activities.append(activity)
         return activity
 
-    def _save_full(self, activity) ->None:
+    def _save_full(self, activity, ident: str = None) ->None:
         """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 

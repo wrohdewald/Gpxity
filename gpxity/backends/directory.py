@@ -27,8 +27,11 @@ class Directory(Backend):
     subdirectories YYYY/MM (year/month) with only the activities for one month.
     Those are symbolic links to the main file and have the same file name.
 
-    This backend uses activity.title for the id. If an activity has no title, it uses a random
-    sequence of characters. Changing the title also changes the id.
+    If :meth:`~gpxity.backend.Backend.save` is given a value for ident, this
+    is used as id, the file name will be :literal:`id.gpx`.
+    Otherwise, this backend uses :attr:`Activity.title <gpxity.activity.Activity.title>` for the id.
+    If an activity has no title, it uses a random sequence of characters.
+    Changing the title also changes the id.
 
     Args:
         url (str): a directory. If not given, use a unique temporary directory named
@@ -189,13 +192,15 @@ class Directory(Backend):
         name = activity.title or activity.id_in_backend
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
-    def _save_full(self, activity):
+    def _save_full(self, activity, ident: str = None):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
         self._remove_activity_in_backend(activity)
         if activity.title:
             # enforce new id_in_backend using title
             activity.id_in_backend = None
+        if ident is not None:
+            activity.id_in_backend = ident
         _gpx_path = self._gpx_path(activity)
         try:
             with open(_gpx_path, 'w') as out_file:

@@ -179,7 +179,7 @@ class Activity:
         """
         if self.__dirty:
             if self.backend and not self._loading and not self._batch_changes:
-                self.backend.save(self, self.__dirty) # pylint: disable=no-member
+                self.backend.save(self, attributes=self.__dirty) # pylint: disable=no-member
                 self.__dirty = set()
 
     @property
