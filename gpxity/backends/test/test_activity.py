@@ -376,6 +376,13 @@ class ActivityTests(BasicTest):
 
     def test_angle(self):
         """test Activity.angle"""
+        activity1 = Activity()
+        activity1.add_points(list())
+        self.assertEqual(len(activity1.gpx.tracks), 0)
+        self.assertEqual(activity1.angle(), 0)
+        activity1.add_points(self.some_random_points(1))
+        del activity1.gpx.tracks[0].segments[0]
+        self.assertEqual(activity1.angle(), 0)
         for _ in range(1000):
             activity1 = Activity()
             activity1.add_points(self.some_random_points(2))

@@ -499,22 +499,20 @@ class Activity:
             the angle in degrees 0..360 between start and end.
             If we have no track, return 0
         """
-        self._load_full()
-        if not self.__gpx.tracks:
-            return 0
-        first_point = self.__gpx.tracks[0].segments[0].points[0]
-        last_point = self.__gpx.tracks[-1].segments[-1].points[-1]
-        delta_lat = first_point.latitude - last_point.latitude
-        delta_long = first_point.longitude - last_point.longitude
-        norm_lat = delta_lat / 90.0
-        norm_long = delta_long / 180.0
-        try:
-            result = degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long **2)))
-        except ZeroDivisionError:
-            return 0
-        if norm_lat >= 0.0:
-            return (360.0 + result) % 360.0
-        return 180.0 - result
+        for first_point in self.all_points():
+            last_point = self.__gpx.tracks[-1].segments[-1].points[-1]
+            delta_lat = first_point.latitude - last_point.latitude
+            delta_long = first_point.longitude - last_point.longitude
+            norm_lat = delta_lat / 90.0
+            norm_long = delta_long / 180.0
+            try:
+                result = degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long **2)))
+            except ZeroDivisionError:
+                return 0
+            if norm_lat >= 0.0:
+                return (360.0 + result) % 360.0
+            return 180.0 - result
+        return 0
 
     def all_points(self):
         """
