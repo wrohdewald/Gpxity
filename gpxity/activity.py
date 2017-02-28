@@ -280,21 +280,23 @@ class Activity:
 
     def add_points(self, points) ->None:
         """Adds points to last segment in the last track. If no track
-        is allocated yet, do so.
+        is allocated yet and points is not an empty list, allocates
+        a track.
 
         UNFINISHED
 
         Args:
             points (list(GPXTrackPoint): The points to be added
         """
-        if self.__gpx.tracks:
-            # make sure the same points are not added twice
-            assert points != self.__gpx.tracks[-1].segments[-1].points[-len(points):]
-        self._load_full()
-        if not self.__gpx.tracks:
-            self.__gpx.tracks.append(GPXTrack())
-            self.__gpx.tracks[0].segments.append(GPXTrackSegment())
-        self.__gpx.tracks[-1].segments[-1].points.extend(points)
+        if points:
+            if self.__gpx.tracks:
+                # make sure the same points are not added twice
+                assert points != self.__gpx.tracks[-1].segments[-1].points[-len(points):]
+            self._load_full()
+            if not self.__gpx.tracks:
+                self.__gpx.tracks.append(GPXTrack())
+                self.__gpx.tracks[0].segments.append(GPXTrackSegment())
+            self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
     def _parse_keywords(self):
         """self.keywords is 1:1 as parsed from xml. Here we extract
