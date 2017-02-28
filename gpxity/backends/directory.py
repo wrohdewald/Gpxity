@@ -32,14 +32,16 @@ class Directory(Backend):
 
     Args:
         url (str): a directory. If not given, use a unique temporary directory named
-            gpxpy.X where X are some random characters.
+            :attr:`prefix`.X where X are some random characters.
             If the directory does not exist, it is created.
         auth (tuple(str, str)): Unused.
         cleanup (bool): If True, :meth:`destroy` will remove all activities. If url was
             not given, it will also remove the directory.
+        prefix: The prefix for a temporary directory path. Must not be given if url is given.
 
     Attributes:
-        prefix (str): The prefix for temporary directories.
+        prefix (str):  Class attribute, may be changed. The default prefix for
+            temporary directories. Default value is :literal:`gpxity.`
         fs_encoding (str): The encoding for file system names. By default, we
             expect the file system being able to handle arbitrary UTF-8 encoded names
             except character '/' and special names '.' and '..'. If needed, we will introduce
@@ -53,12 +55,16 @@ class Directory(Backend):
     # pylint: disable=abstract-method
 
     prefix = 'gpxity.'
-    fs_encoding = None
 
-    def __init__(self, url=None, auth=None, cleanup=False):
+    def __init__(self, url=None, auth=None, cleanup=False, prefix: str = None):
+        self.fs_encoding = None
+        if prefix is None:
+            prefix = self.__class__.prefix
+        elif url:
+            raise Exception('Directory does not accept both url and prefix')
         self.url_given = bool(url)
         if not self.url_given:
-            url = tempfile.mkdtemp(prefix=self.prefix)
+            url = tempfile.mkdtemp(prefix=prefix)
         super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
             os.makedirs(self.url)

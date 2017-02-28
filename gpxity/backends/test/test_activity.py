@@ -452,10 +452,10 @@ class ActivityTests(BasicTest):
                 activity.title = title
                 self.assertEqual(activity.title, title)
                 self.assertNotEqual(activity.id_in_backend, title)
-            prev_encoding = Directory.fs_encoding
-            Directory.fs_encoding = 'whatever'
+            prev_encoding = directory.fs_encoding
+            directory.fs_encoding = 'whatever'
             try:
                 with self.assertRaises(Exception):
                     activity.title = 'TITLE'
             finally:
-                Directory.fs_encoding = prev_encoding
+                directory.fs_encoding = prev_encoding
