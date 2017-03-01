@@ -472,7 +472,7 @@ class ActivityTests(BasicTest):
             with Directory('url', prefix='x', cleanup=True):
                 pass
 
-    def test_keywords(self):
+    def test_local_keywords(self):
         """Some keyword tests. More see in test_backends"""
         gpx = self._get_gpx_from_test_file('test')
         gpx.keywords = 'What:Cycling, Status:public'
