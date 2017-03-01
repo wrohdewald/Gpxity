@@ -163,7 +163,7 @@ class Activity:
         Returns:
             the new activity
         """
-        result = Activity(gpx=self.__gpx.clone())
+        result = Activity(gpx=self.gpx.clone())
         result.what = self.what
         result.public = self.public
         return result
