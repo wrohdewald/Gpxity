@@ -183,7 +183,7 @@ class TestBackends(BasicTest):
 
     def test_download_many(self):
         """download many activities"""
-        many = 100
+        many = 150
         backend = self.setup_backend(MMT, count=many, cleanup=False, clear_first=False, sub_name='many')
         self.assertEqual(len(backend.list_all()), many)
 

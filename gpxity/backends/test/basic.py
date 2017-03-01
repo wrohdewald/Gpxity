@@ -122,7 +122,7 @@ class BasicTest(unittest.TestCase):
         return start + datetime.timedelta(seconds=random_second)
 
     @classmethod
-    def some_random_points(cls, count=10):
+    def some_random_points(cls, count=100):
         """
 
         Returns:
@@ -182,9 +182,12 @@ class BasicTest(unittest.TestCase):
             result.remove_all()
         else:
             result.list_all()
-        while count > len(result.activities):
+        while count > len(result.activities) +1:
             activity = self.create_test_activity(count, len(result.activities))
             result.save(activity)
+        self.assertGreaterEqual(len(result), count)
+        if clear_first:
+            self.assertEqual(len(result), count)
         return result
 
     @staticmethod
