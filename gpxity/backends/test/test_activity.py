@@ -434,8 +434,8 @@ class ActivityTests(BasicTest):
                 target_file.write(' ')
             os.symlink('deadtarget', source)
             os.remove(target_path)
-            with self.assertRaises(Exception):
-                directory.list_all() # this loads symlinks
+            directory.list_all() # this loads symlinks. It removes the dead link.
+            self.assertFalse(os.path.exists(source))
 
     def test_fs_encoding(self):
         """fs_encoding"""
