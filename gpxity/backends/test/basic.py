@@ -76,7 +76,7 @@ class BasicTest(unittest.TestCase):
         return gpxpy.parse(io.StringIO(get_data(__package__, '{}.gpx'.format(name)).decode('utf-8')))
 
     @classmethod
-    def create_test_activity(cls, count=1, idx=0, what=None):
+    def create_test_activity(cls, count: int = 1, idx: int = 0, what: str = None, status: bool = False):
         """creates an activity. It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
@@ -84,12 +84,13 @@ class BasicTest(unittest.TestCase):
         in degrees of :literal:`360 * idx / count`.
 
         Args:
-            count (int): See above. Using 1 as default if not given.
-            idx (int): See above. Using 0 as default if not given.
-            what (str): The wanted value for the activity.
+            count: See above. Using 1 as default if not given.
+            idx: See above. Using 0 as default if not given.
+            what: The wanted value for the activity.
                 Default: if count == len(:attr:`Activity.legal_what <gpxity.activity.Activity.legal_what>`),
                 the default value will be legal_what[idx].
                 Otherwise a random value will be applied.
+            status: Public?
 
         Returns:
             (Activity): A new activity not bound to a backend
@@ -113,6 +114,7 @@ class BasicTest(unittest.TestCase):
             result.what = Activity.legal_what[idx]
         else:
             result.what = random.choice(Activity.legal_what)
+        result.public = status
         return result
 
     @staticmethod
@@ -162,7 +164,7 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(activity1.points_equal(activity2))
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
-    def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True, sub_name=None):
+    def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True, status: bool = False, sub_name=None):
         """sets up an instance of a backend with count activities.
 
         If count == len(:attr:`Activity.legal_what <gpxity.activity.Activity.legal_what>`),
@@ -175,6 +177,7 @@ class BasicTest(unittest.TestCase):
             count (int): how many random activities should be inserted?
             cleanup (bool): If True, remove all activities when done. Passed to the backend.
             clear_first (bool): if True, first remove all existing activities
+            status: should the activities be public or private?
             sub_name (str): use this to get specific username/passwords from Authenticate
 
         Returns:
@@ -187,8 +190,8 @@ class BasicTest(unittest.TestCase):
             result.remove_all()
         else:
             result.list_all()
-        while count > len(result.activities) +1:
-            activity = self.create_test_activity(count, len(result.activities))
+        while count > len(result.activities):
+            activity = self.create_test_activity(count, len(result.activities), status=status)
             result.save(activity)
         self.assertGreaterEqual(len(result), count)
         if clear_first:
