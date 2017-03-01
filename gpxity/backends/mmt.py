@@ -300,27 +300,35 @@ class MMT(Backend):
 
     def _load_page_in_session(self, activity, session):
         """The MMT api does not deliver all attributes we want.
-        This gets some more by scanning the web page."""
+        This gets some more by scanning the web page and
+        returns it in page_parser.result"""
         with activity.loading():
             response = session.get('{}/explore/activity/{}'.format(
                 self._base_url(), activity.id_in_backend))
             page_parser = ParseMMTActivity()
             page_parser.feed(response.text)
-            # if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
-            # while the home page says "Cycling activity". We prefer the value from the home page
-            # and silently ignore this inconsistency.
-            if self.remote_known_whats is None:
-                self.remote_known_whats = page_parser.result['legal_whats']
-            if page_parser.result['title']:
-                activity.title = page_parser.result['title']
-            if page_parser.result['description']:
-                activity.description = page_parser.result['description']
-            # MMT sends different values of the current activity type, hopefully what_3 is always the
-            # correct one.
-            if page_parser.result['what_3']:
-                activity.what = page_parser.result['what_3']
-            if page_parser.result['public'] is not None:
-                activity.public = page_parser.result['public']
+            return page_parser.result
+
+    def _use_page_results(self, activity, page_scan):
+        """if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
+            while the home page says "Cycling activity". We prefer the value from the home page
+            and silently ignore this inconsistency.
+         """
+        if self.remote_known_whats is None:
+            self.remote_known_whats = page_scan['legal_whats']
+        if page_scan['title']:
+            activity.title = page_scan['title']
+        if page_scan['description']:
+            _ = page_scan['description']
+            if _ == self._default_description:
+                _ = ''
+            activity.description = _
+        # MMT sends different values of the current activity type, hopefully what_3 is always the
+        # correct one.
+        if page_scan['what_3']:
+            activity.what = page_scan['what_3']
+        if page_scan['public'] is not None:
+            activity.public = page_scan['public']
 
     def load_full(self, activity):
         """get the entire activity"""
@@ -331,7 +339,8 @@ class MMT(Backend):
                 activity.parse(response.text)
                 # but this does not give us activity type and other things,
                 # get them from the web page.
-                self._load_page_in_session(activity, session)
+                page_scan = self._load_page_in_session(activity, session)
+                self._use_page_results(activity, page_scan)
 
     def _remove_activity_in_backend(self, activity):
         """remove on the server"""
