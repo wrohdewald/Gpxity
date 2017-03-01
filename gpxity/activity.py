@@ -360,6 +360,10 @@ class Activity:
             result = result.replace('</trkpt><', '</trkpt>\n<')
             result = result.replace('<link ></link>', '')   # and remove those empty <link> tags
             result = result.replace('\n</trkpt>', '</trkpt>')
+            result = result.replace('>\n<ele>', '><ele>')
+            result = result.replace('>\n<time>', '><time>')
+            result = result.replace('</ele>\n<time>', '</ele><time>')
+            result = result.replace('.0</ele>', '</ele>') # this could differ depending on the source
             result = result.replace('\n\n', '\n')
         finally:
             self.__gpx.keywords = old_keywords
