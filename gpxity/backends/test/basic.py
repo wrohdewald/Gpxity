@@ -66,7 +66,17 @@ class BasicTest(unittest.TestCase):
         self.auth = Authenticate(cls_, sub_name).auth
 
     @staticmethod
-    def create_test_activity(count=1, idx=0, what=None):
+    def _get_gpx_from_test_file(name: str):
+        """gets data from a predefined gpx file.
+        name is without .gpx"""
+        gpx_test_file = os.path.join(os.path.dirname(__file__), '{}.gpx'.format(name))
+        if not os.path.exists(gpx_test_file):
+            raise Exception('MMTTests needs a GPX file named {}.gpx for testing in {}'.format(
+                name, os.getcwd()))
+        return gpxpy.parse(io.StringIO(get_data(__package__, '{}.gpx'.format(name)).decode('utf-8')))
+
+    @classmethod
+    def create_test_activity(cls, count=1, idx=0, what=None):
         """creates an activity. It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
@@ -86,13 +96,7 @@ class BasicTest(unittest.TestCase):
         """
         if BasicTest.all_backend_classes is None:
             BasicTest.all_backend_classes = BasicTest._find_backend_classes()
-        gpx_test_file = os.path.join(os.path.dirname(__file__), 'test.gpx')
-        if not os.path.exists(gpx_test_file):
-            raise Exception('MMTTests needs a GPX file named test.gpx for testing in {}'.format(
-                os.getcwd()))
-
-        data = io.StringIO(get_data(__package__, 'test.gpx').decode('utf-8'))
-        gpx = gpxpy.parse(data)
+        gpx = cls._get_gpx_from_test_file('test')
         movement = gpxpy.geo.LocationDelta(distance=100000, angle=360 * idx / count)
         last_points = gpx.tracks[-1].segments[-1].points
         new_point = GPXTrackPoint(
