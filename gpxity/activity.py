@@ -85,8 +85,10 @@ class Activity:
         self.__what = self.legal_what[0]
         self.__public = False
         self.id_in_backend = id_in_backend
-        self.__gpx = gpx or GPX()
         self.__backend = None
+        self.__gpx = gpx or GPX()
+        if gpx:
+            self._parse_keywords()
         if backend is not None:
             if gpx is not None:
                 raise Exception('Cannot accept backend and gpx')

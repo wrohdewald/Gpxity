@@ -459,3 +459,18 @@ class ActivityTests(BasicTest):
                     activity.title = 'TITLE'
             finally:
                 directory.fs_encoding = prev_encoding
+
+    def test_directory(self):
+        """Directory incantations"""
+        with self.assertRaises(Exception):
+            with Directory('url', prefix='x', cleanup=True):
+                pass
+
+    def test_keywords(self):
+        """Some keyword tests. More see in test_backends"""
+        gpx = self._get_gpx_from_test_file('test')
+        gpx.keywords = 'What:Cycling, Status:public'
+        activity = Activity(gpx=gpx)
+        self.assertEqual(activity.keywords, list())
+        activity.what = 'Running'
+        print(activity.keywords)
