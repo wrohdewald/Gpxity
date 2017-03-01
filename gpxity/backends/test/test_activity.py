@@ -167,13 +167,18 @@ class ActivityTests(BasicTest):
         gpx_last_time = activity.gpx.tracks[-1].segments[-1].points[-1].time
         self.assertEqual(activity.last_time(), gpx_last_time)
 
-    def test_xml(self):
-        """roughly check if we have one line per trackpoint"""
+    def test_one_line_per_trkpt(self):
+        """One line per trackpoint"""
         activity = self.create_test_activity()
         xml = activity.to_xml()
         self.assertNotIn('<link ></link>', xml)
         lines = xml.split('\n')
-        self.assertTrue(len(lines) >= activity.gpx.get_track_points_no())
+        start_lines = set(x for x in lines if x.startswith('<trkpt'))
+        end_lines = set(x for x in lines if x.endswith('</trkpt>'))
+        have_points = activity.gpx.get_track_points_no()
+        self.assertEqual(len(start_lines), have_points)
+        self.assertEqual(len(end_lines), have_points)
+        self.assertEqual(start_lines, end_lines)
 
     def test_parse(self):
         """does Activity parse xml correctly"""

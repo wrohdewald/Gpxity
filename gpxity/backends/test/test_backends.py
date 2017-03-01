@@ -198,3 +198,27 @@ class TestBackends(BasicTest):
                     activity2.title = 'TITLE'
                 finally:
                     backend.destroy()
+
+    def test_private(self):
+        """Up- and download private activities"""
+        local = self.setup_backend(Directory, count=5, cleanup=True, status=False)
+        activity = Activity(gpx=self._get_gpx_from_test_file('test2'))
+        activity.public = False
+        self.assertFalse(activity.public)
+        local.save(activity)
+        try:
+            for cls in self._find_backend_classes():
+                with self.subTest(' {}'.format(cls.__name__)):
+                    backend = self.setup_backend(cls, clear_first=True, cleanup=True)
+                    try:
+                        backend.copy_all_from(local)
+                        for _ in backend.activities:
+                            self.assertFalse(_.public)
+                        backend2 = self.clone_backend(backend)
+                        with Directory(cleanup=True) as copy:
+                            copy.copy_all_from(backend2)
+                            self.assertSameActivities(local, copy)
+                    finally:
+                        backend.destroy()
+        finally:
+            local.destroy()

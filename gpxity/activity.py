@@ -351,8 +351,7 @@ class Activity:
         self._load_full()
         new_keywords = self.keywords
         new_keywords.append('What:{}'.format(self.what))
-        if self.public:
-            new_keywords.append('Status:public')
+        new_keywords.append('Status:{}'.format('public' if self.public else 'private'))
         old_keywords = self.__gpx.keywords
         try:
             self.__gpx.keywords = ', '.join(new_keywords)
