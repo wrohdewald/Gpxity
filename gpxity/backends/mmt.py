@@ -94,6 +94,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser"""
+        # pylint: disable=too-many-branches
         self.seeing_title = False
         self.seeing_description = False
         self.seeing_what = False
@@ -105,6 +106,12 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
                         if attrs[3][0] == 'value':
                             value = attrs[3][1].strip()
                             self.result['what_3'] = value
+            if attrs[0] == ('id', 'mid'):
+                if attrs[1] == ('type', 'hidden'):
+                    if attrs[2] == ('name', 'mid'):
+                        if attrs[3][0] == 'value':
+                            value = attrs[3][1].strip()
+                            self.result['mid'] = value
             if attrs[0] == ('type', 'radio') and attrs[1] == ('class', 'activity_type'):
                 value = attrs[3][1].strip()
                 self.result['legal_whats'].append(value)
@@ -334,12 +341,14 @@ class MMT(Backend):
         """get the entire activity"""
         with activity.loading():
             with MMTSession(self) as session:
-                response = session.get('{}/assets/php/gpx.php?tid={}'.format(
-                    self._base_url(), activity.id_in_backend))
+                page_scan = self._load_page_in_session(activity, session)
+                response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
+                    self._base_url(), activity.id_in_backend, page_scan['mid'], session.cookies['exp_uniqueid']))
+                    # some activities download only a few points if mid/uid are not given, but I
+                    # have not been able to write a unittest triggering that ...
                 activity.parse(response.text)
                 # but this does not give us activity type and other things,
                 # get them from the web page.
-                page_scan = self._load_page_in_session(activity, session)
                 self._use_page_results(activity, page_scan)
 
     def _remove_activity_in_backend(self, activity):
