@@ -133,11 +133,12 @@ class BasicTest(unittest.TestCase):
             A list with count points
         """
         result = list()
+        start_time = cls._random_datetime()
         for _ in range(count):
             point = GPXTrackPoint(
                 latitude=random.uniform(0.0, 90.0),
                 longitude=random.uniform(0.0, 180.0), elevation=_,
-                time=cls._random_datetime() + datetime.timedelta(seconds=10))
+                time=start_time + datetime.timedelta(seconds=10 * _))
             result.append(point)
         return result
 
