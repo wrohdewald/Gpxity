@@ -14,7 +14,7 @@ from contextlib import contextmanager
 
 
 import gpxpy
-from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment
+from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment, GPXXMLSyntaxException
 
 
 
@@ -330,7 +330,12 @@ class Activity:
         with self.loading():
             old_gpx = self.__gpx
             old_public = self.public
-            self.__gpx = gpxpy.parse(indata)
+            try:
+                self.__gpx = gpxpy.parse(indata)
+            except GPXXMLSyntaxException as exc:
+                print('{}: Activity {} has illegal GPX XML: {}'.format(
+                    self.backend, self.id_in_backend, exc))
+                raise
             self._parse_keywords()
             self.public = self.public or old_public
             if old_gpx.name and not self.__gpx.name:
