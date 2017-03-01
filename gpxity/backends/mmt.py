@@ -166,6 +166,8 @@ class MMT(Backend):
 
    #  skip_test = True
 
+    _default_description = 'None yet. Let everyone know how you got on.'
+
     def __init__(self, url=None, auth=None, cleanup=True):
         if url is None:
             url = 'http://www.mapmytracks.com/api'
@@ -209,6 +211,9 @@ class MMT(Backend):
         aborts our connection."""
         if activity.is_loading:
             return
+        attr_value = getattr(activity, attribute)
+        if attribute == 'description' and attr_value == self._default_description:
+            attr_value = ''
         with MMTSession(self) as session:
             url = self._base_url() + '/assets/php/interface.php'
             data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
@@ -218,7 +223,7 @@ class MMT(Backend):
                     attr=attribute,
                     eid=activity.id_in_backend,
                     usrid=self.auth[0],
-                    value=getattr(activity, attribute),
+                    value=attr_value,
                     uid=session.cookies['exp_uniqueid']).encode('ascii', 'xmlcharrefreplace')
             response = session.post(url, data=data)
             if 'success' not in response.text:
