@@ -109,6 +109,7 @@ class TestBackends(BasicTest):
                     # make sure there is no cache in the way
                     backend2 = self.clone_backend(backend)
                     activity2 = backend2.list_all()[0]
+                    self.assertEqualActivities(activity, activity2)
                     self.assertNotEqual(first_public, activity2.public)
                     self.assertNotEqual(first_title, activity2.title)
                     self.assertNotEqual(first_description, activity2.description)
@@ -182,7 +183,7 @@ class TestBackends(BasicTest):
         is not always as trivial as it should be."""
 
     def test_download_many(self):
-        """download many activities"""
+        """Download many activities"""
         many = 150
         backend = self.setup_backend(MMT, count=many, cleanup=False, clear_first=False, sub_name='many')
         self.assertEqual(len(backend.list_all()), many)

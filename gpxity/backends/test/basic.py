@@ -147,9 +147,11 @@ class BasicTest(unittest.TestCase):
     def assertSameActivities(self, backend1, backend2): # pylint: disable=invalid-name
         """both backends must hold identical activities"""
         self.maxDiff = None # pylint: disable=invalid-name
-        self.assertEqual(backend1, backend2, 'backend1:{} backend2:{}'.format(
-            list(x.key() for x in backend1.activities),
-            list(x.key() for x in backend2.activities)))
+        if backend1 == backend2:
+            return True
+        keys1 = sorted(x.key() for x in backend1.activities)
+        keys2 = sorted(x.key() for x in backend2.activities)
+        self.assertEqual(keys1, keys2)
 
     def assertEqualActivities(self, activity1, activity2): # pylint: disable=invalid-name
         """both activities must be identical. We test more than necessary for better test coverage."""
