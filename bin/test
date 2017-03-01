@@ -20,7 +20,24 @@ unittest.testMethodPrefix = 'test_'
 
 runner = unittest.TextTestRunner(verbosity=2)
 loader = unittest.TestLoader()
-suite = loader.discover('.')
+full_suite = loader.discover('.')
+
+def tests_in(suite):
+    for test in suite:
+        if isinstance(test, unittest.TestSuite):
+            yield from tests_in(test)
+        else:
+            yield test
+
+suite = unittest.TestSuite()
+
+wanted = sys.argv[1:]
+
+for test in tests_in(full_suite):
+    ident = str(test).split()[0].replace(unittest.testMethodPrefix, '').strip()
+    if not wanted or ident in wanted:
+        suite.addTest(test)
+
 #suite.debug()
 result = runner.run(suite)
 
