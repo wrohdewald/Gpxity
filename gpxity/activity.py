@@ -473,6 +473,7 @@ class Activity:
         if self.backend:
             parts.append(repr(self.backend))
             parts.append('id:{}'.format(self.id_in_backend))
+        parts.append('public' if self.public else 'private')
         if self.__gpx:
             parts.append(self.what)
             if self.__gpx.name:

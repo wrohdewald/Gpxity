@@ -365,6 +365,7 @@ class ActivityTests(BasicTest):
             activity.add_points(self.some_random_points(10))
             self.assertIn('id:', str(activity))
             self.assertIn('Title', str(activity))
+            self.assertIn('public' if activity.public else 'private', str(activity))
             self.assertIn('Running', str(activity))
             self.assertIn(str(activity.time), str(activity))
             self.assertIn(str(activity.last_time()), str(activity))
