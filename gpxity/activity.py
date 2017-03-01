@@ -213,7 +213,7 @@ class Activity:
         """str: The description.
         """
         self._load_full()
-        return self.__gpx.description
+        return self.__gpx.description or ''
 
     @contextmanager
     def loading(self):
