@@ -141,6 +141,10 @@ class Backend:
     def save(self, activity, ident: str = None, attributes=None):
         """save full activity.
 
+        It is not allowed but possible to set Activity.id_in_backend to
+        something other than str. But here we raise an exception
+        if that ident is used for saving.
+
         Args:
             activity (Activity): The activity we want to save in this backend.
                 It may be associated with an arbitrary backend.
@@ -177,6 +181,9 @@ class Backend:
                     break
 
         if fully:
+            activity_id = ident or self._next_id or activity.id_in_backend
+            if activity_id is not None and not isinstance(activity_id, str):
+                raise Exception('{}: id_in_backend must be str')
             self._save_full(activity, ident or self._next_id)
         else:
             for attribute in attributes:

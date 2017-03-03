@@ -479,4 +479,15 @@ class ActivityTests(BasicTest):
         activity = Activity(gpx=gpx)
         self.assertEqual(activity.keywords, list())
         activity.what = 'Running'
-        print(activity.keywords)
+
+    def test_id(self):
+        """id_in_backend must be str"""
+        with Directory(cleanup=True) as directory:
+            activity = Activity()
+            activity.id_in_backend = 56
+            with self.assertRaises(Exception):
+                directory.save(activity)
+            activity.id_in_backend = '56'
+            directory.save(activity)
+            self.assertEqual(len(directory.list_all()), 1)
+
