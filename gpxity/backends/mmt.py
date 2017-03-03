@@ -283,7 +283,7 @@ class MMT(Backend):
 
         with MMTSession(self) as session:
             while True:
-                old_len = len(self.activities)
+                old_len = len(self)
                 response = self.__post(
                     'get_activities', author=self.auth[0],
                     offset=old_len, session=session)
@@ -297,7 +297,7 @@ class MMT(Backend):
                         activity.title = raw_data.title
                         activity.what = raw_data.what
                     yield activity
-                assert len(self.activities) > old_len
+                assert len(self) > old_len
 
     def _base_url(self):
         """the url without subdirectories"""

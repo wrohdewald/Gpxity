@@ -34,7 +34,7 @@ class ActivityTests(BasicTest):
             with self.assertRaises(Exception):
                 Activity(backend, gpx=GPX())
             Activity(backend)
-            self.assertEqual(len(backend.activities), 1)
+            self.assertEqual(len(backend), 1)
 
         test_url = tempfile.mkdtemp(prefix=Directory.prefix)
         self.assertTrue(os.path.exists(test_url))
@@ -258,19 +258,19 @@ class ActivityTests(BasicTest):
             dir2 = self.clone_backend(directory)
             activity = self.create_test_activity()
             activity.backend = directory
-            self.assertEqual(len(directory.activities), 1)
-            self.assertEqual(len(directory.activities), 1)
+            self.assertEqual(len(directory), 1)
+            self.assertEqual(len(directory), 1)
             aclone = activity.clone()
             self.assertEqualActivities(activity, aclone)
 
-            self.assertEqual(len(dir2.activities), 0)
+            self.assertEqual(len(dir2), 0)
             dir2.list_all()
-            self.assertEqual(len(dir2.activities), 1)
+            self.assertEqual(len(dir2), 1)
 
             activity2 = activity.clone()
             self.assertEqualActivities(activity, activity2)
             activity2.backend = directory
-            self.assertEqual(len(directory.activities), 2)
+            self.assertEqual(len(directory), 2)
             with self.assertRaises(Exception):
                 activity2.backend = dir2
             with self.assertRaises(Exception):
@@ -281,10 +281,10 @@ class ActivityTests(BasicTest):
             self.assertIs(activity.backend, directory)
             self.assertIs(activity2.backend, directory)
             self.assertIs(activity3.backend, dir2)
-            self.assertEqual(len(directory.activities), 2)
-            self.assertEqual(len(dir2.activities), 2)
+            self.assertEqual(len(directory), 2)
+            self.assertEqual(len(dir2), 2)
             directory.list_all()
-            self.assertEqual(len(directory.activities), 3)
+            self.assertEqual(len(directory), 3)
             trunk = os.path.join(directory.url, 'Random GPX # 0')
             expected_names = list(trunk + x for x in ('.gpx', '.1.gpx', '.2.gpx'))
             files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))

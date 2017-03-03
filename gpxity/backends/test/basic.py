@@ -193,8 +193,8 @@ class BasicTest(unittest.TestCase):
             result.remove_all()
         else:
             result.list_all()
-        while count > len(result.activities):
-            activity = self.create_test_activity(count, len(result.activities), status=status)
+        while count > len(result):
+            activity = self.create_test_activity(count, len(result), status=status)
             result.save(activity)
         self.assertGreaterEqual(len(result), count)
         if clear_first:

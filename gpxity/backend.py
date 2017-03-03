@@ -250,6 +250,9 @@ class Backend:
             return self.activities[index]
         raise IndexError
 
+    def __len__(self):
+        return len(self.activities)
+
     def clear(self):
         """Clears cached list of activities, does not remove anything."""
         self.activities.clear()

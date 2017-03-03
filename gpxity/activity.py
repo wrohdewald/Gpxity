@@ -93,7 +93,7 @@ class Activity:
             if gpx is not None:
                 raise Exception('Cannot accept backend and gpx')
         self.__backend = backend
-        if backend and self not in backend:
+        if backend is not None and self not in backend:
             backend.append(self)
 
     @property
@@ -180,7 +180,7 @@ class Activity:
         Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.backend.Backend.save>`.
         """
         if self.__dirty:
-            if self.backend and not self._loading and not self._batch_changes:
+            if self.backend is not None and not self._loading and not self._batch_changes:
                 self.backend.save(self, attributes=self.__dirty) # pylint: disable=no-member
                 self.__dirty = set()
 
@@ -276,7 +276,7 @@ class Activity:
 
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
-        if self.backend and self.id_in_backend and not self._loaded and not self._loading:
+        if self.backend is not None and self.id_in_backend and not self._loaded and not self._loading:
             self.backend.load_full(self) # pylint: disable=no-member
             self._loaded = True
 
