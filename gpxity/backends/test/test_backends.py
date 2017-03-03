@@ -167,7 +167,7 @@ class TestBackends(BasicTest):
                     self.assertEqualActivities(activity, activity2)
                     activity.description = tstdescr
                     self.assertEqual(activity.description, tstdescr)
-                    backend2.activities.clear()
+                    backend2.clear()
                     backend2.list_all()
                     activity2 = backend2[0]
                     self.assertEqual(activity2.description, tstdescr)

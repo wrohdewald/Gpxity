@@ -113,7 +113,7 @@ class Backend:
         Returns:
             list(Activity): all activities
         """
-        self.activities.clear()
+        self.clear()
         return list(self._yield_activities())
 
     def _yield_activities(self):
@@ -128,7 +128,7 @@ class Backend:
     def list_activities(self):
         """A generator returning all activities. If all have already been listed,
         return their cached list. For rescanning first call
-        :meth:`self.activities.clear()`.
+        :meth:`self.clear()`.
 
         Yields:
             the next activity"""
@@ -138,7 +138,7 @@ class Backend:
             for _ in self.activities:
                 yield _
         else:
-            self.activities.clear()
+            self.clear()
             for _ in self._yield_activities():
                 yield _
             self._activities_fully_listed = True
@@ -229,7 +229,7 @@ class Backend:
         has meanwhile been changed through another backend instance
         or another process, we cannot find it anymore. We do **not**
         relist all activities in the backend. If you want to make shure it
-        will be empty, call :meth:`self.activities.clear` before :meth:`remove_all`."""
+        will be empty, call :meth:`self.clear` before :meth:`remove_all`."""
         for activity in list(self.list_activities()):
             self.remove(activity)
 
@@ -278,6 +278,10 @@ class Backend:
         if isinstance(index, int):
             return self.activities[index]
         raise IndexError
+
+    def clear(self):
+        """Clears cached list of activities, does not remove anything."""
+        self.activities.clear()
 
     def append(self, value):
         """Appends an activity to the cached list."""
