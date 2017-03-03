@@ -34,16 +34,13 @@ class TestBackends(BasicTest):
         """Save empty activity"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, cleanup=True)
-                try:
+                with self.temp_backend(cls, cleanup=True) as backend:
                     activity = Activity()
                     if cls is MMT:
                         with self.assertRaises(Exception):
                             backend.save(activity)
                     else:
                         self.assertIsNotNone(backend.save(activity))
-                finally:
-                    backend.destroy()
 
     def test_backend(self):
         """Manipulate backend"""
@@ -63,10 +60,8 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 if issubclass(cls, Directory):
-                    try:
-                        backend = self.setup_backend(cls, sub_name='wrong', cleanup=True)
-                    finally:
-                        backend.destroy()
+                    with self.temp_backend(cls, sub_name='wrong', cleanup=True):
+                        pass
                 else:
                     with self.assertRaises(requests.exceptions.HTTPError):
                         self.setup_backend(cls, sub_name='wrong')
@@ -75,8 +70,7 @@ class TestBackends(BasicTest):
         """Test creation of a backend"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, count=3, clear_first=True, cleanup=True)
-                try:
+                with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
                     self.assertEqual(len(backend.list_all()), 3)
                     first_time = backend.get_time()
                     time.sleep(2)
@@ -84,15 +78,12 @@ class TestBackends(BasicTest):
                     total_seconds = (second_time - first_time).total_seconds()
                     self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
                         2, second_time, first_time, second_time - first_time))
-                finally:
-                    backend.destroy()
 
     def test_write_remote_attributes(self):
         """If we change title, description, public, what in activity, is the backend updated?"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, count=1, clear_first=True, cleanup=True)
-                try:
+                with self.temp_backend(cls, count=1, clear_first=True, cleanup=True) as backend:
                     activity = backend.list_all()[0]
                     first_public = activity.public
                     first_title = activity.title
@@ -114,8 +105,6 @@ class TestBackends(BasicTest):
                     self.assertNotEqual(first_title, activity2.title)
                     self.assertNotEqual(first_description, activity2.description)
                     self.assertNotEqual(first_what, activity2.what)
-                finally:
-                    backend.destroy()
 
     def test_all_what(self):
         """can we up- and download all values for :attr:`Activity.what`?"""
@@ -124,20 +113,21 @@ class TestBackends(BasicTest):
             self.setup_backend(x, count=what_count, clear_first=True)
             for x in self._find_backend_classes())
         copies = list(self.clone_backend(x) for x in backends)
-        first_backend = copies[0]
-        for other in copies[1:]:
-            self.assertSameActivities(first_backend, other)
-        for backend in copies:
-            backend.destroy()
-        for backend in backends:
-            backend.destroy()
+        try:
+            first_backend = copies[0]
+            for other in copies[1:]:
+                self.assertSameActivities(first_backend, other)
+        finally:
+            for backend in copies:
+                backend.destroy()
+            for backend in backends:
+                backend.destroy()
 
     def test_keywords(self):
         """save and load keywords"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, count=1, clear_first=True, cleanup=True)
-                try:
+                with self.temp_backend(cls, count=1, clear_first=True, cleanup=True) as backend:
                     activity = Activity(backend)
                     activity.add_points(self.some_random_points(5))
                     activity.keywords = (['a', 'b', 'c'])
@@ -149,17 +139,14 @@ class TestBackends(BasicTest):
                         activity.add_keyword('What:whatever')
                     activity.add_keyword('e')
                     self.assertEqual(activity.keywords, (['a', 'c', 'e']))
-                finally:
-                    backend.destroy()
 
     def test_unicode(self):
         """Can we up- and download unicode characters in all text attributes?"""
         tstdescr = 'DESCRIPTION with utf-8 char ß (unicode szlig) and something japanese:の諸問題'
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, count=1, clear_first=True)
-                backend2 = self.clone_backend(backend)
-                try:
+                with self.temp_backend(cls, count=1, clear_first=True) as backend:
+                    backend2 = self.clone_backend(backend) # auch contextmanager
                     activity = backend.list_all()[0]
                     activity.title = 'Title with utf-8 char ß (unicode szlig)'
                     backend2.list_all()
@@ -172,8 +159,6 @@ class TestBackends(BasicTest):
                     activity2 = backend2[0]
                     self.assertEqual(activity2.description, tstdescr)
                     self.assertEqualActivities(activity, activity2)
-                finally:
-                    backend.destroy()
                     backend2.destroy()
 
     def test_change_points(self):
@@ -192,26 +177,21 @@ class TestBackends(BasicTest):
         """two activities having the same title"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                backend = self.setup_backend(cls, count=2, clear_first=True)
-                activity1, activity2 = backend.list_all()
-                try:
+                with self.temp_backend(cls, count=2, clear_first=True) as backend:
+                    activity1, activity2 = backend.list_all()
                     activity1.title = 'TITLE'
                     activity2.title = 'TITLE'
-                finally:
-                    backend.destroy()
 
     def test_private(self):
         """Up- and download private activities"""
-        local = self.setup_backend(Directory, count=5, cleanup=True, status=False)
-        activity = Activity(gpx=self._get_gpx_from_test_file('test2'))
-        activity.public = False
-        self.assertFalse(activity.public)
-        local.save(activity)
-        try:
+        with self.temp_backend(Directory, count=5, cleanup=True, status=False) as local:
+            activity = Activity(gpx=self._get_gpx_from_test_file('test2'))
+            activity.public = False
+            self.assertFalse(activity.public)
+            local.save(activity)
             for cls in self._find_backend_classes():
                 with self.subTest(' {}'.format(cls.__name__)):
-                    backend = self.setup_backend(cls, clear_first=True, cleanup=True)
-                    try:
+                    with self.temp_backend(cls, clear_first=True, cleanup=True) as backend:
                         backend.copy_all_from(local)
                         for _ in backend:
                             self.assertFalse(_.public)
@@ -219,7 +199,3 @@ class TestBackends(BasicTest):
                         with Directory(cleanup=True) as copy:
                             copy.copy_all_from(backend2)
                             self.assertSameActivities(local, copy)
-                    finally:
-                        backend.destroy()
-        finally:
-            local.destroy()

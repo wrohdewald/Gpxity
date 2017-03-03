@@ -17,6 +17,7 @@ import random
 from inspect import getmembers, isclass, getmro
 from pkgutil import get_data
 import tempfile
+from contextlib import contextmanager
 
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
@@ -200,6 +201,18 @@ class BasicTest(unittest.TestCase):
         if clear_first:
             self.assertEqual(len(result), count)
         return result
+
+    @contextmanager
+    def temp_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True,
+                     status: bool = False, sub_name=None):
+        """Just like setup_backend but usable as a context manager. which will
+        call destroy() when done.
+        """
+        tmp_backend = self.setup_backend(cls_, url, count, cleanup, clear_first, status, sub_name)
+        try:
+            yield tmp_backend
+        finally:
+            tmp_backend.destroy()
 
     @staticmethod
     def clone_backend(backend):
