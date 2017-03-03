@@ -166,7 +166,8 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(activity1.points_equal(activity2))
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
-    def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True, status: bool = False, sub_name=None):
+    def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True,
+                      status: bool = False, sub_name=None):
         """sets up an instance of a backend with count activities.
 
         If count == len(:attr:`Activity.legal_what <gpxity.activity.Activity.legal_what>`),
