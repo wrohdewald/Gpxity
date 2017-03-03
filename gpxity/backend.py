@@ -51,7 +51,7 @@ class Backend:
 
     def __init__(self, url=None, auth=None, cleanup=False):
         super(Backend, self).__init__()
-        self.activities = list()
+        self._activities = list()
         self._activities_fully_listed = False
         self.url = url or ''
         if self.url and not self.url.endswith('/'):
@@ -103,10 +103,10 @@ class Backend:
 
         Yields:
             the next activity"""
-        if not self.activities:
+        if not self._activities:
             self._activities_fully_listed = False
         if self._activities_fully_listed:
-            for _ in self.activities:
+            for _ in self._activities:
                 yield _
         else:
             self.clear()
@@ -180,7 +180,7 @@ class Backend:
     def remove(self, activity) ->None:
         """Removes activity."""
         self._remove_activity_in_backend(activity)
-        self.activities.remove(activity)
+        self._activities.remove(activity)
         activity.id_in_backend = None
 
     def _remove_activity_in_backend(self, activity) ->None:
@@ -241,25 +241,25 @@ class Backend:
     def __getitem__(self, index):
         """Allows accesses like alist[a_id].
         Does NOT load activities, only checks what is already known."""
-        for _ in self.activities:
+        for _ in self._activities:
             if _ is index:
                 return _
             if _.id_in_backend == index:
                 return _
         if isinstance(index, int):
-            return self.activities[index]
+            return self._activities[index]
         raise IndexError
 
     def __len__(self):
-        return len(self.activities)
+        return len(self._activities)
 
     def clear(self):
         """Clears cached list of activities, does not remove anything."""
-        self.activities.clear()
+        self._activities.clear()
 
     def append(self, value):
         """Appends an activity to the cached list."""
-        self.activities.append(value)
+        self._activities.append(value)
 
     def __repr__(self):
         result = '{}({} {})'.format(
