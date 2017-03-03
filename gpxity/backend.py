@@ -199,7 +199,7 @@ class Backend:
                 write_name = '_write_{}'.format(attribute)
                 getattr(self, write_name)(activity)
         if activity not in self:
-            self.activities.append(activity)
+            self.append(activity)
         return activity
 
     def _save_full(self, activity, ident: str = None) ->None:
@@ -278,6 +278,10 @@ class Backend:
         if isinstance(index, int):
             return self.activities[index]
         raise IndexError
+
+    def append(self, value):
+        """Appends an activity to the cached list."""
+        self.activities.append(value)
 
     def __repr__(self):
         result = '{}({} {})'.format(

@@ -94,7 +94,7 @@ class Activity:
                 raise Exception('Cannot accept backend and gpx')
         self.__backend = backend
         if backend and self not in backend:
-            backend.activities.append(self)
+            backend.append(self)
 
     @property
     def backend(self):
