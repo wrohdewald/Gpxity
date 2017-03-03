@@ -40,7 +40,7 @@ class _ActivityList(list):
                 return _
             if _.id_in_backend == index:
                 return _
-        if isinstance(index, int) and 0 <= index < len(self):
+        if isinstance(index, int):
             return list.__getitem__(self, index)
 
 
