@@ -3,8 +3,11 @@ Changelog
 
 1.1.2
 -----
+  * len(backend) is the number of activities
+  * Allow backend[x] and x in backend
+  * hide Backend.activities, directly add needed methods to Backend
   * MMT: Download activity sometimes did not download the entire track
-  * bin/test and bin/coverage now accept test method names (without test_ prefix)
+  * bin/test and bin/coverage now accept test method names (without `test_` prefix)
   * Directory: removes dead links without raising an exception
   * Activity.description never returns None
   * Activity: Parsing illegal GPX XML now prints a more helpful error message
