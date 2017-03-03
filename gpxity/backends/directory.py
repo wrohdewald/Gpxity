@@ -151,7 +151,6 @@ class Directory(Backend):
         return (x.replace('.gpx', '') for x in gpx_names)
 
     def _yield_activities(self):
-        self.activities.clear()
         self._load_symlinks()
         for _ in self._list_gpx():
             yield Activity(self, _)

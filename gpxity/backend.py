@@ -113,6 +113,7 @@ class Backend:
         Returns:
             list(Activity): all activities
         """
+        self.activities.clear()
         return list(self._yield_activities())
 
     def _yield_activities(self):
@@ -137,6 +138,7 @@ class Backend:
             for _ in self.activities:
                 yield _
         else:
+            self.activities.clear()
             for _ in self._yield_activities():
                 yield _
             self._activities_fully_listed = True

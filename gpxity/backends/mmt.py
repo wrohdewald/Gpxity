@@ -281,8 +281,6 @@ class MMT(Backend):
         """get all activities for this user. If we do not use the generator
         created by yield_activity, unittest fails. Why?"""
 
-        self.activities.clear()
-
         with MMTSession(self) as session:
             while True:
                 old_len = len(self.activities)
