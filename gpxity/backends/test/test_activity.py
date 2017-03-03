@@ -63,8 +63,8 @@ class ActivityTests(BasicTest):
             self.assertFalse(activity.dirty)
 
     def test_activity_list(self):
-        """test ActivityList"""
-        with Directory(cleanup=True) as directory: # we have no direct access to class ActivityList
+        """test list of activities"""
+        with Directory(cleanup=True) as directory:
             self.assertEqual(len(directory), 0)
             activity1 = Activity(backend=directory)
             self.assertIn(activity1, directory)

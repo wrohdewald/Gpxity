@@ -15,35 +15,6 @@ import dis
 __all__ = ['Backend']
 
 
-class _ActivityList(list):
-
-    """A list of all activities in a backend,
-    allowing activity id as index like in
-    backend.activities['12345']
-
-    Args:
-        content (list(Activity): Initial list of activities
-    """
-
-    def __init__(self, content=None):
-        super(_ActivityList, self).__init__()
-        if content is not None:
-            self.extend(content)
-
-    def __contains__(self, index) ->bool:
-        return self.__getitem__(index) is not None
-
-    def __getitem__(self, index):
-        """Allows accesses like alist[a_id]"""
-        for _ in self:
-            if _ is index:
-                return _
-            if _.id_in_backend == index:
-                return _
-        if isinstance(index, int):
-            return list.__getitem__(self, index)
-
-
 class Backend:
     """A place where activities live. Something like the filesystem or
     http://mapmytracks.com.
@@ -80,7 +51,7 @@ class Backend:
 
     def __init__(self, url=None, auth=None, cleanup=False):
         super(Backend, self).__init__()
-        self.activities = _ActivityList()
+        self.activities = list()
         self._activities_fully_listed = False
         self.url = url or ''
         if self.url and not self.url.endswith('/'):
@@ -268,7 +239,7 @@ class Backend:
             return False
 
     def __getitem__(self, index):
-        """allows indexing.
+        """Allows accesses like alist[a_id].
         Does NOT load activities, only checks what is already known."""
         for _ in self.activities:
             if _ is index:
