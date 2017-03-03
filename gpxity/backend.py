@@ -52,6 +52,13 @@ class Backend:
     may be removed automatically, if cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
+    A backend allows indexing by normal int index, by activity and by id_in_backend.
+    :literal:`if 'ident' in backend` is possible.
+    len(backend) shows the number of activities. Please note that
+
+    Code like :literal:`if backend:` can be problematic. This will be False if the backend
+    has no activity. If that is not what you want, consider :literal:`if backend is not None`
+
     Not all backends support all methods. The unsupported methods
     will raise NotImplementedError. As a convenience every backend
     has a list **supported** to be used like :literal:`if 'update' in backend.supported:`
@@ -189,7 +196,7 @@ class Backend:
             for attribute in attributes:
                 write_name = '_write_{}'.format(attribute)
                 getattr(self, write_name)(activity)
-        if activity not in self.activities:
+        if activity not in self:
             self.activities.append(activity)
         return activity
 
@@ -247,7 +254,28 @@ class Backend:
 
     def has_same_activities(self, other) ->bool:
         """True if both backends have the same activities."""
-        return set(x.key() for x in self.activities) == set(x.key() for x in other.activities)
+        return set(x.key() for x in self) == set(x.key() for x in other)
+
+    def __contains__(self, value) ->bool:
+        """value is either an an activity or an activity id.
+        Does NOT load activities, only checks what is already known."""
+        try:
+            self.__getitem__(value)
+            return True
+        except IndexError:
+            return False
+
+    def __getitem__(self, index):
+        """allows indexing.
+        Does NOT load activities, only checks what is already known."""
+        for _ in self.activities:
+            if _ is index:
+                return _
+            if _.id_in_backend == index:
+                return _
+        if isinstance(index, int):
+            return self.activities[index]
+        raise IndexError
 
     def __repr__(self):
         result = '{}({} {})'.format(

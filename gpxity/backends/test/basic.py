@@ -149,8 +149,8 @@ class BasicTest(unittest.TestCase):
         self.maxDiff = None # pylint: disable=invalid-name
         if backend1 == backend2:
             return True
-        keys1 = sorted(x.key() for x in backend1.activities)
-        keys2 = sorted(x.key() for x in backend2.activities)
+        keys1 = sorted(x.key() for x in backend1)
+        keys2 = sorted(x.key() for x in backend2)
         self.assertEqual(keys1, keys2)
 
     def assertEqualActivities(self, activity1, activity2): # pylint: disable=invalid-name

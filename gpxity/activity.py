@@ -93,7 +93,7 @@ class Activity:
             if gpx is not None:
                 raise Exception('Cannot accept backend and gpx')
         self.__backend = backend
-        if backend and self not in backend.activities:
+        if backend and self not in backend:
             backend.activities.append(self)
 
     @property

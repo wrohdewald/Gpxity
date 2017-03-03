@@ -163,13 +163,13 @@ class TestBackends(BasicTest):
                     activity = backend.list_all()[0]
                     activity.title = 'Title with utf-8 char ß (unicode szlig)'
                     backend2.list_all()
-                    activity2 = backend2.activities[0]
+                    activity2 = backend2[0]
                     self.assertEqualActivities(activity, activity2)
                     activity.description = tstdescr
                     self.assertEqual(activity.description, tstdescr)
                     backend2.activities.clear()
                     backend2.list_all()
-                    activity2 = backend2.activities[0]
+                    activity2 = backend2[0]
                     self.assertEqual(activity2.description, tstdescr)
                     self.assertEqualActivities(activity, activity2)
                 finally:
@@ -213,7 +213,7 @@ class TestBackends(BasicTest):
                     backend = self.setup_backend(cls, clear_first=True, cleanup=True)
                     try:
                         backend.copy_all_from(local)
-                        for _ in backend.activities:
+                        for _ in backend:
                             self.assertFalse(_.public)
                         backend2 = self.clone_backend(backend)
                         with Directory(cleanup=True) as copy:

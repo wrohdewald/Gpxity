@@ -65,10 +65,9 @@ class ActivityTests(BasicTest):
     def test_activity_list(self):
         """test ActivityList"""
         with Directory(cleanup=True) as directory: # we have no direct access to class ActivityList
-            ali = directory.activities
-            self.assertEqual(len(ali), 0)
+            self.assertEqual(len(directory), 0)
             activity1 = Activity(backend=directory)
-            self.assertIn(activity1, ali)
+            self.assertIn(activity1, directory)
             self.assertIsNone(activity1.id_in_backend)
             activity1.description = 'x'
             self.assertIsNotNone(activity1.id_in_backend)
@@ -491,3 +490,28 @@ class ActivityTests(BasicTest):
             directory.save(activity)
             self.assertEqual(len(directory.list_all()), 1)
 
+    def test_in(self):
+        """x in backend"""
+        with Directory(cleanup=True) as directory:
+            activity = Activity()
+            activity.id_in_backend = '56'
+            directory.save(activity)
+            self.assertEqual(activity.id_in_backend, '56')
+            self.assertIn(activity, directory)
+            self.assertIn(activity.id_in_backend, directory)
+            directory.remove_all()
+            self.assertNotIn(activity, directory)
+            self.assertNotIn(activity.id_in_backend, directory)
+
+    def test_getitem(self):
+        """backend[idx]"""
+        with Directory(cleanup=True) as directory:
+            activity = Activity()
+            activity.id_in_backend = '56'
+            directory.save(activity)
+            self.assertEqual(directory[0], activity)
+            self.assertEqual(directory[activity], activity)
+            self.assertEqual(directory['56'], activity)
+            directory.remove_all()
+            with self.assertRaises(IndexError):
+                directory[0] # pylint: disable=pointless-statement
