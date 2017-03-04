@@ -177,8 +177,11 @@ class Backend:
         """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 
-    def remove(self, activity) ->None:
-        """Removes activity."""
+    def remove(self, value) ->None:
+        """Removes activity.
+        Args:
+            value: If it is not an activity, we look it up: self[value]"""
+        activity = value if hasattr(value, 'id_in_backend') else self[value]
         self._remove_activity_in_backend(activity)
         self._activities.remove(activity)
         activity.id_in_backend = None
