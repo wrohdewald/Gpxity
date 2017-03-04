@@ -193,7 +193,7 @@ class Activity:
 
         For the same reason time is readonly.
         """
-        return self.__gpx.get_time_bounds()[0] or self.__gpx.time
+        return self.gpx.get_time_bounds()[0] or self.__gpx.time
 
     @property
     def title(self) -> str:
