@@ -474,21 +474,23 @@ class Activity:
         self.dirty = 'keywords'
 
     def __repr__(self):
-        parts = []
-        if self.backend:
-            parts.append(repr(self.backend))
-            parts.append('id:{}'.format(self.id_in_backend))
-        parts.append('public' if self.public else 'private')
-        if self.__gpx:
-            parts.append(self.what)
-            if self.__gpx.name:
-                parts.append(self.__gpx.name)
-            if self.__gpx.get_time_bounds()[0]:
-                parts.append('{}-{}'.format(*self.__gpx.get_time_bounds()))
-            parts.append('{} points'.format(self.gpx.get_track_points_no()))
-            if self.angle():
-                parts.append('angle={}'.format(self.angle()))
-        return 'Activity({})'.format(' '.join(parts))
+        with self.decoupled():
+            # this should not automatically load the entire activity
+            parts = []
+            if self.backend:
+                parts.append(repr(self.backend))
+                parts.append('id:{}'.format(self.id_in_backend))
+            parts.append('public' if self.public else 'private')
+            if self.__gpx:
+                parts.append(self.what)
+                if self.__gpx.name:
+                    parts.append(self.__gpx.name)
+                if self.__gpx.get_time_bounds()[0]:
+                    parts.append('{}-{}'.format(*self.__gpx.get_time_bounds()))
+                parts.append('{} points'.format(self.gpx.get_track_points_no()))
+                if self.angle():
+                    parts.append('angle={}'.format(self.angle()))
+            return 'Activity({})'.format(' '.join(parts))
 
     def __str__(self):
         return self.__repr__()
