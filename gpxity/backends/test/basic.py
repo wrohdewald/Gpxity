@@ -47,6 +47,7 @@ class BasicTest(unittest.TestCase):
 
     def setUp(self):
         """defines test specific Directory.prefix"""
+        self.start_time = datetime.datetime.now()
         Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '/'
         path = os.path.join(tempfile.gettempdir(), Directory.prefix)
         if not os.path.exists(path):
@@ -56,6 +57,8 @@ class BasicTest(unittest.TestCase):
         """Check if there are still /tmp/gpxitytest.* directories"""
         must_be_empty = os.path.join(tempfile.gettempdir(), Directory.prefix)
         os.rmdir(must_be_empty)
+        timedelta = datetime.datetime.now() - self.start_time
+        print('{} seconds '.format(timedelta.seconds), end='', flush=True)
 
     def setup_auth(self, cls_, sub_name=None):
         """get auth data. Save it in self.auth
