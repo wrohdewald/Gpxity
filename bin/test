@@ -16,9 +16,14 @@ elif os.path.basename(os.path.dirname(cwd)) == 'bin':
 unittest.testMethodPrefix = 'test_'
 
 
+verbosity = 2
 
+args = sys.argv[1:]
+while args and args[0] == '-v':
+    verbosity += 1
+    args = args[1:]
 
-runner = unittest.TextTestRunner(verbosity=2)
+runner = unittest.TextTestRunner(descriptions=verbosity>2,  verbosity=verbosity)
 loader = unittest.TestLoader()
 full_suite = loader.discover('.')
 
