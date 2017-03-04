@@ -26,7 +26,7 @@ class Backend:
     may be removed automatically, if cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
-    A backend allows indexing by normal int index, by activity and by id_in_backend.
+    A backend allows indexing by normal int index, by :class:`Activity <gpxity.activity.Activity>` and by id_in_backend.
     :literal:`if 'ident' in backend` is possible.
     len(backend) shows the number of activities. Please note that Code
     like :literal:`if backend:` may not behave as expected. This will be False if the backend
