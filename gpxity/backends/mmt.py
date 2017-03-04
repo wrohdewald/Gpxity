@@ -216,7 +216,7 @@ class MMT(Backend):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        if activity.is_loading:
+        if activity.is_decoupled:
             return
         attr_value = getattr(activity, attribute)
         if attribute == 'description' and attr_value == self._default_description:
@@ -293,7 +293,7 @@ class MMT(Backend):
                 for _ in chunk:
                     raw_data = MMTRawActivity(_)
                     activity = Activity(self, raw_data.activity_id)
-                    with activity.loading():
+                    with activity.decoupled():
                         activity.title = raw_data.title
                         activity.what = raw_data.what
                     yield activity
@@ -307,7 +307,7 @@ class MMT(Backend):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
-        with activity.loading():
+        with activity.decoupled():
             response = session.get('{}/explore/activity/{}'.format(
                 self._base_url(), activity.id_in_backend))
             page_parser = ParseMMTActivity()
@@ -337,7 +337,7 @@ class MMT(Backend):
 
     def load_full(self, activity):
         """get the entire activity"""
-        with activity.loading():
+        with activity.decoupled():
             with MMTSession(self) as session:
                 page_scan = self._load_page_in_session(activity, session)
                 response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(

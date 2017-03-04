@@ -216,10 +216,12 @@ class Activity:
         return self.__gpx.description or ''
 
     @contextmanager
-    def loading(self):
-        """This context manager marks the activity as being loaded. In
-        that state, automatic writes of changes into the backend are
-        disabled.
+    def decoupled(self):
+        """This context manager disables automic synchronization with
+        the backend. In that state, automatic writes of changes into
+        the backend are disabled, and if you access attributes which
+        would normally trigger a full load from the backend, they will not.
+        (The latter is used by __str__ and __repr__).
 
         You should never need this unless you write a new backend.
         """
@@ -231,8 +233,8 @@ class Activity:
             self._loading = prev_loading
 
     @property
-    def is_loading(self):
-        """True if we are currently loading. See :meth:`loading`."""
+    def is_decoupled(self):
+        """True if we are currently decoupled. See :meth:`decoupled`."""
         return self._loading
 
     @contextmanager
@@ -327,7 +329,7 @@ class Activity:
         if not indata:
             # ignore empty file
             return
-        with self.loading():
+        with self.decoupled():
             old_gpx = self.__gpx
             old_public = self.public
             try:

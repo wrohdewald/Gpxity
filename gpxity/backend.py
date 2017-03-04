@@ -140,8 +140,8 @@ class Backend:
             and returned.
         """
 
-        if activity.is_loading:
-            raise Exception('A backend cannot save() if activity.is_loading. This is a bug in gpxity.')
+        if activity.is_decoupled:
+            raise Exception('A backend cannot save() if activity.is_decoupled. This is a bug in gpxity.')
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
         if activity.backend is None:

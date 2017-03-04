@@ -161,7 +161,7 @@ class Directory(Backend):
 
     def load_full(self, activity):
         """fills the activity with all its data from source."""
-        with activity.loading():
+        with activity.decoupled():
             with open(self._gpx_path(activity)) as in_file:
                 activity.parse(in_file)
 
