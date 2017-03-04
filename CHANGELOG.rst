@@ -3,6 +3,7 @@ Changelog
 
 1.1.2
 -----
+  * a first example
   * simplify authentication
   * simplify Backend API
   * len(backend) is the number of activities
