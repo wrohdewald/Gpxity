@@ -11,6 +11,7 @@ This module defines :class:`~gpxity.backend.Backend`
 import datetime
 from inspect import getmembers, isfunction
 import dis
+from contextlib import contextmanager
 
 __all__ = ['Backend']
 
@@ -50,6 +51,7 @@ class Backend:
     skip_test = False
 
     def __init__(self, url=None, auth=None, cleanup=False):
+        self._decoupled = False
         super(Backend, self).__init__()
         self._activities = list()
         self._activities_fully_listed = False
@@ -59,6 +61,23 @@ class Backend:
         self.auth = auth
         self._cleanup = cleanup
         self._next_id = None # this is a hack, see save()
+
+    @contextmanager
+    def _decouple(self):
+        """This context manager disables automic synchronization with
+        the backend. In that state, automatic writes of changes into
+        the backend are disabled, and if you access attributes which
+        would normally trigger a full load from the backend, they will not.
+        Use this to avoid recursions.
+
+        You should never need this unless you write a new backend.
+        """
+        prev_decoupled = self._decoupled
+        self._decoupled = True
+        try:
+            yield
+        finally:
+            self._decoupled = prev_decoupled
 
     @classmethod
     def _define_support(cls):

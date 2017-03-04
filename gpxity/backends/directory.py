@@ -151,9 +151,12 @@ class Directory(Backend):
         return (x.replace('.gpx', '') for x in gpx_names)
 
     def _yield_activities(self):
-        self._load_symlinks()
-        for _ in self._list_gpx():
-            yield Activity(self, _)
+        if not self._decoupled:
+            # avoids recursion
+            self._load_symlinks()
+            for _ in self._list_gpx():
+                with self._decouple():
+                    yield Activity(self, _)
 
     def get_time(self) ->datetime.datetime:
         """get server time as a Linux timestamp"""
