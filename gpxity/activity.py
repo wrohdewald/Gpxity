@@ -368,6 +368,8 @@ class Activity:
             result = result.replace('</ele>\n<time>', '</ele><time>')
             result = result.replace('.0</ele>', '</ele>') # this could differ depending on the source
             result = result.replace('\n\n', '\n')
+            if not result.endswith('\n'):
+                result += '\n'
         finally:
             self.__gpx.keywords = old_keywords
         return result
