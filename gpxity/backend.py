@@ -203,23 +203,18 @@ class Backend:
         has meanwhile been changed through another backend instance
         or another process, we cannot find it anymore. We do **not**
         relist all activities in the backend. If you want to make sure it
-        will be empty, call :meth:`clear` before :meth:`remove_all`."""
-        for activity in list(self.list_activities()):
+        will be empty, call :meth:`scan` before :meth:`remove_all`."""
+        for activity in list(self):
             self.remove(activity)
 
-    def copy_all_from(self, from_backend):
+    def copy_all_from(self, from_backend) ->None:
         """Copies all activities into this backend.
 
         Args:
             from_backend (Backend): The source of the activities
-
-        Returns:
-            List of all new activities in this backend
         """
-        result = list()
-        for activity in from_backend.list_all():
-            result.append(self.save(activity))
-        return result
+        for activity in from_backend:
+            self.save(activity)
 
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities. Some backends
