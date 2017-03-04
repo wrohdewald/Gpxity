@@ -509,9 +509,9 @@ class ActivityTests(BasicTest):
             activity = Activity()
             activity.id_in_backend = '56'
             directory.save(activity)
-            self.assertEqual(directory[0], activity)
-            self.assertEqual(directory[activity], activity)
-            self.assertEqual(directory['56'], activity)
+            self.assertIs(directory[0], activity)
+            self.assertIs(directory[activity], activity)
+            self.assertIs(directory['56'], activity)
             directory.remove_all()
             with self.assertRaises(IndexError):
                 directory[0] # pylint: disable=pointless-statement
