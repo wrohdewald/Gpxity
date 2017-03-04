@@ -7,7 +7,7 @@
 This module defines :class:`~gpxity.Authenticate`
 """
 
-from pkgutil import get_data
+import os
 from configparser import ConfigParser
 
 __all__ = ['Authenticate']
@@ -17,6 +17,8 @@ class Authenticate:
     """
     Get username and password from auth.cfg. If nothing is
     useable, sets them to None.
+
+    auth.cfg is expected in :literal:`~/.config/Gpxity/auth.cfg`
 
     .. DANGER::
        auth.cfg is not encrypted. Better not use this unless you know what you are doing!
@@ -47,14 +49,10 @@ class Authenticate:
         self.sub_name = sub_name
         self.auth = (None, None)
 
-        try:
-            with open('auth.cfg') as auth_file:
-                self._parse_config(auth_file.read())
-        except BaseException:
-            try:
-                self._parse_config(get_data(__package__, 'backends/test/auth.cfg').decode())
-            except BaseException:
-                pass
+        path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
+        with open(path) as auth_file:
+            self._parse_config(auth_file.read())
+        return
 
     def _parse_config(self, data):
         """try to use data"""
