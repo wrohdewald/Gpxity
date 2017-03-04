@@ -23,7 +23,6 @@ import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
 from ...activity import Activity
-from ...auth import Authenticate
 from ...backend import Backend
 
 # pylint: disable=attribute-defined-outside-init
@@ -37,7 +36,6 @@ class BasicTest(unittest.TestCase):
 
     Attributes:
         all_backend_classes: a list of all backend implementations
-        auth (tuple(str, str)): username/password
     """
 
     all_backend_classes = None
@@ -59,15 +57,6 @@ class BasicTest(unittest.TestCase):
         os.rmdir(must_be_empty)
         timedelta = datetime.datetime.now() - self.start_time
         print('{} seconds '.format(timedelta.seconds), end='', flush=True)
-
-    def setup_auth(self, cls_, sub_name=None):
-        """get auth data. Save it in self.auth
-
-        Args:
-            cls_ (Backend): The backend class
-            sub_name: for more specific username/passwords, see :class:`gpxity.auth.Authenticate`
-        """
-        self.auth = Authenticate(cls_, sub_name).auth
 
     @staticmethod
     def _get_gpx_from_test_file(name: str):
@@ -189,14 +178,13 @@ class BasicTest(unittest.TestCase):
             cleanup (bool): If True, remove all activities when done. Passed to the backend.
             clear_first (bool): if True, first remove all existing activities
             status: should the activities be public or private?
-            sub_name (str): use this to get specific username/passwords from Authenticate
+            sub_name (str): use this to for a specific accout name. Default is :literal:`test`.
 
         Returns:
             the prepared Backend
         """
 
-        self.setup_auth(cls_, sub_name)
-        result = cls_(url, auth=self.auth, cleanup=cleanup)
+        result = cls_(url, auth=sub_name or 'test', cleanup=cleanup)
         if clear_first:
             result.remove_all()
         while count > len(result):

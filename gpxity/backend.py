@@ -13,6 +13,8 @@ from inspect import getmembers, isfunction
 import dis
 from contextlib import contextmanager
 
+from . import Authenticate
+
 __all__ = ['Backend']
 
 
@@ -42,7 +44,9 @@ class Backend:
     Args:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
-        auth (tuple(str, str)): (username, password)
+        auth (tuple(str, str)): (username, password). Alternatively you can pass a single string.
+            This will be used to get username and password from :class:`Authenticate <gpxity.auth.Authenticate>`
+            with **sub_name** set to **auth**.
         cleanup (bool): If true, :meth:`destroy` will remove all activities.
 
     Attributes:
@@ -61,7 +65,10 @@ class Backend:
         self.url = url or ''
         if self.url and not self.url.endswith('/'):
             self.url += '/'
-        self.auth = auth
+        if isinstance(auth, str):
+            self.auth = Authenticate(self.__class__, auth).auth
+        else:
+            self.auth = auth
         self._cleanup = cleanup
         self._next_id = None # this is a hack, see save()
 

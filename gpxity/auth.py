@@ -10,8 +10,6 @@ This module defines :class:`~gpxity.Authenticate`
 from pkgutil import get_data
 from configparser import ConfigParser
 
-from gpxity import Backend
-
 __all__ = ['Authenticate']
 
 class Authenticate:
@@ -19,6 +17,9 @@ class Authenticate:
     """
     Get username and password from auth.cfg. If nothing is
     useable, sets them to None.
+
+    .. DANGER::
+       auth.cfg is not encrypted. Better not use this unless you know what you are doing!
 
     Args:
         cls (Backend): The class of the backend
@@ -30,7 +31,7 @@ class Authenticate:
     auth.cfg has sections
       * [default]             most general fallback
       * [ClassName]           the class name of a backend like MMT
-      * [ClassName.sub_name]  can be used for a specific test
+      * [ClassName.sub_name]  can be used for a specific account
 
     Those sections are tried from most specific to default until
     both username and password are known. It is legal if a more
@@ -40,7 +41,7 @@ class Authenticate:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, cls: Backend, sub_name: str = None):
+    def __init__(self, cls, sub_name: str = None):
 
         self.cls = cls
         self.sub_name = sub_name
