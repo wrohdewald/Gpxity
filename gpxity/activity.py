@@ -301,6 +301,7 @@ class Activity:
                 self.__gpx.tracks.append(GPXTrack())
                 self.__gpx.tracks[0].segments.append(GPXTrackSegment())
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
+            self.dirty = 'track'
 
     def _parse_keywords(self):
         """self.keywords is 1:1 as parsed from xml. Here we extract
