@@ -99,7 +99,7 @@ class Backend:
     def list_activities(self):
         """A generator returning all activities. If all have already been listed,
         return their cached list. For rescanning first call
-        :meth:`self.clear()`.
+        :meth:`clear`.
 
         Yields:
             the next activity"""
@@ -202,8 +202,8 @@ class Backend:
         """Removes all activities we know about. If their :attr:`id_in_backend`
         has meanwhile been changed through another backend instance
         or another process, we cannot find it anymore. We do **not**
-        relist all activities in the backend. If you want to make shure it
-        will be empty, call :meth:`self.clear` before :meth:`remove_all`."""
+        relist all activities in the backend. If you want to make sure it
+        will be empty, call :meth:`clear` before :meth:`remove_all`."""
         for activity in list(self.list_activities()):
             self.remove(activity)
 
@@ -253,7 +253,8 @@ class Backend:
         return len(self._activities)
 
     def clear(self):
-        """Clears cached list of activities, does not remove anything."""
+        """Clears cached list of activities, does not remove anything.
+        This forces later code to re-load the list of activities from the backend."""
         self._activities.clear()
 
     def append(self, value):
