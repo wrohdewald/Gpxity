@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.1.2
------
+1.1.2  release 2017-03-4
+------------------------
   * a first example
   * simplify authentication
   * simplify Backend API
