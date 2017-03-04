@@ -228,10 +228,6 @@ class Backend:
         if self._cleanup:
             self.remove_all()
 
-    def has_same_activities(self, other) ->bool:
-        """True if both backends have the same activities."""
-        return set(x.key() for x in self) == set(x.key() for x in other)
-
     def __contains__(self, value) ->bool:
         """value is either an an activity or an activity id.
         Does NOT load activities, only checks what is already known."""
@@ -276,5 +272,5 @@ class Backend:
         self.destroy()
 
     def __eq__(self, other):
-        """compares activities in both backends. Used for testing."""
-        return self.has_same_activities(other)
+        """True if both backends have the same activities."""
+        return set(x.key() for x in self) == set(x.key() for x in other)
