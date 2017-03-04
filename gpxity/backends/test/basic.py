@@ -157,12 +157,16 @@ class BasicTest(unittest.TestCase):
         keys2 = sorted(x.key() for x in backend2)
         self.assertEqual(keys1, keys2)
 
-    def assertEqualActivities(self, activity1, activity2): # pylint: disable=invalid-name
-        """both activities must be identical. We test more than necessary for better test coverage."""
+    def assertEqualActivities(self, activity1, activity2, xml: bool = False): # pylint: disable=invalid-name
+        """both activities must be identical. We test more than necessary for better test coverage.
+
+        Args:
+            xml: if True, also compare to_xml()"""
         self.maxDiff = None
         self.assertEqual(activity1.key(), activity2.key())
         self.assertTrue(activity1.points_equal(activity2))
-        self.assertEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
+        if xml:
+            self.assertEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
     def assertNotEqualActivities(self, activity1, activity2): # pylint: disable=invalid-name
         """both activities must be identical. We test more than necessary for better test coverage."""
@@ -195,8 +199,6 @@ class BasicTest(unittest.TestCase):
         result = cls_(url, auth=self.auth, cleanup=cleanup)
         if clear_first:
             result.remove_all()
-        else:
-            result.list_all()
         while count > len(result):
             activity = self.create_test_activity(count, len(result), status=status)
             result.save(activity)
@@ -219,7 +221,7 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def clone_backend(backend):
-        """returns a clone of backend with nothing listed or loaded
+        """returns a clone of backend
         """
         return backend.__class__(backend.url, backend.auth)
 

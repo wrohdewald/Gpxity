@@ -71,7 +71,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
-                    self.assertEqual(len(backend.list_all()), 3)
+                    self.assertEqual(len(backend), 3)
                     first_time = backend.get_time()
                     time.sleep(2)
                     second_time = backend.get_time()
@@ -84,7 +84,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.temp_backend(cls, count=1, clear_first=True, cleanup=True) as backend:
-                    activity = backend.list_all()[0]
+                    activity = backend[0]
                     first_public = activity.public
                     first_title = activity.title
                     first_description = activity.description
@@ -99,7 +99,7 @@ class TestBackends(BasicTest):
                         activity.what = 'Cycling'
                     # make sure there is no cache in the way
                     backend2 = self.clone_backend(backend)
-                    activity2 = backend2.list_all()[0]
+                    activity2 = backend2[0]
                     self.assertEqualActivities(activity, activity2)
                     self.assertNotEqual(first_public, activity2.public)
                     self.assertNotEqual(first_title, activity2.title)
@@ -146,19 +146,18 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.temp_backend(cls, count=1, clear_first=True) as backend:
-                    backend2 = self.clone_backend(backend) # auch contextmanager
-                    activity = backend.list_all()[0]
+                    backend2 = self.clone_backend(backend)
+                    activity = backend[0]
                     activity.title = 'Title with utf-8 char ß (unicode szlig)'
-                    backend2.list_all()
+                    backend2.scan() # because backend2 does not know about changes thru backend
                     activity2 = backend2[0]
-                    self.assertEqualActivities(activity, activity2)
+                    # activity and activity2 may not be identical. If the original activity
+                    # contains gpx xml data ignored by MMT, it will not be in activity2.
+                    self.assertEqual(activity.title, activity2.title)
                     activity.description = tstdescr
                     self.assertEqual(activity.description, tstdescr)
-                    backend2.clear()
-                    backend2.list_all()
-                    activity2 = backend2[0]
-                    self.assertEqual(activity2.description, tstdescr)
-                    self.assertEqualActivities(activity, activity2)
+                    backend2.scan()
+                    self.assertEqual(backend2[0].description, tstdescr)
                     backend2.destroy()
 
     def test_change_points(self):
@@ -171,16 +170,15 @@ class TestBackends(BasicTest):
         """Download many activities"""
         many = 150
         backend = self.setup_backend(MMT, count=many, cleanup=False, clear_first=False, sub_name='many')
-        self.assertEqual(len(backend.list_all()), many)
+        self.assertEqual(len(backend), many)
 
     def test_duplicate_title(self):
         """two activities having the same title"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.temp_backend(cls, count=2, clear_first=True) as backend:
-                    activity1, activity2 = backend.list_all()
-                    activity1.title = 'TITLE'
-                    activity2.title = 'TITLE'
+                    backend[0].title = 'TITLE'
+                    backend[1].title = 'TITLE'
 
     def test_private(self):
         """Up- and download private activities"""

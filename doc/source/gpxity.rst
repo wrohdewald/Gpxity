@@ -40,6 +40,6 @@ gpxity.backend module
     :members:
     :undoc-members:
     :show-inheritance:
-    :exclude-members: append
+    :exclude-members: append, skip_test
 
 

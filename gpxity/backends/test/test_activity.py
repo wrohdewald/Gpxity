@@ -242,8 +242,8 @@ class ActivityTests(BasicTest):
         self.assertEqual(activity2.title, 'Title2')
         self.assertEqual(activity2.description, 'Description2')
 
-    def test_save(self):
-        """save locally"""
+    def test_save_dir(self):
+        """Correct files?"""
         with Directory(cleanup=True) as directory:
             os.chmod(directory.url, 0o555)
             activity = self.create_test_activity()
@@ -254,47 +254,49 @@ class ActivityTests(BasicTest):
             activity.backend = directory
             self.assertIsNotNone(activity.backend)
 
+    def test_save(self):
+        """save locally"""
         with Directory(cleanup=True) as directory:
             dir2 = self.clone_backend(directory)
-            activity = self.create_test_activity()
-            activity.backend = directory
-            self.assertEqual(len(directory), 1)
-            self.assertEqual(len(directory), 1)
-            aclone = activity.clone()
-            self.assertEqualActivities(activity, aclone)
+            try:
+                activity = self.create_test_activity()
+                activity.backend = directory
+                self.assertEqual(len(directory), 1)
+                aclone = activity.clone()
+                self.assertEqualActivities(activity, aclone)
 
-            self.assertEqual(len(dir2), 0)
-            dir2.list_all()
-            self.assertEqual(len(dir2), 1)
+                self.assertEqual(len(dir2), 1)
 
-            activity2 = activity.clone()
-            self.assertEqualActivities(activity, activity2)
-            activity2.backend = directory
-            self.assertEqual(len(directory), 2)
-            with self.assertRaises(Exception):
-                activity2.backend = dir2
-            with self.assertRaises(Exception):
-                activity2.backend = None
-            activity3 = dir2.save(activity2)
-            self.assertEqualActivities(activity, activity3)
-            self.assertEqualActivities(activity2, activity3)
-            self.assertIs(activity.backend, directory)
-            self.assertIs(activity2.backend, directory)
-            self.assertIs(activity3.backend, dir2)
-            self.assertEqual(len(directory), 2)
-            self.assertEqual(len(dir2), 2)
-            directory.list_all()
-            self.assertEqual(len(directory), 3)
-            trunk = os.path.join(directory.url, 'Random GPX # 0')
-            expected_names = list(trunk + x for x in ('.gpx', '.1.gpx', '.2.gpx'))
-            files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
-            self.assertEqual(files, expected_names)
-            filecmp.clear_cache()
-            for idx1, idx2 in ((0, 1), (0, 2)):
-                file1 = files[idx1]
-                file2 = files[idx2]
-                self.assertTrue(filecmp.cmp(file1, file2),
-                                'Files are different: {} and {}'.format(file1, file2))
+                activity2 = activity.clone()
+                self.assertEqualActivities(activity, activity2)
+                activity2.backend = directory
+                self.assertEqual(len(directory), 2)
+                with self.assertRaises(Exception):
+                    activity2.backend = dir2
+                with self.assertRaises(Exception):
+                    activity2.backend = None
+                activity3 = dir2.save(activity2)
+                self.assertEqualActivities(activity, activity3)
+                self.assertEqualActivities(activity2, activity3)
+                self.assertIs(activity.backend, directory)
+                self.assertIs(activity2.backend, directory)
+                self.assertIs(activity3.backend, dir2)
+                self.assertEqual(len(directory), 2)
+                self.assertEqual(len(dir2), 2)
+                directory.scan() # we changed it through dir2
+                self.assertEqual(len(directory), 3)
+                trunk = os.path.join(directory.url, 'Random GPX # 0')
+                expected_names = list(trunk + x for x in ('.gpx', '.1.gpx', '.2.gpx'))
+                files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
+                self.assertEqual(files, expected_names)
+                filecmp.clear_cache()
+                for idx1, idx2 in ((0, 1), (0, 2)):
+                    file1 = files[idx1]
+                    file2 = files[idx2]
+                    self.assertTrue(filecmp.cmp(file1, file2),
+                                    'Files are different: {} and {}'.format(file1, file2))
+            finally:
+                dir2.destroy()
 
     def test_add_points(self):
         """test Activity.add_points"""
@@ -376,8 +378,14 @@ class ActivityTests(BasicTest):
             self.assertTrue(str(activity).startswith('Activity('))
             self.assertTrue(str(activity).endswith(')'))
             activity.add_points(self.some_random_points(count=5))
-            self.assertIn('5 points', str(activity))
+            self.assertIn(' 15 points', str(activity))
             self.assertIn('angle=', str(activity))
+
+            # str(activity) must not fully load it
+            clone = self.clone_backend(directory)
+            self.assertIn(' 0 points', str(clone[0]))
+            self.assertEqual(clone[0].gpx.get_track_points_no(), 15)
+            self.assertIn(' 15 points', str(clone[0]))
 
     def test_angle(self):
         """test Activity.angle"""
@@ -438,7 +446,7 @@ class ActivityTests(BasicTest):
                 target_file.write(' ')
             os.symlink('deadtarget', source)
             os.remove(target_path)
-            directory.list_all() # this loads symlinks. It removes the dead link.
+            directory.scan() # this loads symlinks. It removes the dead link.
             self.assertFalse(os.path.exists(source))
 
     def test_fs_encoding(self):
@@ -488,7 +496,7 @@ class ActivityTests(BasicTest):
                 directory.save(activity)
             activity.id_in_backend = '56'
             directory.save(activity)
-            self.assertEqual(len(directory.list_all()), 1)
+            self.assertEqual(len(directory), 1)
 
     def test_in(self):
         """x in backend"""

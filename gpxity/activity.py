@@ -36,7 +36,7 @@ class Activity:
     to rewrite the entire activity.
 
     You can use the context manager :meth:`batch_changes`. This holds back updating the backend until
-    the context is exiting.
+    leaving the context.
 
     Not all backends support everything, you could get the exception NotImplementedError.
 
@@ -63,7 +63,9 @@ class Activity:
             Currently those are the values as defined by mapmytracks.
             This should eventually become more flexible.
         id_in_backend (str): Every backend has its own scheme for unique activity ids. Some
-            backends may change the id if the activity data changes.
+            backends may change the id if the activity data changes. This must be `str` but
+            that is not enforced here. But :meth:`Backend.save <gpxity.backend.Backend.save>` will raise
+            an exception if this is not `str`.
     """
 
     # pylint: disable = too-many-instance-attributes
@@ -132,7 +134,7 @@ class Activity:
         Is the activity in sync with the backend?
 
         After directly manipulating :attr:`gpx`, set dirty to True.
-        See also :meth:`~gpxity.activity.Activity.gpx`.
+        See also :attr:`~gpxity.activity.Activity.gpx`.
 
         Setting dirty to True will directly call :meth:`~gpxity.activity.Activity._save`.
 
@@ -223,7 +225,8 @@ class Activity:
         would normally trigger a full load from the backend, they will not.
         (The latter is used by __str__ and __repr__).
 
-        You should never need this unless you write a new backend.
+        If you have a use case other than implementing a backend, please
+        tell the author. Otherwise this might disappear from the public API.
         """
         prev_loading = self._loading
         self._loading = True
@@ -241,6 +244,7 @@ class Activity:
     def batch_changes(self):
         """This context manager disables  the direct update in the backend
         and saves the entire activity when done.
+        :meth:`batch_changes` updates :attr:`dirty`, :meth:`decoupled` does not.
         """
         prev_batch_changes = self._batch_changes
         self._batch_changes = True

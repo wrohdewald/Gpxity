@@ -26,10 +26,13 @@ class Backend:
 
     A backend allows indexing by normal int index, by activity and by id_in_backend.
     :literal:`if 'ident' in backend` is possible.
-    len(backend) shows the number of activities. Please note that
-
-    Code like :literal:`if backend:` can be problematic. This will be False if the backend
+    len(backend) shows the number of activities. Please note that Code
+    like :literal:`if backend:` may not behave as expected. This will be False if the backend
     has no activity. If that is not what you want, consider :literal:`if backend is not None`
+
+    The backend will automatically synchronize. So something like :literal:`len(Backend())` will work.
+    However, some other Backend pointing to the same storage or even a different process
+    might change things. If you want to cope with that, use :meth:`scan`.
 
     Not all backends support all methods. The unsupported methods
     will raise NotImplementedError. As a convenience every backend
@@ -97,41 +100,29 @@ class Backend:
         """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
 
-    def list_all(self):
-        """list all activities for this user
-
-        Returns:
-            list(Activity): all activities
+    def scan(self) ->None:
+        """Enforces a reload of the list of all activities in the backend.
+        This will be delayed until the list is actually needed again.
         """
-        self.clear()
-        return list(self._yield_activities())
+        self._activities_fully_listed = False
+
+    def _scan(self) ->None:
+        """loads the list of all activities in the backend if not yet done.
+        Enforce this by calling :meth:`scan` first.
+        """
+        if not self._activities_fully_listed:
+            self._activities_fully_listed = True
+            self._activities = list()
+            list(self._yield_activities())
 
     def _yield_activities(self):
         """A generator for all activities. It yields the next found and appends it to activities.
-        It first clears self.activities.
+        The activities will not be loaded if possible.
 
         Yields:
             the next activity
         """
         raise NotImplementedError()
-
-    def list_activities(self):
-        """A generator returning all activities. If all have already been listed,
-        return their cached list. For rescanning first call
-        :meth:`clear`.
-
-        Yields:
-            the next activity"""
-        if not self._activities:
-            self._activities_fully_listed = False
-        if self._activities_fully_listed:
-            for _ in self._activities:
-                yield _
-        else:
-            self.clear()
-            for _ in self._yield_activities():
-                yield _
-            self._activities_fully_listed = True
 
     def load_full(self, activity) ->None:
         """fills the activity with all its data from source"""
@@ -158,6 +149,8 @@ class Backend:
             backend, a new activity living in this backend will be created
             and returned.
         """
+
+        # pylint: disable=too-many-branches
 
         if activity.is_decoupled:
             raise Exception('A backend cannot save() if activity.is_decoupled. This is a bug in gpxity.')
@@ -188,8 +181,10 @@ class Backend:
             for attribute in attributes:
                 write_name = '_write_{}'.format(attribute)
                 getattr(self, write_name)(activity)
-        if activity not in self:
+        if not self._find_item(activity):
             self.append(activity)
+            if len(self._activities) == 1:
+                self._activities_fully_listed = True
         return activity
 
     def _save_full(self, activity, ident: str = None) ->None:
@@ -198,8 +193,10 @@ class Backend:
 
     def remove(self, value) ->None:
         """Removes activity.
+
         Args:
-            value: If it is not an activity, we look it up: self[value]"""
+            value: If it is not an :class:`~gpxity.activity.Activity`, :meth:`remove` looks
+                it up by doing :literal:`self[value]`"""
         activity = value if hasattr(value, 'id_in_backend') else self[value]
         self._remove_activity_in_backend(activity)
         self._activities.remove(activity)
@@ -221,8 +218,8 @@ class Backend:
         """Removes all activities we know about. If their :attr:`id_in_backend`
         has meanwhile been changed through another backend instance
         or another process, we cannot find it anymore. We do **not**
-        relist all activities in the backend. If you want to make sure it
-        will be empty, call :meth:`scan` before :meth:`remove_all`."""
+        rescan all activities in the backend. If you want to make sure it
+        will be empty, call :meth:`scan` first."""
         for activity in list(self):
             self.remove(activity)
 
@@ -251,9 +248,12 @@ class Backend:
         except IndexError:
             return False
 
-    def __getitem__(self, index):
-        """Allows accesses like alist[a_id].
-        Does NOT load activities, only checks what is already known."""
+    def _find_item(self, index):
+        """finds an activity
+
+        Args:
+            index: May be Activity, str or int. str would be an id_in_backend.
+        """
         for _ in self._activities:
             if _ is index:
                 return _
@@ -261,15 +261,21 @@ class Backend:
                 return _
         if isinstance(index, int):
             return self._activities[index]
+
+    def __getitem__(self, index):
+        """Allows accesses like alist[a_id]. Do not call this when implementing
+        a backend because this always calls scan() first. Instead use :meth:`_find_item`."""
+        self._scan()
+        result = self._find_item(index)
+        if result is not None:
+            return result
         raise IndexError
 
     def __len__(self):
+        """do not call this when implementing a backend because this calls scan()"""
+        self._scan()
         return len(self._activities)
 
-    def clear(self):
-        """Clears cached list of activities, does not remove anything.
-        This forces later code to re-load the list of activities from the backend."""
-        self._activities.clear()
 
     def append(self, value):
         """Appends an activity to the cached list."""
@@ -288,4 +294,6 @@ class Backend:
 
     def __eq__(self, other):
         """True if both backends have the same activities."""
+        self._scan()
+        other._scan() # pylint: disable=protected-access
         return set(x.key() for x in self) == set(x.key() for x in other)

@@ -3,6 +3,7 @@ Changelog
 
 1.1.2
 -----
+  * simplify Backend API
   * len(backend) is the number of activities
   * Allow backend[x] and x in backend
   * hide Backend.activities, directly add needed methods to Backend
