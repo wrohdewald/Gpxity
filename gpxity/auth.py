@@ -78,3 +78,5 @@ class Authenticate:
                     break
 
         self.auth = (username, password)
+        if username is None:
+            raise Exception('Authenticate: Nothing found for account {}'.format(username))

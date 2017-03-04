@@ -62,7 +62,7 @@ class MMTSession:
         login_url = '{}/login'.format(base_url)
         response = self.session.post(login_url, data=payload)
         if not 'You are now logged in.' in response.text:
-            raise requests.exceptions.HTTPError()
+            raise requests.exceptions.HTTPError('Login as {} failed'.format(backend.auth[0]))
 
     def __enter__(self):
         return self.session
