@@ -16,24 +16,20 @@ Changelog
   * Backend.save() now accepts ident=str
   * Directory tries not to use illegal file names for symlinks
 
-1.1.1
------
-Released 2017-02-26
+1.1.1  released 2017-02-26
+--------------------------
   * Added Changelog
 
-1.1.0  
------
-Released 2017-02-26 
+1.1.0  released 2017-02-26 
+--------------------------
   * New backend ServerDirectory
 
-1.0.1
------
-Released 2017-02-25
+1.0.1  released 2017-02-25
+--------------------------
   * Documentation fixes
 
-1.0.0
------
-Released 2017-02-25
+1.0.0  released 2017-02-25
+--------------------------
   * Initial version supporting backends Directory and MMT
 
 
