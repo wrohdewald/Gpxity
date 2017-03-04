@@ -66,7 +66,7 @@ class TestBackends(BasicTest):
                     with self.assertRaises(requests.exceptions.HTTPError):
                         self.setup_backend(cls, sub_name='wrong')
 
-    def test_create_backend(self):
+    def test_z9_create_backend(self):
         """Test creation of a backend"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
@@ -106,7 +106,7 @@ class TestBackends(BasicTest):
                     self.assertNotEqual(first_description, activity2.description)
                     self.assertNotEqual(first_what, activity2.what)
 
-    def test_all_what(self):
+    def test_zz_all_what(self):
         """can we up- and download all values for :attr:`Activity.what`?"""
         what_count = len(Activity.legal_what)
         backends = list(
@@ -123,7 +123,7 @@ class TestBackends(BasicTest):
             for backend in backends:
                 backend.destroy()
 
-    def test_keywords(self):
+    def test_z2_keywords(self):
         """save and load keywords"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
@@ -140,7 +140,7 @@ class TestBackends(BasicTest):
                     activity.add_keyword('e')
                     self.assertEqual(activity.keywords, (['a', 'c', 'e']))
 
-    def test_unicode(self):
+    def test_z_unicode(self):
         """Can we up- and download unicode characters in all text attributes?"""
         tstdescr = 'DESCRIPTION with utf-8 char ß (unicode szlig) and something japanese:の諸問題'
         for cls in self._find_backend_classes():
