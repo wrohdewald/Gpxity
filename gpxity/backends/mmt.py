@@ -33,6 +33,7 @@ There are some problems with the server running at mapmytracks.com:
 from xml.etree import ElementTree
 from html.parser import HTMLParser
 import datetime
+from collections import defaultdict
 
 import requests
 
@@ -84,6 +85,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.seeing_title = False
         self.seeing_description = False
         self.seeing_status = False
+        self.result['mid'] = None
         self.result['title'] = None
         self.result['description'] = None
         self.result['legal_whats'] = list()
@@ -99,32 +101,29 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.seeing_description = False
         self.seeing_what = False
         self.seeing_status = False
-        if tag == 'input' and len(attrs) == 4:
-            if attrs[0] == ('id', 'activity_type'):
-                if attrs[1] == ('type', 'hidden'):
-                    if attrs[2] == ('name', 'activity_type'):
-                        if attrs[3][0] == 'value':
-                            value = attrs[3][1].strip()
-                            self.result['what_3'] = value
-            if attrs[0] == ('id', 'mid'):
-                if attrs[1] == ('type', 'hidden'):
-                    if attrs[2] == ('name', 'mid'):
-                        if attrs[3][0] == 'value':
-                            value = attrs[3][1].strip()
-                            self.result['mid'] = value
-            if attrs[0] == ('type', 'radio') and attrs[1] == ('class', 'activity_type'):
-                value = attrs[3][1].strip()
+        attributes = defaultdict(str)
+        for key, value in attrs:
+            attributes[key] = value
+        if tag == 'input':
+            value = attributes['value'].strip()
+            if (attributes['id'] == 'activity_type' and attributes['type'] == 'hidden'
+                    and attributes['name'] == 'activity_type' and value):
+                self.result['what_3'] = value
+            elif (attributes['id'] == 'mid' and attributes['type'] == 'hidden'
+                  and attributes['name'] == 'mid'and value):
+                self.result['mid'] = value
+            elif attributes['type'] == 'radio' and attributes['class'] == 'activity_type':
                 self.result['legal_whats'].append(value)
-        elif tag == 'div' and attrs and attrs[0] == ('class', 'panel') and attrs[1][0] == 'data-activity':
-            # sometime this says Miscellaneous instead of the correct value like Swimming
-            self.result['what'] = attrs[1][1]
-        elif tag == 'span' and attrs and attrs[0] == ('class', 'privacy-status'):
+        elif tag == 'div' and attributes['class'] == 'panel' and 'data-activity' in attributes:
+            # TODO: still so? sometime this says Miscellaneous instead of the correct value like Swimming
+            self.result['what'] = attributes['data-activity']
+        elif tag == 'span' and attributes['class'] == 'privacy-status':
             self.seeing_status = True
         elif tag == 'title':
             self.seeing_what = True
-        elif tag == 'h2' and attrs and attrs[0] == ('id', 'track-title'):
+        elif tag == 'h2' and attributes['id'] == 'track-title':
             self.seeing_title = True
-        elif tag == 'p' and attrs and attrs[0] == ('id', 'track-desc'):
+        elif tag == 'p' and attributes['id'] == 'track-desc':
             self.seeing_description = True
 
     def handle_data(self, data):
