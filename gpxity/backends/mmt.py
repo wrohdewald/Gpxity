@@ -179,6 +179,18 @@ class MMT(Backend):
             url = 'http://www.mapmytracks.com/api'
         super(MMT, self).__init__(url, auth, cleanup)
         self.remote_known_whats = None
+        self.__mid = -1 # member id at MMT for auth
+
+    @property
+    def mid(self):
+        """the member id on MMT belonging to auth"""
+        if self.__mid == -1:
+            with MMTSession(self) as session:
+                response = session.get(self._base_url())
+            page_parser = ParseMMTActivity()
+            page_parser.feed(response.text)
+            self.__mid = page_parser.result['mid']
+        return self.__mid
 
     def __post(self, request, session=None, **kwargs):
         """helper for the real function"""
@@ -340,7 +352,7 @@ class MMT(Backend):
             with MMTSession(self) as session:
                 page_scan = self._load_page_in_session(activity, session)
                 response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
-                    self._base_url(), activity.id_in_backend, page_scan['mid'], session.cookies['exp_uniqueid']))
+                    self._base_url(), activity.id_in_backend, self.mid, session.cookies['exp_uniqueid']))
                     # some activities download only a few points if mid/uid are not given, but I
                     # have not been able to write a unittest triggering that ...
                 activity.parse(response.text)
