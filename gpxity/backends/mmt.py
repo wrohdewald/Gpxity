@@ -325,11 +325,12 @@ class MMT(Backend):
             page_parser.feed(response.text)
             return page_parser.result
 
-    def _use_page_results(self, activity, page_scan):
+    def _use_webpage_results(self, activity, session):
         """if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
             while the home page says "Cycling activity". We prefer the value from the home page
             and silently ignore this inconsistency.
          """
+        page_scan = self._load_page_in_session(activity, session)
         if self.remote_known_whats is None:
             self.remote_known_whats = page_scan['legal_whats']
         if page_scan['title']:
@@ -350,7 +351,6 @@ class MMT(Backend):
         """get the entire activity"""
         with activity.decoupled():
             with MMTSession(self) as session:
-                page_scan = self._load_page_in_session(activity, session)
                 response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
                     self._base_url(), activity.id_in_backend, self.mid, session.cookies['exp_uniqueid']))
                     # some activities download only a few points if mid/uid are not given, but I
@@ -358,7 +358,7 @@ class MMT(Backend):
                 activity.parse(response.text)
                 # but this does not give us activity type and other things,
                 # get them from the web page.
-                self._use_page_results(activity, page_scan)
+                self._use_webpage_results(activity, session)
 
     def _remove_activity_in_backend(self, activity):
         """remove on the server"""
