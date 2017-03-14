@@ -195,7 +195,10 @@ class MMT(Backend):
     def __post(self, session=None, **data):
         """helper for the real function"""
         try:
-            response = (session or requests).post(self.url, data=data, auth=self.auth, timeout=(5, 300))
+            if session:
+                response = session.post(self.url, data=data, timeout=(5, 300))
+            else:
+                response = requests.post(self.url, data=data, auth=self.auth, timeout=(5, 300))
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise
