@@ -292,23 +292,22 @@ class MMT(Backend):
         """get all activities for this user. If we do not use the generator
         created by yield_activity, unittest fails. Why?"""
 
-        with MMTSession(self) as session:
-            while True:
-                old_len = len(self._activities)
-                response = self.__post(
-                    'get_activities', author=self.auth[0],
-                    offset=old_len, session=session)
-                chunk = response.find('activities')
-                if not chunk:
-                    return
-                for _ in chunk:
-                    raw_data = MMTRawActivity(_)
-                    activity = Activity(self, raw_data.activity_id)
-                    with activity.decoupled():
-                        activity.title = raw_data.title
-                        activity.what = raw_data.what
-                    yield activity
-                assert len(self._activities) > old_len
+        while True:
+            old_len = len(self._activities)
+            response = self.__post(
+                'get_activities', author=self.auth[0],
+                offset=old_len)
+            chunk = response.find('activities')
+            if not chunk:
+                return
+            for _ in chunk:
+                raw_data = MMTRawActivity(_)
+                activity = Activity(self, raw_data.activity_id)
+                with activity.decoupled():
+                    activity.title = raw_data.title
+                    activity.what = raw_data.what
+                yield activity
+            assert len(self._activities) > old_len
 
     def _base_url(self):
         """the url without subdirectories"""
