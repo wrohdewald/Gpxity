@@ -192,20 +192,25 @@ class MMT(Backend):
             self.__mid = page_parser.result['mid']
         return self.__mid
 
-    def __post(self, session=None, url=None, **data):
+    def __post(self, session=None, url=None, data=None, expect=None, **kwargs):
         """Helper for the real function with some error handling.
 
         Args:
             session (requests.Session): If given, use this. Otherwise, use basic auth.
             url (str):  Will be appended to self.url. Default is api/. For the basic url, pass an empty  string.
-            data (dict): will be passed 1:1 to requests.post()
+            data (str): should be xml and will be encoded. May be None.
+            expect (str): If given, raise an error if this string is not part of the server answer.
+            kwargs: a dict for post(). May be None. data and kwargs must not both be passed.
         """
         if url is None:
             url = 'api/'
         full_url = self.url + url
+        if data:
+            data = data.encode('ascii', 'xmlcharrefreplace')
+        else:
+            data = kwargs
         try:
             if session:
-
                 response = session.post(full_url, data=data, timeout=(5, 300))
             else:
                 response = requests.post(full_url, data=data, auth=self.auth, timeout=(5, 300))
@@ -215,16 +220,19 @@ class MMT(Backend):
         if response.status_code != requests.codes.ok: # pylint: disable=no-member
             self.__handle_post_error(full_url, data, response)
             return
-        try:
-            result = ElementTree.fromstring(response.text)
-        except ElementTree.ParseError:
-            print('POST {} has parse error: {}'.format(data, response.text))
-            raise
-        assert result.text != 'error' # should have raise_for_status
-        result_type = result.find('type')
-        if result_type is not None and result_type.text == 'error':
-            reason = result.find('reason').text if result.find('reason') else 'no reason given'
-            raise requests.exceptions.HTTPError('{}: {}'.format(data, reason))
+        result = response.text
+        if expect and expect not in result:
+            raise requests.exceptions.HTTPError('{}: expected {} in {}'.format(data, expect, result))
+        if result.startswith('<?xml'):
+            try:
+                result = ElementTree.fromstring(result)
+            except ElementTree.ParseError:
+                print('POST {} has parse error: {}'.format(data, response.text))
+                raise
+            result_type = result.find('type')
+            if result_type is not None and result_type.text == 'error':
+                reason = result.find('reason').text if result.find('reason') else 'no reason given'
+                raise requests.exceptions.HTTPError('{}: {}'.format(data, reason))
         return result
 
     @staticmethod
@@ -249,7 +257,6 @@ class MMT(Backend):
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
         with MMTSession(self) as session:
-            url = self.url + '/assets/php/interface.php'
             data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
                 '<message><nature>update_{attr}</nature><eid>{eid}</eid>' \
                 '<usr>{usrid}</usr><uid>{uid}</uid>' \
@@ -258,10 +265,8 @@ class MMT(Backend):
                     eid=activity.id_in_backend,
                     usrid=self.auth[0],
                     value=attr_value,
-                    uid=session.cookies['exp_uniqueid']).encode('ascii', 'xmlcharrefreplace')
-            response = session.post(url, data=data)
-            if 'success' not in response.text:
-                raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
+                    uid=session.cookies['exp_uniqueid'])
+            self.__post(url='assets/php/interface.php', session=session, data=data, expect='success')
 
     def _write_title(self, activity):
         """changes title on remote server"""
@@ -274,26 +279,20 @@ class MMT(Backend):
     def _write_public(self, activity):
         """changes public/private on remote server"""
         with MMTSession(self) as session:
-            data = {
-                'mid': self.mid,
-                'tid': activity.id_in_backend,
-                'hash':session.cookies['exp_uniqueid'],
-                'status': 1 if activity.public else 2}
-            response = session.post(url='{}/user-embeds/statuschange-track'.format(self.url), data=data)
-            if 'access granted' not in response.text:
-                # what a strange answer
-                raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
+            self.__post(
+                session=session, url='user-embeds/statuschange-track', expect='access granted',
+                mid=self.mid, tid=activity.id_in_backend, hash=session.cookies['exp_uniqueid'],
+                status=1 if activity.public else 2)
+            # what a strange answer
 
     def _write_what(self, activity):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
         with MMTSession(self) as session:
-            url = self.url + '/handler/change_activity'
-            data = {'eid': activity.id_in_backend, 'activity': activity.what}
-            response = session.post(url, data=data)
-            if 'ok' not in response.text:
-                raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
+            self.__post(
+                session=session, url='handler/change_activity', expect='ok',
+                eid=activity.id_in_backend, activity=activity.what)
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
