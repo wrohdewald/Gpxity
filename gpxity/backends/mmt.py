@@ -192,22 +192,20 @@ class MMT(Backend):
             self.__mid = page_parser.result['mid']
         return self.__mid
 
-    def __post(self, request, session=None, **kwargs):
+    def __post(self, session=None, **data):
         """helper for the real function"""
-        data = kwargs.copy()
-        data['request'] = request
         try:
             response = (session or requests).post(self.url, data=data, auth=self.auth, timeout=(5, 300))
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise
         if response.status_code != requests.codes.ok: # pylint: disable=no-member
-            self.__handle_post_error(request, response)
+            self.__handle_post_error(data, response)
             return
         try:
             result = ElementTree.fromstring(response.text)
         except ElementTree.ParseError:
-            print('POST {} has parse error in {}: {}'.format(data, request, response.text))
+            print('POST {} has parse error in {}: {}'.format(data, response.text))
             raise
         assert result.text != 'error' # should have raise_for_status
         result_type = result.find('type')
@@ -216,12 +214,16 @@ class MMT(Backend):
             raise requests.exceptions.HTTPError('{}: {}'.format(data, reason))
         return result
 
-    def __handle_post_error(self, request, result):
+    def __handle_post_error(self, data, result):
         """we got status_code != ok"""
         try:
             result.raise_for_status()
         except BaseException as exc:
-            raise type(exc)('{}: {} {} {}'.format(exc, self.url, request, result.text))
+            if 'request' in data:
+                _ = data['request']
+            else:
+                _ = data
+            raise type(exc)('{}: {} {} {}'.format(exc, self.url, _, result.text))
 
     def _write_attribute(self, activity, attribute):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
@@ -286,7 +288,7 @@ class MMT(Backend):
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
-        return _convert_time(self.__post('get_time').find('server_time').text)
+        return _convert_time(self.__post(request='get_time').find('server_time').text)
 
     def _yield_activities(self):
         """get all activities for this user. If we do not use the generator
@@ -295,7 +297,7 @@ class MMT(Backend):
         while True:
             old_len = len(self._activities)
             response = self.__post(
-                'get_activities', author=self.auth[0],
+                request='get_activities', author=self.auth[0],
                 offset=old_len)
             chunk = response.find('activities')
             if not chunk:
@@ -362,7 +364,7 @@ class MMT(Backend):
     def _remove_activity_in_backend(self, activity):
         """remove on the server"""
         act_id = activity.id_in_backend
-        response = self.__post('delete_activity', activity_id=act_id)
+        response = self.__post(request='delete_activity', activity_id=act_id)
         type_xml = response.find('type')
         if type_xml is not None and type_xml.text == 'invalid_activity_id':
             # does not exist anymore, silently ignore this.
@@ -384,7 +386,7 @@ class MMT(Backend):
             # remove the previous instance.
             self._remove_activity_in_backend(activity)
         response = self.__post(
-            'upload_activity', gpx_file=activity.to_xml(),
+            request='upload_activity', gpx_file=activity.to_xml(),
             status=mmt_status, description=activity.description, activity=activity.what)
         activity.id_in_backend = response.find('id').text
         self._write_title(activity)
@@ -398,7 +400,7 @@ class MMT(Backend):
         """
         activity.add_points(points)
         self.__post(
-            'update_activity', activity_id=activity.id_in_backend,
+            request='update_activity', activity_id=activity.id_in_backend,
             points=points)
 
 MMT._define_support() # pylint: disable=protected-access
