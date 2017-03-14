@@ -162,7 +162,7 @@ class MMT(Backend):
     The activity ident is the number given by MapMyTracks.
 
     Args:
-        url (str): The Url of the server. Default is http://mapmytracks.com/api
+        url (str): The Url of the server. Default is http://mapmytracks.com
         auth (tuple(str, str)): Username and password
         cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all activities in the
             user account.
@@ -176,7 +176,7 @@ class MMT(Backend):
 
     def __init__(self, url=None, auth=None, cleanup=True):
         if url is None:
-            url = 'http://www.mapmytracks.com/api'
+            url = 'http://www.mapmytracks.com'
         super(MMT, self).__init__(url, auth, cleanup)
         self.remote_known_whats = None
         self.__mid = -1 # member id at MMT for auth
@@ -186,29 +186,39 @@ class MMT(Backend):
         """the member id on MMT belonging to auth"""
         if self.__mid == -1:
             with MMTSession(self) as session:
-                response = session.get(self._base_url())
+                response = session.get(self.url)
             page_parser = ParseMMTActivity()
             page_parser.feed(response.text)
             self.__mid = page_parser.result['mid']
         return self.__mid
 
-    def __post(self, session=None, **data):
-        """helper for the real function"""
+    def __post(self, session=None, url=None, **data):
+        """Helper for the real function with some error handling.
+
+        Args:
+            session (requests.Session): If given, use this. Otherwise, use basic auth.
+            url (str):  Will be appended to self.url. Default is api/. For the basic url, pass an empty  string.
+            data (dict): will be passed 1:1 to requests.post()
+        """
+        if url is None:
+            url = 'api/'
+        full_url = self.url + url
         try:
             if session:
-                response = session.post(self.url, data=data, timeout=(5, 300))
+
+                response = session.post(full_url, data=data, timeout=(5, 300))
             else:
-                response = requests.post(self.url, data=data, auth=self.auth, timeout=(5, 300))
+                response = requests.post(full_url, data=data, auth=self.auth, timeout=(5, 300))
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise
         if response.status_code != requests.codes.ok: # pylint: disable=no-member
-            self.__handle_post_error(data, response)
+            self.__handle_post_error(full_url, data, response)
             return
         try:
             result = ElementTree.fromstring(response.text)
         except ElementTree.ParseError:
-            print('POST {} has parse error in {}: {}'.format(data, response.text))
+            print('POST {} has parse error: {}'.format(data, response.text))
             raise
         assert result.text != 'error' # should have raise_for_status
         result_type = result.find('type')
@@ -217,7 +227,8 @@ class MMT(Backend):
             raise requests.exceptions.HTTPError('{}: {}'.format(data, reason))
         return result
 
-    def __handle_post_error(self, data, result):
+    @staticmethod
+    def __handle_post_error(url, data, result):
         """we got status_code != ok"""
         try:
             result.raise_for_status()
@@ -226,7 +237,7 @@ class MMT(Backend):
                 _ = data['request']
             else:
                 _ = data
-            raise type(exc)('{}: {} {} {}'.format(exc, self.url, _, result.text))
+            raise type(exc)('{}: {} {} {}'.format(exc, url, _, result.text))
 
     def _write_attribute(self, activity, attribute):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
@@ -238,7 +249,7 @@ class MMT(Backend):
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
         with MMTSession(self) as session:
-            url = self._base_url() + '/assets/php/interface.php'
+            url = self.url + '/assets/php/interface.php'
             data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
                 '<message><nature>update_{attr}</nature><eid>{eid}</eid>' \
                 '<usr>{usrid}</usr><uid>{uid}</uid>' \
@@ -268,7 +279,7 @@ class MMT(Backend):
                 'tid': activity.id_in_backend,
                 'hash':session.cookies['exp_uniqueid'],
                 'status': 1 if activity.public else 2}
-            response = session.post(url='{}/user-embeds/statuschange-track'.format(self._base_url()), data=data)
+            response = session.post(url='{}/user-embeds/statuschange-track'.format(self.url), data=data)
             if 'access granted' not in response.text:
                 # what a strange answer
                 raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
@@ -278,7 +289,7 @@ class MMT(Backend):
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
         with MMTSession(self) as session:
-            url = self._base_url() + '/handler/change_activity'
+            url = self.url + '/handler/change_activity'
             data = {'eid': activity.id_in_backend, 'activity': activity.what}
             response = session.post(url, data=data)
             if 'ok' not in response.text:
@@ -309,17 +320,13 @@ class MMT(Backend):
                 yield activity
             assert len(self._activities) > old_len
 
-    def _base_url(self):
-        """the url without subdirectories"""
-        return self.url.replace('/api/', '')
-
     def _load_page_in_session(self, activity, session):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
         with activity.decoupled():
             response = session.get('{}/explore/activity/{}'.format(
-                self._base_url(), activity.id_in_backend))
+                self.url, activity.id_in_backend))
             page_parser = ParseMMTActivity()
             page_parser.feed(response.text)
             return page_parser.result
@@ -351,7 +358,7 @@ class MMT(Backend):
         with activity.decoupled():
             with MMTSession(self) as session:
                 response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
-                    self._base_url(), activity.id_in_backend, self.mid, session.cookies['exp_uniqueid']))
+                    self.url, activity.id_in_backend, self.mid, session.cookies['exp_uniqueid']))
                     # some activities download only a few points if mid/uid are not given, but I
                     # have not been able to write a unittest triggering that ...
                 activity.parse(response.text)
