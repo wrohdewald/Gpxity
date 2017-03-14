@@ -51,27 +51,6 @@ def _convert_time(raw_time) ->datetime.datetime:
     return datetime.datetime.utcfromtimestamp(float(raw_time))
 
 
-class MMTSession:
-    """Helps execute commands while logged in"""
-    # pylint: disable=too-few-public-methods
-
-    def __init__(self, backend):
-        self.session = requests.Session()
-        # I have no idea what ACT=9 does but it seems to be needed
-        payload = {'username': backend.auth[0], 'password': backend.auth[1], 'ACT':'9'}
-        base_url = backend.url.replace('http:', 'https:').replace('/api/', '')
-        login_url = '{}/login'.format(base_url)
-        response = self.session.post(login_url, data=payload)
-        if not 'You are now logged in.' in response.text:
-            raise requests.exceptions.HTTPError('Login as {} failed'.format(backend.auth[0]))
-
-    def __enter__(self):
-        return self.session
-
-    def __exit__(self, exc_type, exc_value, trback):
-        self.session.close()
-
-
 class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
 
     """get some attributes available only on the web page. Of course,
@@ -180,26 +159,40 @@ class MMT(Backend):
         super(MMT, self).__init__(url, auth, cleanup)
         self.remote_known_whats = None
         self.__mid = -1 # member id at MMT for auth
+        self.__session = None
+
+    @property
+    def session(self):
+        """The requests.Session for this backend. Only initialized once."""
+        if self.__session is None:
+            self.__session = requests.Session()
+            # I have no idea what ACT=9 does but it seems to be needed
+            payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
+            base_url = self.url.replace('http:', 'https:')
+            login_url = '{}/login'.format(base_url)
+            response = self.__session.post(login_url, data=payload)
+            if not 'You are now logged in.' in response.text:
+                raise requests.exceptions.HTTPError('Login as {} failed'.format(self.auth[0]))
+        return self.__session
 
     @property
     def mid(self):
         """the member id on MMT belonging to auth"""
         if self.__mid == -1:
-            with MMTSession(self) as session:
-                response = session.get(self.url)
+            response = self.session.get(self.url)
             page_parser = ParseMMTActivity()
             page_parser.feed(response.text)
             self.__mid = page_parser.result['mid']
         return self.__mid
 
-    def __post(self, session=None, url=None, data=None, expect=None, **kwargs):
+    def __post(self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs):
         """Helper for the real function with some error handling.
 
         Args:
-            session (requests.Session): If given, use this. Otherwise, use basic auth.
-            url (str):  Will be appended to self.url. Default is api/. For the basic url, pass an empty  string.
-            data (str): should be xml and will be encoded. May be None.
-            expect (str): If given, raise an error if this string is not part of the server answer.
+            with_session: If given, use self.session. Otherwise, use basic auth.
+            url:  Will be appended to self.url. Default is api/. For the basic url, pass an empty  string.
+            data: should be xml and will be encoded. May be None.
+            expect: If given, raise an error if this string is not part of the server answer.
             kwargs: a dict for post(). May be None. data and kwargs must not both be passed.
         """
         if url is None:
@@ -210,8 +203,8 @@ class MMT(Backend):
         else:
             data = kwargs
         try:
-            if session:
-                response = session.post(full_url, data=data, timeout=(5, 300))
+            if with_session:
+                response = self.session.post(full_url, data=data, timeout=(5, 300))
             else:
                 response = requests.post(full_url, data=data, auth=self.auth, timeout=(5, 300))
         except requests.exceptions.ReadTimeout:
@@ -256,17 +249,16 @@ class MMT(Backend):
         attr_value = getattr(activity, attribute)
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
-        with MMTSession(self) as session:
-            data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
-                '<message><nature>update_{attr}</nature><eid>{eid}</eid>' \
-                '<usr>{usrid}</usr><uid>{uid}</uid>' \
-                '<{attr}>{value}</{attr}></message>'.format(
-                    attr=attribute,
-                    eid=activity.id_in_backend,
-                    usrid=self.auth[0],
-                    value=attr_value,
-                    uid=session.cookies['exp_uniqueid'])
-            self.__post(url='assets/php/interface.php', session=session, data=data, expect='success')
+        data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
+            '<message><nature>update_{attr}</nature><eid>{eid}</eid>' \
+            '<usr>{usrid}</usr><uid>{uid}</uid>' \
+            '<{attr}>{value}</{attr}></message>'.format(
+                attr=attribute,
+                eid=activity.id_in_backend,
+                usrid=self.auth[0],
+                value=attr_value,
+                uid=self.session.cookies['exp_uniqueid'])
+        self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
 
     def _write_title(self, activity):
         """changes title on remote server"""
@@ -278,21 +270,19 @@ class MMT(Backend):
 
     def _write_public(self, activity):
         """changes public/private on remote server"""
-        with MMTSession(self) as session:
-            self.__post(
-                session=session, url='user-embeds/statuschange-track', expect='access granted',
-                mid=self.mid, tid=activity.id_in_backend, hash=session.cookies['exp_uniqueid'],
-                status=1 if activity.public else 2)
+        self.__post(
+            with_session=True, url='user-embeds/statuschange-track', expect='access granted',
+            mid=self.mid, tid=activity.id_in_backend, hash=self.session.cookies['exp_uniqueid'],
+            status=1 if activity.public else 2)
             # what a strange answer
 
     def _write_what(self, activity):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        with MMTSession(self) as session:
-            self.__post(
-                session=session, url='handler/change_activity', expect='ok',
-                eid=activity.id_in_backend, activity=activity.what)
+        self.__post(
+            with_session=True, url='handler/change_activity', expect='ok',
+            eid=activity.id_in_backend, activity=activity.what)
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
@@ -319,23 +309,23 @@ class MMT(Backend):
                 yield activity
             assert len(self._activities) > old_len
 
-    def _load_page_in_session(self, activity, session):
+    def _load_page_in_session(self, activity):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
         with activity.decoupled():
-            response = session.get('{}/explore/activity/{}'.format(
+            response = self.session.get('{}/explore/activity/{}'.format(
                 self.url, activity.id_in_backend))
             page_parser = ParseMMTActivity()
             page_parser.feed(response.text)
             return page_parser.result
 
-    def _use_webpage_results(self, activity, session):
+    def _use_webpage_results(self, activity):
         """if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
             while the home page says "Cycling activity". We prefer the value from the home page
             and silently ignore this inconsistency.
          """
-        page_scan = self._load_page_in_session(activity, session)
+        page_scan = self._load_page_in_session(activity)
         if self.remote_known_whats is None:
             self.remote_known_whats = page_scan['legal_whats']
         if page_scan['title']:
@@ -355,15 +345,14 @@ class MMT(Backend):
     def load_full(self, activity):
         """get the entire activity"""
         with activity.decoupled():
-            with MMTSession(self) as session:
-                response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
-                    self.url, activity.id_in_backend, self.mid, session.cookies['exp_uniqueid']))
-                    # some activities download only a few points if mid/uid are not given, but I
-                    # have not been able to write a unittest triggering that ...
-                activity.parse(response.text)
-                # but this does not give us activity type and other things,
-                # get them from the web page.
-                self._use_webpage_results(activity, session)
+            response = self.session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
+                self.url, activity.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
+                # some activities download only a few points if mid/uid are not given, but I
+                # have not been able to write a unittest triggering that ...
+            activity.parse(response.text)
+            # but this does not give us activity type and other things,
+            # get them from the web page.
+            self._use_webpage_results(activity)
 
     def _remove_activity_in_backend(self, activity):
         """remove on the server"""
@@ -406,5 +395,11 @@ class MMT(Backend):
         self.__post(
             request='update_activity', activity_id=activity.id_in_backend,
             points=points)
+
+    def destroy(self):
+        """also close session"""
+        super(MMT, self).destroy()
+        if self.session:
+            self.session.close()
 
 MMT._define_support() # pylint: disable=protected-access
