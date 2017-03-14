@@ -263,20 +263,15 @@ class MMT(Backend):
     def _write_public(self, activity):
         """changes public/private on remote server"""
         with MMTSession(self) as session:
-            url = self._base_url() + '/assets/php/interface.php'
-            data = '<?xml version="1.0"?>' \
-                '<message><nature>toggle_status</nature><eid>{}</eid>' \
-                '<usr>{}</usr><uid>{}</uid>' \
-                '</message>'.format(
-                    activity.id_in_backend, self.auth[0],
-                    session.cookies['exp_uniqueid']).encode('ascii')
-            response = session.post(url, data=data)
-            if 'success' not in response.text:
-                raise requests.exceptions.HTTPError()
-            wanted_public = activity.public
-            # should reall be only in unittest:
-            self._load_page_in_session(activity, session)
-            assert activity.public == wanted_public
+            data = {
+                'mid': self.mid,
+                'tid': activity.id_in_backend,
+                'hash':session.cookies['exp_uniqueid'],
+                'status': 1 if activity.public else 2}
+            response = session.post(url='{}/user-embeds/statuschange-track'.format(self._base_url()), data=data)
+            if 'access granted' not in response.text:
+                # what a strange answer
+                raise requests.exceptions.HTTPError('{}: {}'.format(data, response.text))
 
     def _write_what(self, activity):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
