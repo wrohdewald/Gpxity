@@ -24,8 +24,7 @@ There are some problems with the server running at mapmytracks.com:
       any time without notice to users or deprecation periods.
     * downloading activities with that abi is very slow and hangs forever for big activities
       (at least this was so in Feb 2017, maybe have to test again occasionally).
-    * not all parts of MMT data are supported like tags (would be nice to have.
-      Download is implemented but no upload) or images (not interesting for me,
+    * not all parts of MMT data are supported like images (not interesting for me,
       at least not now).
 
 """
@@ -64,6 +63,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.seeing_title = False
         self.seeing_description = False
         self.seeing_status = False
+        self.seeing_tag = None
         self.result['mid'] = None
         self.result['title'] = None
         self.result['description'] = None
@@ -72,6 +72,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.result['what_from_title'] = None
         self.result['what_3'] = None
         self.result['public'] = None
+        self.result['tags'] = dict() # key: name, value: id
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser"""
@@ -80,6 +81,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.seeing_description = False
         self.seeing_what = False
         self.seeing_status = False
+        self.seeing_tag = None
         attributes = defaultdict(str)
         for key, value in attrs:
             attributes[key] = value
@@ -104,6 +106,9 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
             self.seeing_title = True
         elif tag == 'p' and attributes['id'] == 'track-desc':
             self.seeing_description = True
+        elif tag == 'a' and attributes['class'] == 'tag-link' and  attributes['rel'] == 'tag':
+            assert attributes['id'].startswith('tag-')
+            self.seeing_tag = attributes['id'].split('-')[2]
 
     def handle_data(self, data):
         """data from the parser"""
@@ -122,6 +127,8 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
                 self.result['what_from_title'] = ''
         if self.seeing_status:
             self.result['public'] = data.strip() != 'Only you can see this activity'
+        if self.seeing_tag:
+            self.result['tags'][data.strip()] = self.seeing_tag
 
 
 class MMTRawActivity:
@@ -139,6 +146,10 @@ class MMTRawActivity:
 class MMT(Backend):
     """The implementation for MapMyTracks.
     The activity ident is the number given by MapMyTracks.
+
+    MMT knows tags. We map :attr:`Activity.keywords <gpxity.activity.Activity.keywords>` to MMT tags. MMT will
+    change keywords: It converts the first character to upper case. See
+    :attr:`Activity.keywords <gpxity.activity.Activity.keywords>` for how Gpxity handles this.
 
     Args:
         url (str): The Url of the server. Default is http://mapmytracks.com
@@ -160,6 +171,10 @@ class MMT(Backend):
         self.remote_known_whats = None
         self.__mid = -1 # member id at MMT for auth
         self.__session = None
+        self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
+            # has a lookup table and never deletes there. So a given tag will always get
+            # the same ID. We use this fact.
+            # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
 
     @property
@@ -184,7 +199,24 @@ class MMT(Backend):
             page_parser = ParseMMTActivity()
             page_parser.feed(response.text)
             self.__mid = page_parser.result['mid']
+            self.__tag_ids.update(page_parser.result['tags'])
+            self._check_tag_ids()
         return self.__mid
+
+    @staticmethod
+    def _kw_to_tag(value):
+        """mimics the changes MMT applies to tags"""
+        return value[0].upper() + value[1:]
+
+    def _check_tag_ids(self):
+        """Assert that all tags conform to what MMT likes"""
+        for _ in self.__tag_ids:
+            assert _[0].upper() == _[0], self.__tag_ids
+
+    def _found_tag_id(self, tag, id_):
+        """We just learned about a new tag id. They never change for a given string."""
+        self.__tag_ids[self._kw_to_tag(tag)] = id_
+        self._check_tag_ids()
 
     def __post(self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs):
         """Helper for the real function with some error handling.
@@ -287,6 +319,84 @@ class MMT(Backend):
             with_session=True, url='handler/change_activity', expect='ok',
             eid=activity.id_in_backend, activity=activity.what)
 
+    def _current_keywords(self, activity):
+        """Read all current keywords (MMT tags).
+
+        Returns:
+            A sorted unique list"""
+        page_scan = self._scan_activity_page(activity)
+        return list(sorted(set(page_scan['tags'])))
+
+    def _write_keywords(self, activity):
+        """Sync activity keywords to MMT tags."""
+        current_tags = self._current_keywords(activity)
+        new_tags = set(self._kw_to_tag(x) for x in activity.keywords)
+        # This should really only remove unwanted tags and only add missing tags,
+        # like #for remove_tag in current_tags-new_tags, for new_tag in new_tags-current_tags
+        # but that does not work, see __remove_one_keyword
+        for remove_tag in current_tags:
+            self.__remove_one_keyword(activity, remove_tag)
+        self._write_add_keyword(activity, ','.join(new_tags))
+
+    def _write_add_keyword(self, activity, value):
+        """Add keyword as MMT tag. MMT allows adding several at once, comma separated,
+        and we allow this too. But do not expect this to work with all backends."""
+        if not value:
+            return
+        data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
+            '<message><nature>add_tag</nature><eid>{eid}</eid>' \
+            '<usr>{usrid}</usr><uid>{uid}</uid>' \
+            '<tagnames>{value}</tagnames></message>'.format(
+                eid=activity.id_in_backend,
+                usrid=self.auth[0],
+                value=value,
+                uid=self.session.cookies['exp_uniqueid'])
+        text = self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
+        # unclear: when do we get id and/or tag? One answer was
+        # <tags>B2</tags><ids>232325,16069</ids>
+        # for the request <tagnames>B2,Berlin</tagnames>
+        ids = (text.find('ids').text or '').split(',')
+        values = value.split(',')
+        tags = (text.find('tags').text or '').split(',')
+        if values != tags or len(ids) != len(values):
+            print('ids:', ids)
+            print('values:', values)
+            print('tags:', tags)
+        else:
+            for key, id_ in zip(values, ids):
+                self._found_tag_id(key, id_)
+
+    def _write_remove_keyword(self, activity, value):
+        """Remove an MTT tag. This is flawed, see __remove_one_keyword, so
+        we rewrite all keywords instead.
+        """
+        # Our list of keywords may not be current, reload it
+#        with activity.decoupled():
+   #         activity.keywords = set(self._current_keywords(activity)) - set([value])
+        # activity.keywords is assumed to be current (see Activity.remove_keyword())
+        for remove_tag in activity.keywords:
+            self.__remove_one_keyword(activity, remove_tag)
+        self.__remove_one_keyword(activity, value)
+        # sort for reproducibility in tests
+        self._write_add_keyword(activity, ','.join(sorted(activity.keywords)))
+
+
+    def __remove_one_keyword(self, activity, value):
+        """Here I have a problem. This seems to do exactly what happens in a
+        browser but MMT always removes the wrong tag. However it always
+        **does** remove a tag, so we can still use this: Repeat calling it until
+        all tags are gone and then redefine all wanted tags.
+        Sadly, MMT never returns anything for this POST."""
+        value = self._kw_to_tag(value)
+        if value not in self.__tag_ids:
+            self.__tag_ids.update(self._scan_activity_page(activity)['tags'])
+            self._check_tag_ids()
+            if value not in self.__tag_ids:
+                raise Exception('{}: Cannot remove keyword {}, reason: not known'.format(self.url, value))
+        self.__post(
+            with_session=True, url='handler/delete-tag.php',
+            tag_id=self.__tag_ids[value], entry_id=activity.id_in_backend)
+
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
         return _convert_time(self.__post(request='get_time').find('server_time').text)
@@ -338,6 +448,8 @@ class MMT(Backend):
                 if _ == self._default_description:
                     _ = ''
                 activity.description = _
+            if page_scan['tags']:
+                activity.keywords = page_scan['tags'].keys()
             # MMT sends different values of the current activity type, hopefully what_3 is always the
             # correct one.
             if page_scan['what_3']:
@@ -386,6 +498,9 @@ class MMT(Backend):
             status=mmt_status, description=activity.description, activity=activity.what)
         activity.id_in_backend = response.find('id').text
         self._write_title(activity)
+        # MMT can add several keywords at once
+        if activity.keywords:
+            self._write_add_keyword(activity, ','.join(activity.keywords))
 
     def update(self, activity, points):
         """append points in the backend. activity already has them.

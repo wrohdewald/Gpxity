@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.1.3
+-----
+  * MMT: Map Activity.keywords to MMT tags
+  * Activity.keywords now returns them sorted
+  * MMT: login only once per backend instance
+
 1.1.2  release 2017-03-4
 ------------------------
   * a first example

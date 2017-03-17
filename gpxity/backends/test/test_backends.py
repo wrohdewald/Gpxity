@@ -127,21 +127,48 @@ class TestBackends(BasicTest):
                 backend.destroy()
 
     def test_z2_keywords(self):
-        """save and load keywords"""
+        """save and load keywords. For now, all test keywords
+        start with uppercase, avoiding MMT problems"""
+        kw_a = 'A'
+        kw_b = 'Berlin'
+        kw_c = 'CamelCase'
+        kw_d = 'D' # self.unicode_string2
+
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, count=1, clear_first=True, cleanup=True) as backend:
-                    activity = Activity(backend)
-                    activity.add_points(self.some_random_points(5))
-                    activity.keywords = (['a', 'b', 'c'])
-                    with self.assertRaises(Exception):
-                        activity.add_keyword('b')
-                    activity.remove_keyword('b')
-                    self.assertEqual(activity.keywords, (['a', 'c']))
+                is_mmt = cls.__name__ == 'MMT'
+                with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt, sub_name='two') as backend:
+                    if not backend:
+                        continue
+                    activity = backend[0]
+                    activity.keywords = list()
+                    self.assertEqual(activity.keywords, list())
+                    activity.keywords = ([kw_a, kw_b, kw_c])
+                    activity.remove_keyword(kw_b)
+                    self.assertEqual(activity.keywords, ([kw_a, kw_c]))
                     with self.assertRaises(Exception):
                         activity.add_keyword('What:whatever')
-                    activity.add_keyword('e')
-                    self.assertEqual(activity.keywords, (['a', 'c', 'e']))
+                    activity.add_keyword(kw_d)
+                    self.assertEqual(set(activity.keywords), set([kw_a, kw_c, kw_d]))
+                    backend2 = self.clone_backend(backend)
+                    activity2 = backend2[activity.id_in_backend]
+                    activity2.remove_keyword(kw_d)
+                    self.assertEqual(activity2.keywords, ([kw_a, kw_c]))
+                    self.assertEqual(activity.keywords, ([kw_a, kw_c, kw_d]))
+                    backend.scan()
+                    self.assertEqual(activity.keywords, ([kw_a, kw_c, kw_d]))
+                    self.assertEqual(backend[activity.id_in_backend].keywords, ([kw_a, kw_c]))
+                    activity.remove_keyword(kw_a)
+                    # this is tricky: The current implementation assumes that activity.keywords is
+                    # current - which it is not. activity still thinks kw_d is there but it has been
+                    # removed by somebody else. MMT has a work-around for removing activities which
+                    # removes them all and re-adds all wanted. So we get kw_d back.
+                    self.assertEqual(activity.keywords, ([kw_c, kw_d]))
+                    #activity2.remove_keyword(kw_a)
+                    activity.remove_keyword(kw_c)
+                    activity.remove_keyword(kw_d)
+                    backend.scan()
+                    self.assertEqual(backend[0].keywords, list())
 
     def test_z_unicode(self):
         """Can we up- and download unicode characters in all text attributes?"""

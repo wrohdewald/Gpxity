@@ -429,6 +429,15 @@ class Activity:
             However this is transparent for you. When parsing theGPX file, those are removed
             from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
             :attr:`Activity.keywords` will never show those special values.
+
+            Some backends may change keywords. :class:`~gpxity.backends.mmt.MMT` converts the
+            first character into upper case and will return it like that. Gpxity will not try to hide such
+            problems. So if you save an activity in :class:`~gpxity.backends.mmt.MMT`, its keywords
+            will change. But they will not change if you copy from :class:`~gpxity.backends.mmt.MMT`
+            to :class:`~gpxity.backends.directory.Directory` - so if you copy from DirectoryA
+            to :class:`~gpxity.backends.mmt.MMT` to DirectoryB, the keywords in
+            DirectoryA and DirectoryB will not be identical, for example "berlin" in DirectoryA but
+            "Berlin" in DirectoryB.
         """
         self._load_full()
         if self.__gpx.keywords:

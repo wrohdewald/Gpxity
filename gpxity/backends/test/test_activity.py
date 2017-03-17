@@ -487,6 +487,19 @@ class ActivityTests(BasicTest):
         self.assertEqual(activity.keywords, list())
         activity.what = 'Running'
 
+    def test_keyword_args(self):
+        """Activity.keywords must accept all types of iterable"""
+        activity = Activity()
+        test_activities = list(sorted(['a', self.unicode_string2]))
+        activity.keywords = set(test_activities)
+        self.assertEqual(activity.keywords, test_activities)
+        activity.keywords = reversed(test_activities)
+        self.assertEqual(activity.keywords, test_activities)
+        with self.assertRaises(Exception):
+            activity.add_keyword(test_activities[0])
+        with self.assertRaises(Exception):
+            activity.keywords = test_activities * 2
+
     def test_id(self):
         """id_in_backend must be str"""
         with Directory(cleanup=True) as directory:
