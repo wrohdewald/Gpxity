@@ -142,13 +142,13 @@ class TestBackends(BasicTest):
 
     def test_z_unicode(self):
         """Can we up- and download unicode characters in all text attributes?"""
-        tstdescr = 'DESCRIPTION with utf-8 char ß (unicode szlig) and something japanese:の諸問題'
+        tstdescr = 'DESCRIPTION with ' + self.unicode_string1 + ' and ' + self.unicode_string2
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.temp_backend(cls, count=1, clear_first=True) as backend:
                     backend2 = self.clone_backend(backend)
                     activity = backend[0]
-                    activity.title = 'Title with utf-8 char ß (unicode szlig)'
+                    activity.title = 'Title ' + self.unicode_string1
                     backend2.scan() # because backend2 does not know about changes thru backend
                     activity2 = backend2[0]
                     # activity and activity2 may not be identical. If the original activity

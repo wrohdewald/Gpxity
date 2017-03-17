@@ -46,6 +46,8 @@ class BasicTest(unittest.TestCase):
     def setUp(self):
         """defines test specific Directory.prefix"""
         self.start_time = datetime.datetime.now()
+        self.unicode_string1 = 'unicode szlig: ß'
+        self.unicode_string2 = 'something japanese:の諸問題'
         Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '/'
         path = os.path.join(tempfile.gettempdir(), Directory.prefix)
         if not os.path.exists(path):
