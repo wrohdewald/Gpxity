@@ -448,6 +448,8 @@ class Activity:
             for keyword in value:
                 # add_keyword ensures we do not get unwanted things like What:
                 self.add_keyword(keyword)
+            self.__dirty = set()
+            self.dirty = 'keywords'
 
     @staticmethod
     def _check_keyword(keyword):
