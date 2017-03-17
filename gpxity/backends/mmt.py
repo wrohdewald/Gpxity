@@ -312,50 +312,50 @@ class MMT(Backend):
                 yield activity
             assert len(self._activities) > old_len
 
-    def _load_page_in_session(self, activity):
+    def _scan_activity_page(self, activity):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
-        with activity.decoupled():
-            response = self.session.get('{}/explore/activity/{}'.format(
-                self.url, activity.id_in_backend))
-            page_parser = ParseMMTActivity()
-            page_parser.feed(response.text)
-            return page_parser.result
+        response = self.session.get('{}/explore/activity/{}'.format(
+            self.url, activity.id_in_backend))
+        page_parser = ParseMMTActivity()
+        page_parser.feed(response.text)
+        return page_parser.result
 
     def _use_webpage_results(self, activity):
         """if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
             while the home page says "Cycling activity". We prefer the value from the home page
             and silently ignore this inconsistency.
          """
-        page_scan = self._load_page_in_session(activity)
+        page_scan = self._scan_activity_page(activity)
         if self.remote_known_whats is None:
             self.remote_known_whats = page_scan['legal_whats']
-        if page_scan['title']:
-            activity.title = page_scan['title']
-        if page_scan['description']:
-            _ = page_scan['description']
-            if _ == self._default_description:
-                _ = ''
-            activity.description = _
-        # MMT sends different values of the current activity type, hopefully what_3 is always the
-        # correct one.
-        if page_scan['what_3']:
-            activity.what = page_scan['what_3']
-        if page_scan['public'] is not None:
-            activity.public = page_scan['public']
+        with activity.decoupled():
+            if page_scan['title']:
+                activity.title = page_scan['title']
+            if page_scan['description']:
+                _ = page_scan['description']
+                if _ == self._default_description:
+                    _ = ''
+                activity.description = _
+            # MMT sends different values of the current activity type, hopefully what_3 is always the
+            # correct one.
+            if page_scan['what_3']:
+                activity.what = page_scan['what_3']
+            if page_scan['public'] is not None:
+                activity.public = page_scan['public']
 
     def _read_all(self, activity):
         """get the entire activity"""
+        response = self.session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
+            self.url, activity.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
+            # some activities download only a few points if mid/uid are not given, but I
+            # have not been able to write a unittest triggering that ...
         with activity.decoupled():
-            response = self.session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
-                self.url, activity.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
-                # some activities download only a few points if mid/uid are not given, but I
-                # have not been able to write a unittest triggering that ...
             activity.parse(response.text)
             # but this does not give us activity type and other things,
             # get them from the web page.
-            self._use_webpage_results(activity)
+        self._use_webpage_results(activity)
 
     def _remove_activity_in_backend(self, activity):
         """remove on the server"""
