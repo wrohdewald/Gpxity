@@ -198,15 +198,16 @@ class MMT(Backend):
         if url is None:
             url = 'api/'
         full_url = self.url + url
+        headers = {'DNT': '1'} # do not track
         if data:
             data = data.encode('ascii', 'xmlcharrefreplace')
         else:
             data = kwargs
         try:
             if with_session:
-                response = self.session.post(full_url, data=data, timeout=(5, 300))
+                response = self.session.post(full_url, data=data, headers=headers, timeout=(5, 300))
             else:
-                response = requests.post(full_url, data=data, auth=self.auth, timeout=(5, 300))
+                response = requests.post(full_url, data=data, headers=headers, auth=self.auth, timeout=(5, 300))
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise
