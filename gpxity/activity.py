@@ -473,7 +473,8 @@ class Activity:
             self.__gpx.keywords += ', {}'.format(value)
         else:
             self.__gpx.keywords = value
-        self.dirty = 'keywords'
+        self.dirty = 'add_keyword:{}'.format(value)
+        # TODO: test with : within keyword
 
     def remove_keyword(self, value: str) ->None:
         """Removes from the keywords.
@@ -484,7 +485,7 @@ class Activity:
         self._check_keyword(value)
         self._load_full()
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
-        self.dirty = 'keywords'
+        self.dirty = 'remove_keyword:{}'.format(value)
 
     def __repr__(self):
         with self.decoupled():

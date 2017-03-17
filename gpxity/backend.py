@@ -177,7 +177,7 @@ class Backend:
             fully = True
         else:
             for attribute in attributes:
-                write_name = '_write_{}'.format(attribute)
+                write_name = '_write_{}'.format(attribute.split(':')[0])
                 if write_name not in self.supported:
                     fully = True
                     break
@@ -189,8 +189,12 @@ class Backend:
             self._write_all(activity, ident or self._next_id)
         else:
             for attribute in attributes:
-                write_name = '_write_{}'.format(attribute)
-                getattr(self, write_name)(activity)
+                _ = attribute.split(':')
+                write_name = '_write_{}'.format(_[0])
+                if len(_) == 1:
+                    getattr(self, write_name)(activity)
+                else:
+                    getattr(self, write_name)(activity, ''.join(_[1:]))
         if not self._find_item(activity):
             self.append(activity)
             if len(self._activities) == 1:
