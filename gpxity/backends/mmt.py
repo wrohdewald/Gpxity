@@ -160,6 +160,7 @@ class MMT(Backend):
         self.remote_known_whats = None
         self.__mid = -1 # member id at MMT for auth
         self.__session = None
+        self._last_response = None # only used for debugging
 
     @property
     def session(self):
@@ -211,6 +212,7 @@ class MMT(Backend):
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise
+        self._last_response = response # for debugging
         if response.status_code != requests.codes.ok: # pylint: disable=no-member
             self.__handle_post_error(full_url, data, response)
             return
