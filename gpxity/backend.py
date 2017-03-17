@@ -41,6 +41,9 @@ class Backend:
     has a list **supported** to be used like :literal:`if 'update' in backend.supported:`
     where `update` is the name of the method.
 
+    Backends support no locking. If others modify a backend concurrently, you may
+    get surprises. It is up to you to handle those.
+
     Args:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.

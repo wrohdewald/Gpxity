@@ -35,10 +35,13 @@ class Activity:
     Some backends are able to change only one attribute with little time overhead, others always have
     to rewrite the entire activity.
 
-    You can use the context manager :meth:`batch_changes`. This holds back updating the backend until
+    However you can use the context manager :meth:`batch_changes`. This holds back updating the backend until
     leaving the context.
 
     Not all backends support everything, you could get the exception NotImplementedError.
+
+    Some backends are able to change only one attribute with little time overhead, others always have
+    to rewrite the entire activity.
 
 
     Args:
@@ -424,7 +427,8 @@ class Activity:
             Example for mapmytracks: keywords = 'Status:public, What:Cycling'.
 
             However this is transparent for you. When parsing theGPX file, those are removed
-            from keywords, and the are re-added in when exporting in :meth:`to_xml`.
+            from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
+            :attr:`Activity.keywords` will never show those special values.
         """
         self._load_full()
         if self.__gpx.keywords:
@@ -433,10 +437,10 @@ class Activity:
 
     @keywords.setter
     def keywords(self, value):
-        """Replaces all keywords with a new list.
+        """Replaces all keywords.
 
         Args:
-            value (list(str)): a list of keywords
+            value (iterable(str)): the new keywords. Must not have duplicates.
         """
         self._load_full()
         with self.batch_changes():
