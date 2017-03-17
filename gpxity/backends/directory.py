@@ -193,7 +193,7 @@ class Directory(Backend):
         name = activity.title or activity.id_in_backend
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
-    def _save_full(self, activity, ident: str = None):
+    def _write_all(self, activity, ident: str = None):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
         self._remove_activity_in_backend(activity)

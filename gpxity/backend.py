@@ -183,7 +183,7 @@ class Backend:
             activity_id = ident or self._next_id or activity.id_in_backend
             if activity_id is not None and not isinstance(activity_id, str):
                 raise Exception('{}: id_in_backend must be str')
-            self._save_full(activity, ident or self._next_id)
+            self._write_all(activity, ident or self._next_id)
         else:
             for attribute in attributes:
                 write_name = '_write_{}'.format(attribute)
@@ -194,7 +194,7 @@ class Backend:
                 self._activities_fully_listed = True
         return activity
 
-    def _save_full(self, activity, ident: str = None) ->None:
+    def _write_all(self, activity, ident: str = None) ->None:
         """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 
