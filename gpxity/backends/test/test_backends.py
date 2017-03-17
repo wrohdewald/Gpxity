@@ -8,6 +8,8 @@ implements :class:`gpxpy.backends.test.test_backends.TestBackends` for all backe
 """
 
 import time
+from unittest import skip
+
 import requests
 
 from .basic import BasicTest
@@ -106,6 +108,7 @@ class TestBackends(BasicTest):
                     self.assertNotEqual(first_description, activity2.description)
                     self.assertNotEqual(first_what, activity2.what)
 
+    @skip
     def test_zz_all_what(self):
         """can we up- and download all values for :attr:`Activity.what`?"""
         what_count = len(Activity.legal_what)
