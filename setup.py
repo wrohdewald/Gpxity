@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+see https://setuptools.readthedocs.io/en/latest/setuptools.html
+"""
+
 import os
 
 from setuptools import setup, find_packages
@@ -49,8 +53,8 @@ setup(
     packages=find_packages(exclude=['doc', 'test', 'bin', '.gitignore']),
     install_requires=['requests', 'gpxpy'],
     extras_require={
-        'test': ['coverage'],
-        'dev': ['sphinx', 'sphinx-autodoc-annotation']
+        'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation']
+        'strava': ['stravalib']
         })
 
 
