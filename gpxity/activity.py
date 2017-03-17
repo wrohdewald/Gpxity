@@ -415,7 +415,7 @@ class Activity:
 
     @property
     def keywords(self):
-        """list(str): represents them as a list - in GPX they are comma separated.
+        """list(str): represents them as a sorted list - in GPX they are comma separated.
             Content is whatever you want.
 
             Because the GPX format does not have attributes for everything used by all backends,
@@ -428,7 +428,7 @@ class Activity:
         """
         self._load_full()
         if self.__gpx.keywords:
-            return list(x.strip() for x in self.__gpx.keywords.split(','))
+            return list(sorted(x.strip() for x in self.__gpx.keywords.split(',')))
         return list()
 
     @keywords.setter
