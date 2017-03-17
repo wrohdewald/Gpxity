@@ -23,7 +23,7 @@ class ServerDirectory(Directory):
 
     # pylint: disable=abstract-method
 
-    skip_test = False
+    skip_test = True
 
     def _set_new_id(self, activity):
         """gives the activity a unique id"""
