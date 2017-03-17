@@ -283,7 +283,7 @@ class Activity:
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
         if self.backend is not None and self.id_in_backend and not self._loaded and not self._loading:
-            self.backend.load_full(self) # pylint: disable=no-member
+            self.backend._read_all(self) # pylint: disable=protected-access, no-member
             self._loaded = True
 
     def add_points(self, points) ->None:

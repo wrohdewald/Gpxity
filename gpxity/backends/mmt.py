@@ -18,7 +18,7 @@ There are some problems with the server running at mapmytracks.com:
       and does not respect gpx.time either.
     * there is an official description of an API at https://github.com/MapMyTracks
       but this does not implement everything needed. For the missing parts we
-      simulate what a web browser would do, see :meth:`MMT.load_full` and
+      simulate what a web browser would do, see :meth:`MMT._read_all` and
       :meth:`MMT._write_attribute`. Of course that could fail if MMT changes its site.
       Which is true for the api itself, it can and does get incompatible changes at
       any time without notice to users or deprecation periods.
@@ -345,7 +345,7 @@ class MMT(Backend):
         if page_scan['public'] is not None:
             activity.public = page_scan['public']
 
-    def load_full(self, activity):
+    def _read_all(self, activity):
         """get the entire activity"""
         with activity.decoupled():
             response = self.session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(

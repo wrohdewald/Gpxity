@@ -131,7 +131,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def load_full(self, activity) ->None:
+    def _read_all(self, activity) ->None:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
 
