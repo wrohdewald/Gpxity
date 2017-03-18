@@ -294,6 +294,8 @@ class Backend:
     def append(self, value):
         """Appends an activity to the cached list."""
         self._activities.append(value)
+        if value.id_in_backend is not None and not isinstance(value.id_in_backend, str):
+            raise Exception('{}: id_in_backend must be str'.format(value))
 
     def __repr__(self):
         """do not call len(self) because that does things"""

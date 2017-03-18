@@ -67,8 +67,8 @@ class Activity:
             This should eventually become more flexible.
         id_in_backend (str): Every backend has its own scheme for unique activity ids. Some
             backends may change the id if the activity data changes. This must be `str` but
-            that is not enforced here. But :meth:`Backend.save <gpxity.backend.Backend.save>` will raise
-            an exception if this is not `str`.
+            that is not enforced here. It will be checked when this activity is attached to
+            a backend.
     """
 
     # pylint: disable = too-many-instance-attributes
