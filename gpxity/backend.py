@@ -195,7 +195,7 @@ class Backend:
                     getattr(self, write_name)(activity)
                 else:
                     getattr(self, write_name)(activity, ''.join(_[1:]))
-        if not self._find_item(activity):
+        if not self._has_item(activity):
             self.append(activity)
             if len(self._activities) == 1:
                 self._activities_fully_listed = True
@@ -256,33 +256,27 @@ class Backend:
     def __contains__(self, value) ->bool:
         """value is either an an activity or an activity id.
         Does NOT load activities, only checks what is already known."""
-        try:
-            self.__getitem__(value)
+        self._scan()
+        return self._has_item(value)
+
+    def _has_item(self, index) ->bool:
+        """like __contains__ but for internal use: does not call _scan first.
+        Must not call self._scan."""
+        if hasattr(index, 'id_in_backend') and index in self._activities:
             return True
-        except IndexError:
-            return False
-
-    def _find_item(self, index):
-        """finds an activity
-
-        Args:
-            index: May be Activity, str or int. str would be an id_in_backend.
-        """
-        for _ in self._activities:
-            if _ is index:
-                return _
-            if _.id_in_backend == index:
-                return _
-        if isinstance(index, int):
-            return self._activities[index]
+        if isinstance(index, str) and index in list(x.id_in_backend for x in self._activities):
+            return True
+        return False
 
     def __getitem__(self, index):
         """Allows accesses like alist[a_id]. Do not call this when implementing
-        a backend because this always calls scan() first. Instead use :meth:`_find_item`."""
+        a backend because this always calls scan() first. Instead use :meth:`_has_item`."""
         self._scan()
-        result = self._find_item(index)
-        if result is not None:
-            return result
+        if isinstance(index, int):
+            return self._activities[index]
+        for _ in self._activities:
+            if _ is index or _.id_in_backend == index:
+                return _
         raise IndexError
 
     def __len__(self):
