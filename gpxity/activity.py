@@ -501,7 +501,7 @@ class Activity:
         with self.decoupled():
             # this should not automatically load the entire activity
             parts = []
-            if self.backend:
+            if self.backend is not None:
                 parts.append(repr(self.backend))
                 parts.append('id:{}'.format(self.id_in_backend))
             parts.append('public' if self.public else 'private')
