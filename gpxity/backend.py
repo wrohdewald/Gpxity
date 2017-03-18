@@ -297,8 +297,8 @@ class Backend:
 
     def __repr__(self):
         """do not call len(self) because that does things"""
-        result = '{}({} in {} {})'.format(
-            self.__class__.__name__, len(self._activities), self.url, self.auth[0] if self.auth else 'anonymous')
+        result = '{}({} in {}{})'.format(
+            self.__class__.__name__, len(self._activities), self.url, ' ' + self.auth[0] if self.auth else '')
         return result
 
     def __enter__(self):
