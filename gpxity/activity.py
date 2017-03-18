@@ -409,6 +409,7 @@ class Activity:
         self._load_full()
         return self.__gpx
 
+    @property
     def last_time(self) ->datetime.datetime:
         """
         Returns:
@@ -527,7 +528,7 @@ class Activity:
         self._load_full()
         return 'title:{} description:{} keywords:{} what:{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.what, self.public, self.last_time(),
+            ','.join(self.keywords), self.what, self.public, self.last_time,
             self.angle(), self.gpx.get_track_points_no())
 
     def angle(self) ->float:

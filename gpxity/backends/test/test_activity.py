@@ -161,10 +161,10 @@ class ActivityTests(BasicTest):
         self.assertEqual(activity.time, first_time)
 
     def test_last_time(self):
-        """Activity.last_time()"""
+        """Activity.last_time"""
         activity = self.create_test_activity()
         gpx_last_time = activity.gpx.tracks[-1].segments[-1].points[-1].time
-        self.assertEqual(activity.last_time(), gpx_last_time)
+        self.assertEqual(activity.last_time, gpx_last_time)
 
     def test_one_line_per_trkpt(self):
         """One line per trackpoint"""
@@ -374,7 +374,7 @@ class ActivityTests(BasicTest):
             self.assertIn('public' if activity.public else 'private', str(activity))
             self.assertIn('Running', str(activity))
             self.assertIn(str(activity.time), str(activity))
-            self.assertIn(str(activity.last_time()), str(activity))
+            self.assertIn(str(activity.last_time), str(activity))
             self.assertTrue(str(activity).startswith('Activity('))
             self.assertTrue(str(activity).endswith(')'))
             activity.add_points(self.some_random_points(count=5))
@@ -432,7 +432,7 @@ class ActivityTests(BasicTest):
         self.assertIn('description:{}'.format(description), key)
         self.assertIn('what:{}'.format(what), key)
         self.assertIn('public:True', key)
-        self.assertIn('last_time:{}'.format(activity.last_time()), key)
+        self.assertIn('last_time:{}'.format(activity.last_time), key)
         self.assertIn('angle:{}'.format(activity.angle()), key)
         self.assertIn('points:{}'.format(activity.gpx.get_track_points_no()), key)
 
