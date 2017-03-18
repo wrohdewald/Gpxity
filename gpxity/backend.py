@@ -296,8 +296,9 @@ class Backend:
         self._activities.append(value)
 
     def __repr__(self):
-        result = '{}({} {})'.format(
-            self.__class__.__name__, self.url, self.auth[0] if self.auth else 'anonymous')
+        """do not call len(self) because that does things"""
+        result = '{}({} in {} {})'.format(
+            self.__class__.__name__, len(self._activities), self.url, self.auth[0] if self.auth else 'anonymous')
         return result
 
     def __enter__(self):
