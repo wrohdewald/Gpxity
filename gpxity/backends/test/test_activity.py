@@ -154,12 +154,6 @@ class ActivityTests(BasicTest):
             activity.add_keyword('Status:public')
         self.assertTrue(activity.public)
 
-    def test_first_time(self):
-        """about activity.time"""
-        activity = self.create_test_activity()
-        first_time = activity.gpx.get_time_bounds()[0]
-        self.assertEqual(activity.time, first_time)
-
     def test_last_time(self):
         """Activity.last_time"""
         activity = self.create_test_activity()
