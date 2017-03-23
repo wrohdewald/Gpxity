@@ -303,6 +303,10 @@ class Backend:
     def __exit__(self, exc_type, exc_value, trback):
         self.destroy()
 
+    def __iter__(self):
+        self._scan()
+        return iter(self._activities)
+
     def __eq__(self, other):
         """True if both backends have the same activities."""
         self._scan()
