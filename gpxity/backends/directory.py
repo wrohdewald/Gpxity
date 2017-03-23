@@ -71,16 +71,17 @@ class Directory(Backend):
         super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
             os.makedirs(self.url)
-        self._symlinks = None
+        self._symlinks = defaultdict(list)
         self._load_symlinks()
 
-    def _load_symlinks(self):
+    def _load_symlinks(self, directory=None):
         """scan the subdirectories with the symlinks. If the content of an
         actiivty changes, the symlinks might have to be adapted. But
         we do not know the name of the existing symlink anymore. So
         just scan them all and assign them to id_in_backend."""
-        self._symlinks = defaultdict(list)
-        for dirpath, _, filenames in os.walk(self.url):
+        if directory is None:
+            directory = self.url
+        for dirpath, _, filenames in os.walk(directory):
             for filename in filenames:
                 full_name = os.path.join(dirpath, filename)
                 if os.path.islink(full_name):
@@ -90,7 +91,8 @@ class Directory(Backend):
                         if gpx_target.endswith('.gpx'):
                             # it really should ...
                             gpx_target = gpx_target[:-4]
-                        self._symlinks[gpx_target].append(full_name)
+                        if full_name not in self._symlinks[gpx_target]:
+                            self._symlinks[gpx_target].append(full_name)
                     else:
                         os.remove(full_name)
                         print('{}: removed dead symbolic link {}'.format(self, full_name))
@@ -153,6 +155,7 @@ class Directory(Backend):
     def _yield_activities(self):
         if not self._decoupled:
             # avoids recursion
+            self._symlinks = defaultdict(list)
             self._load_symlinks()
             for _ in self._list_gpx():
                 with self._decouple():
@@ -190,6 +193,9 @@ class Directory(Backend):
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
+        else:
+            # make sure there is no dead symlink with our wanted name.
+            self._load_symlinks(by_month_dir)
         name = activity.title or activity.id_in_backend
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
