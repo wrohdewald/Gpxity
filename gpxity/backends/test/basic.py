@@ -99,6 +99,7 @@ class BasicTest(unittest.TestCase):
             latitude=last_points[-1].latitude, longitude=last_points[-1].longitude + 0.001,
             time=last_points[-1].time + datetime.timedelta(hours=10, seconds=idx))
         new_point.move(movement)
+        gpx.tracks[0].segments[0].points[0].time = datetime.datetime.now() + datetime.timedelta(seconds=idx*90)
         gpx.tracks[-1].segments[-1].points.append(new_point)
         result = Activity(gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
