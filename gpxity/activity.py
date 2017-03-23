@@ -11,6 +11,7 @@ This module defines :class:`~gpxity.Activity`
 from math import asin, sqrt, degrees
 import datetime
 from contextlib import contextmanager
+from functools import total_ordering
 
 
 import gpxpy
@@ -21,6 +22,7 @@ from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment, GPXXMLSyntaxException
 __all__ = ['Activity']
 
 
+@total_ordering
 class Activity:
 
     """Represents an activity.
@@ -520,7 +522,8 @@ class Activity:
         return self.__repr__()
 
     def key(self) ->str:
-        """For speed optimized equality checks, not granted to be exact.
+        """For speed optimized equality checks, not granted to be exact, but
+        sufficiently safe IMHO.
 
         Returns:
             a string with selected attributes in printable form.
@@ -530,6 +533,14 @@ class Activity:
             self.title, self.description,
             ','.join(self.keywords), self.what, self.public, self.last_time,
             self.angle(), self.gpx.get_track_points_no())
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        return self.key() == other.key()
+
+    def __lt__(self, other):
+        return self.key() < other.key()
 
     def angle(self) ->float:
         """For me, the earth is flat.
