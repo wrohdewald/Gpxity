@@ -575,6 +575,15 @@ class Activity:
                 for point in segment.points:
                     yield point
 
+    def adjust_time(self, delta):
+        """Adds a timedelta to all times.
+        gpxpy.gpx.adjust_time does the same but it ignores waypoints.
+        Caution: gpxpy might change that."""
+        self.gpx.adjust_time(delta)
+        for wpt in self.gpx.waypoints:
+            wpt.time += delta
+        self.dirty = 'gpx'
+
     def points_equal(self, other) ->bool:
         """
         Returns:
