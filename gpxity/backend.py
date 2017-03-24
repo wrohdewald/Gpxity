@@ -195,7 +195,7 @@ class Backend:
                     getattr(self, write_name)(activity)
                 else:
                     getattr(self, write_name)(activity, ''.join(_[1:]))
-        if not self._has_item(activity):
+        if not self._has_item(activity.id_in_backend):
             self.append(activity)
             if len(self._activities) == 1:
                 self._activities_fully_listed = True
