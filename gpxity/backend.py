@@ -13,7 +13,7 @@ from inspect import getmembers, isfunction
 import dis
 from contextlib import contextmanager
 
-from . import Authenticate
+from .auth import Authenticate
 
 __all__ = ['Backend']
 
