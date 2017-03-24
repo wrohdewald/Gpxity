@@ -200,6 +200,7 @@ class Activity:
 
         For the same reason time is readonly.
         """
+        self._load_full()
         return self.gpx.get_time_bounds()[0] or self.__gpx.time
 
     @property
