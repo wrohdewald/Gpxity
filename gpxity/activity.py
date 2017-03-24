@@ -17,6 +17,7 @@ from functools import total_ordering
 import gpxpy
 from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment, GPXXMLSyntaxException
 
+from .util import repr_timespan
 
 
 __all__ = ['Activity']
@@ -524,7 +525,7 @@ class Activity:
                 if self.__gpx.name:
                     parts.append(self.__gpx.name)
                 if self.time and self.last_time:
-                    parts.append('{}-{}'.format(self.time, self.last_time))
+                    parts.append(repr_timespan(self.time, self.last_time))
                 parts.append('{} points'.format(self.gpx.get_track_points_no()))
                 if self.angle():
                     parts.append('angle={}'.format(self.angle()))
