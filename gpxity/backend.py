@@ -122,7 +122,8 @@ class Backend:
         """
         if not self._activities_fully_listed:
             self._activities_fully_listed = True
-            self._activities = list()
+            unsaved = list(x for x in self._activities if x.id_in_backend is None)
+            self._activities = unsaved
             list(self._yield_activities())
 
     def _yield_activities(self):

@@ -101,7 +101,8 @@ class Activity:
             if gpx is not None:
                 raise Exception('Cannot accept backend and gpx')
         self.__backend = backend
-        if backend is not None and self not in backend:
+        if backend is not None and not backend._has_item(id_in_backend): # pylint:disable=protected-access
+            # do not say self in backend because that would do a full load of self.
             backend.append(self)
 
     @property

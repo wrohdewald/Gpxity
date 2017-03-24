@@ -37,6 +37,10 @@ class ActivityTests(BasicTest):
             Activity(backend)
             self.assertEqual(len(backend), 1)
 
+        with self.temp_backend(Directory, count=2, cleanup=True, status=False) as backend:
+            Activity(backend)
+            self.assertEqual(len(backend), 3)
+
         test_url = tempfile.mkdtemp(prefix=Directory.prefix)
         self.assertTrue(os.path.exists(test_url))
         os.rmdir(test_url)
