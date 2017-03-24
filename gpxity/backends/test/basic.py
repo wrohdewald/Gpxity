@@ -99,8 +99,14 @@ class BasicTest(unittest.TestCase):
             latitude=last_points[-1].latitude, longitude=last_points[-1].longitude + 0.001,
             time=last_points[-1].time + datetime.timedelta(hours=10, seconds=idx))
         new_point.move(movement)
-        gpx.tracks[0].segments[0].points[0].time = datetime.datetime.now() + datetime.timedelta(seconds=idx*90)
         gpx.tracks[-1].segments[-1].points.append(new_point)
+
+        # now set all times such that they are in order with this activity and do not overlap
+        # with other test activities
+        duration = new_point.time - gpx.tracks[0].segments[0].points[0].time + datetime.timedelta(seconds=10)
+        for point in gpx.walk(only_points=True):
+            point.time += duration * idx
+
         result = Activity(gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(gpx.name)

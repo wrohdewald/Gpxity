@@ -196,12 +196,20 @@ class Activity:
         """datetime.datetime: start time of activity.
         For a simpler implementation of backends, notably MMT, we ignore
         gpx.time. Instead we return the time of the earliest track point.
-        Only if there is no track point, return gpx.time.
+        Only if there is no track point, return gpx.time. If that is unknown
+        too, return None.
 
         For the same reason time is readonly.
+
+        We assume that the first point comes first in time and the last
+        point comes last in time. In other words, points should be ordered
+        by their time.
         """
         self._load_full()
-        return self.gpx.get_time_bounds()[0] or self.__gpx.time
+        try:
+            return self.__gpx.tracks[0].segments[0].points[0].time
+        except IndexError:
+            pass
 
     @property
     def title(self) -> str:
@@ -416,9 +424,13 @@ class Activity:
     def last_time(self) ->datetime.datetime:
         """
         Returns:
-            the last timestamp we received so far."""
+            the last timestamp we received so far.
+            If none, return None."""
         self._load_full()
-        return self.__gpx.get_time_bounds().end_time
+        try:
+            return self.__gpx.tracks[-1].segments[-1].points[-1].time
+        except IndexError:
+            pass
 
     @property
     def keywords(self):
@@ -511,8 +523,8 @@ class Activity:
                 parts.append(self.what)
                 if self.__gpx.name:
                     parts.append(self.__gpx.name)
-                if self.__gpx.get_time_bounds()[0]:
-                    parts.append('{}-{}'.format(*self.__gpx.get_time_bounds()))
+                if self.time and self.last_time:
+                    parts.append('{}-{}'.format(self.time, self.last_time))
                 parts.append('{} points'.format(self.gpx.get_track_points_no()))
                 if self.angle():
                     parts.append('angle={}'.format(self.angle()))
