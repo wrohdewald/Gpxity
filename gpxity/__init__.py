@@ -5,3 +5,6 @@
 # pylint: disable=wildcard-import, missing-docstring
 from .activity import *
 from .backend import *
+from .backends import *
+
+__all__ = ['Activity', 'Directory', 'MMT', 'ServerDirectory', 'BackendDiff']
