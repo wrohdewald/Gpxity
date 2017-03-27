@@ -22,6 +22,10 @@ class Backend:
     """A place where activities live. Something like the filesystem or
     http://mapmytracks.com.
 
+    A Backend should hold only activities for one person, and they
+    should not overlap in time. This is not enforced but sometimes
+    behaviour is undefined if you ignore this.
+
     This can be used as a context manager. At termination, all activities
     may be removed automatically, if cleanup=True. Some concrete
     implementations may also remove the backend itself.

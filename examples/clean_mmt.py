@@ -45,6 +45,31 @@ def remove_shorties(local, remote=None):
 
 mmt = MMT(auth=sys.argv[1])
 local = Directory(sys.argv[2])
+def overlapping_times(activities):
+    """Yields groups of activities with overlapping times.
+    This may be very slow for many long activities."""
+    previous = None
+    group = set()
+    for current in sorted(activities,  key=lambda x: x.time):
+        if previous and current.time < previous.last_time:
+            group.add(previous)
+            group.add(current)
+        else:
+            if group:
+                yield sorted(group,  key=lambda x:x.time)
+            group = set()
+        previous = current
+    if group:
+        yield sorted(group,  key=lambda x:x.time)
+
+def remove_overlaps(backend):
+    for group in overlapping_times(backend):
+        print('Keeping: {}: {}-{}'.format(group[0].id_in_backend, group[0].time, group[0].last_time))
+        for acti in group[1:]:
+            print('remove: {}: {}-{}'.format(acti.id_in_backend, acti.time, acti.last_time))
+            backend.remove(acti.id_in_backend)
+        print()
+
 
 copy_from_mmt(mmt, local)
 
