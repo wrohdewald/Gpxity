@@ -238,14 +238,28 @@ class Backend:
         for activity in list(self):
             self.remove(activity)
 
-    def sync_from(self, from_backend) ->None:
+    def sync_from(self, from_backend, remove: bool = False, use_remote_ident: bool = False) ->None:
         """Copies all activities into this backend.
 
         Args:
             from_backend (Backend): The source of the activities
+            remove: If True, remove activities in self which do not exist in from_backend
+            use_remote_ident: If True, uses the remote id for our id_in_backend. This
+                may or may not be honoured by the backend. Directory does.
         """
         for activity in from_backend:
-            self.save(activity)
+            if use_remote_ident and activity.id_in_backend in self:
+                self.remove(self[activity.id_in_backend])
+            else:
+                for mine in self:
+                    if mine.time == activity.time:
+                        self.remove(mine)
+            self.save(activity, ident=activity.id_in_backend if use_remote_ident else None)
+        if remove:
+            differ = BackendDiff(self, from_backend)
+            for activities in differ.left.exclusive.values():
+                for activity in activities:
+                    self.remove(activity)
 
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities. Some backends

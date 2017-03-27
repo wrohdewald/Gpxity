@@ -8,6 +8,7 @@ implements :class:`gpxpy.backends.test.test_backends.TestBackends` for all backe
 """
 
 import time
+import datetime
 from unittest import skip
 
 import requests
@@ -227,3 +228,14 @@ class TestBackends(BasicTest):
                         with Directory(cleanup=True) as copy:
                             copy.sync_from(backend2)
                             self.assertSameActivities(local, copy)
+
+    def test_sync(self):
+        """sync_from"""
+        with self.temp_backend(Directory, count=5, cleanup=True) as source:
+            with self.temp_backend(Directory, count=4, cleanup=True) as sink:
+                for _ in sink:
+                    self.move_times(_, datetime.timedelta(hours=100))
+                sink.sync_from(source)
+                self.assertEqual(len(sink), 9)
+                sink.sync_from(source, remove=True)
+                self.assertSameActivities(source, sink)

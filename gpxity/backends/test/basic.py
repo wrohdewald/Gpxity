@@ -253,3 +253,9 @@ class BasicTest(unittest.TestCase):
                 pass
         #sort because we want things reproducibly
         return sorted(set(result), key=lambda x: x.__class__.__name__)
+
+    @staticmethod
+    def move_times(activity, delta):
+        """move all times by delta"""
+        for point in activity.all_points():
+            point.time += delta
