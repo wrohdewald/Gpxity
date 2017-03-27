@@ -3,6 +3,13 @@ Changelog
 
 1.1.3
 -----
+  * New class BackendDiff
+  * clean_mmt with more helper code for finding/cleaning overlapping activities
+  * Backend: rename copy_all_from to sync_from and add parameters
+  * hide class Authenticate from public API
+  * Define assumption about points having to be ordered by time
+  * Do not use slow GPX.get_time_bounds()
+  * Activity.last_time now is a property
   * MMT: Map Activity.keywords to MMT tags
   * Activity.keywords now returns them sorted
   * MMT: login only once per backend instance
