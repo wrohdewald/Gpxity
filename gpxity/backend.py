@@ -238,7 +238,7 @@ class Backend:
         for activity in list(self):
             self.remove(activity)
 
-    def copy_all_from(self, from_backend) ->None:
+    def sync_from(self, from_backend) ->None:
         """Copies all activities into this backend.
 
         Args:

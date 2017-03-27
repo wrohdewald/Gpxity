@@ -220,10 +220,10 @@ class TestBackends(BasicTest):
             for cls in self._find_backend_classes():
                 with self.subTest(' {}'.format(cls.__name__)):
                     with self.temp_backend(cls, clear_first=True, cleanup=True) as backend:
-                        backend.copy_all_from(local)
+                        backend.sync_from(local)
                         for _ in backend:
                             self.assertFalse(_.public)
                         backend2 = self.clone_backend(backend)
                         with Directory(cleanup=True) as copy:
-                            copy.copy_all_from(backend2)
+                            copy.sync_from(backend2)
                             self.assertSameActivities(local, copy)
