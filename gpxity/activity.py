@@ -116,7 +116,7 @@ class Activity:
         """The backend this activity lives in. If it was constructed in memory, backend is None.
         If you change it from None to a backend, this activity is automatically saved in that backend.
 
-        It is not possible to decouple an activity from its backend, use :meth:`~gpxity.activity.Activity.clone()`.
+        It is not possible to decouple an activity from its backend, use :meth:`clone()`.
 
         It is not possible to move the activity to a different backend by changing this.
         Use :meth:`Backend.save() <gpxity.backend.Backend.save()>` instead.
@@ -146,12 +146,18 @@ class Activity:
         """
         Is the activity in sync with the backend?
 
-        After directly manipulating :attr:`gpx`, set dirty to True.
-        See also :attr:`~gpxity.activity.Activity.gpx`.
+        Setting :attr:`dirty` will directly write the changed data into the backend.
 
-        Setting dirty to True will directly call :meth:`~gpxity.activity.Activity._save`.
+        Setting :attr:`dirty` to True will write everything.
 
-        Setting dirty to False is not allowed.
+        Setting :attr:`dirty` to False is not allowed.
+
+        :attr:`dirty` can be set to an arbitrary string like 'title'. If the backend
+        has a method _write_title, that one will be called. Otherwise the
+        entire activity will be written by the backend.
+
+        After directly manipulating :attr:`gpx`, set :attr:`dirty` to 'gpx'.
+        See also :attr:`gpx`.
 
         Returns:
             bool: True if the activity is not in sync with the backend. If no backend is

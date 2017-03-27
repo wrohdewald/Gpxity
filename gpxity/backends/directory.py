@@ -29,7 +29,7 @@ class Directory(Backend):
 
     If :meth:`~gpxity.backend.Backend.save` is given a value for ident, this
     is used as id, the file name will be :literal:`id.gpx`.
-    Otherwise, this backend uses :attr:`Activity.title <gpxity.activity.Activity.title>` for the id.
+    Otherwise, this backend uses :attr:`Activity.title <gpxity.Activity.title>` for the id.
     If an activity has no title, it uses a random sequence of characters.
     Changing the title also changes the id.
 

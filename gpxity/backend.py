@@ -99,7 +99,7 @@ class Backend:
     may be removed automatically, if cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
-    A backend allows indexing by normal int index, by :class:`Activity <gpxity.activity.Activity>` and by id_in_backend.
+    A backend allows indexing by normal int index, by :class:`Activity <gpxity.Activity>` and by id_in_backend.
     :literal:`if 'ident' in backend` is possible.
     len(backend) shows the number of activities. Please note that Code
     like :literal:`if backend:` may not behave as expected. This will be False if the backend
@@ -223,7 +223,7 @@ class Backend:
             activity (Activity): The activity we want to save in this backend.
                 It may be associated with an arbitrary backend.
             ident: If given, a backend may use this as id_in_backend.
-                :class:`~gpxity.backends.directory.Directory` does.
+                :class:`~gpxity.Directory` does.
             attributes (set(str)): If given and the backend supports specific saving for all given attributes,
                 save only those.
                 Otherwise, save the entire activity.
@@ -283,7 +283,7 @@ class Backend:
         """Removes activity.
 
         Args:
-            value: If it is not an :class:`~gpxity.activity.Activity`, :meth:`remove` looks
+            value: If it is not an :class:`~gpxity.Activity`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`"""
         activity = value if hasattr(value, 'id_in_backend') else self[value]
         self._remove_activity_in_backend(activity)
