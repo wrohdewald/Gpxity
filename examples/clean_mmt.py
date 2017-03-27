@@ -22,10 +22,13 @@ to be done:
 
 import sys
 import webbrowser
+import datetime
+
 
 # This uses not the installed copy but the development files
 sys.path.insert(0,  '..')
-from gpxity.backends import Directory, MMT
+
+from gpxity import Directory, MMT, BackendDiff
 
 def copy_from_mmt(mmt, local):
     for a in mmt:
@@ -70,8 +73,65 @@ def remove_overlaps(backend):
             backend.remove(acti.id_in_backend)
         print()
 
+def dump_diffs(backend1, backend2):
+    differ = BackendDiff(backend1, backend2)
+#    differ = BackendDiff(backend1, backend2, key=lambda x:x.gpx.get_track_points_no())
+    if differ.left.exclusive:
+        print('only in {}:'.format(backend1.url))
+        for key, values in differ.left.exclusive.items():
+            for _ in values:
+                print('{}: {}'.format(key, _))
+        print()
+    if differ.right.exclusive:
+        print('only in {}:'.format(backend2.url))
+        for key, values in differ.right.exclusive.items():
+            for _ in values:
+                print('{}: {}'.format(key, _))
+        print()
+
+    for key,  values in differ.matches.items():
+        left = values[0]
+        for right in values[1:]:
+            first_diff_time = last_diff_time = None
+            for _, (point1, point2) in enumerate(zip(left.all_points(), right.all_points())):
+                # GPXTrackPoint has no __eq__ and no working hash()
+                # those are only the most important attributes:
+                if (point1.longitude != point2.longitude
+                    or point1.latitude != point2.latitude
+                    or point1.elevation != point2.elevation):
+                    if first_diff_time is None:
+                        first_diff_time = point1.time
+                    last_diff_time = point1.time
+            if first_diff_time:
+                print('{}: different points between {} and {} in:'.format(
+                    key, first_diff_time, last_diff_time))
+                print('      {}'.format(left))
+                print('      {}'.format(right))
+    print()
+
+    hours2 = datetime.timedelta(hours=2)
+    differ2 = BackendDiff(backend1, backend2, right_key=lambda x: x.time + hours2)
+
+    if differ2.matches:
+        for key,  values in differ2.matches.items():
+            left = values[0]
+            for right in values[1:]:
+                print('{}: happens exactly 2 hours later in {}'.format(key, right))
+        print
+
+    hours2 = datetime.timedelta(hours=2)
+    differ2 = BackendDiff(backend1, backend2, right_key=lambda x: x.time - hours2)
+
+    if differ2.matches:
+        for key, values in differ2.matches.items():
+            left = values[0]
+            for right in values[1:]:
+                print('{}: happens exactly 2 hours earlier in {}'.format(key, right))
+        print
+
 
 copy_from_mmt(mmt, local)
 
 remove_shorties(local, mmt)
+dump_diffs(gpx, mmt_local)
 
