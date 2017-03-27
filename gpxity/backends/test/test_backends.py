@@ -239,3 +239,8 @@ class TestBackends(BasicTest):
                 self.assertEqual(len(sink), 9)
                 sink.sync_from(source, remove=True)
                 self.assertSameActivities(source, sink)
+
+    def test_directory_dirty(self):
+        """test gpx.dirty where id_in_backend is not the default. Currently
+        activity.dirty = 'gpx' changes the file name which is wrong."""
+        pass
