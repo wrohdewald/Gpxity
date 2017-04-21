@@ -164,7 +164,7 @@ class MMT(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    def __init__(self, url=None, auth=None, cleanup=True):
+    def __init__(self, url=None, auth=None, cleanup=False):
         if url is None:
             url = 'http://www.mapmytracks.com'
         super(MMT, self).__init__(url, auth, cleanup)
