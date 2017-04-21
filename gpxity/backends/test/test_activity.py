@@ -372,7 +372,7 @@ class ActivityTests(BasicTest):
             self.assertIn('Title', str(activity))
             self.assertIn('public' if activity.public else 'private', str(activity))
             self.assertIn('Running', str(activity))
-            self.assertIn(repr_timespan(activity.time,  activity.last_time), str(activity))
+            self.assertIn(repr_timespan(activity.time, activity.last_time), str(activity))
             self.assertTrue(str(activity).startswith('Activity('))
             self.assertTrue(str(activity).endswith(')'))
             activity.add_points(self.some_random_points(count=5))
