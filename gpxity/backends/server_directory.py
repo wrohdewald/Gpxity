@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.backends.ServerDirectory`
+This implements :class:`gpxity.ServerDirectory`
 """
 
 

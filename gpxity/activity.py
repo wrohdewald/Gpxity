@@ -119,7 +119,7 @@ class Activity:
         It is not possible to decouple an activity from its backend, use :meth:`clone()`.
 
         It is not possible to move the activity to a different backend by changing this.
-        Use :meth:`Backend.save() <gpxity.backend.Backend.save()>` instead.
+        Use :meth:`Backend.save() <gpxity.Backend.save()>` instead.
         """
         return self.__backend
 
@@ -182,7 +182,7 @@ class Activity:
         """Creates a new activity with the same content but without backend.
 
         Returns:
-            the new activity
+            ~gpxity.Activity: the new activity
         """
         result = Activity(gpx=self.gpx.clone())
         result.what = self.what
@@ -198,7 +198,7 @@ class Activity:
         - batch_changes is active
         - we have no backend
 
-        Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.backend.Backend.save>`.
+        Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.Backend.save>`.
         """
         if self.__dirty:
             if self.backend is not None and not self._loading and not self._batch_changes:
@@ -460,12 +460,12 @@ class Activity:
             from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
             :attr:`Activity.keywords` will never show those special values.
 
-            Some backends may change keywords. :class:`~gpxity.backends.mmt.MMT` converts the
+            Some backends may change keywords. :class:`~gpxity.MMT` converts the
             first character into upper case and will return it like that. Gpxity will not try to hide such
-            problems. So if you save an activity in :class:`~gpxity.backends.mmt.MMT`, its keywords
-            will change. But they will not change if you copy from :class:`~gpxity.backends.mmt.MMT`
-            to :class:`~gpxity.backends.directory.Directory` - so if you copy from DirectoryA
-            to :class:`~gpxity.backends.mmt.MMT` to DirectoryB, the keywords in
+            problems. So if you save an activity in :class:`~gpxity.MMT`, its keywords
+            will change. But they will not change if you copy from :class:`~gpxity.MMT`
+            to :class:`~gpxity.Directory` - so if you copy from DirectoryA
+            to :class:`~gpxity.MMT` to DirectoryB, the keywords in
             DirectoryA and DirectoryB will not be identical, for example "berlin" in DirectoryA but
             "Berlin" in DirectoryB.
         """

@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.backends.MMT` for http://www.mapmytracks.com
+This implements :class:`gpxity.MMT` for http://www.mapmytracks.com
 
 There are some problems with the server running at mapmytracks.com:
     * it is not possible to change an existing activity - if the track changes, the
@@ -147,14 +147,14 @@ class MMT(Backend):
     """The implementation for MapMyTracks.
     The activity ident is the number given by MapMyTracks.
 
-    MMT knows tags. We map :attr:`Activity.keywords <gpxity.activity.Activity.keywords>` to MMT tags. MMT will
+    MMT knows tags. We map :attr:`Activity.keywords <gpxity.Activity.keywords>` to MMT tags. MMT will
     change keywords: It converts the first character to upper case. See
-    :attr:`Activity.keywords <gpxity.activity.Activity.keywords>` for how Gpxity handles this.
+    :attr:`Activity.keywords <gpxity.Activity.keywords>` for how Gpxity handles this.
 
     Args:
         url (str): The Url of the server. Default is http://mapmytracks.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all activities in the
+        cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all activities in the
             user account.
     """
 

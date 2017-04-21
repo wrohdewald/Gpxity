@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This module defines :class:`~gpxity.backend.Backend`
+This module defines :class:`~gpxity.Backend`
 """
 
 import datetime
@@ -100,7 +100,8 @@ class Backend:
     may be removed automatically, if cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
-    A backend allows indexing by normal int index, by :class:`Activity <gpxity.Activity>` and by id_in_backend.
+    A backend allows indexing by normal int index, by :class:`Activity <gpxity.Activity>`
+    and by :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>`.
     :literal:`if 'ident' in backend` is possible.
     len(backend) shows the number of activities. Please note that Code
     like :literal:`if backend:` may not behave as expected. This will be False if the backend
@@ -119,8 +120,7 @@ class Backend:
     get surprises. It is up to you to handle those.
 
     Args:
-        url (str): the address. May be a real URL or a directory, depending on the backend implementation.
-            Every implementation may define its own default for url.
+        url (str): Initial value for :attr:`url`
         auth (tuple(str, str)): (username, password). Alternatively you can pass a single string.
             This will be used to get username and password from :class:`Authenticate <gpxity.auth.Authenticate>`
             with **sub_name** set to **auth**.
@@ -129,6 +129,8 @@ class Backend:
     Attributes:
         supported (set(str)): The names of all supported methods. Creating the first instance of
             the backend initializes this.
+        url (str): the address. May be a real URL or a directory, depending on the backend implementation.
+            Every implementation may define its own default for url.
     """
     supported = None
 
@@ -216,12 +218,12 @@ class Backend:
     def save(self, activity, ident: str = None, attributes=None):
         """save full activity.
 
-        It is not allowed but possible to set Activity.id_in_backend to
+        It is not allowed but possible to set :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>` to
         something other than str. But here we raise an exception
         if that ident is used for saving.
 
         Args:
-            activity (Activity): The activity we want to save in this backend.
+            activity (~gpxity.Activity): The activity we want to save in this backend.
                 It may be associated with an arbitrary backend.
             ident: If given, a backend may use this as id_in_backend.
                 :class:`~gpxity.Directory` does.
@@ -230,7 +232,7 @@ class Backend:
                 Otherwise, save the entire activity.
 
         Returns:
-            Activity: The saved activity. If the original activity lives in a different
+            ~gpxity.Activity: The saved activity. If the original activity lives in a different
             backend, a new activity living in this backend will be created
             and returned.
         """
@@ -337,7 +339,7 @@ class Backend:
 
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities. Some backends
-       (example: :class:`Directory <gpxity.backends.directory.Directory.destroy>`)
+       (example: :class:`Directory <gpxity.Directory.destroy>`)
        may also remove the account (or directory). See also :meth:`remove_all`."""
         if self._cleanup:
             self.remove_all()

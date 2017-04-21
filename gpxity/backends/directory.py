@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-Defines :class:`gpxity.backends.directory.Directory`
+Defines :class:`gpxity.Directory`
 """
 
 
@@ -23,7 +23,7 @@ class Directory(Backend):
     If the activity has a title, use the title as storage id, making it unique by attaching a number if needed.
     An activity without title gets a random name.
 
-    The main directory (given by :attr:`~gpxity.backends.directory.Directory.url`) will have
+    The main directory (given by :attr:`Directory.url <gpxity.backend.Backend.url>`) will have
     subdirectories YYYY/MM (year/month) with only the activities for one month.
     Those are symbolic links to the main file and have the same file name.
 
@@ -132,7 +132,7 @@ class Directory(Backend):
 
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities.
-        If :attr:`~gpxity.backends.directory.Directory.url` was set at init time,
+        If :attr:`~gpxity.Directory.url` was set at init time,
         also removes the directory."""
         super(Directory, self).destroy()
         if self._cleanup:

@@ -72,7 +72,7 @@ class BasicTest(unittest.TestCase):
 
     @classmethod
     def create_test_activity(cls, count: int = 1, idx: int = 0, what: str = None, status: bool = False):
-        """creates an activity. It starts off with **test.gpx** and appends a
+        """creates an :class:`~gpxity.Activity`. It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
         looking at the tracks, they all go in a different direction clockwise, with an angle
@@ -82,13 +82,13 @@ class BasicTest(unittest.TestCase):
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
             what: The wanted value for the activity.
-                Default: if count == len(:attr:`Activity.legal_what <gpxity.activity.Activity.legal_what>`),
+                Default: if count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
                 the default value will be legal_what[idx].
                 Otherwise a random value will be applied.
             status: Public?
 
         Returns:
-            (Activity): A new activity not bound to a backend
+            (~gpxity.Activity): A new activity not bound to a backend
         """
         if BasicTest.all_backend_classes is None:
             BasicTest.all_backend_classes = BasicTest._find_backend_classes()
@@ -176,7 +176,7 @@ class BasicTest(unittest.TestCase):
                       status: bool = False, sub_name=None):
         """sets up an instance of a backend with count activities.
 
-        If count == len(:attr:`Activity.legal_what <gpxity.activity.Activity.legal_what>`),
+        If count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
         the list of activities will always be identical. For an example
         see :meth:`TestBackends.test_all_what <gpxity.backends.test.test_backends.TestBackends.test_all_what>`.
 
