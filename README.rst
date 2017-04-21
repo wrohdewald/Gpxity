@@ -6,6 +6,8 @@ Implemented backends are:
   * :class:`~gpxity.backends.directory.Directory`: Directory for .gpx files on an accessible file system
   * :class:`~gpxity.backends.server_directory.ServerDirectory`: Directory suited for server implementations
   * :class:`~gpxity.backends.mmt.MMT`: For activities on http://mapmytracks.com
+  * :class:`~gpxity.backends.upload_mmt.UploadMMT`: For activities on a very simple server emulating a
+    few MMT commands (just what oruxmaps uses for uploading)
 
 Some backends might not support everything Gxpity wants and you will get the
 exception NotImplementedError().

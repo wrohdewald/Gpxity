@@ -7,4 +7,4 @@ from .activity import *
 from .backend import *
 from .backends import *
 
-__all__ = ['Activity', 'Directory', 'MMT', 'ServerDirectory', 'BackendDiff']
+__all__ = ['Activity', 'Directory', 'MMT', 'UploadMMT', 'ServerDirectory', 'BackendDiff']

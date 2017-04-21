@@ -9,12 +9,14 @@ implements :class:`gpxpy.backends.test.test_backends.TestBackends` for all backe
 
 import time
 import datetime
+import random
+
 from unittest import skip
 
 import requests
 
 from .basic import BasicTest
-from .. import Directory, MMT, ServerDirectory
+from .. import Directory, MMT, ServerDirectory, UploadMMT
 from ... import Activity
 
 # pylint: disable=attribute-defined-outside-init
@@ -238,6 +240,19 @@ class TestBackends(BasicTest):
                 sink.sync_from(source)
                 self.assertEqual(len(sink), 9)
                 sink.sync_from(source, remove=True)
+                self.assertSameActivities(source, sink)
+
+    def test_sync_upload_mmt(self):
+        """sync from local to MMT"""
+        with self.temp_backend(Directory, count=5, cleanup=True) as source:
+            with UploadMMT(auth='mmtserver_test') as sink:
+                prev_len = len(sink)
+                for _ in sink:
+                    self.move_times(_, datetime.timedelta(hours=-random.randrange(10000)))
+                sink.sync_from(source)
+                self.assertEqual(len(sink), prev_len + 5)
+                with self.assertRaises(NotImplementedError):
+                    sink.sync_from(source, remove=True)
                 self.assertSameActivities(source, sink)
 
     def test_directory_dirty(self):
