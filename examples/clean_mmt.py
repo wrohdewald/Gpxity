@@ -12,12 +12,11 @@ This module cleans my MMT activities:
     the MMT activity_id for the file name. Only for activities we
     do not have yet.
 3. removes activities with less than 10 points
-
-to be done:
 4. lists overlapping activities
 5. say which activities are in Dokumente but not in MMT and vice versa. Use activity.time for compares.
+
+To be done:
 6. apply geofencing
-7. update MMT
 """
 
 import sys
@@ -46,8 +45,6 @@ def remove_shorties(local, remote=None):
             if remote and ident in remote:
                 remote.remove(ident)
 
-mmt = MMT(auth=sys.argv[1])
-local = Directory(sys.argv[2])
 def overlapping_times(activities):
     """Yields groups of activities with overlapping times.
     This may be very slow for many long activities."""
@@ -130,8 +127,13 @@ def dump_diffs(backend1, backend2):
         print
 
 
-copy_from_mmt(mmt, local)
+mmt = MMT(auth=sys.argv[1])
+mmt_local = Directory('/home/wr/Dokumente/Privat/mmt')
+gpx = Directory('/home/wr/Dokumente/Privat/gpx')
 
-remove_shorties(local, mmt)
+#remove_shorties(mmt_local,  mmt)
+#remove_shorties(gpx)
+
+mmt_local.sync_from(mmt, remove=True, use_remote_ident=True)
+
 dump_diffs(gpx, mmt_local)
-
