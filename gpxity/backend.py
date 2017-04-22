@@ -142,12 +142,15 @@ class Backend:
         self._activities = list()
         self._activities_fully_listed = False
         self.url = url or ''
-        if self.url and not self.url.endswith('/'):
-            self.url += '/'
         if isinstance(auth, str):
-            self.auth = Authenticate(self.__class__, auth).auth
+            _ = Authenticate(self.__class__, auth)
+            self.auth = _.auth
+            if _.url:
+                self.url = _.url
         else:
             self.auth = auth
+        if self.url and not self.url.endswith('/'):
+            self.url += '/'
         self._cleanup = cleanup
         self._next_id = None # this is a hack, see save()
 

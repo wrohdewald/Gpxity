@@ -29,13 +29,19 @@ class Authenticate:
 
     Attributes:
         auth (tuple(str,str)): (username, password). Both are either str or None.
+        url: If given, overrides the url given to the backend
 
     auth.cfg has sections
       * [default]             most general fallback
       * [ClassName]           the class name of a backend like MMT
       * [ClassName.sub_name]  can be used for a specific account
 
-    Those sections are tried from most specific to default until
+    A section can define
+      * Username
+      * Password
+      * Url
+
+    The sections are tried from most specific to default until
     both username and password are known. It is legal if a more
     specific section only defines username or password.
 
@@ -57,7 +63,7 @@ class Authenticate:
     def _parse_config(self, data):
         """try to use data"""
 
-        username = password = None
+        username = password = url = None
 
         config = ConfigParser()
         config.read_string(data)
@@ -74,9 +80,13 @@ class Authenticate:
                     username = section['Username']
                 if password is None and 'Password' in section:
                     password = section['Password']
+                if url is None and 'Url' in section:
+                    url = section['Url']
                 if username and password:
                     break
 
         self.auth = (username, password)
+        self.url = url
+
         if username is None:
             raise Exception('Authenticate: Nothing found for account {}'.format(username))
