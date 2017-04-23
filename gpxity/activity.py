@@ -222,7 +222,7 @@ class Activity:
         self._load_full()
         try:
             return self.__gpx.tracks[0].segments[0].points[0].time
-        except IndexError:
+        except (IndexError, TypeError):
             pass
 
     @property
