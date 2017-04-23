@@ -234,6 +234,7 @@ class TestBackends(BasicTest):
     def test_sync(self):
         """sync_from"""
         with self.temp_backend(Directory, count=5, cleanup=True) as source:
+
             with self.temp_backend(Directory, count=4, cleanup=True) as sink:
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=100))
@@ -241,6 +242,15 @@ class TestBackends(BasicTest):
                 self.assertEqual(len(sink), 9)
                 sink.sync_from(source, remove=True)
                 self.assertSameActivities(source, sink)
+
+    def test_scan(self):
+        """some tests about Backend.scan()"""
+        with self.temp_backend(Directory, count=5, cleanup=True) as source:
+            backend2 = self.clone_backend(source)
+            activity = self.create_test_activity()
+            backend2.save(activity)
+            self.assertEqual(len(backend2), 6)
+            source.scan() # because it cannot know backend2 added something
 
     def test_sync_upload_mmt(self):
         """sync from local to MMT"""

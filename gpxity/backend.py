@@ -189,11 +189,16 @@ class Backend:
         """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
 
-    def scan(self) ->None:
+    def scan(self, now: bool = False) ->None:
         """Enforces a reload of the list of all activities in the backend.
         This will be delayed until the list is actually needed again.
+
+        Args:
+            now: If True, do not delay scanning.
         """
         self._activities_fully_listed = False
+        if now:
+            self._scan()
 
     def _scan(self) ->None:
         """loads the list of all activities in the backend if not yet done.
@@ -277,8 +282,6 @@ class Backend:
                     getattr(self, write_name)(activity, ''.join(_[1:]))
         if not self._has_item(activity.id_in_backend):
             self.append(activity)
-            if len(self._activities) == 1:
-                self._activities_fully_listed = True
         return activity
 
     def _write_all(self, activity, ident: str = None) ->None:

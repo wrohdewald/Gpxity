@@ -525,6 +525,7 @@ class ActivityTests(BasicTest):
     def test_getitem(self):
         """backend[idx]"""
         with Directory(cleanup=True) as directory:
+            directory.scan(now=True)
             activity = Activity()
             activity.id_in_backend = '56'
             directory.save(activity)
