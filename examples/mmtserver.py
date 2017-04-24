@@ -25,6 +25,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
 
 import gpxpy
+from gpxpy.gpx import GPX, GPXTrackPoint
 
 # This uses not the installed copy but the development files
 sys.path.insert(0, '..')
@@ -38,6 +39,7 @@ class Handler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
     directory = ServerDirectory('serverdir')
+    tracking_activity = None
 
     def check_pw(self):
         """basic http authentication"""
@@ -53,7 +55,7 @@ class Handler(BaseHTTPRequestHandler):
     def load_users(self):
         """load legal user auth from serverdirectory/.users"""
         self.users = dict()
-        with open(os.path.join(self.directory.url, '.users')) as user_file:
+        with open(os.path.join(Handler.directory.url, '.users')) as user_file:
             for line in user_file:
                 user, password = line.strip().split(':')
                 self.users[user] = password
@@ -88,7 +90,20 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         self.send_header('Connection', 'close')
         parsed = self.parseRequest()
-        xml = getattr(self, 'xml_{}'.format(parsed['request']))(parsed)
+        try:
+            request = parsed['request']
+        except KeyError:
+            self.return_error(401, 'No request given in {}'.format(parsed))
+            return
+        try:
+            method = getattr(self, 'xml_{}'.format(request))
+        except AttributeError:
+            self.return_error(401, 'Unknown request {}'.format(parsed['request']))
+            return
+        xml = method(parsed)
+        if xml is None:
+            return
+
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
         xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
         self.send_header('Content-Length', len(xml))
@@ -104,8 +119,8 @@ class Handler(BaseHTTPRequestHandler):
     def xml_get_activities(self, parsed):
         """as defined by the mapmytracks API"""
         a_list = list()
-        if parsed['offset'] != '0':
-            for idx, _ in enumerate(self.directory):
+        if parsed['offset'] == '0':
+            for idx, _ in enumerate(Handler.directory):
                 a_list.append(
                     '<activity{}><id>{}</id>'
                     '<title><![CDATA[ {} ]]></title>'
@@ -116,11 +131,64 @@ class Handler(BaseHTTPRequestHandler):
                         int(_.time.timestamp()), idx + 1))
         return '<activities>{}</activities>'.format(''.join(a_list))
 
+    def __points(self, raw):
+        """convert raw data back into list(GPXTrackPoint)"""
+        values = raw.split()
+        if len(values) % 4:
+            self.return_error(401, 'Point elements not a multiple of 4')
+            raise TypeError
+        result = list()
+        for idx in range(0, len(values), 4):
+            point = GPXTrackPoint(
+                latitude=float(values[idx]),
+                longitude=float(values[idx+1]),
+                elevation=float(values[idx+2]),
+                time=datetime.datetime.utcfromtimestamp(float(values[idx+3])))
+            result.append(point)
+        return result
+
+    def __starting_Gpx(self, parsed):
+        """builds an initial Gpx object"""
+        segment = gpxpy.gpx.GPXTrackSegment()
+        segment.points = self.__points(parsed['points'])
+        track = gpxpy.gpx.GPXTrack()
+        track.segments.append(segment)
+        result =GPX()
+        result.tracks.append(track)
+        return result
+
     def xml_upload_activity(self, parsed):
         """as defined by the mapmytracks API"""
         activity = Activity(gpx=gpxpy.parse(parsed['gpx_file']))
-        self.directory.save(activity)
+        Handler.directory.save(activity)
         return '<type>success</type><id>{}</id>'.format(activity.id_in_backend)
+
+    def xml_start_activity(self, parsed):
+        try:
+            Handler.tracking_activity = Activity(gpx=self.__starting_Gpx(parsed))
+        except TypeError:
+            return
+        Handler.tracking_activity.title = parsed['title']
+        Handler.tracking_activity.public = parsed['privacy'] == 'public'
+        Handler.tracking_activity.what = parsed['activity']
+        Handler.directory.save(Handler.tracking_activity)
+        return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
+            Handler.tracking_activity.id_in_backend)
+
+    def xml_update_activity(self, parsed):
+        if parsed['activity_id'] != Handler.tracking_activity.id_in_backend:
+            self.return_error(401,  'wrong activity id {}, expected {}'.format(
+                parsed['activity_id'], Handler.tracking_activity.id_in_backend))
+        else:
+            Handler.tracking_activity.add_points(self.__points(parsed['points']))
+            return '<type>activity_updated</type>'
+
+    def xml_stop_activity(self, parsed):
+        if Handler.tracking_activity is None:
+            self.return_error(401,  'No activity in tracking mode')
+        else:
+            Handler.tracking_activity = None
+            return '<type>activity_stopped</type>'
 
 def main():
     """main"""
