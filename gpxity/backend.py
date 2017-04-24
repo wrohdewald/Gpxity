@@ -113,8 +113,8 @@ class Backend:
 
     Not all backends support all methods. The unsupported methods
     will raise NotImplementedError. As a convenience every backend
-    has a list **supported** to be used like :literal:`if 'update' in backend.supported:`
-    where `update` is the name of the method.
+    has a list **supported** to be used like :literal:`if 'track' in backend.supported:`
+    where `track` is the name of the method.
 
     Backends support no locking. If others modify a backend concurrently, you may
     get surprises. It is up to you to handle those.
@@ -179,7 +179,8 @@ class Backend:
         """
         cls.supported = set()
         for name, _ in getmembers(cls, isfunction):
-            if not name.startswith('_')  or (name.startswith('_write_') and name != '_write_attribute'):
+            if not name.startswith('_')  or (
+                    name.startswith('_write_') and name != '_write_attribute') or name == '_track':
                 first_instruction = next(dis.get_instructions(_.__code__))
                 supported = first_instruction is None or first_instruction.argval != 'NotImplementedError'
                 if supported:
@@ -303,12 +304,20 @@ class Backend:
         """backend dependent implementation"""
         raise NotImplementedError()
 
-    def update(self, activity, points) ->None: # pylint: disable=no-self-use
-        """Appends to the remove activity. points are already
-        added to activity
+    def _track(self, activity, points):
+        """Modelled after MapMyTracks. I hope this matches other
+        services too.
 
-        Todo:
-            should not be exposed."""
+        This will always produce a new activity in the backend.supported
+
+        Args:
+            activity(Activity): Holds initial data
+            points: If None, stop tracking. Otherwise, start tracking
+                and add points.
+
+        For details see :meth:`Activity.track() <gpxity.Activity.track>`.
+
+        """
         raise NotImplementedError()
 
     def remove_all(self):

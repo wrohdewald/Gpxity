@@ -265,6 +265,17 @@ class TestBackends(BasicTest):
                     sink.sync_from(source, remove=True)
                 self.assertSameActivities(source, sink)
 
+    def test_track(self):
+        """test life tracking"""
+        activity = self.create_test_activity()
+        with UploadMMT(auth='mmtserver_test') as uplink:
+            activity.track(uplink, self.some_random_points())
+            new_id = activity.id_in_backend
+            time.sleep(2)
+            activity.track(points=self.some_random_points())
+            activity.track()
+            self.assertIn(new_id, uplink)
+
     def test_directory_dirty(self):
         """test gpx.dirty where id_in_backend is not the default. Currently
         activity.dirty = 'gpx' changes the file name which is wrong."""

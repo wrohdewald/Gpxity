@@ -319,8 +319,6 @@ class Activity:
         is allocated yet and points is not an empty list, allocates
         a track.
 
-        UNFINISHED
-
         Args:
             points (list(GPXTrackPoint): The points to be added
         """
@@ -334,6 +332,40 @@ class Activity:
                 self.__gpx.tracks[0].segments.append(GPXTrackSegment())
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
             self.dirty = 'gpx'
+
+    def track(self, backend=None, points=None) ->None:
+        """Life tracking.
+
+        If this activity belongs to a backend supporting
+        life tracking:
+
+        * **points** is None: Stop life tracking
+        * if life tracking is not active, start it and send all points already known in this \
+            activity. The backend may change :attr:`id_in_backend`.
+        * if life tracking was already active, just send the new points.
+
+        MMT supports simultaneous life tracking for only
+        one activity per account, others may support more.
+
+        For backends not supporting life tracking, the points are
+        simply added.
+
+        Args:
+            backend: The backend which should track this Activity. Only pass this
+              when you start tracking.
+            points (list(GPXTrackPoint): The points to be added
+        """
+        if self.backend is not None and backend is not None:
+            raise Exception('track(): Activity must not have a backend yet')
+        if backend is not None:
+            self.__backend = backend
+        if self.backend is None:
+            raise Exception('track(): backend unknown')
+        # pylint: disable=no-member
+        if '_track' in self.backend.supported:
+            self.backend._track(self, points) # pylint: disable=protected-access
+        else:
+            self.add_points(points)
 
     def _parse_keywords(self):
         """self.keywords is 1:1 as parsed from xml. Here we extract
