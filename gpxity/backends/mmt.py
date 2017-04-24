@@ -37,6 +37,7 @@ from collections import defaultdict
 import requests
 
 from .. import Backend, Activity
+from ..util import VERSION
 
 
 __all__ = ['MMT']
@@ -176,6 +177,7 @@ class MMT(Backend):
             # the same ID. We use this fact.
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
+        self._tracking_activity = None
 
     @property
     def session(self):
@@ -380,7 +382,6 @@ class MMT(Backend):
         # sort for reproducibility in tests
         self._write_add_keyword(activity, ','.join(sorted(activity.keywords)))
 
-
     def __remove_one_keyword(self, activity, value):
         """Here I have a problem. This seems to do exactly what happens in a
         browser but MMT always removes the wrong tag. However it always
@@ -459,7 +460,11 @@ class MMT(Backend):
 
     def _read_all(self, activity):
         """get the entire activity"""
-        response = self.session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
+        session = self.session
+        if session is None:
+            # https access not implemented for TrackMMT
+            return
+        response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
             self.url, activity.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
             # some activities download only a few points if mid/uid are not given, but I
             # have not been able to write a unittest triggering that ...
@@ -497,22 +502,58 @@ class MMT(Backend):
             request='upload_activity', gpx_file=activity.to_xml(),
             status=mmt_status, description=activity.description, activity=activity.what)
         activity.id_in_backend = response.find('id').text
-        self._write_title(activity)
+        if '_write_title' in self.supported:
+            self._write_title(activity)
         # MMT can add several keywords at once
-        if activity.keywords:
+        if activity.keywords and '_write_add_keyword' in self.supported:
             self._write_add_keyword(activity, ','.join(activity.keywords))
 
-    def update(self, activity, points):
-        """append points in the backend. activity already has them.
-        points are GPXTrackPoint"
+    @staticmethod
+    def __track_points(points):
+        """formats points for life tracking"""
+        _ = list()
+        for point in points:
+            _.append('{} {} {} {}'.format(
+                point.latitude,
+                point.longitude,
+                point.elevation if point.elevation is not None else 0,
+                point.time.timestamp()))
+        return ' '.join(_)
 
-        Todo:
-            Doc is wrong, must rethink this.
+    def _track(self, activity, points):
+        """Supports only one activity per account. We ensure that only
+        one activity is tracked by this backend instance, you have to
+        make sure there are no other processes interfering. The MMT
+        API does not help you with that.
+
+        points are not yet added to activity."
         """
-        activity.add_points(points)
+        if points is None:
+            if self._tracking_activity:
+                self.__post(request='stop_activity')
+                self._tracking_activity = None
+            return
+        if not self._tracking_activity:
+            result = self.__post(
+                request='start_activity',
+                title=activity.title,
+                privacy='public' if activity.public else 'private',
+                activity=activity.what,
+                points=self.__track_points(activity.all_points()),
+                source='Gpxity',
+                version=VERSION,
+                # tags='TODO',
+                unique_token='{}'.format(id(activity)))
+            if result.find('type').text != 'activity_started':
+                raise Exception('activity_started failed')
+            activity.id_in_backend = result.find('activity_id').text
+            self._tracking_activity = activity
+            self.append(activity)
+        if activity != self._tracking_activity:
+            raise Exception('MMT._track() got wrong activity')
         self.__post(
             request='update_activity', activity_id=activity.id_in_backend,
-            points=points)
+            points=self.__track_points(points))
 
     def destroy(self):
         """also close session"""

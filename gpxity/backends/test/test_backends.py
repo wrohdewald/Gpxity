@@ -16,7 +16,7 @@ from unittest import skip
 import requests
 
 from .basic import BasicTest
-from .. import Directory, MMT, ServerDirectory, UploadMMT
+from .. import Directory, MMT, ServerDirectory, TrackMMT
 from ... import Activity
 
 # pylint: disable=attribute-defined-outside-init
@@ -252,23 +252,20 @@ class TestBackends(BasicTest):
             self.assertEqual(len(backend2), 6)
             source.scan() # because it cannot know backend2 added something
 
-    def test_sync_upload_mmt(self):
+    def test_sync_trackmmt(self):
         """sync from local to MMT"""
         with self.temp_backend(Directory, count=5, cleanup=True) as source:
-            with UploadMMT(auth='mmtserver_test') as sink:
+            with TrackMMT(auth='test') as sink:
                 prev_len = len(sink)
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=-random.randrange(10000)))
                 sink.sync_from(source)
                 self.assertEqual(len(sink), prev_len + 5)
-                with self.assertRaises(NotImplementedError):
-                    sink.sync_from(source, remove=True)
-                self.assertSameActivities(source, sink)
 
     def test_track(self):
         """test life tracking"""
         activity = self.create_test_activity()
-        with UploadMMT(auth='mmtserver_test') as uplink:
+        with TrackMMT(auth='test') as uplink:
             activity.track(uplink, self.some_random_points())
             new_id = activity.id_in_backend
             time.sleep(2)
