@@ -127,8 +127,11 @@ class Backend:
         cleanup (bool): If true, :meth:`destroy` will remove all activities.
 
     Attributes:
-        supported (set(str)): The names of all supported methods. Creating the first instance of
-            the backend initializes this.
+        supported (set(str)): The names of supported methods. Creating the first instance of
+            the backend initializes this. Only methods which may not be supported are mentioned here.
+            Those are: remove, track, get_time, _write_title, _write_public, _write_what,
+            _write_gpx, _write_description, _write_keywords, _write_add_keyword, _write_remove_keyword.
+            If a particular _write_* like _write_public does not exist, the entire activity is written instead.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
     """
@@ -172,18 +175,28 @@ class Backend:
             self._decoupled = prev_decoupled
 
     @classmethod
+    def _is_implemented(cls, method):
+        """False if the first instruction in method raises NotImplementedError
+        or if the method does nothing"""
+        first_instruction = next(dis.get_instructions(method.__code__))
+        return first_instruction is not None and first_instruction.argval != 'NotImplementedError'
+
+    @classmethod
     def _define_support(cls):
         """If the first thing a method does is raising NotImplementedError, it is
-        marked as unsupported. Those are the default values, the implementations
-        will have to refine the results.
+        marked as unsupported.
         """
+        support_mappings = {
+            '_remove_activity':'remove',
+            '_track':'track',
+            'get_time':'get_time'}
         cls.supported = set()
-        for name, _ in getmembers(cls, isfunction):
-            if not name.startswith('_')  or (
-                    name.startswith('_write_') and name != '_write_attribute') or name == '_track':
-                first_instruction = next(dis.get_instructions(_.__code__))
-                supported = first_instruction is None or first_instruction.argval != 'NotImplementedError'
-                if supported:
+        for name, method in getmembers(cls, isfunction):
+            if name in support_mappings:
+                if cls._is_implemented(method):
+                    cls.supported.add(support_mappings[name])
+            elif name.startswith('_write_') and name != '_write_attribute':
+                if cls._is_implemented(method):
                     cls.supported.add(name)
 
     def get_time(self) ->datetime.datetime:

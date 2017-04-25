@@ -362,7 +362,7 @@ class Activity:
         if self.backend is None:
             raise Exception('track(): backend unknown')
         # pylint: disable=no-member
-        if '_track' in self.backend.supported:
+        if 'track' in self.backend.supported:
             self.backend._track(self, points) # pylint: disable=protected-access
         else:
             self.add_points(points)

@@ -28,9 +28,14 @@ class TestBackends(BasicTest):
     def test_supported(self):
         """Check values in supported for all backends"""
         expect_unsupported = dict()
-        expect_unsupported[Directory] = set(['update'])
-        expect_unsupported[ServerDirectory] = set(['update'])
+        expect_unsupported[Directory] = set(['track'])
+        expect_unsupported[ServerDirectory] = set(['track'])
         expect_unsupported[MMT] = set()
+        expect_unsupported[TrackMMT] = set([
+            'remove', '_write_attribute',
+            '_write_title', '_write_description', '_write_public',
+            '_write_what', '_write_keyword', '_write_add_keyword',
+            '_write_remove_keyword'])
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
