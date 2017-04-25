@@ -474,7 +474,7 @@ class MMT(Backend):
             # get them from the web page.
         self._use_webpage_results(activity)
 
-    def _remove_activity_in_backend(self, activity):
+    def _remove_activity(self, activity):
         """remove on the server"""
         act_id = activity.id_in_backend
         response = self.__post(request='delete_activity', activity_id=act_id)
@@ -497,7 +497,7 @@ class MMT(Backend):
         if activity.id_in_backend:
             # we cannot change an MMT activity in-place, we need to re-upload and then
             # remove the previous instance.
-            self._remove_activity_in_backend(activity)
+            self._remove_activity(activity)
         response = self.__post(
             request='upload_activity', gpx_file=activity.to_xml(),
             status=mmt_status, description=activity.description, activity=activity.what)

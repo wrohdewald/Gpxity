@@ -296,11 +296,11 @@ class Backend:
             value: If it is not an :class:`~gpxity.Activity`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`"""
         activity = value if hasattr(value, 'id_in_backend') else self[value]
-        self._remove_activity_in_backend(activity)
+        self._remove_activity(activity)
         self._activities.remove(activity)
         activity.id_in_backend = None
 
-    def _remove_activity_in_backend(self, activity) ->None:
+    def _remove_activity(self, activity) ->None:
         """backend dependent implementation"""
         raise NotImplementedError()
 
