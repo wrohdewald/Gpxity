@@ -44,9 +44,10 @@ class TestBackends(BasicTest):
         """Save empty activity"""
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, cleanup=True) as backend:
+                can_remove = 'remove' in cls.supported
+                with self.temp_backend(cls, cleanup=can_remove, clear_first=can_remove) as backend:
                     activity = Activity()
-                    if cls is MMT:
+                    if cls is MMT or cls is TrackMMT:
                         with self.assertRaises(Exception):
                             backend.save(activity)
                     else:
@@ -79,42 +80,44 @@ class TestBackends(BasicTest):
     def test_z9_create_backend(self):
         """Test creation of a backend"""
         for cls in self._find_backend_classes():
-            with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
-                    self.assertEqual(len(backend), 3)
-                    first_time = backend.get_time()
-                    time.sleep(2)
-                    second_time = backend.get_time()
-                    total_seconds = (second_time - first_time).total_seconds()
-                    self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
-                        2, second_time, first_time, second_time - first_time))
+            if 'remove' in cls.supported:
+                with self.subTest(' {}'.format(cls.__name__)):
+                    with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
+                        self.assertEqual(len(backend), 3)
+                        first_time = backend.get_time()
+                        time.sleep(2)
+                        second_time = backend.get_time()
+                        total_seconds = (second_time - first_time).total_seconds()
+                        self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
+                            2, second_time, first_time, second_time - first_time))
 
     def test_write_remote_attributes(self):
         """If we change title, description, public, what in activity, is the backend updated?"""
         for cls in self._find_backend_classes():
-            with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, count=1, clear_first=True, cleanup=True) as backend:
-                    activity = backend[0]
-                    first_public = activity.public
-                    first_title = activity.title
-                    first_description = activity.description
-                    first_what = activity.what
-                    activity.public = not activity.public
-                    activity.title = 'A new title'
-                    self.assertEqual(activity.title, 'A new title')
-                    activity.description = 'A new description'
-                    if activity.what == 'Cycling':
-                        activity.what = 'Running'
-                    else:
-                        activity.what = 'Cycling'
-                    # make sure there is no cache in the way
-                    backend2 = self.clone_backend(backend)
-                    activity2 = backend2[0]
-                    self.assertEqualActivities(activity, activity2)
-                    self.assertNotEqual(first_public, activity2.public)
-                    self.assertNotEqual(first_title, activity2.title)
-                    self.assertNotEqual(first_description, activity2.description)
-                    self.assertNotEqual(first_what, activity2.what)
+            if 'remove' in cls.supported:
+                with self.subTest(' {}'.format(cls.__name__)):
+                    with self.temp_backend(cls, count=1, clear_first=True, cleanup=True) as backend:
+                        activity = backend[0]
+                        first_public = activity.public
+                        first_title = activity.title
+                        first_description = activity.description
+                        first_what = activity.what
+                        activity.public = not activity.public
+                        activity.title = 'A new title'
+                        self.assertEqual(activity.title, 'A new title')
+                        activity.description = 'A new description'
+                        if activity.what == 'Cycling':
+                            activity.what = 'Running'
+                        else:
+                            activity.what = 'Cycling'
+                        # make sure there is no cache in the way
+                        backend2 = self.clone_backend(backend)
+                        activity2 = backend2[0]
+                        self.assertEqualActivities(activity, activity2)
+                        self.assertNotEqual(first_public, activity2.public)
+                        self.assertNotEqual(first_title, activity2.title)
+                        self.assertNotEqual(first_description, activity2.description)
+                        self.assertNotEqual(first_what, activity2.what)
 
     @skip
     def test_zz_all_what(self):
@@ -122,7 +125,7 @@ class TestBackends(BasicTest):
         what_count = len(Activity.legal_what)
         backends = list(
             self.setup_backend(x, count=what_count, clear_first=True)
-            for x in self._find_backend_classes())
+            for x in self._find_backend_classes() if 'remove' in x.supported)
         copies = list(self.clone_backend(x) for x in backends)
         try:
             first_backend = copies[0]
@@ -143,6 +146,8 @@ class TestBackends(BasicTest):
         kw_d = 'D' # self.unicode_string2
 
         for cls in self._find_backend_classes():
+            if cls.__name__ == 'TrackMMT':
+                continue
             with self.subTest(' {}'.format(cls.__name__)):
                 is_mmt = cls.__name__ == 'MMT'
                 with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt, sub_name='two') as backend:
@@ -182,21 +187,22 @@ class TestBackends(BasicTest):
         """Can we up- and download unicode characters in all text attributes?"""
         tstdescr = 'DESCRIPTION with ' + self.unicode_string1 + ' and ' + self.unicode_string2
         for cls in self._find_backend_classes():
-            with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, count=1, clear_first=True) as backend:
-                    backend2 = self.clone_backend(backend)
-                    activity = backend[0]
-                    activity.title = 'Title ' + self.unicode_string1
-                    backend2.scan() # because backend2 does not know about changes thru backend
-                    activity2 = backend2[0]
-                    # activity and activity2 may not be identical. If the original activity
-                    # contains gpx xml data ignored by MMT, it will not be in activity2.
-                    self.assertEqual(activity.title, activity2.title)
-                    activity.description = tstdescr
-                    self.assertEqual(activity.description, tstdescr)
-                    backend2.scan()
-                    self.assertEqual(backend2[0].description, tstdescr)
-                    backend2.destroy()
+            if 'remove' in cls.supported:
+                with self.subTest(' {}'.format(cls.__name__)):
+                    with self.temp_backend(cls, count=1, clear_first=True) as backend:
+                        backend2 = self.clone_backend(backend)
+                        activity = backend[0]
+                        activity.title = 'Title ' + self.unicode_string1
+                        backend2.scan() # because backend2 does not know about changes thru backend
+                        activity2 = backend2[0]
+                        # activity and activity2 may not be identical. If the original activity
+                        # contains gpx xml data ignored by MMT, it will not be in activity2.
+                        self.assertEqual(activity.title, activity2.title)
+                        activity.description = tstdescr
+                        self.assertEqual(activity.description, tstdescr)
+                        backend2.scan()
+                        self.assertEqual(backend2[0].description, tstdescr)
+                        backend2.destroy()
 
     def test_change_points(self):
         """Can we change the points of a track?
@@ -213,10 +219,11 @@ class TestBackends(BasicTest):
     def test_duplicate_title(self):
         """two activities having the same title"""
         for cls in self._find_backend_classes():
-            with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, count=2, clear_first=True) as backend:
-                    backend[0].title = 'TITLE'
-                    backend[1].title = 'TITLE'
+            if 'remove' in cls.supported:
+                with self.subTest(' {}'.format(cls.__name__)):
+                    with self.temp_backend(cls, count=2, clear_first=True) as backend:
+                        backend[0].title = 'TITLE'
+                        backend[1].title = 'TITLE'
 
     def test_private(self):
         """Up- and download private activities"""
@@ -226,15 +233,16 @@ class TestBackends(BasicTest):
             self.assertFalse(activity.public)
             local.save(activity)
             for cls in self._find_backend_classes():
-                with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(cls, clear_first=True, cleanup=True) as backend:
-                        backend.sync_from(local)
-                        for _ in backend:
-                            self.assertFalse(_.public)
-                        backend2 = self.clone_backend(backend)
-                        with Directory(cleanup=True) as copy:
-                            copy.sync_from(backend2)
-                            self.assertSameActivities(local, copy)
+                if 'remove' in cls.supported:
+                    with self.subTest(' {}'.format(cls.__name__)):
+                        with self.temp_backend(cls, clear_first=True, cleanup=True) as backend:
+                            backend.sync_from(local)
+                            for _ in backend:
+                                self.assertFalse(_.public)
+                            backend2 = self.clone_backend(backend)
+                            with Directory(cleanup=True) as copy:
+                                copy.sync_from(backend2)
+                                self.assertSameActivities(local, copy)
 
     def test_sync(self):
         """sync_from"""
