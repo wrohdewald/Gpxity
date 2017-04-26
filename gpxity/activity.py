@@ -468,10 +468,9 @@ class Activity:
 
     @property
     def last_time(self) ->datetime.datetime:
-        """
-        Returns:
-            the last timestamp we received so far.
-            If none, return None."""
+        """datetime.datetime:
+        the last time we received so far.
+        If none, return None."""
         self._load_full()
         try:
             return self.__gpx.tracks[-1].segments[-1].points[-1].time
