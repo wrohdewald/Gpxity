@@ -20,6 +20,7 @@ import os
 import sys
 import base64
 import datetime
+from optparse import OptionParser
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
@@ -189,12 +190,23 @@ class Handler(BaseHTTPRequestHandler):
         if Handler.tracking_activity is None:
             self.return_error(401,  'No activity in tracking mode')
         else:
+            self.send_mail('stop_activity', Handler.tracking_activity)
             Handler.tracking_activity = None
             return '<type>activity_stopped</type>'
 
+
+def options():
+    parser = OptionParser()
+    parser.add_option(
+        '', '--port', dest='port', metavar='PORT',
+        type=int, default=8080, help='Listen on PORT')
+    return  parser.parse_args()[0]
+
 def main():
     """main"""
-    httpd = HTTPServer(("", int(sys.argv[1])), Handler)
+    global OPT
+    OPT = options()
+    httpd = HTTPServer(("", OPT.port), Handler)
     httpd.serve_forever()
 
 main()
