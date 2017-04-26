@@ -52,6 +52,7 @@ class Directory(Backend):
             support any other character set but UTF-8.
             Note that :attr:`fs_encoding` is independent of the platform we are running on - we
             might use a network file system.
+        is_temporary (bool): True if no Url was given and we created a temporary directory
     """
 
    # skip_test = True
@@ -65,8 +66,8 @@ class Directory(Backend):
             prefix = self.__class__.prefix
         elif url:
             raise Exception('Directory does not accept both url and prefix')
-        self.url_given = bool(url)
-        if not self.url_given:
+        self.is_temporary = not bool(url)
+        if self.is_temporary:
             url = tempfile.mkdtemp(prefix=prefix)
         super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
         if not os.path.exists(self.url):
@@ -137,7 +138,7 @@ class Directory(Backend):
         super(Directory, self).destroy()
         if self._cleanup:
             self.remove_all()
-            if not self.url_given:
+            if self.is_temporary:
                 os.rmdir(self.url)
 
     def _gpx_path(self, activity):
