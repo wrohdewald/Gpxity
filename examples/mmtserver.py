@@ -63,7 +63,7 @@ class Handler(BaseHTTPRequestHandler):
             expect = expect.decode('utf-8')
             if expect == self.headers['Authorization']:
                 return True
-        return False
+        return True
 
     def load_users(self):
         """load legal user auth from serverdirectory/.users"""
