@@ -25,6 +25,8 @@ from optparse import OptionParser
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
 
+from subprocess import Popen, PIPE
+
 import gpxpy
 from gpxpy.gpx import GPX, GPXTrackPoint
 
@@ -41,6 +43,16 @@ class Handler(BaseHTTPRequestHandler):
     users = None
     directory = ServerDirectory(auth='mmtserver') # define the directory in auth.cfg, using the Url=value
     tracking_activity = None
+
+    def send_mail(self, reason,  activity):
+        """if a mail address is known, send new GPX there"""
+        if OPT.mailto:
+            msg = b'GPX is attached'
+            subject = 'New GPX: {} {}'.format(reason, activity)
+            process  = Popen(
+                ['mutt', '-s', subject, '-a', activity.backend.gpx_path(activity),  '--', OPT.mailto],
+                stdin=PIPE)
+            process.communicate(msg)
 
     def check_pw(self):
         """basic http authentication"""
@@ -162,6 +174,7 @@ class Handler(BaseHTTPRequestHandler):
         """as defined by the mapmytracks API"""
         activity = Activity(gpx=gpxpy.parse(parsed['gpx_file']))
         Handler.directory.save(activity)
+        self.send_mail('upload_activity', activity)
         return '<type>success</type><id>{}</id>'.format(activity.id_in_backend)
 
     def xml_start_activity(self, parsed):
@@ -175,6 +188,7 @@ class Handler(BaseHTTPRequestHandler):
         Handler.tracking_activity.public = parsed['privacy'] == 'public'
         Handler.tracking_activity.what = parsed['activity']
         Handler.directory.save(Handler.tracking_activity)
+        self.send_mail('start_activity', Handler.tracking_activity)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
             Handler.tracking_activity.id_in_backend)
 
@@ -200,6 +214,9 @@ def options():
     parser.add_option(
         '', '--port', dest='port', metavar='PORT',
         type=int, default=8080, help='Listen on PORT')
+    parser.add_option(
+        '', '--mailto', dest='mailto', metavar='MAIL',
+        default=None, help='mail new activities to MAIL')
     return  parser.parse_args()[0]
 
 def main():
