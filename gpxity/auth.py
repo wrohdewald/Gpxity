@@ -55,8 +55,8 @@ class Authenticate:
         self.sub_name = sub_name
         self.auth = (None, None)
 
-        path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
-        with open(path) as auth_file:
+        self.path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
+        with open(self.path) as auth_file:
             self._parse_config(auth_file.read())
         return
 
@@ -89,4 +89,5 @@ class Authenticate:
         self.url = url
 
         if username is None:
-            raise Exception('Authenticate: Nothing found for account {}'.format(username))
+            raise Exception('Authenticate: No user found for account {}. Looking for {}.{} in {}'.format(
+                username, self.cls.__name__, self.sub_name, self.path))
