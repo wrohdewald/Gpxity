@@ -169,6 +169,8 @@ class Handler(BaseHTTPRequestHandler):
         except TypeError:
             return
         Handler.tracking_activity.title = parsed['title']
+        if 'privicity' in parsed:
+            parsed['privacy'] = parsed['privicity']
         Handler.tracking_activity.public = parsed['privacy'] == 'public'
         Handler.tracking_activity.what = parsed['activity']
         Handler.directory.save(Handler.tracking_activity)
