@@ -143,7 +143,7 @@ class Directory(Backend):
             if self.is_temporary:
                 os.rmdir(self.url)
 
-    def _gpx_path(self, activity):
+    def gpx_path(self, activity):
         """The full path name for the local copy of an activity"""
         if not activity.id_in_backend:
             self._set_new_id(activity)
@@ -171,7 +171,7 @@ class Directory(Backend):
     def _read_all(self, activity):
         """fills the activity with all its data from source."""
         with activity.decoupled():
-            with open(self._gpx_path(activity)) as in_file:
+            with open(self.gpx_path(activity)) as in_file:
                 activity.parse(in_file)
 
     def _remove_activity(self, activity):
@@ -184,7 +184,7 @@ class Directory(Backend):
             except OSError:
                 pass
         self._symlinks[activity.id_in_backend] = list()
-        gpx_file = self._gpx_path(activity)
+        gpx_file = self.gpx_path(activity)
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 
@@ -211,13 +211,13 @@ class Directory(Backend):
             activity.id_in_backend = None
         if ident is not None:
             activity.id_in_backend = ident
-        _gpx_path = self._gpx_path(activity)
+        gpx_path = self.gpx_path(activity)
         try:
-            with open(_gpx_path, 'w') as out_file:
+            with open(gpx_path, 'w') as out_file:
                 out_file.write(activity.to_xml())
             time = activity.time
             if time:
-                os.utime(_gpx_path, (time.timestamp(), time.timestamp()))
+                os.utime(gpx_path, (time.timestamp(), time.timestamp()))
                 link_name = self._symlink_path(activity)
                 link_target = os.path.join('..', '..', '{}.gpx'.format(activity.id_in_backend))
                 os.symlink(link_target, link_name)
