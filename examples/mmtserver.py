@@ -85,9 +85,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def parseRequest(self): # pylint: disable=invalid-name
         """as the name says. Why do I have to implement this?"""
+        if OPT.debug:
+            print('got headers:')
+            for k,v in self.headers.items():
+                print('  ',k,v)
         data_length = int(self.headers['Content-Length'])
         data = self.rfile.read(data_length).decode('utf-8')
         parsed = parse_qs(data)
+        if OPT.debug:
+            print('got',parsed)
         for key, value in parsed.items():
             if len(value) != 1:
                 self.return_error(400, '{} must appear only once'.format(key))
@@ -118,6 +124,8 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
+        if OPT.debug:
+            print('returning',xml)
         xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
         self.send_header('Content-Length', len(xml))
         self.end_headers()
@@ -198,6 +206,9 @@ class Handler(BaseHTTPRequestHandler):
                 parsed['activity_id'], Handler.tracking_activity.id_in_backend))
         else:
             Handler.tracking_activity.add_points(self.__points(parsed['points']))
+            if OPT.debug:
+                print('update_activity:',Handler.tracking_activity)
+                print('  last time:',Handler.tracking_activity.last_time)
             return '<type>activity_updated</type>'
 
     def xml_stop_activity(self, parsed):
@@ -217,6 +228,10 @@ def options():
     parser.add_option(
         '', '--mailto', dest='mailto', metavar='MAIL',
         default=None, help='mail new activities to MAIL')
+    parser.add_option(
+        '', '--debug', action='store_true',
+        help='show debug output', dest='debug',
+        default=False)
     return  parser.parse_args()[0]
 
 def main():
