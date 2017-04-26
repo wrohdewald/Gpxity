@@ -7,9 +7,11 @@
 implements :class:`gpxpy.backends.test.test_backends.TestBackends` for all backends
 """
 
+import os
 import time
 import datetime
 import random
+import tempfile
 
 from unittest import skip
 
@@ -17,6 +19,7 @@ import requests
 
 from .basic import BasicTest
 from .. import Directory, MMT, ServerDirectory, TrackMMT
+from ...auth import Authenticate
 from ... import Activity
 
 # pylint: disable=attribute-defined-outside-init
@@ -290,3 +293,34 @@ class TestBackends(BasicTest):
         """test gpx.dirty where id_in_backend is not the default. Currently
         activity.dirty = 'gpx' changes the file name which is wrong."""
         pass
+
+    def test_directory(self):
+        """directory creation/deletion"""
+        with self.assertRaises(Exception):
+            with Directory('url', prefix='x', cleanup=True):
+                pass
+
+        dir_a = Directory(cleanup=True)
+        self.assertTrue(dir_a.is_temporary)
+        a_url = dir_a.url
+        self.assertTrue(os.path.exists(a_url))
+        dir_a.destroy()
+        self.assertFalse(os.path.exists(a_url))
+
+        test_url = tempfile.mkdtemp() + '/'
+        dir_b = Directory(url=test_url, cleanup=True)
+        self.assertFalse(dir_b.is_temporary)
+        self.assertTrue(dir_b.url == test_url)
+        dir_b.destroy()
+        self.assertTrue(os.path.exists(test_url))
+        os.rmdir(test_url)
+
+        dir_c = Directory(auth='urltest')
+        auth_dir = Authenticate(Directory, 'urltest').url
+        if not auth_dir.endswith('/'):
+            auth_dir += '/'
+        self.assertFalse(dir_c.is_temporary)
+        self.assertTrue(dir_c.url == auth_dir)
+        dir_c.destroy()
+        self.assertTrue(os.path.exists(auth_dir))
+        os.rmdir(auth_dir)

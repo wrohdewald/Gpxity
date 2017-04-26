@@ -38,7 +38,7 @@ from gpxity import ServerDirectory # pylint: disable=no-name-in-module
 class Handler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
-    directory = ServerDirectory('serverdir')
+    directory = ServerDirectory() # define the directory in auth.cfg, using the Url=value
     tracking_activity = None
 
     def check_pw(self):

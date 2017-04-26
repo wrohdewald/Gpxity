@@ -471,12 +471,6 @@ class ActivityTests(BasicTest):
             finally:
                 directory.fs_encoding = prev_encoding
 
-    def test_directory(self):
-        """Directory incantations"""
-        with self.assertRaises(Exception):
-            with Directory('url', prefix='x', cleanup=True):
-                pass
-
     def test_local_keywords(self):
         """Some keyword tests. More see in test_backends"""
         gpx = self._get_gpx_from_test_file('test')

@@ -34,10 +34,11 @@ class Directory(Backend):
     Changing the title also changes the id.
 
     Args:
-        url (str): a directory. If not given, use a unique temporary directory named
+        url (str): a directory. If no Url is given, either here or through auth, use a unique
+            temporary directory named
             :attr:`prefix`.X where X are some random characters.
             If the directory does not exist, it is created.
-        auth (tuple(str, str)): Unused.
+        auth (str): You can use this as in every backend to define Url= in auth.cfg
         cleanup (bool): If True, :meth:`destroy` will remove all activities. If url was
             not given, it will also remove the directory.
         prefix: The prefix for a temporary directory path. Must not be given if url is given.
@@ -66,10 +67,11 @@ class Directory(Backend):
             prefix = self.__class__.prefix
         elif url:
             raise Exception('Directory does not accept both url and prefix')
-        self.is_temporary = not bool(url)
+        full_url = os.path.abspath(os.path.expanduser(url)) if url else None
+        super(Directory, self).__init__(url=full_url, auth=auth, cleanup=cleanup)
+        self.is_temporary = not bool(self.url)
         if self.is_temporary:
-            url = tempfile.mkdtemp(prefix=prefix)
-        super(Directory, self).__init__(os.path.abspath(os.path.expanduser(url)), auth=auth, cleanup=cleanup)
+            self.url = tempfile.mkdtemp(prefix=prefix)
         if not os.path.exists(self.url):
             os.makedirs(self.url)
         self._symlinks = defaultdict(list)
