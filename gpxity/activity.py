@@ -302,6 +302,7 @@ class Activity:
 
     @what.setter
     def what(self, value: str):
+        value = value.capitalize()
         if value != self.what:
             if value not in Activity.legal_what and value is not None:
                 raise Exception('What {} is not known'.format(value))
