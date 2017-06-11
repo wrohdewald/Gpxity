@@ -14,7 +14,7 @@ import io
 import filecmp
 import tempfile
 
-from gpxpy.gpx import GPX
+from ...gpxpy.gpxpy.gpx import GPX
 
 from .basic import BasicTest
 from ... import Activity

@@ -27,11 +27,17 @@ from urllib.parse import parse_qs
 
 from subprocess import Popen, PIPE
 
-import gpxpy
-from gpxpy.gpx import GPX, GPXTrackPoint
-
 # This uses not the installed copy but the development files
 sys.path.insert(0, '..')
+
+from gpxity.gpxpy.gpxpy import gpx as mod_gpx
+
+GPX = mod_gpx.GPX
+GPXTrack = mod_gpx.GPXTrack
+GPXTrackSegment = mod_gpx.GPXTrackSegment
+GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
+
+
 
 # pylint: disable=wrong-import-position
 

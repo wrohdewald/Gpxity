@@ -13,17 +13,21 @@ import datetime
 from contextlib import contextmanager
 from functools import total_ordering
 
+from .util import repr_timespan
+
 # This code would speed up parsing GPX by about 30%. When doing
 # that, GPX will only return str instead of datetime for times.
 #
 # import gpxpy.gpxfield as mod_gpxfield
 # mod_gpxfield.TIME_TYPE=None
 
+from .gpxpy.gpxpy import gpx as mod_gpx
+from .gpxpy.gpxpy import parse as gpxpy_parse
 
-import gpxpy
-from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment, GPXXMLSyntaxException
-
-from .util import repr_timespan
+GPX = mod_gpx.GPX
+GPXTrack = mod_gpx.GPXTrack
+GPXTrackSegment = mod_gpx.GPXTrackSegment
+GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 
 
 __all__ = ['Activity']
@@ -399,7 +403,7 @@ class Activity:
             old_gpx = self.__gpx
             old_public = self.public
             try:
-                self.__gpx = gpxpy.parse(indata)
+                self.__gpx = gpxpy_parse(indata)
             except GPXXMLSyntaxException as exc:
                 print('{}: Activity {} has illegal GPX XML: {}'.format(
                     self.backend, self.id_in_backend, exc))
