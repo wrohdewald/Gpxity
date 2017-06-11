@@ -9,7 +9,7 @@ This implements only a minimum of what MMT can do:
 upload entire tracks and extend a track. That is
 what oruxmaps does - see examples/mmt_server.
 
-Simple_MMT is used to test mmt_server.
+TrackMMT is used to test mmt_server.
 """
 
 from .mmt import MMT
