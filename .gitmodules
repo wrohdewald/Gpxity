@@ -1,0 +1,3 @@
+[submodule "gpxity/gpxpy"]
+	path = gpxity/gpxpy
+	url = https://github.com/wrohdewald/gpxpy.git
