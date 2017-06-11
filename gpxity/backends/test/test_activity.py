@@ -58,7 +58,7 @@ class ActivityTests(BasicTest):
             with self.assertRaises(Exception):
                 activity.dirty = False
             self.assertFalse(activity.dirty)
-            activity.dirty = True
+            activity.dirty = 'gpx'
             self.assertFalse(activity.dirty)
             activity.title = 'new title'
             self.assertFalse(activity.dirty)

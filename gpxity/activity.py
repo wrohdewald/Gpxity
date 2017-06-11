@@ -152,10 +152,6 @@ class Activity:
 
         Setting :attr:`dirty` will directly write the changed data into the backend.
 
-        Setting :attr:`dirty` to True will write everything.
-
-        Setting :attr:`dirty` to False is not allowed.
-
         :attr:`dirty` can be set to an arbitrary string like 'title'. If the backend
         has a method _write_title, that one will be called. Otherwise the
         entire activity will be written by the backend.
@@ -171,15 +167,12 @@ class Activity:
 
     @dirty.setter
     def dirty(self, value):
-        if not value:
-            raise Exception('You may not set dirty to False. Instead use _save().')
+        if not isinstance(value, str):
+            raise Exception('dirty only receives str')
         if self._loading:
             return
 
-        if isinstance(value, bool):
-            self.__dirty = set(['all'])
-        else:
-            self.__dirty.add(value)
+        self.__dirty.add(value)
         self._save()
 
     def clone(self):
