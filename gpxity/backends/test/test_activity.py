@@ -474,11 +474,26 @@ class ActivityTests(BasicTest):
 
     def test_local_keywords(self):
         """Some keyword tests. More see in test_backends"""
+        # What: and Status: are special
         gpx = self._get_gpx_from_test_file('test')
         gpx.keywords = 'What:Cycling, Status:public'
         activity = Activity(gpx=gpx)
         self.assertEqual(activity.keywords, list())
-        activity.what = 'Running'
+
+        # : is legal within a keyword
+        gpx.keywords = 'Hello:Dolly'
+        activity = Activity(gpx=gpx)
+        self.assertEqual(activity.keywords, list(['Hello:Dolly']))
+
+        # keywords are sorted
+        gpx.keywords = 'Hello,Dolly'
+        activity = Activity(gpx=gpx)
+        self.assertEqual(activity.keywords, list(['Dolly', 'Hello']))
+
+        # no comma within a keyword
+        with self.assertRaises(Exception):
+            activity.add_keyword('Bye,Sam')
+
 
     def test_keyword_args(self):
         """Activity.keywords must accept all types of iterable"""

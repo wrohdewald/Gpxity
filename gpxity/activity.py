@@ -527,9 +527,12 @@ class Activity:
             raise Exception('Do not use this directly,  use Activity.what')
         if keyword.startswith('Status:'):
             raise Exception('Do not use this directly,  use Activity.public')
+        if ',' in keyword:
+            raise Exception('No comma allowed within a keyword')
 
     def add_keyword(self, value: str) ->None:
         """Adds to the comma separated keywords. Duplicate keywords are not allowed.
+        A keyword may not contain a comma.
 
         Args:
             value: the keyword
@@ -543,7 +546,6 @@ class Activity:
         else:
             self.__gpx.keywords = value
         self.dirty = 'add_keyword:{}'.format(value)
-        # TODO: test with : within keyword
 
     def remove_keyword(self, value: str) ->None:
         """Removes from the keywords.
