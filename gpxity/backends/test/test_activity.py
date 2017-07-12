@@ -30,7 +30,8 @@ class ActivityTests(BasicTest):
 
     def test_init(self):
         """test initialisation"""
-        Activity()
+        activity = Activity()
+        self.assertFalse(activity.public)
         with Directory(cleanup=True) as backend:
             with self.assertRaises(Exception):
                 Activity(backend, gpx=GPX())

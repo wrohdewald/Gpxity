@@ -441,7 +441,7 @@ class Activity:
     def public(self):
         """
         bool: Is this a private activity (can only be seen by the account holder) or
-            is it public?
+            is it public? Default value is False
         """
         self._load_full()
         return self.__public
