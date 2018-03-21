@@ -251,7 +251,7 @@ class MMT(Backend):
             self.__handle_post_error(full_url, data, response)
             return
         result = response.text
-        if expect and expect not in result:
+        if (result == 'access denied') or (expect and expect not in result):
             raise requests.exceptions.HTTPError('{}: expected {} in {}'.format(data, expect, result))
         if result.startswith('<?xml'):
             try:
@@ -476,14 +476,9 @@ class MMT(Backend):
 
     def _remove_activity(self, activity):
         """remove on the server"""
-        act_id = activity.id_in_backend
-        response = self.__post(request='delete_activity', activity_id=act_id)
-        type_xml = response.find('type')
-        if type_xml is not None and type_xml.text == 'invalid_activity_id':
-            # does not exist anymore, silently ignore this.
-            return
-        if type_xml is None or type_xml.text != 'activity_deleted':
-            raise Exception('{}: Could not delete activity {}: {}'.format(self, activity, response.text))
+        self.__post(
+            with_session=True, url='handler/delete_track', expect='access granted',
+            tid=activity.id_in_backend, hash=self.session.cookies['exp_uniqueid'])
 
     def _write_all(self, activity, ident: str = None):
         """save full gpx track on the MMT server.
