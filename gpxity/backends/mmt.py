@@ -183,6 +183,8 @@ class MMT(Backend):
     def session(self):
         """The requests.Session for this backend. Only initialized once."""
         if self.__session is None:
+            if not self.auth:
+                raise Exception('{}: Needs authentication data'.format(self.url))
             self.__session = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
             payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
