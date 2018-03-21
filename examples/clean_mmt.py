@@ -34,10 +34,10 @@ def copy_from_mmt(mmt, local):
         if a.id_in_backend not in local:
             local.save(a, ident=a.id_in_backend)
 
-def remove_shorties(local, remote=None):
+def remove_shorties(local, remote=None, min_points=10):
     for local_activity in local:
         has_points = local_activity.gpx.get_points_no()
-        if  has_points < 10:
+        if  has_points < min_points:
             print('*** {} had only {} points'.format(local_activity, has_points))
             ident = local_activity.id_in_backend
             webbrowser.open('http://www.mapmytracks.com/explore/activity/{}'.format(ident))
