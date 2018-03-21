@@ -257,5 +257,5 @@ class BasicTest(unittest.TestCase):
     @staticmethod
     def move_times(activity, delta):
         """move all times by delta"""
-        for point in activity.all_points():
+        for point in activity.points():
             point.time += delta

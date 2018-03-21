@@ -607,7 +607,7 @@ class Activity:
             the angle in degrees 0..360 between start and end.
             If we have no track, return 0
         """
-        for first_point in self.all_points():
+        for first_point in self.points():
             last_point = self.__gpx.tracks[-1].segments[-1].points[-1]
             delta_lat = first_point.latitude - last_point.latitude
             delta_long = first_point.longitude - last_point.longitude
@@ -622,7 +622,7 @@ class Activity:
             return 180.0 - result
         return 0
 
-    def all_points(self):
+    def points(self):
         """
         Yields:
             GPXTrackPoint: all points in all tracks and segments
@@ -654,7 +654,7 @@ class Activity:
             return False
         if self.angle() != other.angle():
             return False
-        for _, (point1, point2) in enumerate(zip(self.all_points(), other.all_points())):
+        for _, (point1, point2) in enumerate(zip(self.points(), other.points())):
             # GPXTrackPoint has no __eq__ and no working hash()
             # those are only the most important attributes:
             if point1.longitude != point2.longitude:

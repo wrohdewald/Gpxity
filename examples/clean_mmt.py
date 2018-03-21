@@ -75,7 +75,7 @@ def dump_diffs(backend1, backend2):
         left = values[0]
         for right in values[1:]:
             first_diff_time = last_diff_time = None
-            for _, (point1, point2) in enumerate(zip(left.all_points(), right.all_points())):
+            for _, (point1, point2) in enumerate(zip(left.points(), right.points())):
                 # GPXTrackPoint has no __eq__ and no working hash()
                 # those are only the most important attributes:
                 if (point1.longitude != point2.longitude

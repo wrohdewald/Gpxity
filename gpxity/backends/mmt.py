@@ -539,7 +539,7 @@ class MMT(Backend):
                 title=activity.title,
                 privacy='public' if activity.public else 'private',
                 activity=activity.what,
-                points=self.__track_points(activity.all_points()),
+                points=self.__track_points(activity.points()),
                 source='Gpxity',
                 version=VERSION,
                 # tags='TODO',

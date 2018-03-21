@@ -318,7 +318,7 @@ class ActivityTests(BasicTest):
             activity1 = Activity()
             activity1.add_points(points)
             activity2 = activity1.clone()
-            points2 = list(activity2.all_points()) # those are cloned points
+            points2 = list(activity2.points()) # those are cloned points
             self.assertTrue(activity1.points_equal(activity2))
             activity2.gpx.tracks.clear()
             activity2.add_points(points2[:5])
@@ -342,13 +342,13 @@ class ActivityTests(BasicTest):
             self.assertFalse(activity1.points_equal(activity2))
             activity2.gpx.tracks[-1].segments[-1].points[-2].elevation -= 1
             self.assertTrue(activity1.points_equal(activity2), '{} != {}'.format(
-                list(activity1.all_points()), list(activity2.all_points())))
+                list(activity1.points()), list(activity2.points())))
 
             old_long = activity2.gpx.tracks[-1].segments[-1].points[-1].longitude
             activity2.gpx.tracks[-1].segments[-1].points[-1].longitude += 1
             self.assertFalse(activity1.points_equal(activity2))
-            a1_points = list(activity1.all_points())
-            a2_points = list(activity2.all_points())
+            a1_points = list(activity1.points())
+            a2_points = list(activity2.points())
             a1_first = a1_points[0]
             a1_last = a1_points[-1]
             a2_first = a2_points[0]
@@ -405,7 +405,7 @@ class ActivityTests(BasicTest):
         activity1 = Activity()
         activity1.add_points(self.some_random_points(2))
         first_point = None
-        for point in activity1.all_points():
+        for point in activity1.points():
             if first_point is None:
                 first_point = point
             else:
