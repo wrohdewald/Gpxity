@@ -664,3 +664,26 @@ class Activity:
             if point1.elevation != point2.elevation:
                 return False
         return True
+
+    @staticmethod
+    def overlapping_times(activities):
+        """"
+        Yields:
+            groups of activities with overlapping times. Sorted by time.
+
+        This may be very slow for many long activities.
+        """
+        previous = None
+        group = list()  # Activity is  mutable, so a set is no possible
+        for current in sorted(activities,  key=lambda x: x.time):
+            if previous and current.time <= previous.last_time:
+                if previous not in group:
+                    group.append(previous)
+                group.append(current)
+            else:
+                if group:
+                    yield sorted(group,  key=lambda x:x.time)
+                    group = list()
+            previous = current
+        if group:
+            yield sorted(group,  key=lambda x:x.time)
