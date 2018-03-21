@@ -622,16 +622,24 @@ class Activity:
             return 180.0 - result
         return 0
 
+    def segments(self):
+        """
+        Yields:
+            GPXTrackSegment: all segments in all tracks
+        """
+        self._load_full()
+        for track in self.__gpx.tracks:
+            for segment in track.segments:
+                yield segment
+
     def points(self):
         """
         Yields:
             GPXTrackPoint: all points in all tracks and segments
         """
-        self._load_full()
-        for track in self.__gpx.tracks:
-            for segment in track.segments:
-                for point in segment.points:
-                    yield point
+        for segment in self.segments():
+            for point in segment.points:
+                yield point
 
     def adjust_time(self, delta):
         """Adds a timedelta to all times.
