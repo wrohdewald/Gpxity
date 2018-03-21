@@ -71,7 +71,8 @@ class BasicTest(unittest.TestCase):
         return gpxpy.parse(io.StringIO(get_data(__package__, '{}.gpx'.format(name)).decode('utf-8')))
 
     @classmethod
-    def create_test_activity(cls, count: int = 1, idx: int = 0, what: str = None, status: bool = False):
+    def create_test_activity(cls, count: int = 1, idx: int = 0, what: str = None, status: bool = False,
+        start_time=None, end_time=None):
         """creates an :class:`~gpxity.Activity`. It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
@@ -86,6 +87,8 @@ class BasicTest(unittest.TestCase):
                 the default value will be legal_what[idx].
                 Otherwise a random value will be applied.
             status: Public?
+            start_time: If given, assign it to the first point and adjust all following times
+            end_time: explicit time for the last point. If None: See above.
 
         Returns:
             (~gpxity.Activity): A new activity not bound to a backend
@@ -93,11 +96,18 @@ class BasicTest(unittest.TestCase):
         if BasicTest.all_backend_classes is None:
             BasicTest.all_backend_classes = BasicTest._find_backend_classes()
         gpx = cls._get_gpx_from_test_file('test')
+        if start_time is not None:
+            move_time = start_time - gpx.tracks[0].segments[0].points[0].time
+            for track in gpx.tracks:
+                for segment in track.segments:
+                    for point in segment.points:
+                        point.time += move_time
         movement = gpxpy.geo.LocationDelta(distance=100000, angle=360 * idx / count)
         last_points = gpx.tracks[-1].segments[-1].points
+        if end_time is None:
+            end_time = last_points[-1].time + datetime.timedelta(hours=10, seconds=idx)
         new_point = GPXTrackPoint(
-            latitude=last_points[-1].latitude, longitude=last_points[-1].longitude + 0.001,
-            time=last_points[-1].time + datetime.timedelta(hours=10, seconds=idx))
+            latitude=last_points[-1].latitude, longitude=last_points[-1].longitude + 0.001, time=end_time)
         new_point.move(movement)
         gpx.tracks[-1].segments[-1].points.append(new_point)
 

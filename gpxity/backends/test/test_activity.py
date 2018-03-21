@@ -13,6 +13,7 @@ import os
 import io
 import filecmp
 import tempfile
+import datetime
 
 from ...gpxpy.gpxpy.gpx import GPX
 
@@ -545,3 +546,18 @@ class ActivityTests(BasicTest):
             directory.remove_all()
             with self.assertRaises(IndexError):
                 directory[0] # pylint: disable=pointless-statement
+
+    def test_overlapping_times(self):
+        """Activity.overlapping_times(activities)"""
+        now = datetime.datetime.now()
+        activity1 = self.create_test_activity(start_time=now)
+        seconds10 = datetime.timedelta(seconds=10)
+        activity2 = self.create_test_activity(start_time=activity1.last_time - seconds10)
+        activity3 = self.create_test_activity(start_time=activity1.last_time)
+        self.assertEqual(activity1.last_time - seconds10, activity2.time)
+        group1 = list([activity1, activity2, activity3])
+        activity4 = self.create_test_activity(start_time=activity3.last_time + seconds10)
+        group2 = list([activity4, activity4])
+        self.assertEqual(list(Activity.overlapping_times(group1 + group2)), list([group1, group2]))
+        group2 = list([activity4])
+        self.assertEqual(list(Activity.overlapping_times(group1 + group2)), list([group1]))
