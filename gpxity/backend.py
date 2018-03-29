@@ -27,7 +27,7 @@ class BackendDiff:
         right (Backend): The other one
         key: A lambda which does the comparison.
             Default is the start time: `key=lambda x: x.time`
-        key_right: Default is key. If given, this will be used for activities from right.
+        right_key: Default is key. If given, this will be used for activities from right.
             This allows things like `BackendDiff(b1, b2, key_right = lambda x: x.time + hours2)`
             where hours2 is a timedelta of two hours. If your GPX data has a problem with
             the time zone, this lets you find activities differring only by exactly 2 hours.
@@ -164,7 +164,7 @@ class Backend:
         would normally trigger a full load from the backend, they will not.
         Use this to avoid recursions.
 
-        You should never need this unless you write a new backend.
+        You should never need this unless you implement a new backend.
         """
         prev_decoupled = self._decoupled
         self._decoupled = True
@@ -254,7 +254,7 @@ class Backend:
 
         Returns:
             ~gpxity.Activity: The saved activity. If the original activity lives in a different
-            backend, a new activity living in this backend will be created
+            backend, a new activity living in that backend will be created
             and returned.
         """
 
