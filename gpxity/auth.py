@@ -15,8 +15,8 @@ __all__ = ['Authenticate']
 class Authenticate:
 
     """
-    Get username and password from auth.cfg. If nothing is
-    useable, sets them to None.
+    Get password and / or Url from auth.cfg.
+    If nothing is useable, sets them to None.
 
     auth.cfg is expected in :literal:`~/.config/Gpxity/auth.cfg`
 
@@ -25,25 +25,18 @@ class Authenticate:
 
     Args:
         cls (Backend): The class of the backend
-        username (str): Be more specific. This can be used to define different data for some tests.
+        username (str): For the wanted account in the backend
 
     Attributes:
         auth (tuple(str,str)): (username, password). Both are either str or None.
         url: If given, overrides the url given to the backend
 
-    auth.cfg has sections
-      * [default]             most general fallback
-      * [ClassName]           the class name of a backend like MMT
-      * [ClassName.username]  can be used for a specific account
+    For every specific account in a backend, auth.cfg has a section:
+      * [ClassName.username]
 
     A section can define
-      * Username
       * Password
       * Url
-
-    The sections are tried from most specific to default until
-    both username and password are known. It is legal if a more
-    specific section only defines username or password.
 
     """
 
@@ -52,7 +45,7 @@ class Authenticate:
     def __init__(self, cls, username: str = None):
 
         self.cls = cls
-        self.username = username
+        self.__username = username
         self.auth = (None, None)
 
         self.path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
@@ -63,31 +56,20 @@ class Authenticate:
     def _parse_config(self, data):
         """try to use data"""
 
-        username = password = url = None
+        password = url = None
 
         config = ConfigParser()
         config.read_string(data)
 
-        # try most specific section first, default last:
-        try_sections = list([self.cls.__name__, 'default'])
-        if self.username:
-            try_sections.insert(0, (try_sections[0] + '.' + self.username))
+        config_key = '{}:{}'.format(self.cls.__name__, self.__username)
+        try:
+            section = config[config_key]
+        except KeyError:
+            raise KeyError('Section [{}] not found in {}'.format(config_key, self.path))
+        if 'Password' in section:
+            password = section['Password']
+        if 'Url' in section:
+            url = section['Url']
 
-        for check_section in try_sections:
-            if check_section in config.sections():
-                section = config[check_section]
-                if username is None and 'Username' in section:
-                    username = section['Username']
-                if password is None and 'Password' in section:
-                    password = section['Password']
-                if url is None and 'Url' in section:
-                    url = section['Url']
-                if username and password:
-                    break
-
-        self.auth = (username, password)
+        self.auth = (self.__username, password)
         self.url = url
-
-        if username is None:
-            raise Exception('Authenticate: No user found for account {}. Looking for {}.{} in {}'.format(
-                username, self.cls.__name__, self.username, self.path))

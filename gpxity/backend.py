@@ -121,9 +121,8 @@ class Backend:
 
     Args:
         url (str): Initial value for :attr:`url`
-        auth (tuple(str, str)): (username, password). Alternatively you can pass a single string.
-            This will be used to get username and password from :class:`Authenticate <gpxity.auth.Authenticate>`
-            with **username** set to **auth**.
+        auth (tuple(str, str)): (username, password). Alternatively you can pass the username as a single string.
+            This will lookup the password from :class:`Authenticate <gpxity.auth.Authenticate>`.
         cleanup (bool): If true, :meth:`destroy` will remove all activities.
 
     Attributes:
