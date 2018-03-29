@@ -222,7 +222,8 @@ class Directory(Backend):
                 link_name = self._symlink_path(activity)
                 link_target = os.path.join('..', '..', '{}.gpx'.format(activity.id_in_backend))
                 os.symlink(link_target, link_name)
-                self._symlinks[activity.id_in_backend].append(link_name)
+                if link_name not in self._symlinks[activity.id_in_backend]:
+                    self._symlinks[activity.id_in_backend].append(link_name)
         except BaseException:
             raise
 
