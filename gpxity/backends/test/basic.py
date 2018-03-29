@@ -192,7 +192,7 @@ class BasicTest(unittest.TestCase):
 
         Args:
             cls_ (Backend): the class of the backend to be created
-            username (str): use this to for a specific accout name. Default is :literal:`test`.
+            username (str): use this to for a specific accout name. Default is 'gpxitytest'
             url (str): for the backend
             count (int): how many random activities should be inserted?
             cleanup (bool): If True, remove all activities when done. Passed to the backend.
@@ -203,7 +203,7 @@ class BasicTest(unittest.TestCase):
             the prepared Backend
         """
 
-        result = cls_(url, auth=username or 'test', cleanup=cleanup)
+        result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup)
         if clear_first:
             result.remove_all()
         while count > len(result):
