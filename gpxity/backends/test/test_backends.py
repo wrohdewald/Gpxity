@@ -219,7 +219,7 @@ class TestBackends(BasicTest):
     def test_download_many(self):
         """Download many activities"""
         many = 150
-        backend = self.setup_backend(MMT, count=many, cleanup=False, clear_first=False, sub_name='many')
+        backend = self.setup_backend(MMT, sub_name='many', count=many, cleanup=False, clear_first=False)
         self.assertEqual(len(backend), many)
 
     def test_duplicate_title(self):

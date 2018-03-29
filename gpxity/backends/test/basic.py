@@ -182,8 +182,8 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(activity1.points_equal(activity2))
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
-    def setup_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True,
-                      status: bool = False, sub_name=None):
+    def setup_backend(self, cls_, sub_name=None, url=None, count=0, cleanup=True, clear_first=True,
+                      status: bool = False):
         """sets up an instance of a backend with count activities.
 
         If count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
@@ -192,12 +192,12 @@ class BasicTest(unittest.TestCase):
 
         Args:
             cls_ (Backend): the class of the backend to be created
+            sub_name (str): use this to for a specific accout name. Default is :literal:`test`.
             url (str): for the backend
             count (int): how many random activities should be inserted?
             cleanup (bool): If True, remove all activities when done. Passed to the backend.
             clear_first (bool): if True, first remove all existing activities
             status: should the activities be public or private?
-            sub_name (str): use this to for a specific accout name. Default is :literal:`test`.
 
         Returns:
             the prepared Backend
@@ -220,7 +220,7 @@ class BasicTest(unittest.TestCase):
         """Just like setup_backend but usable as a context manager. which will
         call destroy() when done.
         """
-        tmp_backend = self.setup_backend(cls_, url, count, cleanup, clear_first, status, sub_name)
+        tmp_backend = self.setup_backend(cls_, sub_name, url, count, cleanup, clear_first, status)
         try:
             yield tmp_backend
         finally:
