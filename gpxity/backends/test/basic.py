@@ -182,7 +182,7 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(activity1.points_equal(activity2))
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
-    def setup_backend(self, cls_, sub_name=None, url=None, count=0, cleanup=True, clear_first=True,
+    def setup_backend(self, cls_, username=None, url=None, count=0, cleanup=True, clear_first=True,
                       status: bool = False):
         """sets up an instance of a backend with count activities.
 
@@ -192,7 +192,7 @@ class BasicTest(unittest.TestCase):
 
         Args:
             cls_ (Backend): the class of the backend to be created
-            sub_name (str): use this to for a specific accout name. Default is :literal:`test`.
+            username (str): use this to for a specific accout name. Default is :literal:`test`.
             url (str): for the backend
             count (int): how many random activities should be inserted?
             cleanup (bool): If True, remove all activities when done. Passed to the backend.
@@ -203,7 +203,7 @@ class BasicTest(unittest.TestCase):
             the prepared Backend
         """
 
-        result = cls_(url, auth=sub_name or 'test', cleanup=cleanup)
+        result = cls_(url, auth=username or 'test', cleanup=cleanup)
         if clear_first:
             result.remove_all()
         while count > len(result):
@@ -216,11 +216,11 @@ class BasicTest(unittest.TestCase):
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True,
-                     status: bool = False, sub_name=None):
+                     status: bool = False, username=None):
         """Just like setup_backend but usable as a context manager. which will
         call destroy() when done.
         """
-        tmp_backend = self.setup_backend(cls_, sub_name, url, count, cleanup, clear_first, status)
+        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, status)
         try:
             yield tmp_backend
         finally:

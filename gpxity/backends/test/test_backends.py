@@ -77,11 +77,11 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 if issubclass(cls, Directory):
-                    with self.temp_backend(cls, sub_name='wrong', cleanup=True):
+                    with self.temp_backend(cls, username='wrong', cleanup=True):
                         pass
                 else:
                     with self.assertRaises(requests.exceptions.HTTPError):
-                        self.setup_backend(cls, sub_name='wrong')
+                        self.setup_backend(cls, username='wrong')
 
     def test_z9_create_backend(self):
         """Test creation of a backend"""
@@ -156,7 +156,7 @@ class TestBackends(BasicTest):
                 continue
             with self.subTest(' {}'.format(cls.__name__)):
                 is_mmt = cls.__name__ == 'MMT'
-                with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt, sub_name='two') as backend:
+                with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt, username='two') as backend:
                     if not backend:
                         continue
                     activity = backend[0]
@@ -219,7 +219,7 @@ class TestBackends(BasicTest):
     def test_download_many(self):
         """Download many activities"""
         many = 150
-        backend = self.setup_backend(MMT, sub_name='many', count=many, cleanup=False, clear_first=False)
+        backend = self.setup_backend(MMT, username='many', count=many, cleanup=False, clear_first=False)
         self.assertEqual(len(backend), many)
 
     def test_duplicate_title(self):

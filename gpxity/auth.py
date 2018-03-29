@@ -25,7 +25,7 @@ class Authenticate:
 
     Args:
         cls (Backend): The class of the backend
-        sub_name (str): Be more specific. This can be used to define different data for some tests.
+        username (str): Be more specific. This can be used to define different data for some tests.
 
     Attributes:
         auth (tuple(str,str)): (username, password). Both are either str or None.
@@ -34,7 +34,7 @@ class Authenticate:
     auth.cfg has sections
       * [default]             most general fallback
       * [ClassName]           the class name of a backend like MMT
-      * [ClassName.sub_name]  can be used for a specific account
+      * [ClassName.username]  can be used for a specific account
 
     A section can define
       * Username
@@ -49,10 +49,10 @@ class Authenticate:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, cls, sub_name: str = None):
+    def __init__(self, cls, username: str = None):
 
         self.cls = cls
-        self.sub_name = sub_name
+        self.username = username
         self.auth = (None, None)
 
         self.path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
@@ -70,8 +70,8 @@ class Authenticate:
 
         # try most specific section first, default last:
         try_sections = list([self.cls.__name__, 'default'])
-        if self.sub_name:
-            try_sections.insert(0, (try_sections[0] + '.' + self.sub_name))
+        if self.username:
+            try_sections.insert(0, (try_sections[0] + '.' + self.username))
 
         for check_section in try_sections:
             if check_section in config.sections():
@@ -90,4 +90,4 @@ class Authenticate:
 
         if username is None:
             raise Exception('Authenticate: No user found for account {}. Looking for {}.{} in {}'.format(
-                username, self.cls.__name__, self.sub_name, self.path))
+                username, self.cls.__name__, self.username, self.path))

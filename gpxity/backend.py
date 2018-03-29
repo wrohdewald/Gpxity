@@ -123,7 +123,7 @@ class Backend:
         url (str): Initial value for :attr:`url`
         auth (tuple(str, str)): (username, password). Alternatively you can pass a single string.
             This will be used to get username and password from :class:`Authenticate <gpxity.auth.Authenticate>`
-            with **sub_name** set to **auth**.
+            with **username** set to **auth**.
         cleanup (bool): If true, :meth:`destroy` will remove all activities.
 
     Attributes:
