@@ -683,15 +683,15 @@ class Activity:
         """
         previous = None
         group = list()  # Activity is  mutable, so a set is no possible
-        for current in sorted(activities,  key=lambda x: x.time):
+        for current in sorted(activities, key=lambda x: x.time):
             if previous and current.time <= previous.last_time:
                 if previous not in group:
                     group.append(previous)
                 group.append(current)
             else:
                 if group:
-                    yield sorted(group,  key=lambda x:x.time)
+                    yield sorted(group, key=lambda x: x.time)
                     group = list()
             previous = current
         if group:
-            yield sorted(group,  key=lambda x:x.time)
+            yield sorted(group, key=lambda x: x.time)
