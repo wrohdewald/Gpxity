@@ -177,7 +177,8 @@ class Directory(Backend):
     def _remove_activity(self, activity):
         """Removes its symlinks, empty symlink parent directories  and the file, in this order."""
         for symlink in self._symlinks[activity.id_in_backend]:
-            os.remove(symlink)
+            if os.path.exists(symlink):
+                os.remove(symlink)
             symlink_dir = os.path.split(symlink)[0]
             try:
                 os.removedirs(symlink_dir)
