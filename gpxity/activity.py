@@ -202,6 +202,14 @@ class Activity:
                 self.backend.save(self, attributes=self.__dirty) # pylint: disable=no-member
                 self.__dirty = set()
 
+    def remove(self):
+        """Removes this activity in the associated backend. If the activity
+        is not coupled with a backend, raise an Exception.
+        """
+        if self.backend is None:
+            raise Exception('{}: Removing needs a backend'.format(self))
+        self.backend.remove(self.id_in_backend)
+
     @property
     def time(self) ->datetime.datetime:
         """datetime.datetime: start time of activity.

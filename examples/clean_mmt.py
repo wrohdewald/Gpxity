@@ -52,7 +52,7 @@ def remove_overlaps(backend):
         print('Keeping: {}: {}-{}'.format(group[0].id_in_backend, group[0].time, group[0].last_time))
         for acti in group[1:]:
             print('remove: {}: {}-{}'.format(acti.id_in_backend, acti.time, acti.last_time))
-            backend.remove(acti.id_in_backend)
+            acti.remove()
         print()
 
 def dump_diffs(backend1, backend2):
