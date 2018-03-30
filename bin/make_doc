@@ -5,8 +5,8 @@ set -e
 parentdir=$(basename $(dirname $(pwd -P)))
 currentdir=$(basename $(pwd -P))
 
-test "$parentdir/$currentdir" != Gpxity/doc && (
-	echo you must be in Gpxity/doc
+test "$currentdir" != Gpxity && (
+	echo you must be in Gpxity
 	echo you are in "$parentdir/$currentdir"
 	exit 2
 )
@@ -17,5 +17,7 @@ test "$parentdir/$currentdir" != Gpxity/doc && (
 #rm -f build/html/_sources/gpxity*rst.txt
 #
 #sphinx-apidoc -M -f -o source  ../gpxity
+
+cd doc
 
 make html
