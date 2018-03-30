@@ -439,7 +439,9 @@ class Activity:
 
             result = self.__gpx.to_xml()
             result = result.replace('</trkpt><', '</trkpt>\n<')
-            result = result.replace('<link ></link>', '')   # and remove those empty <link> tags
+            result = result.replace('<copyright ></copyright>', '')   # gpxviewer does not accept such illegal xml
+            result = result.replace('<link ></link>', '')
+            result = result.replace('<author>\n</author>\n', '')
             result = result.replace('\n</trkpt>', '</trkpt>')
             result = result.replace('>\n<ele>', '><ele>')
             result = result.replace('>\n<time>', '><time>')

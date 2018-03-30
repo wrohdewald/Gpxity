@@ -60,6 +60,7 @@ class ActivityTests(BasicTest):
             with self.assertRaises(Exception):
                 activity.dirty = False
             self.assertFalse(activity.dirty)
+            # version 1.1 should perhaps be a test on its own, see Activity.to_xml()
             activity.dirty = 'gpx'
             self.assertFalse(activity.dirty)
             activity.title = 'new title'
