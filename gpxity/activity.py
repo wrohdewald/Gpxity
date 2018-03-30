@@ -172,6 +172,10 @@ class Activity:
         if self._loading:
             return
 
+        # see gpxity.py/fix(): only setting dirty to 'gpx' still needs activity.title
+        # but self._save() will remove the activity file in Directory before trying
+        # to get title from file content. See also test_dirty() around dir2
+        self._load_full()
         self.__dirty.add(value)
         self._save()
 

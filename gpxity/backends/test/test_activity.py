@@ -68,6 +68,8 @@ class ActivityTests(BasicTest):
                 activity.title = 'new 2'
                 self.assertTrue(activity.dirty)
             self.assertFalse(activity.dirty)
+            with Directory(directory.url, cleanup=True) as dir2:
+                dir2[0].dirty = 'gpx'
 
     def test_activity_list(self):
         """test list of activities"""
