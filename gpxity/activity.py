@@ -197,10 +197,13 @@ class Activity:
 
         Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.Backend.save>`.
         """
-        if self.__dirty:
-            if self.backend is not None and not self._loading and not self._batch_changes:
-                self.backend.save(self, attributes=self.__dirty) # pylint: disable=no-member
-                self.__dirty = set()
+        if self.backend is None:
+            self.__dirty = set()
+        if not self.__dirty:
+            return
+        if not self._loading and not self._batch_changes:
+            self.backend.save(self, attributes=self.__dirty)
+            self.__dirty = set()
 
     def remove(self):
         """Removes this activity in the associated backend. If the activity
