@@ -141,7 +141,7 @@ class Backend:
     def __init__(self, url=None, auth=None, cleanup=False):
         self._decoupled = False
         super(Backend, self).__init__()
-        self._activities = list()
+        self.__activities = list()
         self._activities_fully_listed = False
         self.url = url or ''
         if isinstance(auth, str):
@@ -219,8 +219,8 @@ class Backend:
         """
         if not self._activities_fully_listed:
             self._activities_fully_listed = True
-            unsaved = list(x for x in self._activities if x.id_in_backend is None)
-            self._activities = unsaved
+            unsaved = list(x for x in self.__activities if x.id_in_backend is None)
+            self.__activities = unsaved
             list(self._yield_activities())
 
     def _yield_activities(self):
@@ -309,7 +309,7 @@ class Backend:
                 it up by doing :literal:`self[value]`"""
         activity = value if hasattr(value, 'id_in_backend') else self[value]
         self._remove_activity(activity)
-        self._activities.remove(activity)
+        self.__activities.remove(activity)
         activity.id_in_backend = None
 
     def _remove_activity(self, activity) ->None:
@@ -380,9 +380,9 @@ class Backend:
     def _has_item(self, index) ->bool:
         """like __contains__ but for internal use: does not call _scan first.
         Must not call self._scan."""
-        if hasattr(index, 'id_in_backend') and index in self._activities:
+        if hasattr(index, 'id_in_backend') and index in self.__activities:
             return True
-        if isinstance(index, str) and index in list(x.id_in_backend for x in self._activities):
+        if isinstance(index, str) and index in list(x.id_in_backend for x in self.__activities):
             return True
         return False
 
@@ -391,8 +391,8 @@ class Backend:
         a backend because this always calls scan() first. Instead use :meth:`_has_item`."""
         self._scan()
         if isinstance(index, int):
-            return self._activities[index]
-        for _ in self._activities:
+            return self.__activities[index]
+        for _ in self.__activities:
             if _ is index or _.id_in_backend == index:
                 return _
         raise IndexError
@@ -400,19 +400,22 @@ class Backend:
     def __len__(self):
         """do not call this when implementing a backend because this calls scan()"""
         self._scan()
-        return len(self._activities)
+        return len(self.__activities)
 
+    def real_len(self):
+        """len(backend) without calling scan() first"""
+        return len(self.__activities)
 
     def append(self, value):
         """Appends an activity to the cached list."""
-        self._activities.append(value)
+        self.__activities.append(value)
         if value.id_in_backend is not None and not isinstance(value.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
 
     def __repr__(self):
         """do not call len(self) because that does things"""
         result = '{}({} in {}{})'.format(
-            self.__class__.__name__, len(self._activities), self.url, ' ' + self.auth[0] if self.auth else '')
+            self.__class__.__name__, len(self.__activities), self.url, ' ' + self.auth[0] if self.auth else '')
         return result
 
     def __enter__(self):
@@ -423,7 +426,7 @@ class Backend:
 
     def __iter__(self):
         self._scan()
-        return iter(self._activities)
+        return iter(self.__activities)
 
     def __eq__(self, other):
         """True if both backends have the same activities."""

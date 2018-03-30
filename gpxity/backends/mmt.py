@@ -409,7 +409,7 @@ class MMT(Backend):
         created by yield_activity, unittest fails. Why?"""
 
         while True:
-            old_len = len(self._activities)
+            old_len = self.real_len()
             response = self.__post(
                 request='get_activities', author=self.auth[0],
                 offset=old_len)
@@ -423,7 +423,7 @@ class MMT(Backend):
                     activity.title = raw_data.title
                     activity.what = raw_data.what
                 yield activity
-            assert len(self._activities) > old_len
+            assert self.real_len() > old_len
 
     def _scan_activity_page(self, activity):
         """The MMT api does not deliver all attributes we want.
