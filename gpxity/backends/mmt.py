@@ -143,6 +143,7 @@ class MMTRawActivity:
         self.title = html.unescape(xml.find('title').text)
         self.time = _convert_time(xml.find('date').text)
         self.what = html.unescape(xml.find('activity_type').text)
+        self.distance = float(xml.find('distance').text)
 
 
 class MMT(Backend):
@@ -423,6 +424,7 @@ class MMT(Backend):
                 activity.header_data['title'] = raw_data.title
                 activity.header_data['what'] = raw_data.what
                 activity.header_data['time'] = raw_data.time
+                activity.header_data['distance'] = raw_data.distance
                 yield activity
             assert self.real_len() > old_len
 

@@ -85,9 +85,11 @@ class Activity:
         header_data (dict): The backend may only deliver some general information about
             activities, the full data will only be loaded when needed. This general information
             can help avoiding having to load the full data. The backend will fill header_data
-            if it can. MMT does this for time, title and what. The backends are free to put
-            additional info here but we cannot rely on anything to be always available.
-            This additional info will not be saved into other backends, however.
+            if it can. The backends are free to put additional info here. MMT does this for
+            time, title, what and distance. You can never rely on a value to be really
+            available - if the wanted value is missing, the entire Activity is automatically
+            loaded. The values time, title, what are fully supported, others may not
+            be written into some backends.
     """
 
     # pylint: disable = too-many-instance-attributes
