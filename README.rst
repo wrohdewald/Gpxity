@@ -1,7 +1,10 @@
-Gpxity is a Python - library making it easy to move activities between different backends.
+Gpxity is a Python - library making it easy to move GPS-based activities between different backends.
 In this context, a backend is a place where activities can be stored.
 
-Implemented backends are:
+And there is a command line utility **gpxdo** helping you organize your activities.
+
+
+The library currently implements those backends:
 
   * :class:`~gpxity.backends.directory.Directory`: Directory for .gpx files on an accessible file system
   * :class:`~gpxity.backends.server_directory.ServerDirectory`: Directory suited for server implementations
