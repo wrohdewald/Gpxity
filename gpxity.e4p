@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxity -->
-<!-- Saved: 2017-04-24, 16:54:03 -->
-<!-- Copyright (C) 2017 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
+<!-- Saved: 2018-03-25, 18:21:40 -->
+<!-- Copyright (C) 2018 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
   <Hash>07d0779d70d5de2689b8cbdbbba74b6255465a71</Hash>
   <ProgLanguage mixed="0">Python3</ProgLanguage>
   <ProjectType>Console</ProjectType>
-  <Description></Description>
   <Version>0.1</Version>
   <Author>Wolfgang Rohdewald</Author>
   <Email>wolfgang@rohdewald.de</Email>
-  <Eol index="-1"/>
   <Sources>
+    <Source>bin/gpxdo</Source>
     <Source>bin/test</Source>
     <Source>examples/clean_mmt.py</Source>
+    <Source>examples/fix_orux.py</Source>
     <Source>examples/mmtserver.py</Source>
     <Source>gpxity/__init__.py</Source>
     <Source>gpxity/activity.py</Source>
@@ -143,9 +143,6 @@
         </value>
       </dict>
     </VcsOptions>
-    <VcsOtherData>
-      <dict/>
-    </VcsOtherData>
   </Vcs>
   <FiletypeAssociations>
     <FiletypeAssociation pattern="*.idl" type="INTERFACES"/>
