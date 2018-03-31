@@ -270,6 +270,12 @@ class Activity:
         self._load_full()
         return self.__gpx.description or ''
 
+    @description.setter
+    def description(self, value: str):
+        if value != self.description:
+            self.__gpx.description = value
+            self.dirty = 'description'
+
     @contextmanager
     def decoupled(self):
         """This context manager disables automic synchronization with
@@ -307,12 +313,6 @@ class Activity:
         finally:
             self._batch_changes = prev_batch_changes
             self._save()
-
-    @description.setter
-    def description(self, value: str):
-        if value != self.description:
-            self.__gpx.description = value
-            self.dirty = 'description'
 
     @property
     def what(self) ->str:
