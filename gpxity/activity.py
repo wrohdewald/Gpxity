@@ -601,13 +601,18 @@ class Activity:
             parts.append('public' if self.public else 'private')
             if self.__gpx:
                 parts.append(self.what)
-                if self.__gpx.name:
-                    parts.append(self.__gpx.name)
+                if self.keywords:
+                    parts.append(','.join(self.keywords))
+                if self.title:
+                    parts.append(self.title)
                 if self.time and self.last_time:
                     parts.append(repr_timespan(self.time, self.last_time))
-                parts.append('{} points'.format(self.gpx.get_track_points_no()))
-                if self.angle():
-                    parts.append('angle={}'.format(self.angle()))
+                elif self.time:
+                    parts.append(str(self.time))
+                if 'distance' in self.header_data:
+                    parts.append('{:4.2f}km'.format(self.header_data['distance']))
+                else:
+                    parts.append('{} points'.format(self.gpx.get_track_points_no()))
             return 'Activity({})'.format(' '.join(parts))
 
     def __str__(self):
