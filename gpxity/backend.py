@@ -341,7 +341,8 @@ class Backend:
         for activity in list(self):
             self.remove(activity)
 
-    def sync_from(self, from_backend, remove: bool = False, use_remote_ident: bool = False) ->None:
+    def sync_from(self, from_backend, remove: bool = False,
+                  use_remote_ident: bool = False, verbose: bool = False) ->None:
         """Copies all activities into this backend.
 
         Args:
@@ -358,6 +359,8 @@ class Backend:
                     if mine.time == activity.time:
                         self.remove(mine)
             self.save(activity, ident=activity.id_in_backend if use_remote_ident else None)
+            if verbose:
+                print('saved', activity)
         if remove:
             differ = BackendDiff(self, from_backend)
             for activities in differ.left.exclusive.values():
