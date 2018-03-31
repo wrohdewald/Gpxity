@@ -420,9 +420,9 @@ class MMT(Backend):
             for _ in chunk:
                 raw_data = MMTRawActivity(_)
                 activity = Activity(self, raw_data.activity_id)
-                with activity.decoupled():
-                    activity.title = raw_data.title
-                    activity.what = raw_data.what
+                activity.header_data['title'] = raw_data.title
+                activity.header_data['what'] = raw_data.what
+                activity.header_data['time'] = raw_data.time
                 yield activity
             assert self.real_len() > old_len
 

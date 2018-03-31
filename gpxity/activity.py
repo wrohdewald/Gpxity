@@ -82,6 +82,12 @@ class Activity:
             backends may change the id if the activity data changes. This must be `str` but
             that is not enforced here. It will be checked when this activity is attached to
             a backend.
+        header_data (dict): The backend may only deliver some general information about
+            activities, the full data will only be loaded when needed. This general information
+            can help avoiding having to load the full data. The backend will fill header_data
+            if it can. MMT does this for time, title and what. The backends are free to put
+            additional info here but we cannot rely on anything to be always available.
+            This additional info will not be saved into other backends, however.
     """
 
     # pylint: disable = too-many-instance-attributes
@@ -104,6 +110,7 @@ class Activity:
         self.__public = False
         self.id_in_backend = id_in_backend
         self.__backend = None
+        self.header_data = dict()
         self.__gpx = gpx or GPX()
         if gpx:
             self._parse_keywords()
@@ -231,6 +238,8 @@ class Activity:
         point comes last in time. In other words, points should be ordered
         by their time.
         """
+        if not self._loaded and 'time' in self.header_data:
+            return self.header_data['time']
         self._load_full()
         try:
             return next(self.points()).time
@@ -241,6 +250,8 @@ class Activity:
     def title(self) -> str:
         """str: The title.
         """
+        if not self._loaded and 'title' in self.header_data:
+            return self.header_data['title']
         self._load_full()
         return self.__gpx.name
 
@@ -309,6 +320,8 @@ class Activity:
         Returns:
             The current value or the default value (see :attr:`legal_what`)
         """
+        if not self._loaded and 'what' in self.header_data:
+            return self.header_data['what']
         self._load_full()
         return self.__what
 
@@ -460,6 +473,8 @@ class Activity:
         bool: Is this a private activity (can only be seen by the account holder) or
             is it public? Default value is False
         """
+        if not self._loaded and 'public' in self.header_data:
+            return self.header_data['public']
         self._load_full()
         return self.__public
 
