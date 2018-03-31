@@ -689,6 +689,22 @@ class Activity:
             wpt.time += delta
         self.dirty = 'gpx'
 
+    def points_hash(self) -> float:
+        """A hash that is hopefully different for every possible track.
+        It is built using the combination of all points.
+        """
+        self._load_full()
+        result = 1.0
+        for point in self.points():
+            if point.longitude:
+                result *= point.longitude
+            if point.latitude:
+                result *= point.latitude
+            if point.elevation:
+                result *= point.elevation
+            result %= 1e20
+        return result
+
     def points_equal(self, other) ->bool:
         """
         Returns:
@@ -696,6 +712,8 @@ class Activity:
 
         All points of all tracks and segments are combined.
         """
+        # We do not use points_hash because we want to abort as soon as we know
+        # they are different.
         self._load_full()
         if self.gpx.get_track_points_no() != other.gpx.get_track_points_no():
             return False
