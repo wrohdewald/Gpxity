@@ -87,6 +87,32 @@ class TestBackends(BasicTest):
                     with self.assertRaises(requests.exceptions.HTTPError):
                         self.setup_backend(cls, username='wrong_password')
 
+    def test_match(self):
+        """test backend match function"""
+        def match_date(activity):
+            """match against a date"""
+            if activity.time < datetime.datetime(year=2016, month=9, day=5):
+                return 'time {} is before {}'.format(activity.time, '2016-09-05')
+        for cls in (Directory, ):
+            with self.subTest(' {}'.format(cls.__name__)):
+                with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
+                    for idx, _ in enumerate(backend):
+                        _.adjust_time(datetime.timedelta(hours=idx))
+                    new_activity = backend[0].clone()
+                    self.assertIsNotNone(match_date(new_activity))
+                    self.assertEqual(len(backend), 3)
+                    backend.match = match_date
+                    self.assertEqual(len(backend), 1)
+                    with self.assertRaises(cls.NoMatch):
+                        backend.append(new_activity)
+                    self.assertEqual(len(backend), 1)
+                    orig_time = backend[0].time
+                    with self.assertRaises(cls.NoMatch):
+                        backend[0].adjust_time(datetime.timedelta(days=-5))
+                    self.assertEqual(len(backend), 1)
+                    self.assertEqual(orig_time, backend[0].time)
+                    self.assertIsNone(match_date(backend[0]))
+
     def test_z9_create_backend(self):
         """Test creation of a backend"""
         for cls in self._find_backend_classes():

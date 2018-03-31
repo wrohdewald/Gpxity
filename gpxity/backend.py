@@ -134,6 +134,10 @@ class Backend:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
     """
+
+    class NoMatch(Exception):
+        """Is raised if an activity is expected to pass the match filter but does not"""
+
     supported = None
 
     skip_test = False
@@ -154,6 +158,7 @@ class Backend:
         if self.url and not self.url.endswith('/'):
             self.url += '/'
         self._cleanup = cleanup
+        self.__match = None
         self._next_id = None # this is a hack, see save()
 
     @contextmanager
@@ -198,6 +203,28 @@ class Backend:
                 if cls._is_implemented(method):
                     cls.supported.add(name)
 
+    @property
+    def match(self):
+        """A function with one argument returning None or str. The backend will call
+            this with every activity and ignore activities where match does not return None.
+            The returned str should explain why the activity does not match.
+
+            If you change an activity such that it does not match anymore, the exception
+            NoMatch will be raised and the activity will be re-loaded from the physical
+            backend.
+        """
+        return self.__match
+
+    @match.setter
+    def match(self, value):
+        old_match = self.__match
+        self.__match = value
+        try:
+            self.scan()
+        except self.NoMatch:
+            self.__match = old_match
+            raise
+
     def get_time(self) ->datetime.datetime:
         """get time from the server where backend is located as a Linux timestamp"""
         raise NotImplementedError()
@@ -205,6 +232,10 @@ class Backend:
     def scan(self, now: bool = False) ->None:
         """Enforces a reload of the list of all activities in the backend.
         This will be delayed until the list is actually needed again.
+
+        If this finds an unsaved activity not matching the current match
+        function, an exception is thrown.
+        Saved Activities not matching the current match will no be loaded.
 
         Args:
             now: If True, do not delay scanning.
@@ -220,8 +251,21 @@ class Backend:
         if not self._activities_fully_listed:
             self._activities_fully_listed = True
             unsaved = list(x for x in self.__activities if x.id_in_backend is None)
+            if self.__match is not None:
+                for activity in unsaved:
+                    self.matches(activity, 'scan')
             self.__activities = unsaved
-            list(self._yield_activities())
+            match_function = self.__match
+            self.__match = None
+            try:
+                # _yield_activities should return ALL activities, match will be
+                # applied in a second loop. This way the Backend implementations
+                # do not have to worry about the match code.
+                list(self._yield_activities())
+            finally:
+                self.__match = match_function
+            if self.__match is not None:
+                self.__activities = list(x for x in self.__activities if self.matches(x))
 
     def _yield_activities(self):
         """A generator for all activities. It yields the next found and appends it to activities.
@@ -236,12 +280,28 @@ class Backend:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
 
+    def matches(self, activity, exc_prefix: str = None):
+        """Does activity match the current match function?
+
+        Args:
+            exc_prefix: If not None, use it for the beginning of an exception message.
+                If None, never raise an exception
+        """
+        if self.__match is None:
+            return True
+        match_error = self.__match(activity)
+        if match_error and exc_prefix:
+            raise Backend.NoMatch('{}: {} does not match: {}'.format(exc_prefix, activity, match_error))
+        return match_error is None
+
     def save(self, activity, ident: str = None, attributes=None):
         """save full activity.
 
         It is not allowed but possible to set :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>` to
         something other than str. But here we raise an exception
         if that ident is used for saving.
+
+        If the activity does not pass the current match function, raise an exception.
 
         Args:
             activity (~gpxity.Activity): The activity we want to save in this backend.
@@ -262,6 +322,14 @@ class Backend:
 
         if activity.is_decoupled:
             raise Exception('A backend cannot save() if activity.is_decoupled. This is a bug in gpxity.')
+        try:
+            self.matches(activity, 'save')
+        except Backend.NoMatch:
+            if activity.backend is not None:
+                # it already exists in the backend, reset to correct values
+                self._read_all(activity)
+                self.matches(activity) # should always be the case
+            raise
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
         if activity.backend is None:
@@ -302,11 +370,14 @@ class Backend:
         raise NotImplementedError()
 
     def remove(self, value) ->None:
-        """Removes activity.
+        """Removes activity. This can also be done for activities
+        not passing the current match function.
 
         Args:
             value: If it is not an :class:`~gpxity.Activity`, :meth:`remove` looks
-                it up by doing :literal:`self[value]`"""
+                it up by doing :literal:`self[value]`
+        """
+
         activity = value if hasattr(value, 'id_in_backend') else self[value]
         self._remove_activity(activity)
         self.__activities.remove(activity)
@@ -337,9 +408,12 @@ class Backend:
         has meanwhile been changed through another backend instance
         or another process, we cannot find it anymore. We do **not**
         rescan all activities in the backend. If you want to make sure it
-        will be empty, call :meth:`scan` first."""
+        will be empty, call :meth:`scan` first.
+
+        If you use a match function, only matching activities will be removed."""
         for activity in list(self):
-            self.remove(activity)
+            if self.matches(activity):
+                self.remove(activity)
 
     def sync_from(self, from_backend, remove: bool = False,
                   use_remote_ident: bool = False, verbose: bool = False) ->None:
@@ -411,6 +485,7 @@ class Backend:
 
     def append(self, value):
         """Appends an activity to the cached list."""
+        self.matches(value, 'append')
         self.__activities.append(value)
         if value.id_in_backend is not None and not isinstance(value.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
