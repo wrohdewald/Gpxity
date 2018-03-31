@@ -30,6 +30,7 @@ There are some problems with the server running at mapmytracks.com:
 """
 
 from xml.etree import ElementTree
+import html
 from html.parser import HTMLParser
 import datetime
 from collections import defaultdict
@@ -139,9 +140,9 @@ class MMTRawActivity:
     # pylint: disable=too-few-public-methods
     def __init__(self, xml):
         self.activity_id = xml.find('id').text
-        self.title = xml.find('title').text
+        self.title = html.unescape(xml.find('title').text)
         self.time = _convert_time(xml.find('date').text)
-        self.what = xml.find('activity_type').text
+        self.what = html.unescape(xml.find('activity_type').text)
 
 
 class MMT(Backend):
