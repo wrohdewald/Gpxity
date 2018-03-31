@@ -548,7 +548,7 @@ class Activity:
         self._load_full()
         with self.batch_changes():
             self.__gpx.keywords = ''
-            for keyword in value:
+            for keyword in sorted(value):
                 # add_keyword ensures we do not get unwanted things like What:
                 self.add_keyword(keyword)
             self.__dirty = set()
