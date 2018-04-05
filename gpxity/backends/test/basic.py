@@ -180,8 +180,8 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(activity1.points_equal(activity2))
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
-    def setup_backend(self, cls_, username=None, url=None, count=0, cleanup=True, clear_first=True,
-                      status: bool = False):
+    def setup_backend(self, cls_, username=None, url=None, count=0,  # pylint: disable=too-many-arguments
+                      cleanup=True, clear_first=True, what=None, status: bool = False):
         """sets up an instance of a backend with count activities.
 
         If count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
@@ -205,7 +205,7 @@ class BasicTest(unittest.TestCase):
         if clear_first:
             result.remove_all()
         while count > len(result):
-            activity = self.create_test_activity(count, len(result), status=status)
+            activity = self.create_test_activity(count, len(result), what=what, status=status)
             result.save(activity)
         self.assertGreaterEqual(len(result), count)
         if clear_first:
@@ -213,12 +213,12 @@ class BasicTest(unittest.TestCase):
         return result
 
     @contextmanager
-    def temp_backend(self, cls_, url=None, count=0, cleanup=True, clear_first=True,
-                     status: bool = False, username=None):
+    def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
+                     cleanup=True, clear_first=True, what=None, status: bool = False, username=None):
         """Just like setup_backend but usable as a context manager. which will
         call destroy() when done.
         """
-        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, status)
+        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, what, status)
         try:
             yield tmp_backend
         finally:
