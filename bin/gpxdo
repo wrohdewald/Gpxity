@@ -207,6 +207,7 @@ class Utility:
 
         result.match = self.match
         result.activity_only = activity_id
+        result.debug = self.options.debug
         return result
 
     def match(self, activity):
@@ -244,9 +245,8 @@ class Utility:
     @staticmethod
     def add_verbose_arg(parser):
         """Add the verbose argument"""
-        parser.add_argument(
-            '--verbose', action='store_true',
-            help='verbose output', default=False)
+        parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
+        parser.add_argument('--debug', action='store_true', help='debug backend traffic', default=False)
 
     help_epilog = """
 

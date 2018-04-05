@@ -13,6 +13,8 @@ from inspect import getmembers, isfunction
 import dis
 from contextlib import contextmanager
 from collections import defaultdict
+import logging
+from http.client import HTTPConnection
 
 from .auth import Authenticate
 
@@ -142,7 +144,7 @@ class Backend:
 
     skip_test = False
 
-    def __init__(self, url=None, auth=None, cleanup=False):
+    def __init__(self, url=None, auth=None, cleanup=False, debug=False):
         self._decoupled = False
         super(Backend, self).__init__()
         self.__activities = list()
@@ -160,6 +162,10 @@ class Backend:
         self._cleanup = cleanup
         self.__match = None
         self._next_id = None # this is a hack, see save()
+        self.__debug = None
+        self.debug = debug
+
+
 
     @contextmanager
     def _decouple(self):
@@ -202,6 +208,28 @@ class Backend:
             elif name.startswith('_write_') and name != '_write_attribute':
                 if cls._is_implemented(method):
                     cls.supported.add(name)
+
+    @property
+    def debug(self):
+        """True: output HTTP debugging data to stdout"""
+        return self.__debug
+
+    @debug.setter
+    def debug(self, value):
+        if self.__debug != value:
+            self.__debug = value
+            if value:
+                HTTPConnection.debuglevel = 1
+                logging.basicConfig()
+                logging.getLogger().setLevel(logging.DEBUG)
+                requests_log = logging.getLogger("urllib3")
+                requests_log.setLevel(logging.DEBUG)
+                requests_log.propagate = True
+            else:
+                HTTPConnection.debuglevel = 0
+                logging.basicConfig()
+                logging.getLogger().setLevel(logging.CRITICAL + 1)
+                requests_log = None
 
     @property
     def match(self):
