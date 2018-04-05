@@ -77,6 +77,14 @@ class Directory(Backend):
         self._symlinks = defaultdict(list)
         self._load_symlinks()
 
+    def decode_what(self, value: str) ->str:
+        """Not needed for directory, this is always the internal value."""
+        return value
+
+    def encode_what(self, value: str) ->str:
+        """Not needed for directory, this is always the internal value."""
+        return value
+
     def _load_symlinks(self, directory=None):
         """scan the subdirectories with the symlinks. If the content of an
         actiivty changes, the symlinks might have to be adapted. But

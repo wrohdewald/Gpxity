@@ -52,6 +52,29 @@ def _convert_time(raw_time) ->datetime.datetime:
     return datetime.datetime.utcfromtimestamp(float(raw_time))
 
 
+class ParseMMTWhats(HTMLParser): # pylint: disable=abstract-method
+
+    """Parse the legal values for what from html"""
+
+    def __init__(self):
+        super(ParseMMTWhats, self).__init__()
+        self.seeing_activities = False
+        self.result = list()
+
+    def handle_starttag(self, tag, attrs):
+        """starttag from the parser"""
+        # pylint: disable=too-many-branches
+        attributes = dict(attrs)
+        if tag == 'select' and attributes['name'] == 'activity':
+            self.seeing_activities = True
+        if self.seeing_activities and tag == 'option':
+            self.result.append(attributes['value'])
+
+    def handle_endtag(self, tag):
+        if self.seeing_activities and tag == 'select':
+            self.seeing_activities = False
+
+
 class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
 
     """get some attributes available only on the web page. Of course,
@@ -69,7 +92,6 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
         self.result['mid'] = None
         self.result['title'] = None
         self.result['description'] = None
-        self.result['legal_whats'] = list()
         self.result['what'] = None
         self.result['what_from_title'] = None
         self.result['what_3'] = None
@@ -95,8 +117,6 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
             elif (attributes['id'] == 'mid' and attributes['type'] == 'hidden'
                   and attributes['name'] == 'mid'and value):
                 self.result['mid'] = value
-            elif attributes['type'] == 'radio' and attributes['class'] == 'activity_type':
-                self.result['legal_whats'].append(value)
         elif tag == 'div' and attributes['class'] == 'panel' and 'data-activity' in attributes:
             # TODO: still so? sometime this says Miscellaneous instead of the correct value like Swimming
             self.result['what'] = attributes['data-activity']
@@ -167,6 +187,19 @@ class MMT(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
+    legal_whats = None
+
+    _what_encoding = {
+        'Pedelec': 'Cycling',
+        'Crossskating': 'Skating',
+        'Handcycle': 'Cycling',
+        'Motorhome': 'Driving',
+        'Cabriolet': 'Driving',
+        'Coach': 'Miscellaneous',
+        'Pack animal trekking': 'Hiking',
+        'Train': 'Miscellaneous'
+    }
+
     def __init__(self, url=None, auth=None, cleanup=False):
         if url is None:
             url = 'http://www.mapmytracks.com'
@@ -180,6 +213,11 @@ class MMT(Backend):
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
         self._tracking_activity = None
+        if not self.legal_whats:
+            response = self.session.post('{}/profile/upload/manual'.format(self.url))
+            whats_parser = ParseMMTWhats()
+            whats_parser.feed(response.text)
+            self.legal_whats = whats_parser.result
 
     @property
     def session(self):
@@ -196,6 +234,23 @@ class MMT(Backend):
             if not 'You are now logged in.' in response.text:
                 raise self.BackendException('Login as {} failed'.format(self.auth[0]))
         return self.__session
+
+    def decode_what(self, value: str) ->str:
+        """Translate the value from MMT into internal one.
+        Since gpxity once decided to use MMT definitions for activities, this should mostly be 1:1 here."""
+        if value not in Activity.legal_whats:
+            raise self.BackendException('MMT gave us an unknown what={}'.format(value))
+        return value
+
+    def encode_what(self, value: str) ->str:
+        """Translate internal value into MMT value"""
+        if value in self.legal_whats:
+            print('MMT.encode_what:{}->{}'.format(value, value))
+            return value
+        if value not in self._what_encoding:
+            raise self.BackendException('MMT has no equivalent for {}'.format(value))
+        print('MMT.encode_what:{}->{}'.format(value, self._what_encoding[value]))
+        return self._what_encoding[value]
 
     @property
     def mid(self):
@@ -443,8 +498,6 @@ class MMT(Backend):
             and silently ignore this inconsistency.
          """
         page_scan = self._scan_activity_page(activity)
-        if self.remote_known_whats is None:
-            self.remote_known_whats = page_scan['legal_whats']
         with activity.decoupled():
             if page_scan['title']:
                 activity.title = page_scan['title']

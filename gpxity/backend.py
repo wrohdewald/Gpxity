@@ -150,6 +150,8 @@ class Backend:
 
     skip_test = False
 
+    legal_whats = None # Override in the backends
+
     def __init__(self, url=None, auth=None, cleanup=False, debug=False):
         self._decoupled = False
         super(Backend, self).__init__()
@@ -258,6 +260,14 @@ class Backend:
         except self.NoMatch:
             self.__match = old_match
             raise
+
+    def decode_what(self, value: str) ->str:
+        """Translate the value from the backend into internal one."""
+        raise NotImplementedError
+
+    def encode_what(self, value: str) ->str:
+        """Translate internal value into the backend specific value."""
+        raise NotImplementedError
 
     def get_time(self) ->datetime.datetime:
         """get time from the server where backend is located as a Linux timestamp.
@@ -371,7 +381,12 @@ class Backend:
             self._next_id = ident
             activity.backend = self
             # this calls us again!
+            with activity.decoupled():
+                activity.what = self.encode_what(activity.what)
             return activity
+        else:
+            with activity.decoupled():
+                activity.what = self.encode_what(activity.what)
 
         fully = False
         if attributes is None or attributes == set(['all']) or self._next_id:

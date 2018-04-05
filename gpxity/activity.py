@@ -74,7 +74,10 @@ class Activity:
 
     Attributes:
         legal_what (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
-            as default value.
+            as default value. This is a mostly a superset of the values for the different backends.
+            Every backend maps from its internal values into those when reading and maps them
+            back when writing. Since not all backends support all values, information may
+            get lost when copying from one backend to the other.
 
             Currently those are the values as defined by mapmytracks.
             This should eventually become more flexible.
@@ -95,12 +98,16 @@ class Activity:
     # pylint: disable = too-many-instance-attributes
 
     legal_what = (
+        # values from MMT
         'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
         'Swimming', 'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
         'Skiing', 'Cross country skiing', 'Canoeing', 'Kayaking', 'Sea kayaking', 'Stand up paddle boarding',
         'Rowing', 'Windsurfing', 'Kiteboarding', 'Orienteering', 'Mountaineering', 'Skating',
         'Skateboarding', 'Horse riding', 'Hang gliding', 'Gliding', 'Flying', 'Snowboarding',
         'Paragliding', 'Hot air ballooning', 'Nordic walking', 'Snowshoeing', 'Jet skiing', 'Powerboating',
+        # values from GPSIES
+        'Pedelec', 'Crossskating', 'Handcycle', 'Motorhome', 'Cabriolet', 'Coach',
+        'Pack animal trekking', 'Train',
         'Miscellaneous')
 
     def __init__(self, backend=None, id_in_backend: str = None, gpx=None):
@@ -192,6 +199,9 @@ class Activity:
 
     def clone(self):
         """Creates a new activity with the same content but without backend.
+
+        The value for :attr:`what` is translated from the backend specific value
+        (:attr:`Backend.legal_what`) to a neutral internal value (:attr:legal_what).
 
         Returns:
             ~gpxity.Activity: the new activity
@@ -321,6 +331,8 @@ class Activity:
         """str: What is this activity doing? If we have no current value,
         return the default.
 
+        After reading an activity from a backend, this is the original
+        value from the backend.
         Returns:
             The current value or the default value (see :attr:`legal_what`)
         """
@@ -331,10 +343,10 @@ class Activity:
 
     @what.setter
     def what(self, value: str):
-        if value is not None:
-            value = value.capitalize()
         if value != self.what:
-            if value not in Activity.legal_what and value is not None:
+            if (value not in Activity.legal_what
+                    and (self.backend is None or value not in self.backend.legal_whats)
+                    and value is not None):
                 raise Exception('What {} is not known'.format(value))
             self.__what = value if value else self.legal_what[0]
             self.dirty = 'what'
