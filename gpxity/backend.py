@@ -349,7 +349,7 @@ class Backend:
         # pylint: disable=too-many-branches
 
         if activity.is_decoupled:
-            raise Exception('A backend cannot save() if activity.is_decoupled. This is a bug in gpxity.')
+            raise Exception('A backend cannot save() if activity.is_decoupled. This is probably a bug in gpxity.')
         try:
             self.matches(activity, 'save')
         except Backend.NoMatch:
