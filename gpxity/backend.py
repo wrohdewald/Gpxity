@@ -121,6 +121,8 @@ class Backend:
     Backends support no locking. If others modify a backend concurrently, you may
     get surprises. It is up to you to handle those.
 
+    Some backends may use cookies.
+
     Args:
         url (str): Initial value for :attr:`url`
         auth (tuple(str, str)): (username, password). Alternatively you can pass the username as a single string.
@@ -258,7 +260,8 @@ class Backend:
             raise
 
     def get_time(self) ->datetime.datetime:
-        """get time from the server where backend is located as a Linux timestamp"""
+        """get time from the server where backend is located as a Linux timestamp.
+        A backend implementation does not have to support this."""
         raise NotImplementedError()
 
     def scan(self, now: bool = False) ->None:
