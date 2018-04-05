@@ -116,7 +116,7 @@ class TestBackends(BasicTest):
     def test_z9_create_backend(self):
         """Test creation of a backend"""
         for cls in self._find_backend_classes():
-            if 'remove' in cls.supported:
+            if 'remove' in cls.supported and 'get_time' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
                     with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
                         self.assertEqual(len(backend), 3)
