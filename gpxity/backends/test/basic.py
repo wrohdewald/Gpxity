@@ -100,7 +100,7 @@ class BasicTest(unittest.TestCase):
         if start_time is not None:
             move_time = start_time - gpx.tracks[0].segments[0].points[0].time
             gpx.adjust_time(move_time)
-        movement = gpxpy.geo.LocationDelta(distance=100000, angle=360 * idx / count)
+        movement = gpxpy.geo.LocationDelta(distance=1000, angle=360 * idx / count)
         last_points = gpx.tracks[-1].segments[-1].points
         if end_time is None:
             end_time = last_points[-1].time + datetime.timedelta(hours=10, seconds=idx)
