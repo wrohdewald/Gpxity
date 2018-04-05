@@ -377,15 +377,10 @@ class Backend:
             raise
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
-        if activity.backend is None:
-            self._next_id = ident
-            activity.backend = self
-            # this calls us again!
-            with activity.decoupled():
-                activity.what = self.encode_what(activity.what)
-            return activity
-        else:
-            with activity.decoupled():
+        with activity.decoupled():
+            if activity.backend is None:
+                self._next_id = ident
+                activity.backend = self
                 activity.what = self.encode_what(activity.what)
 
         fully = False

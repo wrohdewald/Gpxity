@@ -157,11 +157,13 @@ class Activity:
             else:
                 self._loaded = True
                 self.__backend = value
-                try:
-                    self.__backend.save(self)
-                except BaseException:
-                    self.__backend = None
-                    raise
+                if not self._loading:
+                    try:
+                        self.__backend.save(self)
+                    except BaseException:
+                        self.__backend = None
+                        self._loaded = False
+                        raise
 
     @property
     def dirty(self) ->bool:
