@@ -186,7 +186,7 @@ class MMT(Backend):
         """The requests.Session for this backend. Only initialized once."""
         if self.__session is None:
             if not self.auth:
-                raise Exception('{}: Needs authentication data'.format(self.url))
+                raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self.__session = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
             payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
@@ -194,7 +194,7 @@ class MMT(Backend):
             login_url = '{}/login'.format(base_url)
             response = self.__session.post(login_url, data=payload)
             if not 'You are now logged in.' in response.text:
-                raise requests.exceptions.HTTPError('Login as {} failed'.format(self.auth[0]))
+                raise self.BackendException('Login as {} failed'.format(self.auth[0]))
         return self.__session
 
     @property
@@ -256,21 +256,20 @@ class MMT(Backend):
             return
         result = response.text
         if (result == 'access denied') or (expect and expect not in result):
-            raise requests.exceptions.HTTPError('{}: expected {} in {}'.format(data, expect, result))
+            raise self.BackendException('{}: expected {} in {}'.format(data, expect, result))
         if result.startswith('<?xml'):
             try:
                 result = ElementTree.fromstring(result)
             except ElementTree.ParseError:
-                print('POST {} has parse error: {}'.format(data, response.text))
-                raise
+                raise self.BackendException('POST {} has parse error: {}'.format(data, response.text))
             result_type = result.find('type')
             if result_type is not None and result_type.text == 'error':
                 reason = result.find('reason').text if result.find('reason') else 'no reason given'
-                raise requests.exceptions.HTTPError('{}: {}'.format(data, reason))
+                raise self.BackendException('{}: {}'.format(data, reason))
         return result
 
-    @staticmethod
-    def __handle_post_error(url, data, result):
+    @classmethod
+    def __handle_post_error(cls, url, data, result):
         """we got status_code != ok"""
         try:
             result.raise_for_status()
@@ -279,7 +278,7 @@ class MMT(Backend):
                 _ = data['request']
             else:
                 _ = data
-            raise type(exc)('{}: {} {} {}'.format(exc, url, _, result.text))
+            raise cls.BackendException('{}: {} {} {}'.format(exc, url, _, result.text))
 
     def _write_attribute(self, activity, attribute):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
@@ -397,7 +396,7 @@ class MMT(Backend):
             self.__tag_ids.update(self._scan_activity_page(activity)['tags'])
             self._check_tag_ids()
             if value not in self.__tag_ids:
-                raise Exception('{}: Cannot remove keyword {}, reason: not known'.format(self.url, value))
+                raise self.BackendException('{}: Cannot remove keyword {}, reason: not known'.format(self.url, value))
         self.__post(
             with_session=True, url='handler/delete-tag.php',
             tag_id=self.__tag_ids[value], entry_id=activity.id_in_backend)
@@ -492,7 +491,7 @@ class MMT(Backend):
         of the first trackpoint."""
 
         if not activity.gpx.get_track_points_no():
-            raise Exception('MMT does not accept an activity without trackpoints:{}'.format(activity))
+            raise self.BackendException('MMT does not accept an activity without trackpoints:{}'.format(activity))
         mmt_status = 'public' if activity.public else 'private'
         if activity.id_in_backend:
             # we cannot change an MMT activity in-place, we need to re-upload and then
@@ -545,12 +544,12 @@ class MMT(Backend):
                 # tags='TODO',
                 unique_token='{}'.format(id(activity)))
             if result.find('type').text != 'activity_started':
-                raise Exception('activity_started failed')
+                raise self.BackendException('activity_started failed')
             activity.id_in_backend = result.find('activity_id').text
             self._tracking_activity = activity
             self.append(activity)
         if activity != self._tracking_activity:
-            raise Exception('MMT._track() got wrong activity')
+            raise self.BackendException('MMT._track() got wrong activity')
         self.__post(
             request='update_activity', activity_id=activity.id_in_backend,
             points=self.__track_points(points))

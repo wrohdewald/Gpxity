@@ -140,6 +140,10 @@ class Backend:
     class NoMatch(Exception):
         """Is raised if an activity is expected to pass the match filter but does not"""
 
+    class BackendException(Exception):
+        """Is raised for general backend exceptions, especially error messages from a remote server"""
+
+
     supported = None
 
     skip_test = False

@@ -15,8 +15,6 @@ import tempfile
 
 from unittest import skip
 
-import requests
-
 from .basic import BasicTest
 from .. import Directory, MMT, ServerDirectory, TrackMMT
 from ...auth import Authenticate
@@ -54,7 +52,7 @@ class TestBackends(BasicTest):
                 with self.temp_backend(cls, cleanup=can_remove, clear_first=can_remove) as backend:
                     activity = Activity()
                     if cls is MMT or cls is TrackMMT:
-                        with self.assertRaises(Exception):
+                        with self.assertRaises(cls.BackendException):
                             backend.save(activity)
                     else:
                         self.assertIsNotNone(backend.save(activity))
@@ -84,7 +82,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 if not issubclass(cls, Directory):
-                    with self.assertRaises(requests.exceptions.HTTPError):
+                    with self.assertRaises(cls.BackendException):
                         self.setup_backend(cls, username='wrong_password')
 
     def test_match(self):
