@@ -139,7 +139,8 @@ class TestBackends(BasicTest):
                         first_title = activity.title
                         first_description = activity.description
                         first_what = activity.what
-                        activity.public = not activity.public
+                        self.assertFalse(activity.public)
+                        activity.public = True
                         activity.title = 'A new title'
                         self.assertEqual(activity.title, 'A new title')
                         activity.description = 'A new description'
