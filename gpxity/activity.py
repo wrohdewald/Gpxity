@@ -736,7 +736,7 @@ class Activity:
         Returns:
             True if both activities have identical points.
 
-        All points of all tracks and segments are combined.
+        All points of all tracks and segments are combined. Elevations are ignored.
         """
         # We do not use points_hash because we want to abort as soon as we know
         # they are different.
@@ -751,8 +751,6 @@ class Activity:
             if point1.longitude != point2.longitude:
                 return False
             if point1.latitude != point2.latitude:
-                return False
-            if point1.elevation != point2.elevation:
                 return False
         return True
 
