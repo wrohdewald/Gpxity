@@ -132,7 +132,8 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(cls, count=1, clear_first=True, cleanup=True) as backend:
+                    with self.temp_backend(
+                        cls, count=1, what='Horse riding', clear_first=True, cleanup=True) as backend:
                         activity = backend[0]
                         first_public = activity.public
                         first_title = activity.title
@@ -142,10 +143,7 @@ class TestBackends(BasicTest):
                         activity.title = 'A new title'
                         self.assertEqual(activity.title, 'A new title')
                         activity.description = 'A new description'
-                        if activity.what == 'Cycling':
-                            activity.what = 'Running'
-                        else:
-                            activity.what = 'Cycling'
+                        activity.what = 'Cycling'
                         # make sure there is no cache in the way
                         backend2 = self.clone_backend(backend)
                         activity2 = backend2[0]
