@@ -116,6 +116,8 @@ class Activity:
         self.__gpx = gpx or GPX()
         if gpx:
             self._parse_keywords()
+            with self.decoupled():
+                self._round_points(self.points())
         if backend is not None:
             if gpx is not None:
                 raise Exception('Cannot accept backend and gpx')
@@ -359,6 +361,7 @@ class Activity:
             if not self.__gpx.tracks:
                 self.__gpx.tracks.append(GPXTrack())
                 self.__gpx.tracks[0].segments.append(GPXTrackSegment())
+            self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
             self.dirty = 'gpx'
 
@@ -392,6 +395,7 @@ class Activity:
             raise Exception('track(): backend unknown')
         # pylint: disable=no-member
         if 'track' in self.backend.supported:
+            self._round_points(points)
             self.backend._track(self, points) # pylint: disable=protected-access
         else:
             self.add_points(points)
@@ -438,7 +442,21 @@ class Activity:
                 self.__gpx.name = old_gpx.name
             if old_gpx.description and not self.__gpx.description:
                 self.__gpx.description = old_gpx.description
+            self._round_points(self.points())
             self._loaded = True
+
+    @staticmethod
+    def _round_points(points):
+        """Rounds points to 6 decimal digits because some backends may
+        cut last digits. Gpsies truncates to 7 digits. The points are rounded
+        in place!
+
+        Args:
+            points (list(GPXTrackPoint): The points to be rounded
+        """
+        for _ in points:
+            _.longitude = round(_.longitude, 6)
+            _.latitude = round(_.latitude, 6)
 
     def to_xml(self) ->str:
         """Produces exactly one line per trackpoint for easier editing
@@ -651,8 +669,8 @@ class Activity:
         except StopIteration:
             return 0
         last_point = self.__gpx.tracks[-1].segments[-1].points[-1]
-        delta_lat = first_point.latitude - last_point.latitude
-        delta_long = first_point.longitude - last_point.longitude
+        delta_lat = round(first_point.latitude, 6) - round(last_point.latitude, 6)
+        delta_long = round(first_point.longitude, 6) - round(last_point.longitude, 6)
         norm_lat = delta_lat / 90.0
         norm_long = delta_long / 180.0
         try:
