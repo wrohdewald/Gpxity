@@ -262,7 +262,7 @@ class TestBackends(BasicTest):
 
     def test_private(self):
         """Up- and download private activities"""
-        with self.temp_backend(Directory, count=5, cleanup=True, status=False) as local:
+        with self.temp_backend(Directory, count=5, cleanup=True, public=False) as local:
             activity = Activity(gpx=self._get_gpx_from_test_file('test2'))
             activity.public = False
             self.assertFalse(activity.public)

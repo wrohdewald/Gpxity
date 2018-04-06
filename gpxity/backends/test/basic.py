@@ -72,7 +72,7 @@ class BasicTest(unittest.TestCase):
 
     @classmethod
     def create_test_activity(
-            cls, count: int = 1, idx: int = 0, what: str = None, status: bool = False,
+            cls, count: int = 1, idx: int = 0, what: str = None, public: bool = False,
             start_time=None, end_time=None):
         """creates an :class:`~gpxity.Activity`. It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
@@ -87,7 +87,7 @@ class BasicTest(unittest.TestCase):
                 Default: if count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
                 the default value will be legal_what[idx].
                 Otherwise a random value will be applied.
-            status: Public?
+            public: should the activities be public or private?
             start_time: If given, assign it to the first point and adjust all following times
             end_time: explicit time for the last point. If None: See above.
 
@@ -124,7 +124,7 @@ class BasicTest(unittest.TestCase):
             result.what = Activity.legal_what[idx]
         else:
             result.what = random.choice(Activity.legal_what)
-        result.public = status
+        result.public = public
         return result
 
     @staticmethod
@@ -181,7 +181,7 @@ class BasicTest(unittest.TestCase):
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
     def setup_backend(self, cls_, username=None, url=None, count=0,  # pylint: disable=too-many-arguments
-                      cleanup=True, clear_first=True, what=None, status: bool = False):
+                      cleanup=True, clear_first=True, what=None, public: bool = False):
         """sets up an instance of a backend with count activities.
 
         If count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
@@ -195,7 +195,7 @@ class BasicTest(unittest.TestCase):
             count (int): how many random activities should be inserted?
             cleanup (bool): If True, remove all activities when done. Passed to the backend.
             clear_first (bool): if True, first remove all existing activities
-            status: should the activities be public or private?
+            public: should the activities be public or private?
 
         Returns:
             the prepared Backend
@@ -205,7 +205,7 @@ class BasicTest(unittest.TestCase):
         if clear_first:
             result.remove_all()
         while count > len(result):
-            activity = self.create_test_activity(count, len(result), what=what, status=status)
+            activity = self.create_test_activity(count, len(result), what=what, public=public)
             result.save(activity)
         self.assertGreaterEqual(len(result), count)
         if clear_first:
@@ -214,11 +214,11 @@ class BasicTest(unittest.TestCase):
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
-                     cleanup=True, clear_first=True, what=None, status: bool = False, username=None):
+                     cleanup=True, clear_first=True, what=None, public: bool = False, username=None):
         """Just like setup_backend but usable as a context manager. which will
         call destroy() when done.
         """
-        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, what, status)
+        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, what, public)
         try:
             yield tmp_backend
         finally:
