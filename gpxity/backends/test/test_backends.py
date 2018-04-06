@@ -139,6 +139,7 @@ class TestBackends(BasicTest):
                         first_title = activity.title
                         first_description = activity.description
                         first_what = activity.what
+                        self.assertEqual(first_what, backend.encode_what('Horse riding'))
                         self.assertFalse(activity.public)
                         activity.public = True
                         activity.title = 'A new title'
