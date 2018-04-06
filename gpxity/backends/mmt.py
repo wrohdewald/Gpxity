@@ -345,8 +345,7 @@ class MMT(Backend):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        if activity.is_decoupled:
-            return
+        assert not activity.is_decoupled, activity
         attr_value = getattr(activity, attribute)
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
