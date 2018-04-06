@@ -180,8 +180,8 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(activity1.points_equal(activity2))
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
-    def setup_backend(self, cls_, username=None, url=None, count=0,  # pylint: disable=too-many-arguments
-                      cleanup=True, clear_first=True, what=None, public: bool = False):
+    def setup_backend(self, cls_, username: str = None, url: str = None, count: int = 0,  # pylint: disable=too-many-arguments
+                      cleanup: bool = True, clear_first: bool = True, what: str = None, public: bool = False):
         """sets up an instance of a backend with count activities.
 
         If count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
@@ -190,11 +190,11 @@ class BasicTest(unittest.TestCase):
 
         Args:
             cls_ (Backend): the class of the backend to be created
-            username (str): use this to for a specific accout name. Default is 'gpxitytest'
-            url (str): for the backend
-            count (int): how many random activities should be inserted?
-            cleanup (bool): If True, remove all activities when done. Passed to the backend.
-            clear_first (bool): if True, first remove all existing activities
+            username: use this to for a specific accout name. Default is 'gpxitytest'
+            url: for the backend
+            count: how many random activities should be inserted?
+            cleanup: If True, remove all activities when done. Passed to the backend.
+            clear_first: if True, first remove all existing activities
             public: should the activities be public or private?
 
         Returns:
