@@ -16,7 +16,7 @@ import tempfile
 from unittest import skip
 
 from .basic import BasicTest
-from .. import Directory, MMT, ServerDirectory, TrackMMT
+from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT
 from ...auth import Authenticate
 from ... import Activity
 
@@ -32,6 +32,7 @@ class TestBackends(BasicTest):
         expect_unsupported[Directory] = set(['track'])
         expect_unsupported[ServerDirectory] = set(['track'])
         expect_unsupported[MMT] = set()
+        expect_unsupported[GPSIES] = set()
         expect_unsupported[TrackMMT] = set([
             'remove', '_write_attribute',
             '_write_title', '_write_description', '_write_public',
@@ -54,7 +55,7 @@ class TestBackends(BasicTest):
                     with activity.decoupled():
                         # In this test, we do not want to trigger an exception for a missing title
                         activity.title = 'I am a title'
-                    if cls is MMT or cls is TrackMMT:
+                    if cls in (MMT, TrackMMT, GPSIES):
                         with self.assertRaises(cls.BackendException):
                             backend.save(activity)
                     else:

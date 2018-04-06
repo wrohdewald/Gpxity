@@ -7,4 +7,5 @@
 from .directory import *
 from .server_directory import *
 from .mmt import *
+from .gpsies import *
 from .trackmmt import *

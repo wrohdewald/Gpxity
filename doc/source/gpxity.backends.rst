@@ -25,6 +25,14 @@ gpxity.backends.directory module
     :show-inheritance:
     :exclude-members: load_full, prefix, skip_test
 
+gpxity.backends.gpsies module
+-------------------------------
+
+.. automodule:: gpxity.backends.gpsies
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 gpxity.backends.mmt module
 --------------------------
 

@@ -19,6 +19,7 @@ Implemented backends are:
   * Directory          for .gpx files on an accessible file system
   * ServerDirectory    suited for a server implementation
   * MMT                for activities on http://mapmytracks.com
+  * GPSIES             for activities on https://gpsies.com
 
 Sometimes you might just change a harmless thing like the description but
 the backend does not allow changing this separately, so we have to re-upload

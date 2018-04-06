@@ -17,7 +17,7 @@ from collections import defaultdict
 
 # This uses not the installed copy but the development files
 sys.path.insert(0, '..')
-from gpxity import Directory, MMT # pylint: disable=wrong-import-position
+from gpxity import Directory, MMT, GPSIES # pylint: disable=wrong-import-position
 
 
 def valid_date_argument(arg_date_str):
@@ -184,8 +184,9 @@ class Utility:
     def instantiate_object(self, name):
         """returns a backend or an activity for name"""
         account = activity_id = None
-        if ':' in name and name.split(':')[0].upper() in ('MMT', ):
-            rest = name[4:]
+        if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES'):
+            clsname = name.split(':')[0].upper()
+            rest = name[len(clsname) + 1:]
             if '/' in rest:
                 if rest.count('/') > 1:
                     raise Exception('wrong syntax in {}'.format(name))
@@ -193,7 +194,10 @@ class Utility:
             else:
                 account = rest
                 activity_id = None
-            result = MMT(auth=account)
+            if clsname == 'MMT':
+                result = MMT(auth=account)
+            elif clsname == 'GPSIES':
+                result = GPSIES(auth=account)
         else:
             if os.path.isdir(name):
                 account = name
@@ -264,6 +268,7 @@ backend:username/activity_id for one specific activity in a backend
 Available backends are:
 
   - MMT     MapMytracks
+  - GPSIES gpsies
 
 The file $HOME/.config/Gpxity/auth.cfg
 defines the type of the backend, username and password. Example:
