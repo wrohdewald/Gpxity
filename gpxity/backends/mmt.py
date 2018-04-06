@@ -59,7 +59,7 @@ class ParseMMTWhats(HTMLParser): # pylint: disable=abstract-method
     def __init__(self):
         super(ParseMMTWhats, self).__init__()
         self.seeing_activities = False
-        self.result = list()
+        self.result = ['Cycling'] # The default value
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser"""
@@ -68,7 +68,9 @@ class ParseMMTWhats(HTMLParser): # pylint: disable=abstract-method
         if tag == 'select' and attributes['name'] == 'activity':
             self.seeing_activities = True
         if self.seeing_activities and tag == 'option':
-            self.result.append(attributes['value'])
+            _ = attributes['value']
+            if _ not in self.result:
+                self.result.append(_)
 
     def handle_endtag(self, tag):
         if self.seeing_activities and tag == 'select':
