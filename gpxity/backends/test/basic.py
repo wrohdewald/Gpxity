@@ -181,7 +181,8 @@ class BasicTest(unittest.TestCase):
         self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
 
     def setup_backend(self, cls_, username: str = None, url: str = None, count: int = 0,  # pylint: disable=too-many-arguments
-                      cleanup: bool = True, clear_first: bool = True, what: str = None, public: bool = False):
+                      cleanup: bool = True, clear_first: bool = True, what: str = None,
+                      public: bool = False, debug: bool = False):
         """sets up an instance of a backend with count activities.
 
         If count == len(:attr:`Activity.legal_whats <gpxity.Activity.legal_whats>`),
@@ -201,7 +202,7 @@ class BasicTest(unittest.TestCase):
             the prepared Backend
         """
 
-        result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup)
+        result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup, debug=debug)
         if clear_first:
             result.remove_all()
         while count > len(result):
@@ -214,11 +215,12 @@ class BasicTest(unittest.TestCase):
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
-                     cleanup=True, clear_first=True, what=None, public: bool = False, username=None):
+                     cleanup=True, clear_first=True, what=None,
+                     public: bool = False, debug: bool = False, username=None):
         """Just like setup_backend but usable as a context manager. which will
         call destroy() when done.
         """
-        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, what, public)
+        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, what, public, debug)
         try:
             yield tmp_backend
         finally:

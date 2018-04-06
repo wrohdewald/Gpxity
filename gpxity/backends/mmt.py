@@ -202,11 +202,10 @@ class MMT(Backend):
         'Train': 'Miscellaneous'
     }
 
-    def __init__(self, url=None, auth=None, cleanup=False):
+    def __init__(self, url=None, auth=None, cleanup=False, debug=False):
         if url is None:
             url = 'http://www.mapmytracks.com'
-        super(MMT, self).__init__(url, auth, cleanup)
-        self.remote_known_whats = None
+        super(MMT, self).__init__(url, auth, cleanup, debug)
         self.__mid = -1 # member id at MMT for auth
         self.__session = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
