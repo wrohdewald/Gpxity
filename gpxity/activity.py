@@ -157,6 +157,8 @@ class Activity:
             else:
                 self._loaded = True
                 self.__backend = value
+                with self.decoupled():
+                    self.what = value.encode_what(self.what)
                 if not self._loading:
                     try:
                         self.__backend.save(self)
@@ -209,7 +211,8 @@ class Activity:
             ~gpxity.Activity: the new activity
         """
         result = Activity(gpx=self.gpx.clone())
-        result.what = self.what
+        result.what = self.backend.decode_what(self.what) if self.backend else self.what
+        # TODO: header_data????
         result.public = self.public
         return result
 
@@ -345,12 +348,22 @@ class Activity:
 
     @what.setter
     def what(self, value: str):
+        if value is None:
+            if self.backend is None: # and not self._loading:
+                value = self.legal_whats[0]
+            else:
+                value = self.backend.legal_whats[0]
         if value != self.what:
-            if (value not in Activity.legal_whats
-                    and (self.backend is None or value not in self.backend.legal_whats)
-                    and value is not None):
-                raise Exception('What {} is not known'.format(value))
-            self.__what = value if value else self.legal_whats[0]
+            if self.backend is None: #  and not self._loading:
+                if value not in self.legal_whats:
+                    raise Exception('What {} is not known'.format(value))
+            else:
+                if value not in self.backend.legal_whats:
+                    value = self.backend.encode_what(value)
+                    if value not in self.backend.legal_whats:
+                        raise Exception(
+                            'What {} is not known for backend {}'.format(value, self.backend.__class__.__name__))
+            self.__what = value
             self.dirty = 'what'
 
     def _load_full(self) ->None:

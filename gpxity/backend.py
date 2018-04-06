@@ -150,7 +150,7 @@ class Backend:
 
     skip_test = False
 
-    legal_whats = None # Override in the backends
+    _legal_whats = None # Override in the backends
 
     def __init__(self, url=None, auth=None, cleanup=False, debug=False):
         self._decoupled = False
@@ -173,7 +173,13 @@ class Backend:
         self.__debug = None
         self.debug = debug
 
-
+    @property
+    def legal_whats(self):
+        """
+        Returns: list(str)
+            all legal values for this backend
+        """
+        raise NotImplementedError
 
     @contextmanager
     def _decouple(self):
@@ -381,7 +387,6 @@ class Backend:
             if activity.backend is None:
                 self._next_id = ident
                 activity.backend = self
-                activity.what = self.encode_what(activity.what)
 
         fully = False
         if attributes is None or attributes == set(['all']) or self._next_id:

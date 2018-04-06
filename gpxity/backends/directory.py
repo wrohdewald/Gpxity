@@ -77,6 +77,13 @@ class Directory(Backend):
         self._symlinks = defaultdict(list)
         self._load_symlinks()
 
+    @property
+    def legal_whats(self):
+        """
+        Returns: list(str)
+            all legal values for what for this backend."""
+        return Activity.legal_whats
+
     def decode_what(self, value: str) ->str:
         """Not needed for directory, this is always the internal value."""
         return value

@@ -189,7 +189,7 @@ class MMT(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    legal_whats = None
+    _legal_whats = list()
 
     _what_encoding = {
         'Pedelec': 'Cycling',
@@ -215,11 +215,18 @@ class MMT(Backend):
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
         self._tracking_activity = None
-        if not self.legal_whats:
+
+    @property
+    def legal_whats(self):
+        """
+        Returns: list(str)
+            all legal values for what."""
+        if not self._legal_whats:
             response = self.session.post('{}/profile/upload/manual'.format(self.url))
             whats_parser = ParseMMTWhats()
             whats_parser.feed(response.text)
-            self.legal_whats = whats_parser.result
+            self._legal_whats.extend(whats_parser.result)
+        return self._legal_whats
 
     @property
     def session(self):
@@ -247,11 +254,9 @@ class MMT(Backend):
     def encode_what(self, value: str) ->str:
         """Translate internal value into MMT value"""
         if value in self.legal_whats:
-            print('MMT.encode_what:{}->{}'.format(value, value))
             return value
         if value not in self._what_encoding:
             raise self.BackendException('MMT has no equivalent for {}'.format(value))
-        print('MMT.encode_what:{}->{}'.format(value, self._what_encoding[value]))
         return self._what_encoding[value]
 
     @property
