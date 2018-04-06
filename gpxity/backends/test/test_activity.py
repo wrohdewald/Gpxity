@@ -110,7 +110,7 @@ class ActivityTests(BasicTest):
 
     def test_no_what(self):
         """what must return default value if not present in gpx.keywords"""
-        what_default = Activity.legal_what[0]
+        what_default = Activity.legal_whats[0]
         activity = Activity()
         self.assertEqual(activity.what, what_default)
         activity.what = None
@@ -124,7 +124,7 @@ class ActivityTests(BasicTest):
 
     def test_duplicate_what(self):
         """try to add two whats to Activity"""
-        what_other = Activity.legal_what[5]
+        what_other = Activity.legal_whats[5]
         activity = Activity()
         activity.what = what_other
         with self.assertRaises(Exception):
@@ -132,8 +132,8 @@ class ActivityTests(BasicTest):
 
     def test_remove_what(self):
         """remove what from Activity"""
-        what_default = Activity.legal_what[0]
-        what_other = Activity.legal_what[5]
+        what_default = Activity.legal_whats[0]
+        what_other = Activity.legal_whats[5]
         activity = Activity()
         activity.what = what_other
         self.assertEqual(activity.what, what_other)
@@ -224,7 +224,7 @@ class ActivityTests(BasicTest):
         xml = activity2.to_xml()
         self.assertIn('Status:public', xml)
         activity2 = Activity()
-        activity2.what = Activity.legal_what[3]
+        activity2.what = Activity.legal_whats[3]
         activity2.public = False
         activity2.parse(xml)
         self.assertTrue(activity2.public)
@@ -418,7 +418,7 @@ class ActivityTests(BasicTest):
         """Activity.key()"""
         title = 'This is a niße title'
         description = title + ' NOT - it is the description'
-        what = Activity.legal_what[3]
+        what = Activity.legal_whats[3]
         public = True
         points = self.some_random_points(10)
         activity = Activity()

@@ -73,7 +73,7 @@ class Activity:
     everything as soon as anything is needed.
 
     Attributes:
-        legal_what (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
+        legal_whats (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
             as default value. This is a mostly a superset of the values for the different backends.
             Every backend maps from its internal values into those when reading and maps them
             back when writing. Since not all backends support all values, information may
@@ -97,7 +97,7 @@ class Activity:
 
     # pylint: disable = too-many-instance-attributes
 
-    legal_what = (
+    legal_whats = (
         # values from MMT
         'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
         'Swimming', 'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
@@ -115,7 +115,7 @@ class Activity:
         self._loaded = backend is None or id_in_backend is None
         self.__dirty = set()
         self._batch_changes = False
-        self.__what = self.legal_what[0]
+        self.__what = self.legal_whats[0]
         self.__public = False
         self.id_in_backend = id_in_backend
         self.__backend = None
@@ -203,7 +203,7 @@ class Activity:
         """Creates a new activity with the same content but without backend.
 
         The value for :attr:`what` is translated from the backend specific value
-        (:attr:`Backend.legal_what`) to a neutral internal value (:attr:legal_what).
+        (:attr:`Backend.legal_whats`) to a neutral internal value (:attr:legal_whats).
 
         Returns:
             ~gpxity.Activity: the new activity
@@ -336,7 +336,7 @@ class Activity:
         After reading an activity from a backend, this is the original
         value from the backend.
         Returns:
-            The current value or the default value (see :attr:`legal_what`)
+            The current value or the default value (see :attr:`legal_whats`)
         """
         if not self._loaded and 'what' in self.header_data:
             return self.header_data['what']
@@ -346,11 +346,11 @@ class Activity:
     @what.setter
     def what(self, value: str):
         if value != self.what:
-            if (value not in Activity.legal_what
+            if (value not in Activity.legal_whats
                     and (self.backend is None or value not in self.backend.legal_whats)
                     and value is not None):
                 raise Exception('What {} is not known'.format(value))
-            self.__what = value if value else self.legal_what[0]
+            self.__what = value if value else self.legal_whats[0]
             self.dirty = 'what'
 
     def _load_full(self) ->None:

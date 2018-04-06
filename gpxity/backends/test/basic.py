@@ -84,8 +84,8 @@ class BasicTest(unittest.TestCase):
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
             what: The wanted value for the activity.
-                Default: if count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
-                the default value will be legal_what[idx].
+                Default: if count == len(:attr:`Activity.legal_whats <gpxity.Activity.legal_whats>`),
+                the default value will be legal_whats[idx].
                 Otherwise a random value will be applied.
             public: should the activities be public or private?
             start_time: If given, assign it to the first point and adjust all following times
@@ -120,10 +120,10 @@ class BasicTest(unittest.TestCase):
         result.description = 'Description to {}'.format(gpx.name)
         if what:
             result.what = what
-        elif count == len(Activity.legal_what):
-            result.what = Activity.legal_what[idx]
+        elif count == len(Activity.legal_whats):
+            result.what = Activity.legal_whats[idx]
         else:
-            result.what = random.choice(Activity.legal_what)
+            result.what = random.choice(Activity.legal_whats)
         result.public = public
         return result
 
@@ -184,7 +184,7 @@ class BasicTest(unittest.TestCase):
                       cleanup: bool = True, clear_first: bool = True, what: str = None, public: bool = False):
         """sets up an instance of a backend with count activities.
 
-        If count == len(:attr:`Activity.legal_what <gpxity.Activity.legal_what>`),
+        If count == len(:attr:`Activity.legal_whats <gpxity.Activity.legal_whats>`),
         the list of activities will always be identical. For an example
         see :meth:`TestBackends.test_all_what <gpxity.backends.test.test_backends.TestBackends.test_all_what>`.
 

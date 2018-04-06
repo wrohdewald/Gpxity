@@ -156,7 +156,7 @@ class TestBackends(BasicTest):
     @skip
     def test_zz_all_what(self):
         """can we up- and download all values for :attr:`Activity.what`?"""
-        what_count = len(Activity.legal_what)
+        what_count = len(Activity.legal_whats)
         backends = list(
             self.setup_backend(x, count=what_count, clear_first=True)
             for x in self._find_backend_classes() if 'remove' in x.supported)
