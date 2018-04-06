@@ -154,13 +154,13 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
-    def assertSameActivities(self, backend1, backend2): # pylint: disable=invalid-name
+    def assertSameActivities(self, backend1, backend2, with_what=True): # pylint: disable=invalid-name
         """both backends must hold identical activities"""
         self.maxDiff = None # pylint: disable=invalid-name
         if backend1 == backend2:
             return True
-        keys1 = sorted(x.key() for x in backend1)
-        keys2 = sorted(x.key() for x in backend2)
+        keys1 = sorted(x.key(with_what) for x in backend1)
+        keys2 = sorted(x.key(with_what) for x in backend2)
         self.assertEqual(keys1, keys2)
 
     def assertEqualActivities(self, activity1, activity2, xml: bool = False): # pylint: disable=invalid-name

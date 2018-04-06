@@ -636,9 +636,15 @@ class Activity:
     def __str__(self):
         return self.__repr__()
 
-    def key(self) ->str:
+    def key(self, with_what: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but
         sufficiently safe IMHO.
+
+        Args:
+            with_what: If False, do not use self.what. Needed for comparing
+            activities for equality like in unittests because values can change
+            and information can get lost while copying between different
+            backends
 
         Returns:
             a string with selected attributes in printable form.
@@ -646,7 +652,7 @@ class Activity:
         self._load_full()
         return 'title:{} description:{} keywords:{} what:{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.what, self.public, self.last_time,
+            ','.join(self.keywords), self.what if with_what else '', self.public, self.last_time,
             self.angle(), self.gpx.get_track_points_no())
 
     def __eq__(self, other):
