@@ -52,9 +52,6 @@ class TestBackends(BasicTest):
                 can_remove = 'remove' in cls.supported
                 with self.temp_backend(cls, cleanup=can_remove, clear_first=can_remove) as backend:
                     activity = Activity()
-                    with activity.decoupled():
-                        # In this test, we do not want to trigger an exception for a missing title
-                        activity.title = 'I am a title'
                     if cls in (MMT, TrackMMT, GPSIES):
                         with self.assertRaises(cls.BackendException):
                             backend.save(activity)
