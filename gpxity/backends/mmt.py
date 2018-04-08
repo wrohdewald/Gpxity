@@ -120,7 +120,6 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
                   and attributes['name'] == 'mid'and value):
                 self.result['mid'] = value
         elif tag == 'div' and attributes['class'] == 'panel' and 'data-activity' in attributes:
-            # TODO: still so? sometime this says Miscellaneous instead of the correct value like Swimming
             self.result['what'] = attributes['data-activity']
         elif tag == 'span' and attributes['class'] == 'privacy-status':
             self.seeing_status = True
