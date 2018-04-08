@@ -376,7 +376,8 @@ class GPSIES(Backend):
             raise self.BackendException(response.text)
         if 'alert-danger' in response.text:
             _ = response.text.split('alert-danger">')[1].split('</div>')[0].strip()
-            # TODO: strippen: <ul class="error"><li>Die eingegebene Url ist ungültig. </li></ul>
+            if '<li>' in _:
+                _ = _.split('<li>')[1].split('</li>')[0]
             raise self.BackendException(_)
         if 'alert-warning' in response.text:
             _ = response.text.split('alert-warning">')[1].split('<')[0].strip()
