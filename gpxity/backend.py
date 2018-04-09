@@ -347,6 +347,17 @@ class Backend:
             raise Backend.NoMatch('{}: {} does not match: {}'.format(exc_prefix, activity, match_error))
         return match_error is None
 
+    def _needs_full_save(self, next_id, attributes) ->bool:
+        """Do we have to rewrite the entire activity?"""
+        if attributes is None or attributes == set(['all']) or next_id:
+            return True
+        else:
+            for attribute in attributes:
+                write_name = '_write_{}'.format(attribute.split(':')[0])
+                if write_name not in self.supported:
+                    return True
+        return False
+
     def save(self, activity, ident: str = None, attributes=None):
         """save full activity.
 
@@ -391,17 +402,7 @@ class Backend:
                 next_id = ident
                 activity.backend = self
 
-        fully = False
-        if attributes is None or attributes == set(['all']) or next_id:
-            fully = True
-        else:
-            for attribute in attributes:
-                write_name = '_write_{}'.format(attribute.split(':')[0])
-                if write_name not in self.supported:
-                    fully = True
-                    break
-
-        if fully:
+        if self._needs_full_save(next_id, attributes):
             activity_id = ident or next_id or activity.id_in_backend
             if activity_id is not None and not isinstance(activity_id, str):
                 raise Exception('{}: id_in_backend must be str')
