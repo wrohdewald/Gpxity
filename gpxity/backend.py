@@ -482,7 +482,7 @@ class Backend:
                 for mine in self:
                     if mine.time == activity.time:
                         self.remove(mine)
-            self.save(activity, ident=activity.id_in_backend if use_remote_ident else None)
+            activity = self.save(activity, ident=activity.id_in_backend if use_remote_ident else None)
             if verbose:
                 print('saved', activity)
         if remove:
