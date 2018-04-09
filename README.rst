@@ -4,6 +4,8 @@ In this context, a backend is a place where activities can be stored.
 And there is a command line utility **gpxdo** helping you organize your activities.
 It lets you list, copy, merge, remove, edit, fix, compare backends and activities.
 
+Find the documentation here: https://gpxity.readthedocs.io/en/latest/
+
 The library currently implements those backends:
 
   * :class:`~gpxity.backends.directory.Directory`: Directory for .gpx files on an accessible file system
