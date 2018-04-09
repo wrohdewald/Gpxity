@@ -206,13 +206,13 @@ class Utility:
             else:
                 if os.path.isfile(name + '.gpx'):
                     activity_id = os.path.basename(name)
-                    account = os.path.dirname(name)
+                    account = os.path.dirname(os.path.abspath(name + '.gpx'))
                 else:
                     if not name.endswith('.gpx'):
                         raise Exception('{} not found')
                     name = name[:-4]
                     activity_id = os.path.basename(name)
-                    account = os.path.dirname(name)
+                    account = os.path.dirname(os.path.abspath(name))
             result = Directory(url=account)
         if account is None:
             raise Exception('{} does not exist'.format(name))
