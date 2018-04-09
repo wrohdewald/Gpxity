@@ -551,14 +551,14 @@ class MMT(Backend):
 
         if not activity.gpx.get_track_points_no():
             raise self.BackendException('MMT does not accept an activity without trackpoints:{}'.format(activity))
-        mmt_status = 'public' if activity.public else 'private'
         if activity.id_in_backend:
             # we cannot change an MMT activity in-place, we need to re-upload and then
             # remove the previous instance.
             self._remove_activity(activity)
         response = self.__post(
             request='upload_activity', gpx_file=activity.to_xml(),
-            status=mmt_status, description=activity.description, activity=activity.what)
+            status='public' if activity.public else 'private',
+            description=activity.description, activity=activity.what)
         activity.id_in_backend = response.find('id').text
         if '_write_title' in self.supported:
             self._write_title(activity)
