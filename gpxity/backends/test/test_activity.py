@@ -547,6 +547,16 @@ class ActivityTests(BasicTest):
             with self.assertRaises(IndexError):
                 directory[0] # pylint: disable=pointless-statement
 
+    def test_adjust_time(self):
+        """adjust_time()"""
+        activity = self.create_test_activity()
+        first_wp_time = activity.gpx.waypoints[0].time
+        first_trkpt_time = next(activity.points()).time
+        seconds10 = datetime.timedelta(seconds=10)
+        activity.adjust_time(seconds10)
+        self.assertEqual(activity.gpx.waypoints[0].time, first_wp_time + seconds10)
+        self.assertEqual(next(activity.points()).time, first_trkpt_time + seconds10)
+
     def test_overlapping_times(self):
         """Activity.overlapping_times(activities)"""
         now = datetime.datetime.now()
