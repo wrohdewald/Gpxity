@@ -392,7 +392,6 @@ class Backend:
             if activity.backend is not None:
                 # it already exists in the backend, reset to correct values
                 self._read_all(activity)
-                self.matches(activity) # should always be the case
             raise
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
