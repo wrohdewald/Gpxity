@@ -387,7 +387,7 @@ class GPSIES(Backend):
                 'GPSies is my hobby website and is funded by advertising'
                 )
             if not any(x in _ for x in ignore_messages):
-                print('WARNING',':', _)
+                print('WARNING', ':', _)
 
     def _remove_activity(self, activity):
         """remove on the server"""

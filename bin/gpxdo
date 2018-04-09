@@ -84,7 +84,8 @@ class Utility:
             print(source)
             for _ in source:
                 if self.options.full:
-                    _.gpx # load full activity
+                    # load full activity
+                    _.gpx # pylint: disable=pointless-statement
                 print(_)
             print()
 
@@ -334,7 +335,7 @@ Dates are expected as YYYY-MM-DD.
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--full', help='download the full activity for more info',
-                                    action='store_true', default=False)
+                               action='store_true', default=False)
         self.add_range_args(ls_parser)
         self.add_verbose_arg(ls_parser)
         ls_parser.add_argument('source', help='one or more activities or backends', nargs='*')
