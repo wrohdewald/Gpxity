@@ -55,7 +55,6 @@ setup(
     install_requires=['requests', 'gpxpy'],
     extras_require={
         'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation']
-        'strava': ['stravalib']
         })
 
 
