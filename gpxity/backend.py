@@ -171,7 +171,6 @@ class Backend:
             self.url += '/'
         self._cleanup = cleanup
         self.__match = None
-        self._next_id = None # this is a hack, see save()
         self.__debug = None
         self.debug = debug
         self.timeout = timeout
@@ -386,13 +385,14 @@ class Backend:
             raise
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
+        next_id = None
         with activity.decoupled():
             if activity.backend is None:
-                self._next_id = ident
+                next_id = ident
                 activity.backend = self
 
         fully = False
-        if attributes is None or attributes == set(['all']) or self._next_id:
+        if attributes is None or attributes == set(['all']) or next_id:
             fully = True
         else:
             for attribute in attributes:
@@ -402,10 +402,10 @@ class Backend:
                     break
 
         if fully:
-            activity_id = ident or self._next_id or activity.id_in_backend
+            activity_id = ident or next_id or activity.id_in_backend
             if activity_id is not None and not isinstance(activity_id, str):
                 raise Exception('{}: id_in_backend must be str')
-            self._write_all(activity, ident or self._next_id)
+            self._write_all(activity, ident or next_id)
         else:
             for attribute in attributes:
                 _ = attribute.split(':')
