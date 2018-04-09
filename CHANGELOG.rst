@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2.0 release 2018-04-XX
+1.2.0 release 2018-04-09
 ------------------------
   * New backend GPSIES for www.gpsies.com
   * New: Command line utility "gpxdo" exposing commands for listing, copying,

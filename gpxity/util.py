@@ -12,7 +12,7 @@ import datetime
 
 __all__ = ['Duration', 'repr_timespan', 'VERSION']
 
-VERSION = '1.1.2'
+VERSION = '1.2.0'
 
 class Duration:
     """A context manager showing time information for debugging."""
