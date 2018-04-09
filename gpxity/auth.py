@@ -38,6 +38,14 @@ class Authenticate:
       * Password
       * Url
 
+    An example for user gpxitytest on gpsies.com:
+
+    .. code-block:: guess
+
+        [GPSIES:gpxitytest]
+        Password = the_unencrypted_password
+
+
     """
 
     # pylint: disable=too-few-public-methods
