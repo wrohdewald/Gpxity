@@ -137,6 +137,8 @@ class Backend:
             If a particular _write_* like _write_public does not exist, the entire activity is written instead.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
+        timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
+            see http://docs.python-requests.org/en/master/user/advanced/#timeouts
     """
 
     class NoMatch(Exception):
@@ -152,7 +154,7 @@ class Backend:
 
     _legal_whats = None # Override in the backends
 
-    def __init__(self, url=None, auth=None, cleanup=False, debug=False):
+    def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         self._decoupled = False
         super(Backend, self).__init__()
         self.__activities = list()
@@ -172,6 +174,7 @@ class Backend:
         self._next_id = None # this is a hack, see save()
         self.__debug = None
         self.debug = debug
+        self.timeout = timeout
 
     @property
     def legal_whats(self):

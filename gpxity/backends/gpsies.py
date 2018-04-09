@@ -160,6 +160,8 @@ class GPSIES(Backend):
         auth (tuple(str, str)): Username and password
         cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all activities in the
             user account.
+        timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
+            see http://docs.python-requests.org/en/master/user/advanced/#timeouts
     """
 
     # pylint: disable=abstract-method
@@ -228,10 +230,10 @@ class GPSIES(Backend):
         'Pack animal trekking': 'packAnimalTrekking'
     }
 
-    def __init__(self, url=None, auth=None, cleanup=False, debug=False):
+    def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         if url is None:
             url = 'https://www.gpsies.com'
-        super(GPSIES, self).__init__(url, auth, cleanup, debug)
+        super(GPSIES, self).__init__(url, auth, cleanup, debug, timeout)
         self.__session = None
         self.session_response = None
 
@@ -241,7 +243,7 @@ class GPSIES(Backend):
         Returns: list(str)
             all legal values for what."""
         if not self._legal_whats:
-            response = requests.post('{}?trackList.do'.format(self.url))
+            response = requests.post('{}?trackList.do'.format(self.url), timeout=self.timeout)
             whats_parser = ParseGPSIESWhats()
             whats_parser.feed(response.text)
             self._legal_whats.extend(whats_parser.result)
@@ -255,7 +257,9 @@ class GPSIES(Backend):
                 raise Exception('{}: Needs authentication data'.format(self.url))
             self.__session = requests.Session()
             data = {'username': self.auth[0], 'password': self.auth[1]}
-            self.session_response = self.__session.post('{}/loginLayer.do?language=en'.format(self.url), data=data)
+            self.session_response = self.__session.post(
+                '{}/loginLayer.do?language=en'.format(self.url),
+                data=data, timeout=self.timeout)
             self._check_response(self.session_response)
         cookies = requests.utils.dict_from_cookiejar(self.__session.cookies)
         cookies['cookieconsent_dismissed'] = 'yes'
@@ -268,7 +272,7 @@ class GPSIES(Backend):
             data[key] = self._html_encode(data[key])
         if data.get('fileDescription'):
             data['fileDescription'] = '<p>{}</p>'.format(data['fileDescription'])
-        response = self.session.post('{}/{}.do'.format(self.url, action), data=data, files=files)
+        response = self.session.post('{}/{}.do'.format(self.url, action), data=data, files=files, timeout=self.timeout)
         self._check_response(response)
         return response
 

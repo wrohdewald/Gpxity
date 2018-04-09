@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.2.1 release xxxx-xx-xx
+------------------------
+  * Backend has a new arg "timeout"
+
 1.2.0 release 2018-04-09
 ------------------------
   * New backend GPSIES for www.gpsies.com

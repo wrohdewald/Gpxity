@@ -196,9 +196,9 @@ class Utility:
                 account = rest
                 activity_id = None
             if clsname == 'MMT':
-                result = MMT(auth=account)
+                result = MMT(auth=account, timeout=self.options.timeout)
             elif clsname == 'GPSIES':
-                result = GPSIES(auth=account)
+                result = GPSIES(auth=account, timeout=self.options.timeout)
         else:
             if os.path.isdir(name):
                 account = name
@@ -255,10 +255,13 @@ class Utility:
         parser.add_argument('--max-distance', help='Limit activities by distance', type=int, default=None)
 
     @staticmethod
-    def add_verbose_arg(parser):
+    def add_common_args(parser):
         """Add the verbose argument"""
         parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
         parser.add_argument('--debug', action='store_true', help='debug backend traffic', default=False)
+        parser.add_argument('--timeout', help="""
+            Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
+            the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
 
     help_epilog = """
 
@@ -299,7 +302,7 @@ Dates are expected as YYYY-MM-DD.
             'sync', help='synchronize one or more sources to a destination backend',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         sync_parser.set_defaults(func=self.sync)
-        self.add_verbose_arg(sync_parser)
+        self.add_common_args(sync_parser)
         self.add_range_args(sync_parser)
         sync_parser.add_argument('source', help='one or more activities or backends', nargs='*')
         sync_parser.add_argument('destination', help='the destination backend', nargs=1)
@@ -308,7 +311,7 @@ Dates are expected as YYYY-MM-DD.
             'mv', help='move one or more sources to a destination backend',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         mv_parser.set_defaults(func=self.move)
-        self.add_verbose_arg(mv_parser)
+        self.add_common_args(mv_parser)
         self.add_range_args(mv_parser)
         mv_parser.add_argument('source', help='one or more activities or backends', nargs='*')
         mv_parser.add_argument('destination', help='the destination backend', nargs=1)
@@ -317,7 +320,7 @@ Dates are expected as YYYY-MM-DD.
             'rm', help='remove activities from one or more sources',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         rm_parser.set_defaults(func=self.remove)
-        self.add_verbose_arg(rm_parser)
+        self.add_common_args(rm_parser)
         self.add_range_args(rm_parser)
         rm_parser.add_argument('source', help='one or more activities or backends', nargs='*')
 
@@ -326,7 +329,7 @@ Dates are expected as YYYY-MM-DD.
                 'fix', help='fix some GPX format bugs in activities from one or more sources',
                 epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
             fix_parser.set_defaults(func=self.fix)
-            self.add_verbose_arg(fix_parser)
+            self.add_common_args(fix_parser)
             self.add_range_args(fix_parser)
             fix_parser.add_argument('source', help='one or more activities or backends', nargs='*')
 
@@ -337,12 +340,12 @@ Dates are expected as YYYY-MM-DD.
         ls_parser.add_argument('--full', help='download the full activity for more info',
                                action='store_true', default=False)
         self.add_range_args(ls_parser)
-        self.add_verbose_arg(ls_parser)
+        self.add_common_args(ls_parser)
         ls_parser.add_argument('source', help='one or more activities or backends', nargs='*')
 
         keyword_parser = subparsers.add_parser('kw', help='add or remove keywords')
         keyword_parser.set_defaults(func=self.keyword)
-        self.add_verbose_arg(keyword_parser)
+        self.add_common_args(keyword_parser)
         self.add_range_args(keyword_parser)
         keyword_parser.add_argument('--remove', help='remove keywords. Default is to add them.',
                                     action='store_true', default=False)
@@ -355,7 +358,7 @@ Dates are expected as YYYY-MM-DD.
             description or keywords from source to destination""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         merge_parser.set_defaults(func=self.merge)
-        self.add_verbose_arg(merge_parser)
+        self.add_common_args(merge_parser)
         self.add_range_args(merge_parser)
         merge_parser.add_argument('--remove', help='remove merged activities',
                                   action='store_true', default=False)
@@ -364,6 +367,12 @@ Dates are expected as YYYY-MM-DD.
 
 
         self.options = parser.parse_args()
+
+        if self.options.timeout is not None:
+            if ',' in self.options.timeout:
+                self.options.timeout = tuple(float(x) for x in self.options.timeout.split(','))
+            else:
+                self.options.timeout = float(self.options.timeout)
 
 
 Utility()
