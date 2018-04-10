@@ -94,7 +94,7 @@ class Directory(Backend):
 
     def _load_symlinks(self, directory=None):
         """scan the subdirectories with the symlinks. If the content of an
-        actiivty changes, the symlinks might have to be adapted. But
+        activity changes, the symlinks might have to be adapted. But
         we do not know the name of the existing symlink anymore. So
         just scan them all and assign them to id_in_backend."""
         if directory is None:
