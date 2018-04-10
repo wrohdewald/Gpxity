@@ -159,7 +159,7 @@ class Activity:
                 self.__backend = value
                 with self.decoupled():
                     self.what = value.encode_what(self.what)
-                if not self._loading:
+                if not self.is_decoupled:
                     try:
                         self.__backend.save(self)
                     except BaseException:
@@ -191,7 +191,7 @@ class Activity:
     def dirty(self, value):
         if not isinstance(value, str):
             raise Exception('dirty only receives str')
-        if self._loading:
+        if self.is_decoupled:
             return
 
         # see gpxity.py/fix(): only setting dirty to 'gpx' still needs activity.title
@@ -231,7 +231,7 @@ class Activity:
             self.__dirty = set()
         if not self.__dirty:
             return
-        if not self._loading and not self._batch_changes:
+        if not self.is_decoupled and not self._batch_changes:
             self.backend.save(self, attributes=self.__dirty)
             self.__dirty = set()
 
@@ -349,12 +349,12 @@ class Activity:
     @what.setter
     def what(self, value: str):
         if value is None:
-            if self.backend is None: # and not self._loading:
+            if self.backend is None: # and not self.is_decoupled:
                 value = self.legal_whats[0]
             else:
                 value = self.backend.legal_whats[0]
         if value != self.what:
-            if self.backend is None: #  and not self._loading:
+            if self.backend is None: #  and not self.is_decoupled:
                 if value not in self.legal_whats:
                     raise Exception('What {} is not known'.format(value))
             else:
@@ -368,7 +368,7 @@ class Activity:
 
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
-        if self.backend is not None and self.id_in_backend and not self._loaded and not self._loading:
+        if self.backend is not None and self.id_in_backend and not self._loaded and not self.is_decoupled:
             self.backend._read_all(self) # pylint: disable=protected-access, no-member
             self._loaded = True
 
