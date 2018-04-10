@@ -413,13 +413,9 @@ class GPSIES(Backend):
             return ''
         return value.encode('ascii', 'xmlcharrefreplace').decode()
 
-    def _write_all(self, activity, ident: str = None):
+    def _write_all(self, activity):
         """save full gpx track on the GPSIES server."""
 
-        if activity.id_in_backend:
-            # we cannot change an GPSIES activity in-place, we need to re-upload and then
-            # remove the previous instance.
-            self._remove_activity(activity)
         files = {'formFile': (
             '{}.gpx'.format(self._html_encode(activity.title)), activity.to_xml(), 'application/gpx+xml')}
         data = {

@@ -347,9 +347,9 @@ class Backend:
             raise Backend.NoMatch('{}: {} does not match: {}'.format(exc_prefix, activity, match_error))
         return match_error is None
 
-    def _needs_full_save(self, next_id, attributes) ->bool:
+    def _needs_full_save(self, ident, attributes) ->bool:
         """Do we have to rewrite the entire activity?"""
-        if attributes is None or attributes == set(['all']) or next_id:
+        if attributes is None or attributes == set(['all']) or ident:
             return True
         else:
             for attribute in attributes:
@@ -371,7 +371,8 @@ class Backend:
             activity (~gpxity.Activity): The activity we want to save in this backend.
                 It may be associated with an arbitrary backend.
             ident: If given, a backend may use this as id_in_backend.
-                :class:`~gpxity.Directory` does.
+                :class:`~gpxity.Directory` does. However most backends always create their own new
+                unique identifier when the full activity is saved/uploaded. MMT and GPSIES do.
             attributes (set(str)): If given and the backend supports specific saving for all given attributes,
                 save only those.
                 Otherwise, save the entire activity.
@@ -395,17 +396,17 @@ class Backend:
             raise
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
-        next_id = None
         with activity.decoupled():
             if activity.backend is None:
-                next_id = ident
                 activity.backend = self
 
-        if self._needs_full_save(next_id, attributes):
-            activity_id = ident or next_id or activity.id_in_backend
-            if activity_id is not None and not isinstance(activity_id, str):
-                raise Exception('{}: id_in_backend must be str')
-            self._write_all(activity, ident or next_id)
+        if self._needs_full_save(ident, attributes):
+            if ident is not None and not isinstance(ident, str):
+                raise Exception('{}: id_in_backend must be str'.format(ident))
+            if activity.id_in_backend:
+                self._remove_activity(activity)
+            activity.id_in_backend = ident
+            self._write_all(activity)
         else:
             for attribute in attributes:
                 _ = attribute.split(':')
@@ -418,7 +419,7 @@ class Backend:
             self.append(activity)
         return activity
 
-    def _write_all(self, activity, ident: str = None) ->None:
+    def _write_all(self, activity) ->None:
         """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 

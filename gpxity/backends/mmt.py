@@ -543,7 +543,7 @@ class MMT(Backend):
             with_session=True, url='handler/delete_track', expect='access granted',
             tid=activity.id_in_backend, hash=self.session.cookies['exp_uniqueid'])
 
-    def _write_all(self, activity, ident: str = None):
+    def _write_all(self, activity):
         """save full gpx track on the MMT server.
         We must upload the title separately.
         Because we cannot upload the time, we set the activity time to the time
@@ -551,10 +551,6 @@ class MMT(Backend):
 
         if not activity.gpx.get_track_points_no():
             raise self.BackendException('MMT does not accept an activity without trackpoints:{}'.format(activity))
-        if activity.id_in_backend:
-            # we cannot change an MMT activity in-place, we need to re-upload and then
-            # remove the previous instance.
-            self._remove_activity(activity)
         response = self.__post(
             request='upload_activity', gpx_file=activity.to_xml(),
             status='public' if activity.public else 'private',
