@@ -94,7 +94,7 @@ class TestBackends(BasicTest):
                 return 'time {} is before {}'.format(activity.time, '2016-09-05')
         for cls in (Directory, ):
             with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
+                with self.temp_backend(cls, count=3) as backend:
                     for idx, _ in enumerate(backend):
                         _.adjust_time(datetime.timedelta(hours=idx))
                     new_activity = backend[0].clone()
@@ -117,7 +117,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported and 'get_time' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(cls, count=3, clear_first=True, cleanup=True) as backend:
+                    with self.temp_backend(cls, count=3) as backend:
                         self.assertEqual(len(backend), 3)
                         first_time = backend.get_time()
                         time.sleep(2)
@@ -131,8 +131,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(
-                        cls, count=1, what='Horse riding', clear_first=True, cleanup=True) as backend:
+                    with self.temp_backend(cls, count=1, what='Horse riding') as backend:
                         activity = backend[0]
                         first_public = activity.public
                         first_title = activity.title
@@ -224,7 +223,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(cls, count=1, clear_first=True) as backend:
+                    with self.temp_backend(cls, count=1) as backend:
                         backend2 = self.clone_backend(backend)
                         activity = backend[0]
                         activity.title = 'Title ' + self.unicode_string1
@@ -256,13 +255,13 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(cls, count=2, clear_first=True) as backend:
+                    with self.temp_backend(cls, count=2) as backend:
                         backend[0].title = 'TITLE'
                         backend[1].title = 'TITLE'
 
     def test_private(self):
         """Up- and download private activities"""
-        with self.temp_backend(Directory, count=5, cleanup=True, public=False, what='Cycling') as local:
+        with self.temp_backend(Directory, count=5, what='Cycling') as local:
             activity = Activity(gpx=self._get_gpx_from_test_file('test2'))
             self.assertTrue(activity.public) # as defined in test2.gpx keywords
             activity.public = False
@@ -271,7 +270,7 @@ class TestBackends(BasicTest):
             for cls in self._find_backend_classes():
                 if 'remove' in cls.supported:
                     with self.subTest(' {}'.format(cls.__name__)):
-                        with self.temp_backend(cls, clear_first=True, cleanup=True) as backend:
+                        with self.temp_backend(cls) as backend:
                             backend.sync_from(local)
                             for _ in backend:
                                 self.assertFalse(_.public)
@@ -282,9 +281,9 @@ class TestBackends(BasicTest):
 
     def test_sync(self):
         """sync_from"""
-        with self.temp_backend(Directory, count=5, cleanup=True) as source:
+        with self.temp_backend(Directory, count=5) as source:
 
-            with self.temp_backend(Directory, count=4, cleanup=True) as sink:
+            with self.temp_backend(Directory, count=4) as sink:
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=100))
                 sink.sync_from(source)
@@ -294,7 +293,7 @@ class TestBackends(BasicTest):
 
     def test_scan(self):
         """some tests about Backend.scan()"""
-        with self.temp_backend(Directory, count=5, cleanup=True) as source:
+        with self.temp_backend(Directory, count=5) as source:
             backend2 = self.clone_backend(source)
             activity = self.create_test_activity()
             backend2.save(activity)
@@ -303,7 +302,7 @@ class TestBackends(BasicTest):
 
     def xtest_sync_trackmmt(self):
         """sync from local to MMT. TODO: automatically start the expected local server"""
-        with self.temp_backend(Directory, count=5, cleanup=True) as source:
+        with self.temp_backend(Directory, count=5) as source:
             with TrackMMT(auth='test') as sink:
                 prev_len = len(sink)
                 for _ in sink:

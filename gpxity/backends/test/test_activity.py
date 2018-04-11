@@ -39,7 +39,7 @@ class ActivityTests(BasicTest):
             Activity(backend)
             self.assertEqual(len(backend), 1)
 
-        with self.temp_backend(Directory, count=2, cleanup=True, public=False) as backend:
+        with self.temp_backend(Directory, count=2) as backend:
             Activity(backend)
             self.assertEqual(len(backend), 3)
 
