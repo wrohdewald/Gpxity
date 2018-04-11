@@ -293,6 +293,7 @@ Dates are expected as YYYY-MM-DD.
 
     def parse_commandline(self):
         """into self.options"""
+        # pylint: disable=too-many-statements
         parser = argparse.ArgumentParser(
             'gpxity', formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=self.help_epilog)
