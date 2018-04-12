@@ -231,7 +231,8 @@ class Directory(Backend):
             if time:
                 os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
                 link_name = self._symlink_path(activity, ident)
-                link_target = os.path.join('..', '..', '{}.gpx'.format(ident))
+                basename = os.path.basename(gpx_pathname)
+                link_target = os.path.join('..', '..', basename)
                 os.symlink(link_target, link_name)
                 if link_name not in self._symlinks[ident]:
                     self._symlinks[ident].append(link_name)
