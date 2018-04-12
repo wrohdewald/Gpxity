@@ -181,9 +181,16 @@ class Utility:
             target = right_dict[point_hash][0]
             for source in sources:
                 self.merge_activities(source, target)
+        """Merge"""
+        msg = self.destination.merge(self.sources[0], remove=self.options.remove)
+        if self.options.verbose:
+            for _ in msg:
+                print(_)
 
     def instantiate_object(self, name):
-        """returns a backend or an activity for name"""
+        """returns a backend for name.
+        If name is a single activity, the returned backend has a match filtering
+        only this one wanted activity."""
         account = activity_id = None
         if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES'):
             clsname = name.split(':')[0].upper()
