@@ -119,6 +119,6 @@ gpx = Directory('/home/wr/Dokumente/Privat/gpx')
 #remove_shorties(mmt_local,  mmt)
 #remove_shorties(gpx)
 
-mmt_local.sync_from(mmt, remove=True, use_remote_ident=True)
+mmt_local.merge(mmt, remove=True, use_remote_ident=True)
 
 dump_diffs(gpx, mmt_local)

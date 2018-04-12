@@ -788,3 +788,48 @@ class Activity:
             previous = current
         if group:
             yield sorted(group, key=lambda x: x.time)
+
+    def _has_default_title(self) ->bool:
+        """Try to check if activity has the default title given by a backend."""
+        # the title of MMT might have been copied into another backend:
+        if not self.title:
+            return True
+        if self.title == '{} activity'.format(self.what):
+            return True
+        if  all(x in '0123456789 :-_' for x in self.title):
+            return True
+        return False
+
+
+    def merge(self, other) ->list:
+        """Merge other activity into this one. The track points must be identical.
+        If either is public, the result is public.
+        If self.title seems like a default and other.title does not, use other.title
+        Combine description and keywords.
+
+        Args:
+            other (:class:`~gpxity.Activity`): The activity to be merged
+        Returns: list(str)
+            Messages about what has been done
+        """
+        if self.points_hash() != other.points_hash():
+            raise Exception('Cannot merge, points are different: {} into {}'.format(other, self))
+        msg = list()
+        with self.batch_changes():
+            if not other._has_default_title() and self._has_default_title():  # pylint: disable=protected-access
+                msg.append('Title: {} -> {}'.format(self.title, other.title))
+                self.title = other.title
+            if other.description != self.description:
+                msg.append('Additional description: {}'.format(
+                    other.description))
+                self.description += '\n'
+                self.description += other.description
+            if other.public and not self.public:
+                msg.append('Visibility: private -> public')
+                self.public = True
+            kw_src = set(other.keywords)
+            kw_dst = set(self.keywords)
+            if kw_src - kw_dst:
+                msg.append('New keywords: {}'.format(','.join(kw_src - kw_dst)))
+                self.keywords = kw_src | kw_dst
+        return msg

@@ -13,7 +13,6 @@ import argparse
 import os
 import sys
 import datetime
-from collections import defaultdict
 
 # This uses not the installed copy but the development files
 sys.path.insert(0, '..')
@@ -47,11 +46,6 @@ class Utility:
                 raise Exception('No activity id allowed in destination:{}'.format(self.options.destination))
         self.options.func()
 
-    def sync(self):
-        """sync all gpx files from source backend to destination backend"""
-        for source in self.sources:
-            self.destination.sync_from(source, use_remote_ident=True, verbose=self.options.verbose)
-
     def _source_activities(self):
         """A copied list with activities combined from all sources, to be used in 'for'-loops"""
         result = list()
@@ -61,7 +55,7 @@ class Utility:
 
     def move(self):
         """move gpx files.
-        We cannot just do sync() followed by remove() because
+        We cannot just do merge() followed by remove() because
         the source might have gotten new activities meanwhile, and
         they would disappear for good."""
         for _ in self._source_activities():
@@ -114,73 +108,7 @@ class Utility:
                 if self.options.verbose:
                     print('added {} to {}'.format(kword, _))
 
-    @staticmethod
-    def _has_default_title(activity) ->bool:
-        """Try to check if activity has the default title given by a backend."""
-        # the title of MMT might have been copied into another backend:
-        if activity.title == '{} activity'.format(activity.what):
-            return True
-        if  all(x in '0123456789 :-_' for x in activity.title):
-            return True
-        return False
-
-    def merge_activities(self, source, target):
-        """merge two activities"""
-        msg = list()
-        msg.append('Merged{} {}:{}'.format(
-            ' and removed' if self.options.remove else '', source.backend.url, source))
-        msg.append('{}  into {}:{}'.format(
-            ' ' * len(' and removed') if self.options.remove else '', target.backend.url, target))
-        if not self._has_default_title(source) and self._has_default_title(target):
-            msg.append('   Title: {} -> {}'.format(target.title, source.title))
-            target.title = source.title
-        if source.description != target.description:
-            msg.append('   Additional description: {}'.format(
-                source.description))
-            target.description += '\n'
-            target.description += source.description
-        if source.public and not target.public:
-            msg.append('   Visibility: private -> public')
-            target.public = True
-        kw_src = set(source.keywords)
-        kw_dst = set(target.keywords)
-        if kw_src - kw_dst:
-            msg.append('   New keywords: {}'.format(','.join(kw_src - kw_dst)))
-            target.keywords = kw_src | kw_dst
-        if self.options.remove:
-            if self.options.verbose and len(msg) <= 2:
-                print('Removed duplicate', source)
-            source.remove()
-        if self.options.verbose:
-            if len(msg) > 2:
-                for _ in msg:
-                    print(_)
-
-
     def merge(self):
-        """merge two files or directories. The directories may be
-        identical: This will remove duplicates in that directory.
-        If both gpx have identical points, or- ify other attributes
-        """
-        left_dict = defaultdict(list)
-        for _ in self.sources[0]:
-            left_dict[_.points_hash()].append(_)
-        if self.sources[0].url == self.destination.url and self.sources[0].auth == self.destination.auth:
-            right_dict = left_dict
-        else:
-            right_dict = defaultdict(list)
-            for _ in self.destination:
-                right_dict[_.points_hash()].append(_)
-        for point_hash in sorted(set(left_dict.keys()) & set(right_dict.keys())):
-            if right_dict is left_dict:
-                sources = left_dict[point_hash][1:]
-            else:
-                sources = left_dict[point_hash]     # no need to copy the list
-                sources.extend(right_dict[point_hash][1:])
-            sources = sorted(sources)
-            target = right_dict[point_hash][0]
-            for source in sources:
-                self.merge_activities(source, target)
         """Merge"""
         msg = self.destination.merge(self.sources[0], remove=self.options.remove)
         if self.options.verbose:
@@ -305,15 +233,6 @@ Dates are expected as YYYY-MM-DD.
             'gpxity', formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=self.help_epilog)
         subparsers = parser.add_subparsers()
-
-        sync_parser = subparsers.add_parser(
-            'sync', help='synchronize one or more sources to a destination backend',
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-        sync_parser.set_defaults(func=self.sync)
-        self.add_common_args(sync_parser)
-        self.add_range_args(sync_parser)
-        sync_parser.add_argument('source', help='one or more activities or backends', nargs='*')
-        sync_parser.add_argument('destination', help='the destination backend', nargs=1)
 
         mv_parser = subparsers.add_parser(
             'mv', help='move one or more sources to a destination backend',

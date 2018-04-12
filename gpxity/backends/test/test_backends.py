@@ -280,24 +280,24 @@ class TestBackends(BasicTest):
                 if 'remove' in cls.supported:
                     with self.subTest(' {}'.format(cls.__name__)):
                         with self.temp_backend(cls) as backend:
-                            backend.sync_from(local)
+                            backend.merge(local)
                             for _ in backend:
                                 self.assertFalse(_.public)
                             backend2 = self.clone_backend(backend)
                             with Directory(cleanup=True) as copy:
-                                copy.sync_from(backend2)
+                                copy.merge(backend2)
                                 self.assertSameActivities(local, copy)
 
-    def test_sync(self):
-        """sync_from"""
+    def test_merge(self):
+        """merge backends"""
         with self.temp_backend(Directory, count=5) as source:
 
             with self.temp_backend(Directory, username='gpxitytest2', count=4) as sink:
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=100))
-                sink.sync_from(source)
+                sink.merge(source)
                 self.assertEqual(len(sink), 9)
-                sink.sync_from(source, remove=True)
+                sink.merge(source, remove=True)
                 self.assertSameActivities(source, sink)
 
     def test_scan(self):
@@ -316,7 +316,7 @@ class TestBackends(BasicTest):
                 prev_len = len(sink)
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=-random.randrange(10000)))
-                sink.sync_from(source)
+                sink.merge(source)
                 self.assertEqual(len(sink), prev_len + 5)
 
     def xtest_track(self):

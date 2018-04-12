@@ -472,32 +472,6 @@ class Backend:
             if self.matches(activity):
                 self.remove(activity)
 
-    def sync_from(self, from_backend, remove: bool = False,
-                  use_remote_ident: bool = False, verbose: bool = False) ->None:
-        """Copies all activities into this backend.
-
-        Args:
-            from_backend (Backend): The source of the activities
-            remove: If True, remove activities in self which do not exist in from_backend
-            use_remote_ident: If True, uses the remote id for our id_in_backend. This
-                may or may not be honoured by the backend. Directory does.
-        """
-        for activity in from_backend:
-            if use_remote_ident and activity.id_in_backend in self:
-                self.remove(self[activity.id_in_backend])
-            else:
-                for mine in self:
-                    if mine.time == activity.time:
-                        self.remove(mine)
-            activity = self.save(activity, ident=activity.id_in_backend if use_remote_ident else None)
-            if verbose:
-                print('saved', activity)
-        if remove:
-            differ = BackendDiff(self, from_backend)
-            for activities in differ.left.exclusive.values():
-                for activity in activities:
-                    self.remove(activity)
-
     def destroy(self):
         """If `cleanup` was set at init time, removes all activities. Some backends
        (example: :class:`Directory <gpxity.Directory.destroy>`)
@@ -571,3 +545,54 @@ class Backend:
         self._scan()
         other._scan() # pylint: disable=protected-access
         return set(x.key() for x in self) == set(x.key() for x in other)
+
+    def merge(self, other, remove: bool = False) ->list:
+        """merge other backend into this one.
+        If two activities have identical points, or-ify their other attributes.
+        Args:
+            remove: If True, remove merged activities
+        Returns: list(str) A list of messages for verbose output
+
+        # TODO: re-introduce use_remote_ident from sync_from
+        """
+        result = list()
+        src_dict = defaultdict(list)
+        for _ in other:
+            src_dict[_.points_hash()].append(_)
+        if other.url == self.url and other.auth == self.auth:
+            dst_dict = src_dict
+        else:
+            dst_dict = defaultdict(list)
+            for _ in self:
+                dst_dict[_.points_hash()].append(_)
+
+        # 1. get all activities existing only in other
+        for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
+            # but only the first one of those with same points
+            self.save(src_dict[point_hash][0])
+            result.append('{} {} -> {}'.format(
+                'move' if remove else 'copy', src_dict[point_hash][0], self))
+            del src_dict[point_hash][0]
+
+        # 2. merge the rest
+        for point_hash in sorted(set(src_dict.keys()) & set(dst_dict.keys())):
+            if dst_dict is src_dict:
+                sources = src_dict[point_hash][1:]
+            else:
+                sources = src_dict[point_hash]     # no need to copy the list
+                sources.extend(dst_dict[point_hash][1:])
+            sources = sorted(sources)
+            target = dst_dict[point_hash][0]
+            for source in sources:
+                msg = target.merge(source)
+                if msg:
+                    msg.insert(0, 'Merged{} {}:{}'.format(
+                        ' and removed' if remove else '', source.backend.url, source))
+                    msg.insert(1, '{}  into {}:{}'.format(
+                        ' ' * len(' and removed') if remove else '', target.backend.url, target))
+                    result.extend(msg)
+                if remove:
+                    if len(msg) <= 2:
+                        result.append('Removed duplicate {}'.format(source))
+                    source.remove()
+        return result
