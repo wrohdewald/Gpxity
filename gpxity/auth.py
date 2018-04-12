@@ -55,7 +55,9 @@ class Authenticate:
         self.cls = cls
         self.__username = username
         self.auth = (None, None)
-
+        if 'Directory' in cls.__name__  and username.startswith('gpxitytest'):
+            self.url = '/tmp/{}'.format(username)
+            return
         self.path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
         with open(self.path) as auth_file:
             self._parse_config(auth_file.read())

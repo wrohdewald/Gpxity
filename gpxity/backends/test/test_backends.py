@@ -283,7 +283,7 @@ class TestBackends(BasicTest):
         """sync_from"""
         with self.temp_backend(Directory, count=5) as source:
 
-            with self.temp_backend(Directory, count=4) as sink:
+            with self.temp_backend(Directory, username='gpxitytest2', count=4) as sink:
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=100))
                 sink.sync_from(source)
@@ -347,8 +347,8 @@ class TestBackends(BasicTest):
         self.assertTrue(os.path.exists(test_url))
         os.rmdir(test_url)
 
-        dir_c = Directory(auth='urltest')
-        auth_dir = Authenticate(Directory, 'urltest').url
+        dir_c = Directory(auth='gpxitytest2')
+        auth_dir = Authenticate(Directory, 'gpxitytest2').url
         if not auth_dir.endswith('/'):
             auth_dir += '/'
         self.assertFalse(dir_c.is_temporary)
