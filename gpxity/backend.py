@@ -549,8 +549,11 @@ class Backend:
 
     def __repr__(self):
         """do not call len(self) because that does things"""
+        dirname = ''
+        if self.auth:
+            dirname = self.auth[0] or ''
         result = '{}({} in {}{})'.format(
-            self.__class__.__name__, len(self.__activities), self.url, ' ' + self.auth[0] if self.auth else '')
+            self.__class__.__name__, len(self.__activities), self.url, ' ' + dirname)
         return result
 
     def __enter__(self):
