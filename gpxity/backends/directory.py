@@ -223,17 +223,18 @@ class Directory(Backend):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
         gpx_pathname = self.gpx_path(activity)
+        ident = activity.id_in_backend
         try:
             with open(gpx_pathname, 'w') as out_file:
                 out_file.write(activity.to_xml())
             time = activity.time
             if time:
                 os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
-                link_name = self._symlink_path(activity, activity.id_in_backend)
-                link_target = os.path.join('..', '..', '{}.gpx'.format(activity.id_in_backend))
+                link_name = self._symlink_path(activity, ident)
+                link_target = os.path.join('..', '..', '{}.gpx'.format(ident))
                 os.symlink(link_target, link_name)
-                if link_name not in self._symlinks[activity.id_in_backend]:
-                    self._symlinks[activity.id_in_backend].append(link_name)
+                if link_name not in self._symlinks[ident]:
+                    self._symlinks[ident].append(link_name)
         except BaseException:
             raise
 
