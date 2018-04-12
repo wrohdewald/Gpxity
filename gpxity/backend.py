@@ -351,7 +351,7 @@ class Backend:
 
     def _needs_full_save(self, ident, attributes) ->bool:
         """Do we have to rewrite the entire activity?"""
-        if attributes is None or attributes == set(['all']) or ident:
+        if not attributes or attributes == set(['all']) or ident:
             return True
         else:
             for attribute in attributes:
@@ -360,7 +360,7 @@ class Backend:
                     return True
         return False
 
-    def save(self, activity, ident: str = None, attributes=None):
+    def save(self, activity, ident: str = None, attributes=set()):
         """save full activity.
 
         If we know that this activity already exists, remove that one first. But we do

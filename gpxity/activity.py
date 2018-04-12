@@ -166,7 +166,7 @@ class Activity:
                         raise
 
     @property
-    def dirty(self) ->bool:
+    def dirty(self) ->set:
         """
         Is the activity in sync with the backend?
 
@@ -180,10 +180,9 @@ class Activity:
         See also :attr:`gpx`.
 
         Returns:
-            bool: True if the activity is not in sync with the backend. If no backend is
-            associated, False stands for an empty activity.
+            set: The names of the attributes currently marked as dirty.
         """
-        return bool(self.__dirty)
+        return self.__dirty
 
     @dirty.setter
     def dirty(self, value):
