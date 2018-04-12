@@ -25,11 +25,11 @@ class ServerDirectory(Directory):
 
     skip_test = True
 
-    def _set_new_id(self, activity):
-        """gives the activity a unique id"""
+    def _new_id(self, _):
+        """Buids a unique id for activity"""
         try:
-            activity.id_in_backend = str(max(int(x) for x in self._list_gpx()) + 1)
+            return str(max(int(x) for x in self._list_gpx()) + 1)
         except ValueError:
-            activity.id_in_backend = '1'
+            return '1'
 
 ServerDirectory._define_support() # pylint: disable=protected-access

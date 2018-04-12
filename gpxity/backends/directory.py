@@ -114,17 +114,19 @@ class Directory(Backend):
                     else:
                         os.remove(full_name)
 
-    def _set_new_id(self, activity):
+    def _new_id_from(self, ident_proposal):
         """a not yet existant file name"""
         if self.fs_encoding is not None:
             raise Exception('No support for fs_encoding={}'.format(self.fs_encoding))
-        value = None
-        if activity.title:
-            value = self._sanitize_name(activity.title)
+        value = self._sanitize_name(ident_proposal)
         if not value:
             value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
+        return value
+
+    def _make_ident_unique(self, value) ->str:
+        """Change the ident such that its gpx_path does not yet exist"""
         path = self._make_path_unique(os.path.join(self.url, value + '.gpx'))
-        activity.id_in_backend = os.path.basename(path)[:-4]
+        return os.path.basename(path)[:-4]
 
     @staticmethod
     def _make_path_unique(value):
@@ -159,12 +161,9 @@ class Directory(Backend):
             if self.is_temporary:
                 os.rmdir(self.url)
 
-    def gpx_path(self, activity):
+    def gpx_path(self, ident):
         """The full path name for the local copy of an activity"""
-        if not activity.id_in_backend:
-            self._set_new_id(activity)
-        base_name = '{}.gpx'.format(activity.id_in_backend)
-        return os.path.join(self.url, base_name)
+        return os.path.join(self.url, '{}.gpx'.format(ident))
 
     def _list_gpx(self):
         """returns a generator of all gpx files, with .gpx removed"""
@@ -188,7 +187,7 @@ class Directory(Backend):
         """fills the activity with all its data from source."""
         with activity.decoupled():
             assert activity.id_in_backend
-            with open(self.gpx_path(activity)) as in_file:
+            with open(self.gpx_path(activity.id_in_backend)) as in_file:
                 activity.parse(in_file)
 
     def _remove_activity(self, activity):
@@ -202,7 +201,7 @@ class Directory(Backend):
             except OSError:
                 pass
         self._symlinks[activity.id_in_backend] = list()
-        gpx_file = self.gpx_path(activity)
+        gpx_file = self.gpx_path(activity.id_in_backend)
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 
@@ -223,8 +222,11 @@ class Directory(Backend):
     def _write_all(self, activity):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
-        gpx_pathname = self.gpx_path(activity)
         ident = activity.id_in_backend
+        if ident is None:
+            ident = self._new_id_from(activity.title)
+        activity.id_in_backend = self._make_ident_unique(ident)
+        gpx_pathname = self.gpx_path(activity.id_in_backend)
         try:
             with open(gpx_pathname, 'w') as out_file:
                 out_file.write(activity.to_xml())
