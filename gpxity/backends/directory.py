@@ -187,6 +187,7 @@ class Directory(Backend):
     def _read_all(self, activity):
         """fills the activity with all its data from source."""
         with activity.decoupled():
+            assert activity.id_in_backend
             with open(self.gpx_path(activity)) as in_file:
                 activity.parse(in_file)
 
