@@ -360,7 +360,7 @@ class Backend:
                     return True
         return False
 
-    def save(self, activity, ident: str = None, attributes=set()):
+    def save(self, activity, ident: str = None):
         """save full activity.
 
         If we know that this activity already exists, remove that one first. But we do
@@ -386,7 +386,7 @@ class Backend:
         """
 
         # pylint: disable=too-many-branches
-
+        attributes = activity.dirty
         if activity.is_decoupled:
             raise Exception('A backend cannot save() if activity.is_decoupled. This is probably a bug in gpxity.')
         try:

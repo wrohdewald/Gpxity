@@ -226,7 +226,7 @@ class Activity:
         if not self.__dirty:
             return
         if not self.is_decoupled and not self._batch_changes:
-            self.backend.save(self, attributes=self.__dirty)
+            self.backend.save(self)
             self.__dirty = set()
 
     def remove(self):
