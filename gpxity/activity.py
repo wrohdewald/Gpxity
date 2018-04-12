@@ -157,8 +157,6 @@ class Activity:
             else:
                 self._loaded = True
                 self.__backend = value
-                with self.decoupled():
-                    self.what = value.encode_what(self.what)
                 if not self.is_decoupled:
                     try:
                         self.__backend.save(self)
@@ -204,14 +202,11 @@ class Activity:
     def clone(self):
         """Creates a new activity with the same content but without backend.
 
-        The value for :attr:`what` is translated from the backend specific value
-        (:attr:`Backend.legal_whats`) to a neutral internal value (:attr:legal_whats).
-
         Returns:
             ~gpxity.Activity: the new activity
         """
         result = Activity(gpx=self.gpx.clone())
-        result.what = self.backend.decode_what(self.what) if self.backend else self.what
+        result.what = self.what
         # TODO: header_data????
         result.public = self.public
         return result
@@ -336,8 +331,9 @@ class Activity:
         """str: What is this activity doing? If we have no current value,
         return the default.
 
-        After reading an activity from a backend, this is the original
-        value from the backend.
+        The value is automatically translated between our internal value and
+        the value used by the backend. This happens when reading from
+        or writing to the backend.
         Returns:
             The current value or the default value (see :attr:`legal_whats`)
         """
@@ -349,20 +345,10 @@ class Activity:
     @what.setter
     def what(self, value: str):
         if value is None:
-            if self.backend is None: # and not self.is_decoupled:
-                value = self.legal_whats[0]
-            else:
-                value = self.backend.legal_whats[0]
+            value = self.legal_whats[0]
         if value != self.what:
-            if self.backend is None: #  and not self.is_decoupled:
-                if value not in self.legal_whats:
-                    raise Exception('What {} is not known'.format(value))
-            else:
-                if value not in self.backend.legal_whats:
-                    value = self.backend.encode_what(value)
-                    if value not in self.backend.legal_whats:
-                        raise Exception(
-                            'What {} is not known for backend {}'.format(value, self.backend.__class__.__name__))
+            if value not in self.legal_whats:
+                raise Exception('What {} is not known'.format(value))
             self.__what = value
             self.dirty = 'what'
 

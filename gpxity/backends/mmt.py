@@ -383,7 +383,7 @@ class MMT(Backend):
         aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
-            eid=activity.id_in_backend, activity=activity.what)
+            eid=activity.id_in_backend, activity=self.encode_what(activity.what))
 
     def _current_keywords(self, activity):
         """Read all current keywords (MMT tags).
@@ -482,7 +482,7 @@ class MMT(Backend):
                 raw_data = MMTRawActivity(_)
                 activity = Activity(self, raw_data.activity_id)
                 activity.header_data['title'] = raw_data.title
-                activity.header_data['what'] = raw_data.what
+                activity.header_data['what'] = self.decode_what(raw_data.what)
                 activity.header_data['time'] = raw_data.time
                 activity.header_data['distance'] = raw_data.distance
                 yield activity
@@ -517,7 +517,7 @@ class MMT(Backend):
             # MMT sends different values of the current activity type, hopefully what_3 is always the
             # correct one.
             if page_scan['what_3']:
-                activity.what = page_scan['what_3']
+                activity.what = self.decode_what(page_scan['what_3'])
             if page_scan['public'] is not None:
                 activity.public = page_scan['public']
 
@@ -592,7 +592,7 @@ class MMT(Backend):
                 request='start_activity',
                 title=activity.title,
                 privacy='public' if activity.public else 'private',
-                activity=activity.what,
+                activity=self.encode_what(activity.what),
                 points=self.__track_points(activity.points()),
                 source='Gpxity',
                 version=VERSION,

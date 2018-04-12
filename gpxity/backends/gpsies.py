@@ -319,7 +319,7 @@ class GPSIES(Backend):
             'fileDescription': activity.description,
             'filename': activity.title,
             'status': '1' if activity.public else '3',
-            'trackTypes': activity.what,
+            'trackTypes': self.encode_what(activity.what),
             'websiteUrl':''}
         self.__post('editTrack', data)
 
@@ -360,7 +360,7 @@ class GPSIES(Backend):
             response = self.__post('editTrack', data)
             page_parser = ParseGPIESEditPage()
             page_parser.feed(response.text)
-            activity.what = page_parser.what
+            activity.what = self.decode_what(page_parser.what)
 
     def _read_all(self, activity):
         """get the entire activity. For gpies, we only need the gpx file"""
@@ -422,7 +422,7 @@ class GPSIES(Backend):
             'filename': activity.title,
             'status': '1' if activity.public else '3',
             'fileDescription': activity.description,
-            'trackTypes': activity.what,
+            'trackTypes': self.encode_what(activity.what),
             'trackClassification':'withoutClassification',
             'trackSimplification': '0',
             'uploadButton':''}
