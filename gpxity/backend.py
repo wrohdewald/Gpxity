@@ -435,9 +435,10 @@ class Backend:
         """
 
         activity = value if hasattr(value, 'id_in_backend') else self[value]
-        self._remove_activity(activity)
+        if activity.id_in_backend:
+            self._remove_activity(activity)
+            activity.id_in_backend = None
         self.__activities.remove(activity)
-        activity.id_in_backend = None
 
     def _remove_activity(self, activity) ->None:
         """backend dependent implementation"""

@@ -42,6 +42,15 @@ class TestBackends(BasicTest):
             with self.subTest(' {}'.format(cls.__name__)):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
 
+    def test_incomplete(self):
+        """Activities may be assigned to a backend but unsaved"""
+        for cls in self._find_backend_classes():
+            if 'remove' in cls.supported:
+                with self.subTest(' {}'.format(cls.__name__)):
+                    with self.temp_backend(cls) as backend:
+                        Activity(backend)
+
+
     def test_save_empty(self):
         """Save empty activity"""
         for cls in self._find_backend_classes():

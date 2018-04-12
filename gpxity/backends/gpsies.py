@@ -395,7 +395,6 @@ class GPSIES(Backend):
 
     def _remove_activity(self, activity):
         """remove on the server"""
-        assert activity.id_in_backend
         data = {
             'fileId': activity.id_in_backend,
             'delete':'',
