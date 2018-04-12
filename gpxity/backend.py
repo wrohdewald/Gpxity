@@ -156,7 +156,7 @@ class Backend:
 
     _legal_whats = None # Override in the backends
 
-    def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
+    def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None):
         self._decoupled = False
         super(Backend, self).__init__()
         self.__activities = list()
