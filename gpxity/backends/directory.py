@@ -203,7 +203,7 @@ class Directory(Backend):
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 
-    def _symlink_path(self, activity):
+    def _symlink_path(self, activity, ident):
         """The path for the speaking symbolic link: YYYY/MM/title.gpx.
         Missing directories YYYY/MM are created.
         activity.time must be set."""
@@ -214,7 +214,7 @@ class Directory(Backend):
         else:
             # make sure there is no dead symlink with our wanted name.
             self._load_symlinks(by_month_dir)
-        name = activity.title or activity.id_in_backend
+        name = activity.title or ident
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
     def _write_all(self, activity):
@@ -227,7 +227,7 @@ class Directory(Backend):
             time = activity.time
             if time:
                 os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
-                link_name = self._symlink_path(activity)
+                link_name = self._symlink_path(activity, activity.id_in_backend)
                 link_target = os.path.join('..', '..', '{}.gpx'.format(activity.id_in_backend))
                 os.symlink(link_target, link_name)
                 if link_name not in self._symlinks[activity.id_in_backend]:
