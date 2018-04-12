@@ -113,7 +113,6 @@ class Directory(Backend):
                             self._symlinks[gpx_target].append(full_name)
                     else:
                         os.remove(full_name)
-                        print('{}: removed dead symbolic link {}'.format(self, full_name))
 
     def _set_new_id(self, activity):
         """a not yet existant file name"""
