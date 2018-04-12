@@ -221,13 +221,13 @@ class Directory(Backend):
     def _write_all(self, activity):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
-        gpx_path = self.gpx_path(activity)
+        gpx_pathname = self.gpx_path(activity)
         try:
-            with open(gpx_path, 'w') as out_file:
+            with open(gpx_pathname, 'w') as out_file:
                 out_file.write(activity.to_xml())
             time = activity.time
             if time:
-                os.utime(gpx_path, (time.timestamp(), time.timestamp()))
+                os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
                 link_name = self._symlink_path(activity)
                 link_target = os.path.join('..', '..', '{}.gpx'.format(activity.id_in_backend))
                 os.symlink(link_target, link_name)
