@@ -143,6 +143,8 @@ class Directory(Backend):
 
     def _sanitize_name(self, value):
         """Change it to legal file name characters"""
+        if value is None:
+            return None
         if self.fs_encoding is not None:
             raise Exception('No support for fs_encoding={}'.format(self.fs_encoding))
         return value.replace('/', '_')
