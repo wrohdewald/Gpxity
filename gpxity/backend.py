@@ -98,11 +98,11 @@ class Backend:
     should not overlap in time. This is not enforced but sometimes
     behaviour is undefined if you ignore this.
 
-    This can be used as a context manager. At termination, all activities
-    may be removed automatically, if cleanup=True. Some concrete
+    A Backend be used as a context manager. Upon termination, all activities
+    may be removed automatically by setting cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
-    A backend allows indexing by normal int index, by :class:`Activity <gpxity.Activity>`
+    A Backend allows indexing by normal int index, by :class:`Activity <gpxity.Activity>`
     and by :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>`.
     :literal:`if 'ident' in backend` is possible.
     len(backend) shows the number of activities. Please note that Code
@@ -134,9 +134,11 @@ class Backend:
             the backend initializes this. Only methods which may not be supported are mentioned here.
             Those are: remove, track, get_time, _write_title, _write_public, _write_what,
             _write_gpx, _write_description, _write_keywords, _write_add_keyword, _write_remove_keyword.
-            If a particular _write_* like _write_public does not exist, the entire activity is written instead.
+            If a particular _write_* like _write_public does not exist, the entire activity is written instead
+            which normally results in a new ident for the activity.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
+        debug: If True, print debugging information
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
     """
@@ -361,15 +363,15 @@ class Backend:
     def save(self, activity, ident: str = None, attributes=None):
         """save full activity.
 
-        It is not allowed but possible to set :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>` to
-        something other than str. But here we raise an exception
-        if that ident is used for saving.
+        If we know that this activity already exists, remove that one first. But we do
+        not rescan the backend source because that would be too expensive and a
+        race would always be possible. We do not even do that for local directories
+        for consistency.
 
         If the activity does not pass the current match function, raise an exception.
 
         Args:
             activity (~gpxity.Activity): The activity we want to save in this backend.
-                It may be associated with an arbitrary backend.
             ident: If given, a backend may use this as id_in_backend.
                 :class:`~gpxity.Directory` does. However most backends always create their own new
                 unique identifier when the full activity is saved/uploaded. MMT and GPSIES do.
