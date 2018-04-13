@@ -102,7 +102,6 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
             attributes[key] = value
         if tag == 'div' and 'alert-warning' in attributes['class']:
             self.seeing_warning = True
-            # TODO: test case
         if tag == 'tbody':
             self.seeing_list = True
         if not self.seeing_list:
@@ -181,7 +180,7 @@ class GPSIES(Backend):
         'mountainbiking': 'Mountain biking',
         'motorbiking': 'Motorcycling',
         'motocross': 'Enduro',
-        'car': 'driving',
+        'car': 'Driving',
         'riding': 'Horse riding',
         'packAnimalTrekking': 'Pack animal trekking',
         'boating': 'Rowing',
