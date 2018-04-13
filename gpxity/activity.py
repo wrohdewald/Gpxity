@@ -51,6 +51,8 @@ class Activity:
     However you can use the context manager :meth:`batch_changes`. This holds back updating the backend until
     leaving the context.
 
+    If you manipulate the gpx directly, this goes unnoticed. Use :meth:`rewrite` when done.
+
     Not all backends support everything, you could get the exception NotImplementedError.
 
     Some backends are able to change only one attribute with little time overhead, others always have
@@ -165,6 +167,10 @@ class Activity:
                         self._loaded = False
                         raise
 
+    def rewrite(self) ->None:
+        """Call this after you directly manipulated  :attr:`gpx`"""
+        self.dirty = 'gpx'
+
     @property
     def dirty(self) ->set:
         """
@@ -176,6 +182,7 @@ class Activity:
         has a method _write_title, that one will be called. Otherwise the
         entire activity will be written by the backend.
 
+        You do normally not need to change this except when changing gpx:
         After directly manipulating :attr:`gpx`, set :attr:`dirty` to 'gpx'.
         See also :attr:`gpx`.
 

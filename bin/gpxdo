@@ -86,7 +86,7 @@ class Utility:
     @staticmethod
     def fix_activity(activity):
         """fix some bugs in the GPX file"""
-        activity.dirty = 'gpx'
+        activity.rewrite()
 
     def fix(self):
         """fix activities"""
