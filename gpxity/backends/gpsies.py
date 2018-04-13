@@ -355,7 +355,7 @@ class GPSIES(Backend):
 
     def _read_what(self, activity):
         """I found no way to download all attributes in one go"""
-        with activity._decouple():  # pylint: disable=protected-access
+        with self._decouple():
             data = {'fileId': activity.id_in_backend}
             response = self.__post('editTrack', data)
             page_parser = ParseGPIESEditPage()
@@ -366,7 +366,7 @@ class GPSIES(Backend):
         """get the entire activity. For gpies, we only need the gpx file"""
         data = {'fileId': activity.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data)
-        with activity._decouple():  # pylint: disable=protected-access
+        with self._decouple():
             activity.parse(response.text)
             # in Activity, the results of a full load override header_data
             _ = activity.header_data['public']

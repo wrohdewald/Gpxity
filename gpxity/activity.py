@@ -113,7 +113,6 @@ class Activity:
         'Miscellaneous')
 
     def __init__(self, backend=None, id_in_backend: str = None, gpx=None):
-        self._loading = False
         self._loaded = backend is None or id_in_backend is None
         self.__dirty = set()
         self._batch_changes = False
@@ -301,21 +300,27 @@ class Activity:
         the backend are disabled, and if you access attributes which
         would normally trigger a full load from the backend, they will not.
         (The latter is used by __str__ and __repr__).
-
-        If you have a use case other than implementing a backend, please
-        tell the author. Otherwise this might disappear from the public API.
         """
-        prev_loading = self._loading
-        self._loading = True
+        # pylint: disable=protected-access
+        had_backend = self.__backend is not None
+        prev_value = self.__backend._decoupled if had_backend else False
+        if had_backend:
+            self.__backend._decoupled = True
         try:
             yield
         finally:
-            self._loading = prev_loading
+            if had_backend and self.__backend is not None:
+                self.__backend._decoupled = prev_value
 
     @property
     def is_decoupled(self):
-        """True if we are currently _decouple. See :meth:`_decouple`."""
-        return self._loading
+        """True if we are currently decoupled from the backend. In that
+        state, changes to Activity are not written to the backend and
+        the activity is not marked dirty.
+        """
+        if self.backend is None:
+            return True
+        return self.backend._decoupled  # pylint: disable=protected-access
 
     @contextmanager
     def batch_changes(self):
