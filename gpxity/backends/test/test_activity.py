@@ -279,7 +279,7 @@ class ActivityTests(BasicTest):
                     activity2.backend = dir2
                 with self.assertRaises(Exception):
                     activity2.backend = None
-                activity3 = dir2.save(activity2)
+                activity3 = dir2.add(activity2)
                 self.assertEqualActivities(activity, activity3)
                 self.assertEqualActivities(activity2, activity3)
                 self.assertIs(activity.backend, directory)
@@ -514,15 +514,15 @@ class ActivityTests(BasicTest):
         with Directory(cleanup=True) as directory:
             activity = Activity()
             with self.assertRaises(Exception):
-                directory.save(activity, ident=56)
-            directory.save(activity, ident='56')
+                directory.add(activity, ident=56)
+            directory.add(activity, ident='56')
             self.assertEqual(len(directory), 1)
 
     def test_in(self):
         """x in backend"""
         with Directory(cleanup=True) as directory:
             activity = Activity()
-            directory.save(activity, '56')
+            directory.add(activity, '56')
             self.assertEqual(activity.id_in_backend, '56')
             self.assertIn(activity, directory)
             self.assertIn(activity.id_in_backend, directory)
@@ -535,7 +535,7 @@ class ActivityTests(BasicTest):
         with Directory(cleanup=True) as directory:
             directory.scan(now=True)
             activity = Activity()
-            directory.save(activity, '56')
+            directory.add(activity, '56')
             self.assertIs(directory[0], activity)
             self.assertIs(directory[activity], activity)
             self.assertIs(directory['56'], activity)

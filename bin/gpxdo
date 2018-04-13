@@ -59,7 +59,7 @@ class Utility:
         the source might have gotten new activities meanwhile, and
         they would disappear for good."""
         for _ in self._source_activities():
-            self.destination.save(_, ident=_.id_in_backend)
+            self.destination.add(_, ident=_.id_in_backend)
             _.remove()
             if self.options.verbose:
                 print('moved {} to {}'.format(_, self.destination))

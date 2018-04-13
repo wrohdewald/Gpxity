@@ -32,7 +32,7 @@ from gpxity import Activity, Directory, MMT, BackendDiff
 def copy_from_mmt(mmt, local):
     for a in mmt:
         if a.id_in_backend not in local:
-            local.save(a, ident=a.id_in_backend)
+            local.add(a, ident=a.id_in_backend)
 
 def remove_shorties(local, remote=None, min_points=10):
     for local_activity in local:

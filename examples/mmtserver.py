@@ -187,7 +187,7 @@ class Handler(BaseHTTPRequestHandler):
     def xml_upload_activity(self, parsed):
         """as defined by the mapmytracks API"""
         activity = Activity(gpx=gpxpy.parse(parsed['gpx_file']))
-        Handler.directory.save(activity)
+        Handler.directory.add(activity)
         self.send_mail('upload_activity', activity)
         return '<type>success</type><id>{}</id>'.format(activity.id_in_backend)
 
@@ -201,7 +201,7 @@ class Handler(BaseHTTPRequestHandler):
             parsed['privacy'] = parsed['privicity']
         Handler.tracking_activity.public = parsed['privacy'] == 'public'
         Handler.tracking_activity.what = parsed['activity']
-        Handler.directory.save(Handler.tracking_activity)
+        Handler.directory.add(Handler.tracking_activity)
         self.send_mail('start_activity', Handler.tracking_activity)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
             Handler.tracking_activity.id_in_backend)

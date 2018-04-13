@@ -63,16 +63,16 @@ class TestBackends(BasicTest):
                     activity = Activity()
                     if cls in (MMT, TrackMMT, GPSIES):
                         with self.assertRaises(cls.BackendException):
-                            backend.save(activity)
+                            backend.add(activity)
                     else:
-                        self.assertIsNotNone(backend.save(activity))
+                        self.assertIsNotNone(backend.add(activity))
 
     def test_backend(self):
         """Manipulate backend"""
         activity = self.create_test_activity()
         with Directory(cleanup=True) as directory1:
             with Directory(cleanup=True) as directory2:
-                saved = directory1.save(activity)
+                saved = directory1.add(activity)
                 self.assertEqual(saved.backend, directory1)
                 activity.backend = directory1
                 with self.assertRaises(Exception):
@@ -275,7 +275,7 @@ class TestBackends(BasicTest):
             self.assertTrue(activity.public) # as defined in test2.gpx keywords
             activity.public = False
             self.assertFalse(activity.public)
-            local.save(activity)
+            local.add(activity)
             for cls in self._find_backend_classes():
                 if 'remove' in cls.supported:
                     with self.subTest(' {}'.format(cls.__name__)):
@@ -305,7 +305,7 @@ class TestBackends(BasicTest):
         with self.temp_backend(Directory, count=5) as source:
             backend2 = self.clone_backend(source)
             activity = self.create_test_activity()
-            backend2.save(activity)
+            backend2.add(activity)
             self.assertEqual(len(backend2), 6)
             source.scan() # because it cannot know backend2 added something
 

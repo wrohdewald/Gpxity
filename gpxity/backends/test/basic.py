@@ -207,7 +207,7 @@ class BasicTest(unittest.TestCase):
             result.remove_all()
         while count > len(result):
             activity = self.create_test_activity(count, len(result), what=what, public=public)
-            result.save(activity)
+            result.add(activity)
         self.assertGreaterEqual(len(result), count)
         if clear_first:
             self.assertEqual(len(result), count)

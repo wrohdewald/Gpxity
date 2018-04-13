@@ -142,7 +142,7 @@ class Activity:
         It is not possible to decouple an activity from its backend, use :meth:`clone()`.
 
         It is not possible to move the activity to a different backend by changing this.
-        Use :meth:`Backend.save() <gpxity.Backend.save()>` instead.
+        Use :meth:`Backend.add() <gpxity.Backend.add()>` instead.
         """
         return self.__backend
 
@@ -154,13 +154,13 @@ class Activity:
             elif self.__backend is not None:
                 raise Exception(
                     'You cannot assign the activity to a different backend this way. '
-                    'Please use Backend.save(activity).')
+                    'Please use Backend.add(activity).')
             else:
                 self._loaded = True
                 self.__backend = value
                 if not self.is_decoupled:
                     try:
-                        self.__backend.save(self)
+                        self.__backend.add(self)
                     except BaseException:
                         self.__backend = None
                         self._loaded = False
@@ -225,14 +225,14 @@ class Activity:
         - batch_changes is active
         - we have no backend
 
-        Otherwise asks the backend to save this activity :meth:`Backend.save() <gpxity.Backend.save>`.
+        Otherwise the backend will save this activity.
         """
         if self.backend is None:
             self.__dirty = set()
         if not self.__dirty:
             return
         if not self.is_decoupled and not self._batch_changes:
-            self.backend.save(self)
+            self.backend.add(self)
             self.__dirty = set()
 
     def remove(self):

@@ -360,7 +360,7 @@ class Backend:
                     return True
         return False
 
-    def save(self, activity, ident: str = None):
+    def add(self, activity, ident: str = None):
         """save full activity.
 
         If we know that this activity already exists, remove that one first. But we do
@@ -569,7 +569,7 @@ class Backend:
         # 1. get all activities existing only in other
         for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
             # but only the first one of those with same points
-            self.save(src_dict[point_hash][0])
+            self.add(src_dict[point_hash][0])
             result.append('{} {} -> {}'.format(
                 'move' if remove else 'copy', src_dict[point_hash][0], self))
             del src_dict[point_hash][0]
