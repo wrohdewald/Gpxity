@@ -437,7 +437,7 @@ class MMT(Backend):
         we rewrite all keywords instead.
         """
         # Our list of keywords may not be current, reload it
-#        with activity.decoupled():
+#        with activity._decouple():  # pylint: disable=protected-access
    #         activity.keywords = set(self._current_keywords(activity)) - set([value])
         # activity.keywords is assumed to be current (see Activity.remove_keyword())
         for remove_tag in activity.keywords:
@@ -504,7 +504,7 @@ class MMT(Backend):
             and silently ignore this inconsistency.
          """
         page_scan = self._scan_activity_page(activity)
-        with activity.decoupled():
+        with activity._decouple():  # pylint: disable=protected-access
             if page_scan['title']:
                 activity.title = page_scan['title']
             if page_scan['description']:
@@ -531,7 +531,7 @@ class MMT(Backend):
             self.url, activity.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
             # some activities download only a few points if mid/uid are not given, but I
             # have not been able to write a unittest triggering that ...
-        with activity.decoupled():
+        with activity._decouple():  # pylint: disable=protected-access
             activity.parse(response.text)
             # but this does not give us activity type and other things,
             # get them from the web page.

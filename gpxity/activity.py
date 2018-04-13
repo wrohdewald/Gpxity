@@ -125,7 +125,7 @@ class Activity:
         self.__gpx = gpx or GPX()
         if gpx:
             self._parse_keywords()
-            with self.decoupled():
+            with self._decouple():
                 self._round_points(self.points())
         if backend is not None:
             if gpx is not None:
@@ -295,7 +295,7 @@ class Activity:
             self.dirty = 'description'
 
     @contextmanager
-    def decoupled(self):
+    def _decouple(self):
         """This context manager disables automic synchronization with
         the backend. In that state, automatic writes of changes into
         the backend are disabled, and if you access attributes which
@@ -314,14 +314,14 @@ class Activity:
 
     @property
     def is_decoupled(self):
-        """True if we are currently decoupled. See :meth:`decoupled`."""
+        """True if we are currently _decouple. See :meth:`_decouple`."""
         return self._loading
 
     @contextmanager
     def batch_changes(self):
         """This context manager disables  the direct update in the backend
         and saves the entire activity when done.
-        :meth:`batch_changes` updates :attr:`dirty`, :meth:`decoupled` does not.
+        :meth:`batch_changes` updates :attr:`dirty`, :meth:`_decouple` does not.
         """
         prev_batch_changes = self._batch_changes
         self._batch_changes = True
@@ -446,7 +446,7 @@ class Activity:
         if not indata:
             # ignore empty file
             return
-        with self.decoupled():
+        with self._decouple():
             old_gpx = self.__gpx
             old_public = self.public
             try:
@@ -630,7 +630,7 @@ class Activity:
         self.dirty = 'remove_keyword:{}'.format(value)
 
     def __repr__(self):
-        with self.decoupled():
+        with self._decouple():
             # this should not automatically load the entire activity
             parts = []
             if self.id_in_backend is not None:

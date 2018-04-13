@@ -398,7 +398,7 @@ class Backend:
             raise
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
-        with activity.decoupled():
+        with activity._decouple():  # pylint: disable=protected-access
             if activity.backend is None:
                 activity.backend = self
 
