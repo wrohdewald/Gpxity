@@ -256,8 +256,7 @@ class Backend:
             The returned str should explain why the activity does not match.
 
             If you change an activity such that it does not match anymore, the exception
-            NoMatch will be raised and the activity will be re-loaded from the physical
-            backend.
+            NoMatch will be raised and the match stays unchanged.
         """
         return self.__match
 
