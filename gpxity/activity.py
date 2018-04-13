@@ -212,7 +212,6 @@ class Activity:
         """
         result = Activity(gpx=self.gpx.clone())
         result.what = self.what
-        # TODO: header_data????
         result.public = self.public
         return result
 
