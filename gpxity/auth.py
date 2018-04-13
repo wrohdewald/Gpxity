@@ -8,6 +8,7 @@ This module defines :class:`~gpxity.Authenticate`
 """
 
 import os
+import tempfile
 from configparser import ConfigParser
 
 __all__ = ['Authenticate']
@@ -56,7 +57,7 @@ class Authenticate:
         self.__username = username
         self.auth = (None, None)
         if 'Directory' in cls.__name__  and username.startswith('gpxitytest'):
-            self.url = '/tmp/{}'.format(username)
+            self.url = tempfile.mkdtemp(prefix='gpxity')
             return
         self.path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
         with open(self.path) as auth_file:

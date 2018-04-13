@@ -49,13 +49,14 @@ class BasicTest(unittest.TestCase):
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
         Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '/'
-        path = os.path.join(tempfile.gettempdir(), Directory.prefix)
+        path = tempfile.mkdtemp(prefix=Directory.prefix)
+
         if not os.path.exists(path):
             os.mkdir(path)
 
     def tearDown(self):
         """Check if there are still /tmp/gpxitytest.* directories"""
-        must_be_empty = os.path.join(tempfile.gettempdir(), Directory.prefix)
+        must_be_empty =tempfile.mkdtemp(prefix=Directory.prefix)
         os.rmdir(must_be_empty)
         timedelta = datetime.datetime.now() - self.start_time
         print('{} seconds '.format(timedelta.seconds), end='', flush=True)
