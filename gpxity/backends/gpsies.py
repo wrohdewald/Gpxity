@@ -141,8 +141,8 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
                 if self.current_tag == 'i' and self.activity.title is None:
                     self.activity.title = data
             elif self.column == 4:
-                if data.endswith('km') and ',' in data:
-                    self.activity.distance = float(data.replace(' km', '').replace('.', '').replace(',', '.'))
+                if data.endswith('km'):
+                    self.activity.distance = float(data.replace(' km', ''))
             elif self.column == 5:
                 self.activity.time = datetime.datetime.strptime(data, '%m/%d/%y')
                 self.result['activities'].append(self.activity)
