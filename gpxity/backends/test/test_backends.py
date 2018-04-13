@@ -365,3 +365,11 @@ class TestBackends(BasicTest):
         dir_c.destroy()
         self.assertTrue(os.path.exists(auth_dir))
         os.rmdir(auth_dir)
+
+    def test_mmt_empty(self):
+        """MMT refuses upload without a specific error message if there is no track point"""
+        activity = self.create_test_activity()
+        del activity.gpx.tracks[0]
+        with MMT(auth='gpxitytest', cleanup=True) as mmt:
+            with self.assertRaises(mmt.BackendException):
+                mmt.add(activity)
