@@ -343,8 +343,8 @@ class TestBackends(BasicTest):
             self.assertIn(new_id, uplink)
 
     def test_directory_dirty(self):
-        """test gpx.dirty where id_in_backend is not the default. Currently
-        activity.dirty = 'gpx' changes the file name which is wrong."""
+        """test gpx._dirty where id_in_backend is not the default. Currently
+        activity._dirty = 'gpx' changes the file name which is wrong."""
         pass
 
     def test_directory(self):

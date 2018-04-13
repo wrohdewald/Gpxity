@@ -53,24 +53,24 @@ class ActivityTests(BasicTest):
             os.rmdir(test_url)
 
     def test_dirty(self):
-        """Activity.dirty"""
+        """Activity._dirty"""
         with Directory(cleanup=True) as directory:
             activity = Activity()
             directory.add(activity)
             with self.assertRaises(Exception):
-                activity.dirty = False
-            self.assertFalse(activity.dirty)
+                activity._dirty = False
+            self.assertFalse(activity._dirty)
             # version 1.1 should perhaps be a test on its own, see Activity.to_xml()
-            activity.dirty = 'gpx'
-            self.assertFalse(activity.dirty)
+            activity._dirty = 'gpx'
+            self.assertFalse(activity._dirty)
             activity.title = 'new title'
-            self.assertFalse(activity.dirty)
+            self.assertFalse(activity._dirty)
             with activity.batch_changes():
                 activity.title = 'new 2'
-                self.assertEqual(activity.dirty, set(['title']))
-            self.assertFalse(activity.dirty)
+                self.assertEqual(activity._dirty, set(['title']))
+            self.assertFalse(activity._dirty)
             with Directory(directory.url, cleanup=True) as dir2:
-                dir2[0].dirty = 'gpx'
+                dir2[0]._dirty = 'gpx'
 
     def test_activity_list(self):
         """test list of activities"""

@@ -156,32 +156,28 @@ class Activity:
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`"""
-        self.dirty = 'gpx'
+        self._dirty = 'gpx'
 
     @property
-    def dirty(self) ->set:
+    def _dirty(self) ->set:
         """
         Is the activity in sync with the backend?
 
-        Setting :attr:`dirty` will directly write the changed data into the backend.
+        Setting :attr:`_dirty` will directly write the changed data into the backend.
 
-        :attr:`dirty` can receive an arbitrary string like 'title'. If the backend
+        :attr:`_dirty` can receive an arbitrary string like 'title'. If the backend
         has a method _write_title, that one will be called. Otherwise the
         entire activity will be written by the backend.
-
-        You do normally not need to change this except when changing gpx:
-        After directly manipulating :attr:`gpx`, set :attr:`dirty` to 'gpx'.
-        See also :attr:`gpx`.
 
         Returns:
             set: The names of the attributes currently marked as dirty.
         """
         return self.__dirty
 
-    @dirty.setter
-    def dirty(self, value):
+    @_dirty.setter
+    def _dirty(self, value):
         if not isinstance(value, str):
-            raise Exception('dirty only receives str')
+            raise Exception('_dirty only receives str')
         if not self.is_decoupled:
             self.__dirty.add(value)
             if not self._batch_changes:
@@ -265,7 +261,7 @@ class Activity:
     def title(self, value: str):
         if value != self.title:
             self.__gpx.name = value
-            self.dirty = 'title'
+            self._dirty = 'title'
 
     @property
     def description(self) ->str:
@@ -278,7 +274,7 @@ class Activity:
     def description(self, value: str):
         if value != self.description:
             self.__gpx.description = value
-            self.dirty = 'description'
+            self._dirty = 'description'
 
     @contextmanager
     def _decouple(self):
@@ -347,7 +343,7 @@ class Activity:
             if value not in self.legal_whats:
                 raise Exception('What {} is not known'.format(value))
             self.__what = value
-            self.dirty = 'what'
+            self._dirty = 'what'
 
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
@@ -373,7 +369,7 @@ class Activity:
                 self.__gpx.tracks[0].segments.append(GPXTrackSegment())
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
-            self.dirty = 'gpx'
+            self._dirty = 'gpx'
 
     def track(self, backend=None, points=None) ->None:
         """Life tracking.
@@ -513,13 +509,13 @@ class Activity:
         """Stores this flag as keyword 'public'."""
         if value != self.public:
             self.__public = value
-            self.dirty = 'public'
+            self._dirty = 'public'
 
     @property
     def gpx(self) ->GPX:
         """
         Direct access to the GPX object. If you use it to change its content,
-        remember to set :attr:`dirty` to True afterwards.
+        remember to call :meth:`rewrite` afterwards.
 
         Returns:
             the GPX object
@@ -580,7 +576,7 @@ class Activity:
                 # add_keyword ensures we do not get unwanted things like What:
                 self.add_keyword(keyword)
             self.__dirty = set()
-            self.dirty = 'keywords'
+            self._dirty = 'keywords'
 
     @staticmethod
     def _check_keyword(keyword):
@@ -607,7 +603,7 @@ class Activity:
             self.__gpx.keywords += ', {}'.format(value)
         else:
             self.__gpx.keywords = value
-        self.dirty = 'add_keyword:{}'.format(value)
+        self._dirty = 'add_keyword:{}'.format(value)
 
     def remove_keyword(self, value: str) ->None:
         """Removes from the keywords.
@@ -618,7 +614,7 @@ class Activity:
         self._check_keyword(value)
         self._load_full()
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
-        self.dirty = 'remove_keyword:{}'.format(value)
+        self._dirty = 'remove_keyword:{}'.format(value)
 
     def __repr__(self):
         with self._decouple():
@@ -723,7 +719,7 @@ class Activity:
         self.gpx.adjust_time(delta)
         for wpt in self.gpx.waypoints:
             wpt.time += delta
-        self.dirty = 'gpx'
+        self._dirty = 'gpx'
 
     def points_hash(self) -> float:
         """A hash that is hopefully different for every possible track.

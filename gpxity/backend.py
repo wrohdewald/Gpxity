@@ -431,7 +431,7 @@ class Backend:
 
         assert activity.backend is self
         assert activity.id_in_backend in self
-        assert activity.dirty
+        assert activity._dirty
 
         needs_full_save = self._needs_full_save(attributes)
 
