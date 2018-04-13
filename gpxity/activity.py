@@ -838,6 +838,8 @@ class Activity:
             if other.public and not self.public:
                 msg.append('Visibility: private -> public')
                 self.public = True
+            if other.what != self.what:
+                msg.append('What: other={} wins over self={}'.format(other.what, self.what))
             kw_src = set(other.keywords)
             kw_dst = set(self.keywords)
             if kw_src - kw_dst:
