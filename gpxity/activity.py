@@ -60,15 +60,8 @@ class Activity:
 
 
     Args:
-        backend (Backend): The Backend where this Activity lives in. See :attr:`backend`.
-        id_in_backend (str): The identifier of this activity in the backend. See :attr:`id_in_backend`.
-        gpx (GPX): Initial content.
-
-    At least one of **backend** or **gpx** must be None. If backend is None and this
-    activity is later coupled with a backend, it is silently assumed that the activity did
-    not yet exist in that backend. That makes a difference when loading data from
-    the backend: If data is expected in the backend but not found, an exception is raised. If
-    no data is expected, we do not try to load data.
+        gpx (GPX): Initial content. To be used if you create a new Activity from scratch without
+            loading it from some backend.
 
     The data will only be loaded from the backend when it is needed. Some backends
     might support loading some attributes separately, but for now, we always load
@@ -78,23 +71,15 @@ class Activity:
         legal_whats (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
             as default value. This is a mostly a superset of the values for the different backends.
             Every backend maps from its internal values into those when reading and maps them
-            back when writing. Since not all backends support all values, information may
-            get lost when copying from one backend to the other.
+            back when writing. Since not all backends support all values defined here and since
+            some backends may define more values than we know, information may get lost when
+            converting, even if you copy an activity between two backends of the same type.
 
-            Currently those are the values as defined by mapmytracks.
-            This should eventually become more flexible.
-        id_in_backend (str): Every backend has its own scheme for unique activity ids. Some
-            backends may change the id if the activity data changes. This must be `str` but
-            that is not enforced here. It will be checked when this activity is attached to
-            a backend.
         header_data (dict): The backend may only deliver some general information about
             activities, the full data will only be loaded when needed. This general information
             can help avoiding having to load the full data. The backend will fill header_data
             if it can. The backends are free to put additional info here. MMT does this for
-            time, title, what and distance. You can never rely on a value to be really
-            available - if the wanted value is missing, the entire Activity is automatically
-            loaded. The values time, title, what are fully supported, others may not
-            be written into some backends.
+            time, title, what and distance. You are not supposed to change header_data.
     """
 
     # pylint: disable = too-many-instance-attributes
@@ -112,27 +97,20 @@ class Activity:
         'Pack animal trekking', 'Train',
         'Miscellaneous')
 
-    def __init__(self, backend=None, id_in_backend: str = None, gpx=None):
-        self._loaded = backend is None or id_in_backend is None
+    def __init__(self, gpx=None):
         self.__dirty = set()
         self._batch_changes = False
         self.__what = self.legal_whats[0]
         self.__public = False
-        self.id_in_backend = id_in_backend
+        self.__id_in_backend = None
         self.__backend = None
+        self._loaded = False
         self.header_data = dict()
         self.__gpx = gpx or GPX()
+        self.__backend = None
         if gpx:
             self._parse_keywords()
-            with self._decouple():
-                self._round_points(self.points())
-        if backend is not None:
-            if gpx is not None:
-                raise Exception('Cannot accept backend and gpx')
-        self.__backend = backend
-        if backend is not None and not backend._has_item(id_in_backend): # pylint:disable=protected-access
-            # do not say self in backend because that would do a full load of self.
-            backend.append(self)
+            self._round_points(self.points())
 
     @property
     def backend(self):
@@ -146,25 +124,35 @@ class Activity:
         """
         return self.__backend
 
-    @backend.setter
-    def backend(self, value):
-        if value is not self.__backend:
-            if value is None:
-                raise Exception('You cannot decouple an activity from its backend. Use clone().')
-            elif self.__backend is not None:
-                raise Exception(
-                    'You cannot assign the activity to a different backend this way. '
-                    'Please use Backend.add(activity).')
-            else:
-                self._loaded = True
-                self.__backend = value
-                if not self.is_decoupled:
-                    try:
-                        self.__backend.add(self)
-                    except BaseException:
-                        self.__backend = None
-                        self._loaded = False
-                        raise
+    @property
+    def is_fully_loaded(self) ->bool:
+        """True if all info from the backend is loaded or if there is no backend."""
+        return self._loaded or (self.backend is None)
+
+    @property
+    def id_in_backend(self) ->str:
+        """Every backend has its own scheme for unique activity ids. Some
+        backends may change the id if the activity data changes.
+        """
+        return self.__id_in_backend
+
+    def _set_id_in_backend(self, value: str) ->None:
+        """To be used only by backend implementations.
+
+        Args:
+            value: The new value
+        """
+        if value is not None and not isinstance(value, str):
+            raise Exception('{}: id_in_backend must be str'.format(value))
+        self.__id_in_backend = value
+ #       if self.backend is not None and not self.backend._has_item(value): # pylint:disable=protected-access
+    #         # do not say self in backend because that would do a full load of self.
+       #     self.backend.append(self)
+
+    def _set_backend(self, value):
+        """To be used only by backend implementations"""
+        assert self.is_decoupled
+        self.__backend = value
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`"""
@@ -177,7 +165,7 @@ class Activity:
 
         Setting :attr:`dirty` will directly write the changed data into the backend.
 
-        :attr:`dirty` can be set to an arbitrary string like 'title'. If the backend
+        :attr:`dirty` can receive an arbitrary string like 'title'. If the backend
         has a method _write_title, that one will be called. Otherwise the
         entire activity will be written by the backend.
 
@@ -194,15 +182,14 @@ class Activity:
     def dirty(self, value):
         if not isinstance(value, str):
             raise Exception('dirty only receives str')
-        if self.is_decoupled:
-            return
+        if not self.is_decoupled:
+            self.__dirty.add(value)
+            if not self._batch_changes:
+                self._rewrite()
 
-        # see gpxity.py/fix(): only setting dirty to 'gpx' still needs activity.title
-        # but self._save() will remove the activity file in Directory before trying
-        # to get title from file content. See also test_dirty() around dir2
-        self._load_full()
-        self.__dirty.add(value)
-        self._save()
+    def _clear_dirty(self):
+        """To be used by the backend when saving"""
+        self.__dirty = set()
 
     def clone(self):
         """Creates a new activity with the same content but without backend.
@@ -213,10 +200,11 @@ class Activity:
         result = Activity(gpx=self.gpx.clone())
         result.what = self.what
         result.public = self.public
+        result._set_id_in_backend(self.id_in_backend)  # pylint: disable=protected-access
         return result
 
-    def _save(self):
-        """Saves all changes in the associated backend.
+    def _rewrite(self):
+        """Rewrites all changes in the associated backend.
 
         If any of those conditions is met, do nothing:
 
@@ -227,12 +215,12 @@ class Activity:
         Otherwise the backend will save this activity.
         """
         if self.backend is None:
-            self.__dirty = set()
+            self._clear_dirty()
         if not self.__dirty:
             return
         if not self.is_decoupled and not self._batch_changes:
-            self.backend.add(self)
-            self.__dirty = set()
+            self.backend._rewrite(self, self.__dirty)  # pylint: disable=protected-access
+            self._clear_dirty()
 
     def remove(self):
         """Removes this activity in the associated backend. If the activity
@@ -324,17 +312,16 @@ class Activity:
     @contextmanager
     def batch_changes(self):
         """This context manager disables  the direct update in the backend
-        and saves the entire activity when done.
-        :meth:`batch_changes` updates :attr:`dirty`, :meth:`_decouple` does not.
+        and saves the entire activity when done. This may or may not make
+        things faster. Directory and GPSIES profits from this, MMT maybe.
         """
         prev_batch_changes = self._batch_changes
         self._batch_changes = True
         try:
             yield
-            self._save()
         finally:
             self._batch_changes = prev_batch_changes
-            self._save()
+            self._rewrite()
 
     @property
     def what(self) ->str:
@@ -466,7 +453,7 @@ class Activity:
             if old_gpx.description and not self.__gpx.description:
                 self.__gpx.description = old_gpx.description
             self._round_points(self.points())
-            self._loaded = True
+        self._loaded = True
 
     @staticmethod
     def _round_points(points):

@@ -34,6 +34,7 @@ import html
 from html.parser import HTMLParser
 import datetime
 from collections import defaultdict
+from contextlib import contextmanager
 
 import requests
 
@@ -215,6 +216,7 @@ class MMT(Backend):
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
         self._tracking_activity = None
+        self.__overriding_ident = None
 
     @property
     def legal_whats(self):
@@ -354,7 +356,7 @@ class MMT(Backend):
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<{attr}>{value}</{attr}></message>'.format(
                 attr=attribute,
-                eid=activity.id_in_backend,
+                eid=self.__overriding_ident or activity.id_in_backend,
                 usrid=self.auth[0],
                 value=attr_value,
                 uid=self.session.cookies['exp_uniqueid'])
@@ -372,7 +374,8 @@ class MMT(Backend):
         """changes public/private on remote server"""
         self.__post(
             with_session=True, url='user-embeds/statuschange-track', expect='access granted',
-            mid=self.mid, tid=activity.id_in_backend, hash=self.session.cookies['exp_uniqueid'],
+            mid=self.mid, tid=self.__overriding_ident or activity.id_in_backend,
+            hash=self.session.cookies['exp_uniqueid'],
             status=1 if activity.public else 2)
             # what a strange answer
 
@@ -382,7 +385,7 @@ class MMT(Backend):
         aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
-            eid=activity.id_in_backend, activity=self.encode_what(activity.what))
+            eid=self.__overriding_ident or activity.id_in_backend, activity=self.encode_what(activity.what))
 
     def _current_keywords(self, activity):
         """Read all current keywords (MMT tags).
@@ -412,7 +415,7 @@ class MMT(Backend):
             '<message><nature>add_tag</nature><eid>{eid}</eid>' \
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<tagnames>{value}</tagnames></message>'.format(
-                eid=activity.id_in_backend,
+                eid=self.__overriding_ident or activity.id_in_backend,
                 usrid=self.auth[0],
                 value=value,
                 uid=self.session.cookies['exp_uniqueid'])
@@ -458,7 +461,7 @@ class MMT(Backend):
                 raise self.BackendException('{}: Cannot remove keyword {}, reason: not known'.format(self.url, value))
         self.__post(
             with_session=True, url='handler/delete-tag.php',
-            tag_id=self.__tag_ids[value], entry_id=activity.id_in_backend)
+            tag_id=self.__tag_ids[value], entry_id=self.__overriding_ident or activity.id_in_backend)
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
@@ -478,7 +481,7 @@ class MMT(Backend):
                 return
             for _ in chunk:
                 raw_data = MMTRawActivity(_)
-                activity = Activity(self, raw_data.activity_id)
+                activity = self._found_activity(raw_data.activity_id)
                 activity.header_data['title'] = raw_data.title
                 activity.header_data['what'] = self.decode_what(raw_data.what)
                 activity.header_data['time'] = raw_data.time
@@ -539,24 +542,38 @@ class MMT(Backend):
             with_session=True, url='handler/delete_track', expect='access granted',
             tid=activity.id_in_backend, hash=self.session.cookies['exp_uniqueid'])
 
-    def _write_all(self, activity):
+    @contextmanager
+    def override_ident(self, ident: str):
+        """Temporarily override the activity ident. While this is active,
+        only the one activity meant must be used."""
+        try:
+            self.__overriding_ident = ident
+            yield
+        finally:
+            self.__overriding_ident = None
+
+    def _write_all(self, activity) ->str:
         """save full gpx track on the MMT server.
         We must upload the title separately.
-        Because we cannot upload the time, we set the activity time to the time
-        of the first trackpoint."""
 
+        Returns:
+            The new id_in_backend
+        """
+        result = None
         if not activity.gpx.get_track_points_no():
             raise self.BackendException('MMT does not accept an activity without trackpoints:{}'.format(activity))
         response = self.__post(
             request='upload_activity', gpx_file=activity.to_xml(),
             status='public' if activity.public else 'private',
-            description=activity.description, activity=activity.what)
-        activity.id_in_backend = response.find('id').text
-        if '_write_title' in self.supported:
-            self._write_title(activity)
-        # MMT can add several keywords at once
-        if activity.keywords and '_write_add_keyword' in self.supported:
-            self._write_add_keyword(activity, ','.join(activity.keywords))
+            description=activity.description, activity=self.encode_what(activity.what))
+        result = response.find('id').text
+        with self.override_ident(result):
+            if '_write_title' in self.supported:
+                self._write_title(activity)
+            # MMT can add several keywords at once
+            if activity.keywords and '_write_add_keyword' in self.supported:
+                self._write_add_keyword(activity, ','.join(activity.keywords))
+        return result
 
     @staticmethod
     def __track_points(points):

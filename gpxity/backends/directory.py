@@ -176,7 +176,7 @@ class Directory(Backend):
         self._symlinks = defaultdict(list)
         self._load_symlinks()
         for _ in self._list_gpx():
-            yield Activity(self, _)
+            yield self._found_activity(_)
 
     def get_time(self) ->datetime.datetime:
         """get server time as a Linux timestamp"""
@@ -217,14 +217,15 @@ class Directory(Backend):
         name = activity.title or ident
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
-    def _write_all(self, activity):
+    def _write_all(self, activity) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
         ident = activity.id_in_backend
         if ident is None:
             ident = self._new_id_from(activity.title)
-        activity.id_in_backend = self._make_ident_unique(ident)
-        gpx_pathname = self.gpx_path(activity.id_in_backend)
+        ident = self._make_ident_unique(ident)
+        activity._set_id_in_backend(ident)  # pylint: disable=protected-access
+        gpx_pathname = self.gpx_path(ident)
         try:
             with open(gpx_pathname, 'w') as out_file:
                 out_file.write(activity.to_xml())
@@ -239,5 +240,6 @@ class Directory(Backend):
                     self._symlinks[ident].append(link_name)
         except BaseException:
             raise
+        return ident
 
 Directory._define_support() # pylint: disable=protected-access

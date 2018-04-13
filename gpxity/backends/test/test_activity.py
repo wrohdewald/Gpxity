@@ -15,8 +15,6 @@ import filecmp
 import tempfile
 import datetime
 
-from ...gpxpy.gpxpy.gpx import GPX
-
 from .basic import BasicTest
 from ... import Activity
 from .. import Directory
@@ -34,13 +32,14 @@ class ActivityTests(BasicTest):
         activity = Activity()
         self.assertFalse(activity.public)
         with Directory(cleanup=True) as backend:
-            with self.assertRaises(Exception):
-                Activity(backend, gpx=GPX())
-            Activity(backend)
+            activity = Activity()
+            activity._set_backend(backend)  # pylint: disable=protected-access
+            self.assertEqual(len(backend), 0)
+            backend.add(activity)
             self.assertEqual(len(backend), 1)
 
         with self.temp_backend(Directory, count=2) as backend:
-            Activity(backend)
+            backend.add(Activity())
             self.assertEqual(len(backend), 3)
 
         test_url = tempfile.mkdtemp(prefix=Directory.prefix)
@@ -56,7 +55,8 @@ class ActivityTests(BasicTest):
     def test_dirty(self):
         """Activity.dirty"""
         with Directory(cleanup=True) as directory:
-            activity = Activity(directory)
+            activity = Activity()
+            directory.add(activity)
             with self.assertRaises(Exception):
                 activity.dirty = False
             self.assertFalse(activity.dirty)
@@ -67,7 +67,7 @@ class ActivityTests(BasicTest):
             self.assertFalse(activity.dirty)
             with activity.batch_changes():
                 activity.title = 'new 2'
-                self.assertTrue(activity.dirty)
+                self.assertEqual(activity.dirty, set(['title']))
             self.assertFalse(activity.dirty)
             with Directory(directory.url, cleanup=True) as dir2:
                 dir2[0].dirty = 'gpx'
@@ -76,9 +76,10 @@ class ActivityTests(BasicTest):
         """test list of activities"""
         with Directory(cleanup=True) as directory:
             self.assertEqual(len(directory), 0)
-            activity1 = Activity(backend=directory)
+            activity1 = Activity()
+            directory.add(activity1)
             self.assertIn(activity1, directory)
-            self.assertIsNone(activity1.id_in_backend)
+            self.assertIsNotNone(activity1.id_in_backend)
             activity1.description = 'x'
             self.assertIsNotNone(activity1.id_in_backend)
 
@@ -252,10 +253,10 @@ class ActivityTests(BasicTest):
             os.chmod(directory.url, 0o555)
             activity = self.create_test_activity()
             with self.assertRaises(OSError):
-                activity.backend = directory
+                directory.add(activity)
             self.assertIsNone(activity.backend)
             os.chmod(directory.url, 0o755)
-            activity.backend = directory
+            directory.add(activity)
             self.assertIsNotNone(activity.backend)
 
     def test_save(self):
@@ -264,7 +265,7 @@ class ActivityTests(BasicTest):
             dir2 = self.clone_backend(directory)
             try:
                 activity = self.create_test_activity()
-                activity.backend = directory
+                directory.add(activity)
                 self.assertEqual(len(directory), 1)
                 aclone = activity.clone()
                 self.assertEqualActivities(activity, aclone)
@@ -273,32 +274,31 @@ class ActivityTests(BasicTest):
 
                 activity2 = activity.clone()
                 self.assertEqualActivities(activity, activity2)
-                activity2.backend = directory
+                directory.add(activity2)
                 self.assertEqual(len(directory), 2)
-                with self.assertRaises(Exception):
-                    activity2.backend = dir2
-                with self.assertRaises(Exception):
-                    activity2.backend = None
-                activity3 = dir2.add(activity2)
-                self.assertEqualActivities(activity, activity3)
-                self.assertEqualActivities(activity2, activity3)
+                dir2.add(activity2)
+                self.assertEqual(len(dir2), 2)
+
+                activity2_copy = dir2.add(activity2)
+                self.assertEqualActivities(activity, activity2_copy)
+                self.assertEqualActivities(activity2, activity2_copy)
                 self.assertIs(activity.backend, directory)
                 self.assertIs(activity2.backend, directory)
-                self.assertIs(activity3.backend, dir2)
+                self.assertIs(activity2_copy.backend, dir2)
                 self.assertEqual(len(directory), 2)
-                self.assertEqual(len(dir2), 2)
+                self.assertEqual(len(dir2), 3)
                 directory.scan() # we changed it through dir2
-                self.assertEqual(len(directory), 3)
+                self.assertEqual(len(directory), 4)
+                dir2.scan()
+                self.assertEqual(len(directory), 4)
                 trunk = os.path.join(directory.url, 'Random GPX # 0')
-                expected_names = list(trunk + x for x in ('.gpx', '.1.gpx', '.2.gpx'))
-                files = list(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
+                expected_names = list(trunk + x + '.gpx' for x in ('.1.1', '.1.2', '.1', ''))
+                files = sorted(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
                 self.assertEqual(files, expected_names)
+                self.assertEqual(len(dir2), 4)
+                dir2.merge(directory, remove=True)
+                self.assertEqual(len(dir2), 1)
                 filecmp.clear_cache()
-                for idx1, idx2 in ((0, 1), (0, 2)):
-                    file1 = files[idx1]
-                    file2 = files[idx2]
-                    self.assertTrue(filecmp.cmp(file1, file2),
-                                    'Files are different: {} and {}'.format(file1, file2))
             finally:
                 dir2.destroy()
 
@@ -367,11 +367,10 @@ class ActivityTests(BasicTest):
         activity = Activity()
         self.assertNotIn('id:', str(activity))
         with Directory(cleanup=True) as directory:
-            activity = Activity(directory)
+            activity = Activity()
             activity.title = 'Title'
             activity.what = 'Running'
             activity.add_points(self.some_random_points(10))
-            self.assertIn('id:', str(activity))
             self.assertIn('Title', str(activity))
             self.assertIn('public' if activity.public else 'private', str(activity))
             self.assertIn('Running', str(activity))
@@ -380,6 +379,8 @@ class ActivityTests(BasicTest):
             self.assertTrue(str(activity).endswith(')'))
             activity.add_points(self.some_random_points(count=5))
             self.assertIn(' 15 points', str(activity))
+            directory.add(activity)
+            self.assertIn('id:', str(activity))
 
             # str(activity) must not fully load it
             clone = self.clone_backend(directory)
@@ -452,7 +453,8 @@ class ActivityTests(BasicTest):
     def test_fs_encoding(self):
         """fs_encoding"""
         with Directory(cleanup=True) as directory:
-            activity = Activity(directory)
+            activity = Activity()
+            directory.add(activity)
             for title in ('TITLE', 'Tätel'):
                 activity.title = title
                 self.assertEqual(activity.title, title)

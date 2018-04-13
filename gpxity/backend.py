@@ -17,6 +17,7 @@ import logging
 from http.client import HTTPConnection
 
 from .auth import Authenticate
+from .activity import Activity
 
 __all__ = ['Backend', 'BackendDiff']
 
@@ -324,6 +325,15 @@ class Backend:
             if self.__match is not None:
                 self.__activities = list(x for x in self.__activities if self.matches(x))
 
+    def _found_activity(self, ident: str):
+        """Creates an empty activity for ident and inserts it into this backend."""
+        result = Activity()
+        with self._decouple():
+            result._set_backend(self)  # pylint: disable=protected-access
+            result._set_id_in_backend(ident)  # pylint: disable=protected-access
+        self.append(result)
+        return result
+
     def _yield_activities(self):
         """A generator for all activities. It yields the next found and appends it to activities.
         The activities will not be loaded if possible.
@@ -351,10 +361,8 @@ class Backend:
             raise Backend.NoMatch('{}: {} does not match: {}'.format(exc_prefix, activity, match_error))
         return match_error is None
 
-    def _needs_full_save(self, ident, attributes) ->bool:
+    def _needs_full_save(self, attributes) ->bool:
         """Do we have to rewrite the entire activity?"""
-        if not attributes or ident:
-            return True
         for attribute in attributes:
             if attribute == 'all':
                 return True
@@ -366,55 +374,75 @@ class Backend:
         return False
 
     def add(self, activity, ident: str = None):
-        """save full activity.
-
-        If we know that this activity already exists, remove that one first. But we do
-        not rescan the backend source because that would be too expensive and a
-        race would always be possible. We do not even do that for local directories
-        for consistency.
+        """        We do not check if it already exists in this backend. No activity
+        already existing in this backend will be overwritten, the id_in_backend
+        of activity will be deduplicated if needed. This is currently only needed
+        for Directory.
 
         If the activity does not pass the current match function, raise an exception.
 
         Args:
             activity (~gpxity.Activity): The activity we want to save in this backend.
             ident: If given, a backend may use this as id_in_backend.
-                :class:`~gpxity.Directory` does. However most backends always create their own new
-                unique identifier when the full activity is saved/uploaded. MMT and GPSIES do.
+                :class:`~gpxity.Directory` might but it will prefer the id_in_backend the
+                activity might already have. Other backends always create their own new
+                unique identifier when the full activity is saved/uploaded.
             attributes (set(str)): If given and the backend supports specific saving for all given attributes,
                 save only those.
                 Otherwise, save the entire activity.
 
         Returns:
             ~gpxity.Activity: The saved activity. If the original activity lives in a different
-            backend, a new activity living in that backend will be created
+            backend, a new activity living in this backend will be created
             and returned.
+        """
+        self.matches(activity, 'add')
+        if activity.backend is not self and activity.backend is not None:
+            new_activity = activity.clone()
+        else:
+            new_activity = activity
+        with self._decouple():
+            new_activity._set_backend(self)  # pylint: disable=protected-access
+
+        if self._decoupled:
+            raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
+        if ident:
+            new_activity._set_id_in_backend(ident)  # pylint: disable=protected-access
+        try:
+            with self._decouple():
+                new_ident = self._write_all(new_activity)
+            new_activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+            if not self._has_item(new_activity.id_in_backend):
+                self.append(new_activity)
+            activity._clear_dirty()
+            return new_activity
+        except Exception:
+            self.remove(new_activity)
+            raise
+        return new_activity
+
+    def _rewrite(self, activity, attributes):
+        """Rewrites the full activity.
+
+        Used only by Activity when things change.
         """
 
         # pylint: disable=too-many-branches
-        attributes = activity.dirty
-        if self._decoupled:
-            raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
-        try:
-            self.matches(activity, 'save')
-        except Backend.NoMatch:
-            if activity.backend is not None:
-                # it already exists in the backend, reset to correct values
-                with self._decouple():
-                    self._read_all(activity)
-            raise
-        if activity.backend is not self and activity.backend is not None:
-            activity = activity.clone()
-        with self._decouple():
-            if activity.backend is None:
-                activity.backend = self
 
-        if self._needs_full_save(ident, attributes):
-            if ident is not None and not isinstance(ident, str):
-                raise Exception('{}: id_in_backend must be str'.format(ident))
-            if activity.id_in_backend:
-                self._remove_activity(activity)
-            activity.id_in_backend = ident
-            self._write_all(activity)
+        assert activity.backend is self
+        assert activity.id_in_backend in self
+        assert activity.dirty
+
+        needs_full_save = self._needs_full_save(attributes)
+
+        self.matches(activity, '_rewrite')
+
+        if needs_full_save:
+            self.remove(activity)
+            activity._set_backend(self)  # pylint: disable=protected-access
+            new_ident = self._write_all(activity)
+            activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+            self.append(activity)
         else:
             for attribute in attributes:
                 _ = attribute.split(':')
@@ -423,11 +451,9 @@ class Backend:
                     getattr(self, write_name)(activity)
                 else:
                     getattr(self, write_name)(activity, ''.join(_[1:]))
-        if not self._has_item(activity.id_in_backend):
-            self.append(activity)
         return activity
 
-    def _write_all(self, activity) ->None:
+    def _write_all(self, activity) ->str:
         """the actual implementation for the concrete Backend"""
         raise NotImplementedError()
 
@@ -443,9 +469,13 @@ class Backend:
         activity = value if hasattr(value, 'id_in_backend') else self[value]
         if activity.id_in_backend:
             self._remove_activity(activity)
-            with self._decouple():
-                activity.id_in_backend = None
-        self.__activities.remove(activity)
+            activity._set_id_in_backend(None)  # pylint: disable=protected-access
+        with self._decouple():
+            activity._set_backend(None)  # pylint: disable=protected-access
+            try:
+                self.__activities.remove(activity)
+            except ValueError:
+                pass
 
     def _remove_activity(self, activity) ->None:
         """backend dependent implementation"""
@@ -559,9 +589,8 @@ class Backend:
         Args:
             remove: If True, remove merged activities
         Returns: list(str) A list of messages for verbose output
-
-        # TODO: re-introduce use_remote_ident from sync_from
         """
+        # pylint: disable=too-many-branches
         result = list()
         src_dict = defaultdict(list)
         for _ in other:
@@ -576,10 +605,14 @@ class Backend:
         # 1. get all activities existing only in other
         for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
             # but only the first one of those with same points
-            self.add(src_dict[point_hash][0])
-            result.append('{} {} -> {}'.format(
-                'move' if remove else 'copy', src_dict[point_hash][0], self))
-            del src_dict[point_hash][0]
+            src_activities = src_dict[point_hash]
+
+            new_activity = self.add(src_activities[0])
+            result.append('{} {} -> {} / {}'.format(
+                'move' if remove else 'copy', src_activities[0], self, new_activity.id_in_backend))
+            if remove:
+                other.remove(src_activities[0])
+            del src_activities[0]
 
         # 2. merge the rest
         for point_hash in sorted(set(src_dict.keys()) & set(dst_dict.keys())):

@@ -48,7 +48,6 @@ class ParseGPSIESWhats(HTMLParser): # pylint: disable=abstract-method
         if tag == 'input' and attributes['name'] == 'trackTypes':
             _ = attributes['id']
             if _ not in self.result:
-                #print('GPSIES: found legal what', _)
                 self.result.append(_)
 
 
@@ -342,10 +341,11 @@ class GPSIES(Backend):
             response = self.__post('userList', data=data)
             page_parser.feed(response.text)
         for raw_data in page_parser.result['activities']:
-            activity = Activity(self, raw_data.activity_id)
+            activity = self._found_activity(raw_data.activity_id)
             activity.header_data['title'] = raw_data.title
             activity.header_data['time'] = raw_data.time
-            activity.header_data['distance'] = raw_data.distance
+            if raw_data.distance:
+                activity.header_data['distance'] = raw_data.distance
             activity.header_data['public'] = raw_data.public
             if self.__session is None: # anonymous, no login
                 activity.public = True
@@ -410,9 +410,12 @@ class GPSIES(Backend):
             return ''
         return value.encode('ascii', 'xmlcharrefreplace').decode()
 
-    def _write_all(self, activity):
-        """save full gpx track on the GPSIES server."""
+    def _write_all(self, activity) ->str:
+        """save full gpx track on the GPSIES server.
 
+        Returns:
+            The new id_in_backend
+        """
         files = {'formFile': (
             '{}.gpx'.format(self._html_encode(activity.title)), activity.to_xml(), 'application/gpx+xml')}
         data = {
@@ -429,8 +432,7 @@ class GPSIES(Backend):
             raise self.BackendException(response.text)
         for line in response.text.split('\n'):
             if 'fileId=' in line:
-                activity.id_in_backend = line.split('fileId=')[1].split('"')[0]
-                break
+                return line.split('fileId=')[1].split('"')[0]
 
     def destroy(self):
         """also close session"""

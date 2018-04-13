@@ -42,15 +42,6 @@ class TestBackends(BasicTest):
             with self.subTest(' {}'.format(cls.__name__)):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
 
-    def test_incomplete(self):
-        """Activities may be assigned to a backend but unsaved"""
-        for cls in self._find_backend_classes():
-            if 'remove' in cls.supported:
-                with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(cls) as backend:
-                        Activity(backend)
-
-
     def test_save_empty(self):
         """Save empty activity"""
         for cls in self._find_backend_classes():
@@ -73,12 +64,25 @@ class TestBackends(BasicTest):
         with Directory(cleanup=True) as directory1:
             with Directory(cleanup=True) as directory2:
                 saved = directory1.add(activity)
+                self.assertEqual(len(directory1), 1)
                 self.assertEqual(saved.backend, directory1)
-                activity.backend = directory1
-                with self.assertRaises(Exception):
-                    activity.backend = directory2
-                with self.assertRaises(Exception):
-                    activity.backend = None
+                directory1.add(activity)
+                self.assertEqual(len(directory1), 2)
+                directory2.add(activity)
+                self.assertEqual(len(directory2), 1)
+                directory2.scan()
+                self.assertEqual(len(directory2), 1)
+
+    def test_duplicate_activities(self):
+        """What happens if we save the same ident twice?"""
+        for cls in self._find_backend_classes():
+            if 'remove' in cls.supported:
+                with self.subTest(' {}'.format(cls.__name__)):
+                    with self.temp_backend(cls) as backend:
+                        activity = self.create_test_activity()
+                        backend.add(activity)
+                        backend.add(activity)
+                        self.assertEqual(len(backend), 1)
 
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg"""
@@ -115,11 +119,11 @@ class TestBackends(BasicTest):
                         backend.append(new_activity)
                     self.assertEqual(len(backend), 1)
                     orig_time = backend[0].time
+                    delta = datetime.timedelta(days=-5)
                     with self.assertRaises(cls.NoMatch):
-                        backend[0].adjust_time(datetime.timedelta(days=-5))
+                        backend[0].adjust_time(delta)
                     self.assertEqual(len(backend), 1)
-                    self.assertEqual(orig_time, backend[0].time)
-                    self.assertIsNone(match_date(backend[0]))
+                    self.assertEqual(orig_time + delta, backend[0].time)
 
     def test_z9_create_backend(self):
         """Test creation of a backend"""
@@ -235,7 +239,12 @@ class TestBackends(BasicTest):
                     with self.temp_backend(cls, count=1) as backend:
                         backend2 = self.clone_backend(backend)
                         activity = backend[0]
+                        self.assertIsNotNone(activity.backend)
+                        self.assertIsNotNone(activity.backend)
                         activity.title = 'Title ' + self.unicode_string1
+                        self.assertIsNotNone(activity.backend)
+                        self.assertIsNotNone(activity.backend)
+                        self.assertEqual(activity.backend, backend)
                         backend2.scan() # because backend2 does not know about changes thru backend
                         activity2 = backend2[0]
                         # activity and activity2 may not be identical. If the original activity
@@ -296,9 +305,12 @@ class TestBackends(BasicTest):
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=100))
                 sink.merge(source)
-                self.assertEqual(len(sink), 9)
+                # the first activity created by temp_backend always has the same points,
+                # so one of the sink activities will be merged
+                self.assertEqual(len(source), 5)
+                self.assertEqual(len(sink), 8)
                 sink.merge(source, remove=True)
-                self.assertSameActivities(source, sink)
+                self.assertEqual(len(source), 0)
 
     def test_scan(self):
         """some tests about Backend.scan()"""
@@ -361,7 +373,7 @@ class TestBackends(BasicTest):
         if not auth_dir.endswith('/'):
             auth_dir += '/'
         self.assertFalse(dir_c.is_temporary)
-        self.assertTrue(dir_c.url == auth_dir)
+        self.assertNotEqual(dir_c.url, auth_dir)
         dir_c.destroy()
         self.assertTrue(os.path.exists(auth_dir))
         os.rmdir(auth_dir)
