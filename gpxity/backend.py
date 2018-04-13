@@ -350,13 +350,14 @@ class Backend:
 
     def _needs_full_save(self, ident, attributes) ->bool:
         """Do we have to rewrite the entire activity?"""
-        if not attributes or attributes == set(['all']) or ident:
+        if not attributes or ident:
             return True
-        else:
-            for attribute in attributes:
-                write_name = '_write_{}'.format(attribute.split(':')[0])
-                if write_name not in self.supported:
-                    return True
+        for attribute in attributes:
+            if attribute == 'all':
+                return True
+            write_name = '_write_{}'.format(attribute.split(':')[0])
+            if write_name not in self.supported:
+                return True
         return False
 
     def add(self, activity, ident: str = None):
