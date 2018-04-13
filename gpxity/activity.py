@@ -151,7 +151,7 @@ class Activity:
 
     def _set_backend(self, value):
         """To be used only by backend implementations"""
-        assert self.is_decoupled
+        assert self.__is_decoupled
         self.__backend = value
 
     def rewrite(self) ->None:
@@ -178,7 +178,7 @@ class Activity:
     def _dirty(self, value):
         if not isinstance(value, str):
             raise Exception('_dirty only receives str')
-        if not self.is_decoupled:
+        if not self.__is_decoupled:
             self.__dirty.add(value)
             if not self._batch_changes:
                 self._rewrite()
@@ -214,7 +214,7 @@ class Activity:
             self._clear_dirty()
         if not self.__dirty:
             return
-        if not self.is_decoupled and not self._batch_changes:
+        if not self.__is_decoupled and not self._batch_changes:
             self.backend._rewrite(self, self.__dirty)  # pylint: disable=protected-access
             self._clear_dirty()
 
@@ -296,7 +296,7 @@ class Activity:
                 self.__backend._decoupled = prev_value
 
     @property
-    def is_decoupled(self):
+    def __is_decoupled(self):
         """True if we are currently decoupled from the backend. In that
         state, changes to Activity are not written to the backend and
         the activity is not marked dirty.
@@ -347,7 +347,7 @@ class Activity:
 
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
-        if self.backend is not None and self.id_in_backend and not self._loaded and not self.is_decoupled:
+        if self.backend is not None and self.id_in_backend and not self._loaded and not self.__is_decoupled:
             self.backend._read_all(self) # pylint: disable=protected-access, no-member
             self._loaded = True
 
