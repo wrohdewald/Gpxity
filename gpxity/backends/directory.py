@@ -61,6 +61,8 @@ class Directory(Backend):
 
     prefix = 'gpxity.'
 
+    _ident_may_use_title = True # Directory can do that
+
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, prefix: str = None):
         self.fs_encoding = None
         if prefix is None:
