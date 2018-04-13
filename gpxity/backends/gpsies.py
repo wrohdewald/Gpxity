@@ -368,9 +368,11 @@ class GPSIES(Backend):
         with self._decouple():
             activity.parse(response.text)
             # in Activity, the results of a full load override header_data
-            _ = activity.header_data['public']
-            del activity.header_data['public']
-            activity.public = _
+            if 'public' in activity.header_data:
+                # header_data is empty if this is a new activity we just wrote
+                _ = activity.header_data['public']
+                del activity.header_data['public']
+                activity.public = _
         self._read_what(activity)
 
     def _check_response(self, response):
