@@ -173,13 +173,10 @@ class Directory(Backend):
         return (x.replace('.gpx', '') for x in gpx_names)
 
     def _yield_activities(self):
-        if not self._decoupled:
-            # avoids recursion
-            self._symlinks = defaultdict(list)
-            self._load_symlinks()
-            for _ in self._list_gpx():
-                with self._decouple():
-                    yield Activity(self, _)
+        self._symlinks = defaultdict(list)
+        self._load_symlinks()
+        for _ in self._list_gpx():
+            yield Activity(self, _)
 
     def get_time(self) ->datetime.datetime:
         """get server time as a Linux timestamp"""
@@ -187,10 +184,9 @@ class Directory(Backend):
 
     def _read_all(self, activity):
         """fills the activity with all its data from source."""
-        with self._decouple():
-            assert activity.id_in_backend
-            with open(self.gpx_path(activity.id_in_backend)) as in_file:
-                activity.parse(in_file)
+        assert activity.id_in_backend
+        with open(self.gpx_path(activity.id_in_backend)) as in_file:
+            activity.parse(in_file)
 
     def _remove_activity(self, activity):
         """Removes its symlinks, empty symlink parent directories  and the file, in this order."""

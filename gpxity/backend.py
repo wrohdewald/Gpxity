@@ -304,7 +304,7 @@ class Backend:
         """loads the list of all activities in the backend if not yet done.
         Enforce this by calling :meth:`scan` first.
         """
-        if not self._activities_fully_listed:
+        if not self._activities_fully_listed and not self._decoupled:
             self._activities_fully_listed = True
             unsaved = list(x for x in self.__activities if x.id_in_backend is None)
             if self.__match is not None:
@@ -317,7 +317,8 @@ class Backend:
                 # _yield_activities should return ALL activities, match will be
                 # applied in a second loop. This way the Backend implementations
                 # do not have to worry about the match code.
-                list(self._yield_activities())
+                with self._decouple():
+                    list(self._yield_activities())
             finally:
                 self.__match = match_function
             if self.__match is not None:
@@ -391,18 +392,19 @@ class Backend:
 
         # pylint: disable=too-many-branches
         attributes = activity.dirty
-        if activity.is_decoupled:
-            raise Exception('A backend cannot save() if activity.is_decoupled. This is probably a bug in gpxity.')
+        if self._decoupled:
+            raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         try:
             self.matches(activity, 'save')
         except Backend.NoMatch:
             if activity.backend is not None:
                 # it already exists in the backend, reset to correct values
-                self._read_all(activity)
+                with self._decouple():
+                    self._read_all(activity)
             raise
         if activity.backend is not self and activity.backend is not None:
             activity = activity.clone()
-        with activity._decouple():  # pylint: disable=protected-access
+        with self._decouple():
             if activity.backend is None:
                 activity.backend = self
 
@@ -441,7 +443,8 @@ class Backend:
         activity = value if hasattr(value, 'id_in_backend') else self[value]
         if activity.id_in_backend:
             self._remove_activity(activity)
-            activity.id_in_backend = None
+            with self._decouple():
+                activity.id_in_backend = None
         self.__activities.remove(activity)
 
     def _remove_activity(self, activity) ->None:

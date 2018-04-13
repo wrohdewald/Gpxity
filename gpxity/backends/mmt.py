@@ -346,7 +346,6 @@ class MMT(Backend):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        assert not activity.is_decoupled, activity
         attr_value = getattr(activity, attribute)
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
@@ -437,8 +436,7 @@ class MMT(Backend):
         we rewrite all keywords instead.
         """
         # Our list of keywords may not be current, reload it
-#        with self._decouple():
-   #         activity.keywords = set(self._current_keywords(activity)) - set([value])
+   #     activity.keywords = set(self._current_keywords(activity)) - set([value])
         # activity.keywords is assumed to be current (see Activity.remove_keyword())
         for remove_tag in activity.keywords:
             self.__remove_one_keyword(activity, remove_tag)
@@ -504,22 +502,21 @@ class MMT(Backend):
             and silently ignore this inconsistency.
          """
         page_scan = self._scan_activity_page(activity)
-        with activity._decouple():  # pylint: disable=protected-access
-            if page_scan['title']:
-                activity.title = page_scan['title']
-            if page_scan['description']:
-                _ = page_scan['description']
-                if _ == self._default_description:
-                    _ = ''
-                activity.description = _
-            if page_scan['tags']:
-                activity.keywords = page_scan['tags'].keys()
-            # MMT sends different values of the current activity type, hopefully what_3 is always the
-            # correct one.
-            if page_scan['what_3']:
-                activity.what = self.decode_what(page_scan['what_3'])
-            if page_scan['public'] is not None:
-                activity.public = page_scan['public']
+        if page_scan['title']:
+            activity.title = page_scan['title']
+        if page_scan['description']:
+            _ = page_scan['description']
+            if _ == self._default_description:
+                _ = ''
+            activity.description = _
+        if page_scan['tags']:
+            activity.keywords = page_scan['tags'].keys()
+        # MMT sends different values of the current activity type, hopefully what_3 is always the
+        # correct one.
+        if page_scan['what_3']:
+            activity.what = self.decode_what(page_scan['what_3'])
+        if page_scan['public'] is not None:
+            activity.public = page_scan['public']
 
     def _read_all(self, activity):
         """get the entire activity"""
@@ -531,10 +528,9 @@ class MMT(Backend):
             self.url, activity.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
             # some activities download only a few points if mid/uid are not given, but I
             # have not been able to write a unittest triggering that ...
-        with self._decouple():
-            activity.parse(response.text)
-            # but this does not give us activity type and other things,
-            # get them from the web page.
+        activity.parse(response.text)
+        # but this does not give us activity type and other things,
+        # get them from the web page.
         self._use_webpage_results(activity)
 
     def _remove_activity(self, activity):

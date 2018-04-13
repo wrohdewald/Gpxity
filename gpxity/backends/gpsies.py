@@ -347,32 +347,29 @@ class GPSIES(Backend):
             activity.header_data['time'] = raw_data.time
             activity.header_data['distance'] = raw_data.distance
             activity.header_data['public'] = raw_data.public
-            with activity._decouple():  # pylint: disable=protected-access
-                if self.__session is None: # anonymous, no login
-                    activity.public = True
+            if self.__session is None: # anonymous, no login
+                activity.public = True
             yield activity
 
     def _read_what(self, activity):
         """I found no way to download all attributes in one go"""
-        with self._decouple():
-            data = {'fileId': activity.id_in_backend}
-            response = self.__post('editTrack', data)
-            page_parser = ParseGPIESEditPage()
-            page_parser.feed(response.text)
-            activity.what = self.decode_what(page_parser.what)
+        data = {'fileId': activity.id_in_backend}
+        response = self.__post('editTrack', data)
+        page_parser = ParseGPIESEditPage()
+        page_parser.feed(response.text)
+        activity.what = self.decode_what(page_parser.what)
 
     def _read_all(self, activity):
         """get the entire activity. For gpies, we only need the gpx file"""
         data = {'fileId': activity.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data)
-        with self._decouple():
-            activity.parse(response.text)
-            # in Activity, the results of a full load override header_data
-            if 'public' in activity.header_data:
-                # header_data is empty if this is a new activity we just wrote
-                _ = activity.header_data['public']
-                del activity.header_data['public']
-                activity.public = _
+        activity.parse(response.text)
+        # in Activity, the results of a full load override header_data
+        if 'public' in activity.header_data:
+            # header_data is empty if this is a new activity we just wrote
+            _ = activity.header_data['public']
+            del activity.header_data['public']
+            activity.public = _
         self._read_what(activity)
 
     def _check_response(self, response):
