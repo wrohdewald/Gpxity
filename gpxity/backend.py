@@ -414,7 +414,7 @@ class Backend:
             new_activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
             if not self._has_item(new_activity.id_in_backend):
                 self.append(new_activity)
-            activity._clear_dirty()
+            activity._clear_dirty()  # pylint: disable=protected-access
             return new_activity
         except Exception:
             self.remove(new_activity)
@@ -431,7 +431,7 @@ class Backend:
 
         assert activity.backend is self
         assert activity.id_in_backend in self
-        assert activity._dirty
+        assert activity._dirty  # pylint: disable=protected-access
 
         needs_full_save = self._needs_full_save(attributes)
 

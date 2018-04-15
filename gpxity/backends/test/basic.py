@@ -56,7 +56,7 @@ class BasicTest(unittest.TestCase):
 
     def tearDown(self):
         """Check if there are still /tmp/gpxitytest.* directories"""
-        must_be_empty =tempfile.mkdtemp(prefix=Directory.prefix)
+        must_be_empty = tempfile.mkdtemp(prefix=Directory.prefix)
         os.rmdir(must_be_empty)
         timedelta = datetime.datetime.now() - self.start_time
         print('{} seconds '.format(timedelta.seconds), end='', flush=True)

@@ -54,6 +54,7 @@ class ActivityTests(BasicTest):
 
     def test_dirty(self):
         """Activity._dirty"""
+        # pylint: disable=protected-access
         with Directory(cleanup=True) as directory:
             activity = Activity()
             directory.add(activity)
