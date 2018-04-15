@@ -114,20 +114,14 @@ class Activity:
 
     @property
     def backend(self):
-        """The backend this activity lives in. If it was constructed in memory, backend is None.
-        If you change it from None to a backend, this activity is automatically saved in that backend.
+        """The backend this activity lives in. If the activity was constructed in memory, backend is None.
+
+        This is a read-only property. It is set with :meth:`Backend.add <gpxity.Backend.add>`.
 
         It is not possible to decouple an activity from its backend, use :meth:`clone()`.
-
-        It is not possible to move the activity to a different backend by changing this.
-        Use :meth:`Backend.add() <gpxity.Backend.add()>` instead.
         """
         return self.__backend
-
-    @property
-    def is_fully_loaded(self) ->bool:
-        """True if all info from the backend is loaded or if there is no backend."""
-        return self._loaded or (self.backend is None)
+        # :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>`.
 
     @property
     def id_in_backend(self) ->str:
@@ -648,9 +642,9 @@ class Activity:
 
         Args:
             with_what: If False, do not use self.what. Needed for comparing
-            activities for equality like in unittests because values can change
-            and information can get lost while copying between different
-            backends
+                activities for equality like in unittests because values can change
+                and information can get lost while copying between different
+                backends
 
         Returns:
             a string with selected attributes in printable form.
