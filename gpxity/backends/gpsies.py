@@ -403,13 +403,6 @@ class GPSIES(Backend):
             'websiteUrl':''}
         self.__post('editTrack', data=data)
 
-    @staticmethod
-    def _html_encode(value):
-        """encodes str to something gpies.com accepts"""
-        if value is None:
-            return ''
-        return value.encode('ascii', 'xmlcharrefreplace').decode()
-
     def _write_all(self, activity) ->str:
         """save full gpx track on the GPSIES server.
 

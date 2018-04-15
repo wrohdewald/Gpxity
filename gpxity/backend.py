@@ -636,3 +636,10 @@ class Backend:
                         result.append('Removed duplicate {}'.format(source))
                     source.remove()
         return result
+
+    @staticmethod
+    def _html_encode(value):
+        """encodes str to something gpies.com accepts"""
+        if value is None:
+            return ''
+        return value.encode('ascii', 'xmlcharrefreplace').decode()
