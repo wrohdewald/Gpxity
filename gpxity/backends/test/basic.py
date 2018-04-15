@@ -48,7 +48,7 @@ class BasicTest(unittest.TestCase):
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
-        Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '/'
+        Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:])
         path = tempfile.mkdtemp(prefix=Directory.prefix)
 
         if not os.path.exists(path):
