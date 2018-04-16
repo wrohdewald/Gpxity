@@ -79,6 +79,12 @@ class Directory(Backend):
         self._symlinks = defaultdict(list)
         self._load_symlinks()
 
+    def _activity_identifier(self, activity) ->str:
+        """The full identifier with backend name and id_in_backend.
+        As used for gpxdo.
+        """
+        return '{}{}'.format(self.url, activity.id_in_backend)
+
     @property
     def legal_whats(self):
         """

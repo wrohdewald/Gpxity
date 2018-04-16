@@ -188,6 +188,12 @@ class Backend:
         """
         raise NotImplementedError
 
+    def _activity_identifier(self, activity) ->str:
+        """The full identifier with backend name and id_in_backend.
+        As used for gpxdo.
+        """
+        return '{}:{}/{}'.format(self.__class__.__name__.lower(), self.auth[0], activity.id_in_backend)
+
     @contextmanager
     def _decouple(self):
         """This context manager disables automic synchronization with

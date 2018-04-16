@@ -636,6 +636,14 @@ class Activity:
     def __str__(self):
         return self.__repr__()
 
+    def identifier(self) ->str:
+        """The full identifier with backend name and id_in_backend.
+        As used for gpxdo.
+        """
+        if self.backend is None:
+            return 'nobackend'
+        return self.backend._activity_identifier(self)
+
     def key(self, with_what: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but
         sufficiently safe IMHO.
