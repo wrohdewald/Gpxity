@@ -349,6 +349,11 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def _read_all_decoupled(self, activity) ->None:
+        """Decouples and calls the backend specific _read_all"""
+        with self._decouple():
+            self._read_all(activity)
+
     def _read_all(self, activity) ->None:
         """fills the activity with all its data from source"""
         raise NotImplementedError()
