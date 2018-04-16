@@ -73,15 +73,37 @@ class Utility:
 
     def list_them(self):
         """list activities"""
-        for source in self.sources:
-            source.scan(now=True) # the next print should contain # of activities
-            print(source)
-            for _ in source:
-                if self.options.full:
-                    # load full activity
-                    _.gpx # pylint: disable=pointless-statement
-                print(_)
-            print()
+        header_line = list()
+        all_activities = self._source_activities()
+        output_lines = list()
+        def add_field(condition, header, value, rightalign=False):
+            """Conditionally add value for the column named 'header'"""
+            if condition:
+                header_line.append(header)
+                for idx, _ in enumerate(all_activities):
+                    if idx == len(output_lines):
+                        output_lines.append([])
+                    output_lines[idx].append(value(_))
+
+        add_field(True, 'Identifier', lambda x: x.identifier())
+        add_field(self.options.title, 'Title', lambda x: x.title[:40]  if x.title else '')
+        add_field(self.options.time, 'Time', lambda x: str(x.time))
+        add_field(self.options.what, 'What', lambda x: x.what)
+        add_field(self.options.keywords, 'Keywords', lambda x: ','.join(y for y in x.keywords))
+        add_field(self.options.length, '    Length', lambda x: '{:>8.3f}km'.format(x.length()))
+        add_field(self.options.points, 'Points', lambda x: '{:>6}'.format(x.gpx.get_track_points_no()))
+        add_field(self.options.status, 'Status', lambda x: 'public' if x.public else 'private')
+        add_field(self.options.description,  'Description', lambda x: x.description)
+
+        if output_lines:
+            output_lines.insert(0, header_line)
+            field_lengths = list()
+            for column in range(len(output_lines[0])):
+                field_lengths.append(max(len(x[column]) for x in output_lines))
+            for _ in output_lines:
+                for idx, field in enumerate(_):
+                    print('{field:{width}}'.format(width=field_lengths[idx], field=field), end='  ')
+                print()
 
     @staticmethod
     def fix_activity(activity):
@@ -168,12 +190,12 @@ class Utility:
                 return 'time {} is before {}'.format(activity.time, self.options.first_date)
             if self.options.last_date and activity.time > self.options.last_date:
                 return 'time {} is after {}'.format(activity.time, self.options.last_date)
-        distance = activity.header_data.get('distance', None)
-        if distance:
-            if self.options.min_distance and distance < self.options.min_distance:
-                return 'distance {} is below {}'.format(distance, self.options.min_distance)
-            if self.options.max_distance and distance > self.options.max_distance:
-                return 'distance {} is above {}'.format(distance, self.options.max_distance)
+        length = activity.header_data.get('distance', None)
+        if length:
+            if self.options.min_length and length < self.options.min_length:
+                return 'length {} is below {}'.format(length, self.options.min_length)
+            if self.options.max_length and length > self.options.max_length:
+                return 'length {} is above {}'.format(length, self.options.max_length)
         if self.options.min_points and activity.gpx.get_track_points_no() < self.options.min_points:
             return 'point count {} is below {}'.format(activity.gpx.get_track_points_no(), self.options.min_points)
         if self.options.max_points and activity.gpx.get_track_points_no() > self.options.max_points:
@@ -186,8 +208,8 @@ class Utility:
         parser.add_argument('--last-date', help='Limit activities by date', type=valid_date_argument, default=None)
         parser.add_argument('--min-points', help='Limit activities by minimum number of points', type=int, default=None)
         parser.add_argument('--max-points', help='Limit activities by maximum number of points', type=int, default=None)
-        parser.add_argument('--min-distance', help='Limit activities by distance', type=int, default=None)
-        parser.add_argument('--max-distance', help='Limit activities by distance', type=int, default=None)
+        parser.add_argument('--min-length', help='Limit activities by track length', type=int, default=None)
+        parser.add_argument('--max-length', help='Limit activities by track length', type=int, default=None)
 
     @staticmethod
     def add_common_args(parser):
@@ -264,7 +286,23 @@ Dates are expected as YYYY-MM-DD.
             'ls', help='list activities from one or more sources',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
-        ls_parser.add_argument('--full', help='download the full activity for more info',
+        ls_parser.add_argument('--long', help='show most useful info',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--title', help='show the title',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--what', help='show the activity type',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--time', help='show the time',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--length', help='show the length',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--points', help='show the number of points',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--status', help='show the status public/private',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--keywords', help='show the keywords',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--description', help='show the description',
                                action='store_true', default=False)
         self.add_range_args(ls_parser)
         self.add_common_args(ls_parser)
