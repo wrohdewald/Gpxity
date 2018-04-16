@@ -23,6 +23,7 @@ from .util import repr_timespan
 
 from .gpxpy.gpxpy import gpx as mod_gpx
 from .gpxpy.gpxpy import parse as gpxpy_parse
+from .gpxpy.gpxpy.geo import length as gpx_length
 
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
@@ -670,6 +671,14 @@ class Activity:
 
     def __lt__(self, other):
         return self.key() < other.key()
+
+    def length(self) ->float:
+        """For me, the earth is flat.
+
+        Returns:
+            the length in km
+        """
+        return round(gpx_length(list(self.points())) / 1000, 3)
 
     def angle(self) ->float:
         """For me, the earth is flat.
