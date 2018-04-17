@@ -69,9 +69,12 @@ class Utility:
     def remove(self):
         """remove activities"""
         for _ in self._source_activities():
-            _.remove()
-            if self.options.verbose:
-                print('removed {}'.format(_))
+            if self.options.dry_run:
+                print('would remove {}'.format(_))
+            else:
+                _.remove()
+                if self.options.verbose:
+                    print('removed {}'.format(_))
 
     def list_them(self):
         """list activities"""
@@ -273,6 +276,8 @@ Dates are expected as YYYY-MM-DD.
         rm_parser.set_defaults(func=self.remove)
         self.add_common_args(rm_parser)
         self.add_range_args(rm_parser)
+        rm_parser.add_argument('--dry-run', help='only show what would be removed',
+                               action='store_true', default=False)
         rm_parser.add_argument('source', help='one or more activities or backends', nargs='*')
 
         if False: # pylint: disable=using-constant-test
