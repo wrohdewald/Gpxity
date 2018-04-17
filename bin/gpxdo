@@ -79,12 +79,14 @@ class Utility:
     def list_them(self):
         """list activities"""
         header_line = list()
+        sort_headers = list()
         all_activities = self._source_activities()
         output_lines = list()
         def add_field(condition, header, value):
             """Conditionally add value for the column named 'header'"""
             if condition:
                 header_line.append(header)
+                sort_headers.append(header.lower().strip())
                 for idx, _ in enumerate(all_activities):
                     if idx == len(output_lines):
                         output_lines.append([])
@@ -101,6 +103,9 @@ class Utility:
         add_field(self.options.description, 'Description', lambda x: x.description)
 
         if output_lines:
+            sort_cols = self.options.sort.split(',')
+            output_lines.sort(
+                key=lambda x: ','.join('{:100}'.format(x[sort_headers.index(y)]) for y in sort_cols))
             output_lines.insert(0, header_line)
             field_lengths = list()
             for column in range(len(output_lines[0])):
@@ -294,6 +299,11 @@ Dates are expected as YYYY-MM-DD.
             'ls', help='list activities from one or more sources',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
+        ls_parser.add_argument('--sort',
+                               help="""one or more out of identifier,title,what,time,length,
+                               points,keywords,status,
+                               separated by commas (no spaces allowed)""",
+                               default='identifier')
         ls_parser.add_argument('--long', help='show most useful info',
                                action='store_true', default=False)
         ls_parser.add_argument('--title', help='show the title',
