@@ -1,9 +1,22 @@
 Changelog
 =========
 
-1.2.1 release xxxx-xx-xx
+1.2.1 release 2018-04-17
 ------------------------
   * Backend has a new arg "timeout"
+  * README has a link to readthedocs
+  * Auth: added an example
+  * Backend.sync_from is gone, there are now Activity.merge() and Backend.merge()
+  * diverse fixes for gpxdo
+  * Activity.what is now always in internal format
+  * Simplify specific backend code by moving more code into the general Backend class
+  * Activity.dirty is gone, there now is Activity.rewrite()
+  * Backend: renamed save() to add()
+  * Activity.identifier is new, to be used by gpxdo
+  * Activity.length is the track length
+  * gpxdo ls has many more options, including --sort
+  * gpxdo rm has a new option --dry-run
+
 
 1.2.0 release 2018-04-09
 ------------------------
