@@ -50,6 +50,8 @@ class Utility:
         """A copied list with activities combined from all sources, to be used in 'for'-loops"""
         result = list()
         for source in self.sources:
+            if self.options.verbose:
+                print('collecting activities from source', source)
             result.extend(source)
         return result
 
