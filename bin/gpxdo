@@ -81,7 +81,7 @@ class Utility:
         header_line = list()
         all_activities = self._source_activities()
         output_lines = list()
-        def add_field(condition, header, value, rightalign=False):
+        def add_field(condition, header, value):
             """Conditionally add value for the column named 'header'"""
             if condition:
                 header_line.append(header)
