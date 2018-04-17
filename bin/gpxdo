@@ -98,7 +98,7 @@ class Utility:
         add_field(self.options.length, '    Length', lambda x: '{:>8.3f}km'.format(x.length()))
         add_field(self.options.points, 'Points', lambda x: '{:>6}'.format(x.gpx.get_track_points_no()))
         add_field(self.options.status, 'Status', lambda x: 'public' if x.public else 'private')
-        add_field(self.options.description,  'Description', lambda x: x.description)
+        add_field(self.options.description, 'Description', lambda x: x.description)
 
         if output_lines:
             output_lines.insert(0, header_line)
