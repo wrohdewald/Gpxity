@@ -118,6 +118,9 @@ class Utility:
     @staticmethod
     def fix_activity(activity):
         """fix some bugs in the GPX file"""
+        if isinstance(activity.backend, Directory):
+            # make Directory build a new file name from the title
+            activity._set_id_in_backend(None)  # pylint: disable=protected-access
         activity.rewrite()
 
     def fix(self):
