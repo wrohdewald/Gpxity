@@ -354,6 +354,10 @@ Dates are expected as YYYY-MM-DD.
         merge_parser.add_argument('destination', help='the destination activity or backend', nargs=1)
 
 
+        if len(sys.argv) < 2:
+            parser.print_usage()
+            sys.exit(2)
+
         self.options = parser.parse_args()
 
         if self.options.timeout is not None:
