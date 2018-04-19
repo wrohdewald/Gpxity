@@ -233,7 +233,7 @@ class Directory(Backend):
         activity._set_id_in_backend(ident)  # pylint: disable=protected-access
         gpx_pathname = self.gpx_path(ident)
         try:
-            with open(gpx_pathname, 'w') as out_file:
+            with open(gpx_pathname, 'w', encoding='utf-8') as out_file:
                 out_file.write(activity.to_xml())
             time = activity.time
             if time:
