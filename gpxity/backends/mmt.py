@@ -427,12 +427,10 @@ class MMT(Backend):
         values = value.split(',')
         tags = (text.find('tags').text or '').split(',')
         if values != tags or len(ids) != len(values):
-            print('ids:', ids)
-            print('values:', values)
-            print('tags:', tags)
-        else:
-            for key, id_ in zip(values, ids):
-                self._found_tag_id(key, id_)
+            raise self.BackendException(
+                'MMT gives us strange tag values: ids={} values={} tags={}'.format(ids, values, tags))
+        for key, id_ in zip(values, ids):
+            self._found_tag_id(key, id_)
 
     def _write_remove_keyword(self, activity, value):
         """Remove an MTT tag. This is flawed, see __remove_one_keyword, so
