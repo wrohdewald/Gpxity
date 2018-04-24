@@ -191,7 +191,7 @@ class Directory(Backend):
     def _read_all(self, activity):
         """fills the activity with all its data from source."""
         assert activity.id_in_backend
-        with open(self.gpx_path(activity.id_in_backend)) as in_file:
+        with open(self.gpx_path(activity.id_in_backend), encoding='utf-8') as in_file:
             activity.parse(in_file)
 
     def _remove_activity(self, activity):
