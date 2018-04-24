@@ -253,9 +253,14 @@ class ActivityTests(BasicTest):
         with Directory(cleanup=True) as directory:
             os.chmod(directory.url, 0o555)
             activity = self.create_test_activity()
-            with self.assertRaises(OSError):
+            if os.getuid() == 0:
+                # for root, this works even with 555
                 directory.add(activity)
-            self.assertIsNone(activity.backend)
+                self.assertIsNotNone(activity.backend)
+            else:
+                with self.assertRaises(OSError):
+                    directory.add(activity)
+                self.assertIsNone(activity.backend)
             os.chmod(directory.url, 0o755)
             directory.add(activity)
             self.assertIsNotNone(activity.backend)
