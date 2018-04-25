@@ -38,5 +38,5 @@ setup(
     scripts=['bin/gpxdo'],
     test_suite='gpxity.backends.test',
     extras_require={
-        'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation']
+        'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest']
         })
