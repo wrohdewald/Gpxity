@@ -19,8 +19,8 @@ from pkgutil import get_data
 import tempfile
 from contextlib import contextmanager
 
-from ...gpxpy import  gpxpy
-from ...gpxpy.gpxpy.gpx import GPXTrackPoint
+import  gpxpy
+from gpxpy.gpx import GPXTrackPoint
 
 from ...activity import Activity
 from ...backend import Backend

@@ -21,9 +21,9 @@ from .util import repr_timespan
 # import gpxpy.gpxfield as mod_gpxfield
 # mod_gpxfield.TIME_TYPE=None
 
-from .gpxpy.gpxpy import gpx as mod_gpx
-from .gpxpy.gpxpy import parse as gpxpy_parse
-from .gpxpy.gpxpy.geo import length as gpx_length
+from gpxpy import gpx as mod_gpx
+from gpxpy import parse as gpxpy_parse
+from gpxpy.geo import length as gpx_length
 
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
