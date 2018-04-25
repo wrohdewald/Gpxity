@@ -4,7 +4,7 @@
 # See LICENSE for details.
 
 """
-implements :class:`gpxpy.backends.test.test_backends.TestBackends` for all backends
+implements :class:`gpxity.backends.test.test_backends.TestBackends` for all backends
 """
 
 import os
