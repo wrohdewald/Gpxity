@@ -51,8 +51,9 @@ setup(
         'Topic :: Communications',
         'Topic :: Internet :: WWW/HTTP',
         ],
-    packages=find_packages(exclude=['doc', 'test', 'bin', '.gitignore']),
-    install_requires=['requests', 'gpxpy'],
+    packages=find_packages(),
+    install_requires=['requests', 'lxml'],
+    scripts=['bin/gpxdo'],
     extras_require={
         'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation']
         })
