@@ -1,6 +1,14 @@
 Changelog
 =========
 
+1.2.2 release 2018-04-25
+------------------------
+  * gpxdo ls --long is no longer ignored
+  * explicitly enforce utf-8 when reading or writing .gpx files
+  * improve setup.py
+  * require gpxpy 1.2.0
+
+
 1.2.1 release 2018-04-17
 ------------------------
   * Backend has a new arg "timeout"
