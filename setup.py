@@ -4,11 +4,7 @@
 see https://setuptools.readthedocs.io/en/latest/setuptools.html
 """
 
-import os
-
 from setuptools import setup, find_packages
-
-here = os.path.abspath(os.path.dirname(__file__))
 
 long_description = """
 Gpxity is a Python - library making it easy to move activities between different backends.
@@ -58,6 +54,3 @@ setup(
     extras_require={
         'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation']
         })
-
-
-
