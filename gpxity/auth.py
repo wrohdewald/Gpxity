@@ -29,7 +29,11 @@ class Authenticate:
         username (str): For the wanted account in the backend
 
     Attributes:
+        path (str): The name for the auth file. Class variable, to be changed before
+          Authenticate() is instantiated.
+
         auth (tuple(str,str)): (username, password). Both are either str or None.
+
         url: If given, overrides the url given to the backend
 
     For every specific account in a backend, auth.cfg has a section:
@@ -51,6 +55,8 @@ class Authenticate:
 
     # pylint: disable=too-few-public-methods
 
+    path = '~/.config/Gpxity/auth.cfg'
+
     def __init__(self, cls, username: str = None):
 
         self.cls = cls
@@ -59,8 +65,8 @@ class Authenticate:
         if 'Directory' in cls.__name__  and username.startswith('gpxitytest'):
             self.url = tempfile.mkdtemp(prefix='gpxity')
             return
-        self.path = os.path.expanduser('~/.config/Gpxity/auth.cfg')
-        with open(self.path) as auth_file:
+        self.__path = os.path.expanduser(self.path)
+        with open(self.__path) as auth_file:
             self._parse_config(auth_file.read())
         return
 
@@ -76,7 +82,7 @@ class Authenticate:
         try:
             section = config[config_key]
         except KeyError:
-            raise KeyError('Section [{}] not found in {}'.format(config_key, self.path))
+            raise KeyError('Section [{}] not found in {}'.format(config_key, self.__path))
         if 'Password' in section:
             password = section['Password']
         if 'Url' in section:

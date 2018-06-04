@@ -24,6 +24,7 @@ from gpxpy.gpx import GPXTrackPoint
 
 from ...activity import Activity
 from ...backend import Backend
+from ...auth import Authenticate
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -45,6 +46,8 @@ class BasicTest(unittest.TestCase):
 
     def setUp(self):
         """defines test specific Directory.prefix"""
+        Authenticate.path = auth_file = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
+        print('auth file now is', Authenticate.path)
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
