@@ -34,7 +34,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         ],
     packages=find_packages(),
-    install_requires=['gpxpy>=1.2.0', 'lxml'],
+    install_requires=['requests', 'gpxpy>=1.2.0', 'lxml'],
     scripts=['bin/gpxdo'],
     test_suite='gpxity.backends.test',
     package_data={
