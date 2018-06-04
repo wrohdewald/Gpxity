@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.2.3 release 2018-06-04
+------------------------
+  * utility for testing installation in a docker container
+
 1.2.2 release 2018-04-25
 ------------------------
   * gpxdo ls --long is no longer ignored

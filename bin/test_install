@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if test ! -r bin/test_install
+then
+	echo start this in the Gpxity root directory
+	exit 2
+fi
+
+kill_containers() {
+	for container in $(docker container ls --all --filter ancestor=gpxity --quiet)
+	do
+		set +e
+		docker container kill $container 2>/dev/null
+		docker container rm $container
+	done
+	docker image prune -f
+	docker image rm gpxity
+}
+
+kill_containers
+
+set -e
+
+docker build -t gpxity .
+
+trap "kill_containers" 0
+
+docker run -it  gpxity /bin/bash
