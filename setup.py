@@ -37,6 +37,9 @@ setup(
     install_requires=['gpxpy>=1.2.0', 'lxml'],
     scripts=['bin/gpxdo'],
     test_suite='gpxity.backends.test',
+    package_data={
+        'gpxity.backends.test': ['*.gpx'],
+        },
     extras_require={
         'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest']
         })
