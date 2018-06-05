@@ -49,7 +49,7 @@ setup(
     scripts=['bin/gpxdo'],
     test_suite='gpxity.backends.test',
     package_data={
-        'gpxity.backends.test': ['*.gpx'],
+        'gpxity.backends.test': ['*.gpx', 'test_auth_cfg'],
         },
     extras_require={
         'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest']
