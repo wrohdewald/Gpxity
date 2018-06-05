@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2.4 release 2018-06-05
+1.2.5 release 2018-06-05
 ------------------------
   * utility for testing installation in a docker container
   * version number is not in the source anymore, setup.py creates version.py
