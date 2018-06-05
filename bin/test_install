@@ -25,4 +25,4 @@ docker build -t gpxity .
 
 trap "kill_containers" 0
 
-docker run -it  gpxity /bin/bash
+docker run --no-cache -it  gpxity /bin/sh
