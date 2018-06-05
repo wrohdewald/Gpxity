@@ -137,7 +137,7 @@ class TestBackends(BasicTest):
                         time.sleep(2)
                         second_time = backend.get_time()
                         total_seconds = (second_time - first_time).total_seconds()
-                        self.assertTrue(1 < total_seconds < 4, 'Time difference should be {}, is {}-{}={}'.format(
+                        self.assertTrue(1 < total_seconds < 8, 'Time difference should be {}, is {}-{}={}'.format(
                             2, second_time, first_time, second_time - first_time))
 
     def test_write_remote_attributes(self):
