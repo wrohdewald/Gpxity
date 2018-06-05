@@ -6,5 +6,6 @@
 from .activity import *
 from .backend import *
 from .backends import *
+from .version import *
 
-__all__ = ['Activity', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'ServerDirectory', 'BackendDiff']
+__all__ = ['Activity', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'ServerDirectory', 'BackendDiff', 'VERSION']

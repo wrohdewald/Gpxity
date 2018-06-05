@@ -1,9 +1,10 @@
 Changelog
 =========
 
-1.2.3 release 2018-06-04
+1.2.3 release 2018-06-05
 ------------------------
   * utility for testing installation in a docker container
+  * version number is not in the source anymore, setup.py creates version.py
 
 1.2.2 release 2018-04-25
 ------------------------

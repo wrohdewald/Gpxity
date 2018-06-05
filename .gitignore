@@ -3,6 +3,7 @@ __pycache__
 .eric6project
 build
 dist
+gpxity/version.py
 Gpxity.egg-info
 **auth.cfg
 TODO

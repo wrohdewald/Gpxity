@@ -11,9 +11,20 @@ def readall(path):
     with open(path) as in_file:
         return in_file.read()
 
+TEMPLATE = '\n'.join([
+    '"""',
+    'This file is created by setup.py, the version is the latest git tag.',
+    '"""',
+    '',
+    'VERSION = "{version}"',
+    ''])
+
 setup(
     name='Gpxity',
-    use_scm_version=True,
+    use_scm_version={
+        'write_to': 'gpxity/version.py',
+        'write_to_template': TEMPLATE
+        },
     setup_requires=['setuptools_scm'],
     description='A uniform interface to GPX services like mapmytracks or gpsies',
     long_description=readall('README.rst') + '\n\n' + readall('CHANGELOG.rst'),

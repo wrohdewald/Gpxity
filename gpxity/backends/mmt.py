@@ -39,7 +39,7 @@ from contextlib import contextmanager
 import requests
 
 from .. import Backend, Activity
-from ..util import VERSION
+from ..version import VERSION
 
 
 __all__ = ['MMT']

@@ -10,9 +10,7 @@ This module defines some helpers.
 
 import datetime
 
-__all__ = ['Duration', 'repr_timespan', 'VERSION']
-
-VERSION = '1.2.2'
+__all__ = ['Duration', 'repr_timespan']
 
 class Duration:
     """A context manager showing time information for debugging."""
