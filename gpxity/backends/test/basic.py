@@ -46,7 +46,7 @@ class BasicTest(unittest.TestCase):
 
     def setUp(self):
         """defines test specific Directory.prefix"""
-        Authenticate.path = auth_file = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
+        Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
         print('auth file now is', Authenticate.path)
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
@@ -102,15 +102,15 @@ class BasicTest(unittest.TestCase):
             BasicTest.all_backend_classes = BasicTest._find_backend_classes()
         gpx = cls._get_gpx_from_test_file('test')
         if start_time is not None:
-            move_time = start_time - gpx.tracks[0].segments[0].points[0].time
-            gpx.adjust_time(move_time)
-        movement = gpxpy.geo.LocationDelta(distance=1000, angle=360 * idx / count)
+            _ = start_time - gpx.tracks[0].segments[0].points[0].time
+            gpx.adjust_time(_)
         last_points = gpx.tracks[-1].segments[-1].points
         if end_time is None:
             end_time = last_points[-1].time + datetime.timedelta(hours=10, seconds=idx)
         new_point = GPXTrackPoint(
             latitude=last_points[-1].latitude, longitude=last_points[-1].longitude + 0.001, time=end_time)
-        new_point.move(movement)
+        _ = gpxpy.geo.LocationDelta(distance=1000, angle=360 * idx / count)
+        new_point.move(_)
         gpx.tracks[-1].segments[-1].points.append(new_point)
 
         # now set all times such that they are in order with this activity and do not overlap
@@ -161,11 +161,10 @@ class BasicTest(unittest.TestCase):
     def assertSameActivities(self, backend1, backend2, with_what=True): # pylint: disable=invalid-name
         """both backends must hold identical activities"""
         self.maxDiff = None # pylint: disable=invalid-name
-        if backend1 == backend2:
-            return True
-        keys1 = sorted(x.key(with_what) for x in backend1)
-        keys2 = sorted(x.key(with_what) for x in backend2)
-        self.assertEqual(keys1, keys2)
+        if backend1 != backend2:
+            keys1 = sorted(x.key(with_what) for x in backend1)
+            keys2 = sorted(x.key(with_what) for x in backend2)
+            self.assertEqual(keys1, keys2)
 
     def assertEqualActivities(self, activity1, activity2, xml: bool = False): # pylint: disable=invalid-name
         """both activities must be identical. We test more than necessary for better test coverage.

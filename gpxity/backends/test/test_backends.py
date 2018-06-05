@@ -105,6 +105,7 @@ class TestBackends(BasicTest):
             """match against a date"""
             if activity.time < datetime.datetime(year=2016, month=9, day=5):
                 return 'time {} is before {}'.format(activity.time, '2016-09-05')
+            return None
         for cls in (Directory, ):
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.temp_backend(cls, count=3) as backend:

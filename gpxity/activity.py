@@ -13,8 +13,6 @@ import datetime
 from contextlib import contextmanager
 from functools import total_ordering
 
-from .util import repr_timespan
-
 # This code would speed up parsing GPX by about 30%. When doing
 # that, GPX will only return str instead of datetime for times.
 #
@@ -24,6 +22,8 @@ from .util import repr_timespan
 from gpxpy import gpx as mod_gpx
 from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length
+
+from .util import repr_timespan
 
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack

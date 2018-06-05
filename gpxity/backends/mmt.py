@@ -317,7 +317,7 @@ class MMT(Backend):
         self._last_response = response # for debugging
         if response.status_code != requests.codes.ok: # pylint: disable=no-member
             self.__handle_post_error(full_url, data, response)
-            return
+            return None
         result = response.text
         if (result == 'access denied') or (expect and expect not in result):
             raise self.BackendException('{}: expected {} in {}'.format(data, expect, result))

@@ -426,6 +426,8 @@ class GPSIES(Backend):
         for line in response.text.split('\n'):
             if 'fileId=' in line:
                 return line.split('fileId=')[1].split('"')[0]
+        raise self.BackendException('No fileId= found in response')
+
 
     def destroy(self):
         """also close session"""

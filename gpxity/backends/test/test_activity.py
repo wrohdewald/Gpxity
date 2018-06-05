@@ -323,8 +323,7 @@ class ActivityTests(BasicTest):
     def test_points_equal(self):
         """test Activity.points_equal"""
         for _ in range(100):
-            point_count = 7
-            points = self.some_random_points(count=point_count)
+            points = self.some_random_points(count=7)
             activity1 = Activity()
             activity1.add_points(points)
             activity2 = activity1.clone()
