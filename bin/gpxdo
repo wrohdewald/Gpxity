@@ -284,7 +284,7 @@ Dates are expected as YYYY-MM-DD.
         subparsers = parser.add_subparsers()
 
         mv_parser = subparsers.add_parser(
-            'mv', help='move one or more sources to a destination backend',
+            'mv', help='move sources to a destination backend',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         mv_parser.set_defaults(func=self.move)
         self.add_common_args(mv_parser)
@@ -293,7 +293,7 @@ Dates are expected as YYYY-MM-DD.
         self.add_destination(mv_parser)
 
         rm_parser = subparsers.add_parser(
-            'rm', help='remove activities from one or more sources',
+            'rm', help='remove activities',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         rm_parser.set_defaults(func=self.remove)
         self.add_common_args(rm_parser)
@@ -304,7 +304,7 @@ Dates are expected as YYYY-MM-DD.
 
         if False: # pylint: disable=using-constant-test
             fix_parser = subparsers.add_parser(
-                'fix', help='fix some GPX format bugs in activities from one or more sources',
+                'fix', help='fix some GPX format bugs in activities',
                 epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
             fix_parser.set_defaults(func=self.fix)
             self.add_common_args(fix_parser)
@@ -312,7 +312,7 @@ Dates are expected as YYYY-MM-DD.
             self.add_multi_source(fix_parser)
 
         ls_parser = subparsers.add_parser(
-            'ls', help='list activities from one or more sources',
+            'ls', help='list activities',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
