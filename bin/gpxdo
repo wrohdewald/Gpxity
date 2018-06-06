@@ -237,6 +237,16 @@ class Utility:
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
             the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
 
+    @staticmethod
+    def add_multi_source(parser):
+        """add --source for one or more activities or backends"""
+        parser.add_argument('source', help='one ore more activities or backends', nargs='*')
+
+    @staticmethod
+    def add_destination(parser):
+        """add --destination"""
+        parser.add_argument('destination', help='the destination backend', nargs=1)
+
     help_epilog = """
 
 source and destination arguments may be single
@@ -279,8 +289,8 @@ Dates are expected as YYYY-MM-DD.
         mv_parser.set_defaults(func=self.move)
         self.add_common_args(mv_parser)
         self.add_range_args(mv_parser)
-        mv_parser.add_argument('source', help='one or more activities or backends', nargs='*')
-        mv_parser.add_argument('destination', help='the destination backend', nargs=1)
+        self.add_multi_source(mv_parser)
+        self.add_destination(mv_parser)
 
         rm_parser = subparsers.add_parser(
             'rm', help='remove activities from one or more sources',
@@ -290,7 +300,7 @@ Dates are expected as YYYY-MM-DD.
         self.add_range_args(rm_parser)
         rm_parser.add_argument('--dry-run', help='only show what would be removed',
                                action='store_true', default=False)
-        rm_parser.add_argument('source', help='one or more activities or backends', nargs='*')
+        self.add_multi_source(rm_parser)
 
         if False: # pylint: disable=using-constant-test
             fix_parser = subparsers.add_parser(
@@ -299,7 +309,7 @@ Dates are expected as YYYY-MM-DD.
             fix_parser.set_defaults(func=self.fix)
             self.add_common_args(fix_parser)
             self.add_range_args(fix_parser)
-            fix_parser.add_argument('source', help='one or more activities or backends', nargs='*')
+            self.add_multi_source(fix_parser)
 
         ls_parser = subparsers.add_parser(
             'ls', help='list activities from one or more sources',
@@ -330,7 +340,7 @@ Dates are expected as YYYY-MM-DD.
                                action='store_true', default=False)
         self.add_range_args(ls_parser)
         self.add_common_args(ls_parser)
-        ls_parser.add_argument('source', help='one or more activities or backends', nargs='*')
+        self.add_multi_source(ls_parser)
 
         keyword_parser = subparsers.add_parser('kw', help='add or remove keywords')
         keyword_parser.set_defaults(func=self.keyword)
@@ -339,7 +349,7 @@ Dates are expected as YYYY-MM-DD.
         keyword_parser.add_argument('--remove', help='remove keywords. Default is to add them.',
                                     action='store_true', default=False)
         keyword_parser.add_argument('keyword', help='a keyword')
-        keyword_parser.add_argument('source', help='one ore more activities or backends', nargs='*')
+        self.add_multi_source(keyword_parser)
 
         merge_parser = subparsers.add_parser(
             'merge', help="""
@@ -351,8 +361,8 @@ Dates are expected as YYYY-MM-DD.
         self.add_range_args(merge_parser)
         merge_parser.add_argument('--remove', help='remove merged activities',
                                   action='store_true', default=False)
-        merge_parser.add_argument('source', help='the source activity or backend', nargs='*')
-        merge_parser.add_argument('destination', help='the destination activity or backend', nargs=1)
+        self.add_multi_source(merge_parser)
+        self.add_destination(merge_parser)
 
 
         if len(sys.argv) < 2:
