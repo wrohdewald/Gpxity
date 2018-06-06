@@ -338,8 +338,8 @@ Dates are expected as YYYY-MM-DD.
                                action='store_true', default=False)
         ls_parser.add_argument('--description', help='show the description',
                                action='store_true', default=False)
-        self.add_range_args(ls_parser)
         self.add_common_args(ls_parser)
+        self.add_range_args(ls_parser)
         self.add_multi_source(ls_parser)
 
         keyword_parser = subparsers.add_parser('kw', help='add or remove keywords')
