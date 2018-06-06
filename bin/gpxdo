@@ -216,6 +216,7 @@ class Utility:
             return 'point count {} is below {}'.format(activity.gpx.get_track_points_no(), self.options.min_points)
         if self.options.max_points and activity.gpx.get_track_points_no() > self.options.max_points:
             return 'point count {} is above {}'.format(activity.gpx.get_track_points_no(), self.options.max_points)
+        return None
 
     @staticmethod
     def add_range_args(parser):
