@@ -5,6 +5,7 @@
 # pylint: disable=wildcard-import, missing-docstring
 from .activity import *
 from .backend import *
+from .diff import *
 from .backends import *
 from .version import *
 
