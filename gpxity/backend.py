@@ -31,7 +31,7 @@ class BackendDiff:
         key: A lambda which does the comparison.
             Default is the start time: `key=lambda x: x.time`
         right_key: Default is key. If given, this will be used for activities from right.
-            This allows things like `BackendDiff(b1, b2, key_right = lambda x: x.time + hours2)`
+            This allows things like `BackendDiff(b1, b2, right_key = lambda x: x.time + hours2)`
             where hours2 is a timedelta of two hours. If your GPX data has a problem with
             the time zone, this lets you find activities differring only by exactly 2 hours.
 
@@ -39,7 +39,7 @@ class BackendDiff:
         left(:class:`BackendDiffSide`): Attributes for the left side
         right(:class:`BackendDiffSide`): Attributes for the right side
         keys_in_both(list): keys appearing on both sides.
-        matches(list): For every keys_in_both, this lists all matching activities from both sides
+        matches(dict(list)): For every keys_in_both, this lists all matching activities from both sides
     """
 
     # pylint: disable=too-few-public-methods
@@ -49,7 +49,7 @@ class BackendDiff:
 
         Attributes:
             backend: The backend
-            key_lambda: The used lambda for calculating the key values
+            key_lambda: The used lambda for calculating the key values. They are used for comparison.
             entries(dict): keys are what key_lambda calculates. values are lists of matching activities
             exclusive(dict): keys with corresponding activity lists for activities existing only on this side
         """
