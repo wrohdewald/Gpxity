@@ -56,16 +56,16 @@ class BackendDiff:
 
         # pylint: disable=too-few-public-methods
 
-        def __init__(self, backend, key_lambda=None):
-            self.backend = backend
+        def __init__(self, backend, key_lambda):
             self.key_lambda = key_lambda
             self.entries = defaultdict(list)
             for _ in backend:
                 try:
                     key = key_lambda(_)
+                    assert key is not None, key_lambda
                 except TypeError:
                     print('BackendDiffSide cannot apply key in {}: {}'.format(backend, _))
-                    key = None
+                    raise
                 self.entries[key].append(_)
             self.exclusive = dict()
 
@@ -77,7 +77,7 @@ class BackendDiff:
 
     def __init__(self, left, right, key=None, right_key=None):
         if key is None:
-            key = lambda x: x.time
+            key = lambda x: x.time or x.gpx.get_track_points_no() or id(x)
         if right_key is None:
             right_key = key
         self.left = BackendDiff.BackendDiffSide(left, key)
