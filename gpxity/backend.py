@@ -59,14 +59,19 @@ class BackendDiff:
         def __init__(self, backend, key_lambda):
             self.key_lambda = key_lambda
             self.entries = defaultdict(list)
-            for _ in backend:
-                try:
-                    key = key_lambda(_)
-                    assert key is not None, key_lambda
-                except TypeError:
-                    print('BackendDiffSide cannot apply key in {}: {}'.format(backend, _))
-                    raise
-                self.entries[key].append(_)
+            if isinstance(backend, Backend):
+                self.backends = [backend]
+            else:
+                self.backends = backend
+            for this in self.backends:
+                for _ in this:
+                    try:
+                        key = key_lambda(_)
+                        assert key is not None, key_lambda
+                    except TypeError:
+                        print('BackendDiffSide cannot apply key to {}/{}'.format(this, _))
+                        raise
+                    self.entries[key].append(_)
             self.exclusive = dict()
 
         def _use_other(self, other):
