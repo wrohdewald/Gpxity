@@ -4,6 +4,7 @@ Changelog
 1.2.7 release 2018-06-xx
 ------------------------
   * new: Activity.last_point() avoids having to iterate over the full list
+  * new: gpxdo diff
 
 1.2.6 release 2018-06-05
 ------------------------
