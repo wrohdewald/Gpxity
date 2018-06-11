@@ -693,7 +693,7 @@ class Activity:
             first_point = next(self.points())
         except StopIteration:
             return 0
-        last_point = self.__gpx.tracks[-1].segments[-1].points[-1]
+        last_point = self.last_point()
         delta_lat = round(first_point.latitude, 6) - round(last_point.latitude, 6)
         delta_long = round(first_point.longitude, 6) - round(last_point.longitude, 6)
         norm_lat = delta_lat / 90.0
@@ -724,6 +724,11 @@ class Activity:
         for segment in self.segments():
             for point in segment.points:
                 yield point
+
+    def last_point(self):
+        """Returns the last point of the track."""
+        # TODO: unittest for activity without __gpx or without points
+        return self.__gpx.tracks[-1].segments[-1].points[-1]
 
     def adjust_time(self, delta):
         """Adds a timedelta to all times.
