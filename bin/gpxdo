@@ -16,7 +16,9 @@ import datetime
 
 # This uses not the installed copy but the development files
 sys.path.insert(0, '..')
-from gpxity import Directory, MMT, GPSIES # pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position
+from gpxity import Directory, BackendDiff, MMT, GPSIES
+from gpxity.util import uniq
 
 
 def valid_date_argument(arg_date_str):
@@ -42,8 +44,9 @@ class Utility:
         if hasattr(self.options, 'destination'):
             self.options.destination = self.options.destination[0]
             self.destination = self.instantiate_object(self.options.destination)
-            if self.destination.activity_only is not None:
-                raise Exception('No activity id allowed in destination:{}'.format(self.options.destination))
+            if self.options.func != self.diff:
+                if self.destination.activity_only is not None:
+                    raise Exception('No activity id allowed in destination:{}'.format(self.options.destination))
         self.options.func()
 
     def _source_activities(self):
@@ -153,6 +156,40 @@ class Utility:
                 for _ in msg:
                     print(_)
 
+    def diff(self):
+        """Compare"""
+        # TODO: show all activities with backend name but only its last unique part
+        def show_exclusive(side):
+            """shows activities appearing only on one side."""
+            backends = uniq(x.backend for x in side.exclusive)
+            for backend in backends:
+                print('only in {}:'.format(backend.url))
+                for _ in side.exclusive:
+                    if _.backend is backend:
+                        print('    {}'.format(_))
+                print()
+
+        differ = BackendDiff(self.sources, self.destination)
+        show_exclusive(differ.left)
+        show_exclusive(differ.right)
+
+        backend_pairs = uniq((x.left.backend, x.right.backend) for x in differ.similar)
+
+        # pylint: disable=too-many-nested-blocks
+        for left, right in backend_pairs:
+            print('Differences between {} and {}'.format(left.url, right.url))
+            for pair in differ.similar:
+                if (pair.left.backend, pair.right.backend) == (left, right):
+                    _ = ''.join(x if x in pair.differences else ' ' for x in BackendDiff.diff_flags)
+                    print('-{}  {}'.format(_, pair.left))
+                    print('+{}  {}'.format(_, pair.right))
+                    for key, explain in pair.differences.items():
+                        if explain:
+                            _ = ''.join(x if x == key else ' ' for x in BackendDiff.diff_flags)
+                            for explain_line in explain:
+                                print(' {}  {}'.format(_, explain_line))
+                    print()
+
     def instantiate_object(self, name):
         """returns a backend for name.
         If name is a single activity, the returned backend has a match filtering
@@ -182,7 +219,7 @@ class Utility:
                     account = os.path.dirname(os.path.abspath(name + '.gpx'))
                 else:
                     if not name.endswith('.gpx'):
-                        raise Exception('{} not found')
+                        raise Exception('{} not found'.format(name))
                     name = name[:-4]
                     activity_id = os.path.basename(name)
                     account = os.path.dirname(os.path.abspath(name))
@@ -238,9 +275,9 @@ class Utility:
             the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
 
     @staticmethod
-    def add_multi_source(parser):
+    def add_multi_source(parser, must_have=False):
         """add --source for one or more activities or backends"""
-        parser.add_argument('source', help='one ore more activities or backends', nargs='*')
+        parser.add_argument('source', help='one ore more activities or backends', nargs='+' if must_have else '*')
 
     @staticmethod
     def add_destination(parser):
@@ -363,6 +400,16 @@ Dates are expected as YYYY-MM-DD.
                                   action='store_true', default=False)
         self.add_multi_source(merge_parser)
         self.add_destination(merge_parser)
+
+        diff_parser = subparsers.add_parser(
+            'diff', help="""
+            copmpare activities between source and destination""",
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        diff_parser.set_defaults(func=self.diff)
+        self.add_common_args(diff_parser)
+        self.add_range_args(diff_parser)
+        self.add_multi_source(diff_parser, must_have=True)
+        self.add_destination(diff_parser)
 
 
         if len(sys.argv) < 2:

@@ -21,69 +21,132 @@ class BackendDiff:
     Args:
         left (Backend): A backend
         right (Backend): The other one
-        key: A lambda which does the comparison.
-            Default is the start time: `key=lambda x: x.time`
-        right_key: Default is key. If given, this will be used for activities from right.
-            This allows things like `BackendDiff(b1, b2, right_key = lambda x: x.time + hours2)`
-            where hours2 is a timedelta of two hours. If your GPX data has a problem with
-            the time zone, this lets you find activities differring only by exactly 2 hours.
 
     Attributes:
         left(:class:`BackendDiffSide`): Attributes for the left side
         right(:class:`BackendDiffSide`): Attributes for the right side
-        keys_in_both(list): keys appearing on both sides.
-        matches(dict(list)): For every keys_in_both, this lists all matching activities from both sides
+        identical(list(Activity)): Activities appearing on both sides.
+        similar(list(Pair)): Pairs of Activities are on both sides with
+            differences. This includes all activities having at least
+            100 identical positions without being identical.
+        diff_flags: T=time, P=positions
     """
 
     # pylint: disable=too-few-public-methods
+
+    diff_flags = 'TPZ'
+
+    class Pair:
+        """Holds two comparable Items and the diff result
+        Attributes:
+            differences(dict()): Keys are Flags for differences, see BackendDiff.diff_flags.
+                    Values is a list(str) with additional info
+        """
+        def __init__(self, left, right):
+            self.left = left
+            self.right = right
+            self.differences = self.__compare()
+
+        def __compare(self):
+            """Compare both activities
+            Returns:
+                defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
+                    Values is a list(str) with additional info
+            """
+
+            time_range = [None, None]
+            def print_diff_time(time_range):
+                """If time_range is relevant, print and reset it."""
+                if time_range[0] and time_range[1] != time_range[0]:
+                    result['P'].append('different points between {} and {}'.format(
+                        time_range[0], time_range[1] or 'end'))
+                time_range[0] = None
+                time_range[1] = None
+
+            result = defaultdict(list)
+            if self.left.title != self.right.title:
+                result['T'].append('"{}" against "{}"'.format(self.left.title or '', self.right.title or ''))
+            for _, (point1, point2) in enumerate(zip(self.left.points(), self.right.points())):
+                # GPXTrackPoint has no __eq__ and no working hash()
+                # those are only the most important attributes:
+                if (point1.longitude != point2.longitude
+                        or point1.latitude != point2.latitude
+                        or point1.elevation != point2.elevation):
+                    if time_range[0] is None:
+                        time_range[0] = point1.time
+                    time_range[1] = point1.time
+                else:
+                    print_diff_time(time_range)
+            print_diff_time(time_range)
+
+            # gpx files produced by old versions of Oruxmaps have a problem with the time zone
+            def offset(point1, point2):
+                """Returns the time delta if both points have a time."""
+                if point1.time and point2.time:
+                    return point2.time - point1.time
+                return None
+
+            start_time_delta = offset(next(self.left.points()), next(self.right.points()))
+            if start_time_delta:
+                end_time_delta = offset(self.left.last_point(), self.right.last_point())
+                if start_time_delta == end_time_delta:
+                    result['Z'].append('Time offset: {}'.format(start_time_delta))
+
+            return result
+
 
     class BackendDiffSide:
         """Represents a backend in BackendDiff.
 
         Attributes:
-            backend: The backend
-            key_lambda: The used lambda for calculating the key values. They are used for comparison.
-            entries(dict): keys are what key_lambda calculates. values are lists of matching activities
-            exclusive(dict): keys with corresponding activity lists for activities existing only on this side
+            backends: The backends
+            exclusive(list): Acivities existing only on this side
         """
 
         # pylint: disable=too-few-public-methods
 
-        def __init__(self, backend, key_lambda):
-            self.key_lambda = key_lambda
-            self.entries = defaultdict(list)
-            if isinstance(backend, Backend):
-                self.backends = [backend]
+        def __init__(self, backends):
+            if isinstance(backends, Backend):
+                self.backends = [backends]
             else:
-                self.backends = backend
+                self.backends = backends
+            self.exclusive = []
+
+        def _find_exclusives(self, matched):
+            """use data from the other side"""
             for this in self.backends:
                 for _ in this:
-                    try:
-                        key = key_lambda(_)
-                        assert key is not None, key_lambda
-                    except TypeError:
-                        print('BackendDiffSide cannot apply key to {}/{}'.format(this, _))
-                        raise
-                    self.entries[key].append(_)
-            self.exclusive = dict()
+                    if _ not in matched:
+                        self.exclusive.append(_)
 
-        def _use_other(self, other):
-            """use data from the other side"""
-            for _ in self.entries.keys():
-                if _ not in other.entries:
-                    self.exclusive[_] = self.entries[_]
+    @staticmethod
+    def __points_match(left, right):
+        """
+        Returns:
+            True if both have at least 100 identical positions
+        """
+        left_points = set([(x.longitude, x.latitude) for x in left.points()])
+        right_points = set([(x.longitude, x.latitude) for x in right.points()])
+        return len(left_points & right_points) >= 100
 
-    def __init__(self, left, right, key=None, right_key=None):
-        if key is None:
-            key = lambda x: x.time or x.gpx.get_track_points_no() or id(x)
-        if right_key is None:
-            right_key = key
-        self.left = BackendDiff.BackendDiffSide(left, key)
-        self.right = BackendDiff.BackendDiffSide(right, right_key)
-        self.left._use_other(self.right) # pylint: disable=protected-access
-        self.right._use_other(self.left) # pylint: disable=protected-access
-        self.keys_in_both = self.left.entries.keys() & self.right.entries.keys()
-        self.matches = defaultdict(list)
-        for _ in self.keys_in_both:
-            self.matches[_].extend(self.left.entries[_])
-            self.matches[_].extend(self.right.entries[_])
+    def __init__(self, left, right):
+        self.similar = []
+        self.identical = []
+        matched = []
+        self.left = BackendDiff.BackendDiffSide(left)
+        self.right = BackendDiff.BackendDiffSide(right)
+        for left_backend in self.left.backends:
+            for left_activity in left_backend:
+                for right_backend in self.right.backends:
+                    for right_activity in right_backend:
+                        if left_activity == right_activity:
+                            self.identical.append(left_activity)
+                            matched.append(left_activity)
+                            matched.append(right_activity)
+                        elif self.__points_match(left_activity, right_activity):
+                            self.similar.append(BackendDiff.Pair(left_activity, right_activity))
+                            matched.append(left_activity)
+                            matched.append(right_activity)
+        # pylint: disable=protected-access
+        self.left._find_exclusives(matched)
+        self.right._find_exclusives(matched)

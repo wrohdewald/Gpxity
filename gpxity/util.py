@@ -10,7 +10,7 @@ This module defines some helpers.
 
 import datetime
 
-__all__ = ['Duration', 'repr_timespan']
+__all__ = ['Duration', 'repr_timespan', 'uniq']
 
 class Duration:
     """A context manager showing time information for debugging."""
@@ -37,3 +37,11 @@ def repr_timespan(start, end):
     minutes = (duration.seconds - hours * 3600) // 60
     hours += duration.days * 24
     return '{}h{}m'.format(hours, minutes)
+
+def uniq(lst):
+    """returns lst with unique elements"""
+    seen = []
+    for _ in lst:
+        if _ not in seen:
+            seen.append(_)
+            yield _
