@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxity -->
-<!-- Saved: 2018-04-04, 12:29:21 -->
+<!-- Saved: 2018-06-06, 10:45:50 -->
 <!-- Copyright (C) 2018 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
@@ -13,7 +13,6 @@
   <Email>wolfgang@rohdewald.de</Email>
   <Sources>
     <Source>bin/gpxdo</Source>
-    <Source>bin/test</Source>
     <Source>examples/clean_mmt.py</Source>
     <Source>examples/fix_orux.py</Source>
     <Source>examples/mmtserver.py</Source>
@@ -38,9 +37,7 @@
   <Translations/>
   <Resources/>
   <Interfaces/>
-  <Others>
-    <Other>bin/test</Other>
-  </Others>
+  <Others/>
   <MainScript>bin/test</MainScript>
   <Vcs>
     <VcsType>Git</VcsType>
