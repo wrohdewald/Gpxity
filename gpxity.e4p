@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxity -->
-<!-- Saved: 2018-06-06, 10:45:50 -->
+<!-- Saved: 2018-06-11, 16:05:03 -->
 <!-- Copyright (C) 2018 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
@@ -30,6 +30,7 @@
     <Source>gpxity/backends/test/test_activity.py</Source>
     <Source>gpxity/backends/test/test_backends.py</Source>
     <Source>gpxity/backends/trackmmt.py</Source>
+    <Source>gpxity/diff.py</Source>
     <Source>gpxity/util.py</Source>
     <Source>setup.py</Source>
   </Sources>
