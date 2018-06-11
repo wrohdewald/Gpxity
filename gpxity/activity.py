@@ -59,6 +59,8 @@ class Activity:
     Some backends are able to change only one attribute with little time overhead, others always have
     to rewrite the entire activity.
 
+    All points are always rounded to  6 decimal digits when they are added to the
+    activity.
 
     Args:
         gpx (GPX): Initial content. To be used if you create a new Activity from scratch without
