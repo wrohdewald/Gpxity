@@ -199,7 +199,7 @@ class Utility:
         """returns a backend for name.
         If name is a single activity, the returned backend has a match filtering
         only this one wanted activity."""
-        account = activity_id = None
+        result = account = activity_id = None
         if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES'):
             clsname = name.split(':')[0].upper()
             rest = name[len(clsname) + 1:]
@@ -219,18 +219,14 @@ class Utility:
                 account = name
                 activity_id = None
             else:
+                if name.endswith('.gpx'):
+                    name = name[:-4]
                 if os.path.isfile(name + '.gpx'):
                     activity_id = os.path.basename(name)
-                    account = os.path.dirname(name)
-                else:
-                    if not name.endswith('.gpx'):
-                        raise Exception('{} not found'.format(name))
-                    name = name[:-4]
-                    activity_id = os.path.basename(name)
-                    account = os.path.dirname(name)
+                    account = os.path.dirname(name) or '.'
             result = Directory(url=account)
         if account is None:
-            raise Exception('{} does not exist'.format(name))
+            raise Exception('{} not found'.format(name))
 
         result.match = self.match
         result.activity_only = activity_id
