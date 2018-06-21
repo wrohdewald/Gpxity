@@ -119,34 +119,34 @@ class BackendDiff:
                     if _ not in matched:
                         self.exclusive.append(_)
 
-    @staticmethod
-    def __points_match(left, right):
-        """
-        Returns:
-            True if both have at least 100 identical positions
-        """
-        left_points = set([(x.longitude, x.latitude) for x in left.points()])
-        right_points = set([(x.longitude, x.latitude) for x in right.points()])
-        return len(left_points & right_points) >= 100
-
     def __init__(self, left, right):
+
+        def positions(activity):
+            """Returns a set of long/lat tuples"""
+            return set([(x.longitude, x.latitude) for x in activity.points()])
+
         self.similar = []
         self.identical = []
         matched = []
         self.left = BackendDiff.BackendDiffSide(left)
         self.right = BackendDiff.BackendDiffSide(right)
+        # pylint: disable=too-many-nested-blocks
         for left_backend in self.left.backends:
             for left_activity in left_backend:
+                left_activity.positions = positions(left_activity)
                 for right_backend in self.right.backends:
                     for right_activity in right_backend:
+                        if not hasattr(right_activity, 'positions'):
+                            right_activity.positions = positions(right_activity)
                         if left_activity == right_activity:
                             self.identical.append(left_activity)
                             matched.append(left_activity)
                             matched.append(right_activity)
-                        elif self.__points_match(left_activity, right_activity):
-                            self.similar.append(BackendDiff.Pair(left_activity, right_activity))
-                            matched.append(left_activity)
-                            matched.append(right_activity)
+                        else:
+                            if len(left_activity.positions & right_activity.positions) >= 100:
+                                self.similar.append(BackendDiff.Pair(left_activity, right_activity))
+                                matched.append(left_activity)
+                                matched.append(right_activity)
         # pylint: disable=protected-access
         self.left._find_exclusives(matched)
         self.right._find_exclusives(matched)
