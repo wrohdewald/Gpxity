@@ -69,8 +69,7 @@ class Directory(Backend):
             prefix = self.__class__.prefix
         elif url:
             raise Exception('Directory does not accept both url and prefix')
-        full_url = os.path.abspath(os.path.expanduser(url)) if url else None
-        super(Directory, self).__init__(url=full_url, auth=auth, cleanup=cleanup, debug=debug)
+        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, debug=debug)
         self.is_temporary = not bool(self.url)
         if self.is_temporary:
             self.url = tempfile.mkdtemp(prefix=prefix)
