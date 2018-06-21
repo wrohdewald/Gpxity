@@ -38,6 +38,9 @@ class Utility:
         self.options = None
         self.parse_commandline()
         self.sources = None
+        if self.options.func == self.list_them:
+            if not self.options.source:
+                self.options.source = ['.']
         if self.options.source:
             self.sources = [self.instantiate_object(x) for x in self.options.source]
         self.destination = None
