@@ -846,4 +846,13 @@ class Activity:
             if kw_src - kw_dst:
                 msg.append('New keywords: {}'.format(','.join(kw_src - kw_dst)))
                 self.keywords = kw_src | kw_dst
+            changed_point_times = 0
+            for self_point, other_point in zip(self.points(), other.points()):
+                if not self_point.time:
+                    self_point.time = other_point.time
+                    changed_point_times += 1
+            if changed_point_times:
+                self._dirty = 'gpx'
+                msg.append('Copied times for {} out of {} points'.format(
+                    changed_point_times, self.gpx.get_track_points_no()))
         return msg
