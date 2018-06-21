@@ -15,7 +15,9 @@ import sys
 import datetime
 
 # This uses not the installed copy but the development files
-sys.path.insert(0, '..')
+_ = os.path.dirname(sys.path[0])
+if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
+    sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 from gpxity import Directory, BackendDiff, MMT, GPSIES
 from gpxity.util import uniq
