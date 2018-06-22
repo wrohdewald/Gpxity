@@ -533,11 +533,11 @@ class MMT(Backend):
         # get them from the web page.
         self._use_webpage_results(activity)
 
-    def _remove_activity(self, activity):
+    def _remove_ident(self, ident: str):
         """remove on the server"""
         self.__post(
             with_session=True, url='handler/delete_track', expect='access granted',
-            tid=activity.id_in_backend, hash=self.session.cookies['exp_uniqueid'])
+            tid=ident, hash=self.session.cookies['exp_uniqueid'])
 
     @contextmanager
     def override_ident(self, ident: str):

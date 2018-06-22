@@ -189,9 +189,9 @@ class Directory(Backend):
         with open(self.gpx_path(activity.id_in_backend), encoding='utf-8') as in_file:
             activity.parse(in_file)
 
-    def _remove_activity(self, activity):
+    def _remove_ident(self, ident: str):
         """Removes its symlinks, empty symlink parent directories  and the file, in this order."""
-        for symlink in self._symlinks[activity.id_in_backend]:
+        for symlink in self._symlinks[ident]:
             if os.path.exists(symlink):
                 os.remove(symlink)
             symlink_dir = os.path.split(symlink)[0]
@@ -199,8 +199,8 @@ class Directory(Backend):
                 os.removedirs(symlink_dir)
             except OSError:
                 pass
-        self._symlinks[activity.id_in_backend] = list()
-        gpx_file = self.gpx_path(activity.id_in_backend)
+        self._symlinks[ident] = list()
+        gpx_file = self.gpx_path(ident)
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 

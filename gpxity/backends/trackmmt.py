@@ -53,7 +53,7 @@ class TrackMMT(MMT):
     def _write_remove_keyword(self, activity, value):
         raise NotImplementedError()
 
-    def _remove_activity(self, activity) ->None:
+    def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation"""
         raise NotImplementedError()
 

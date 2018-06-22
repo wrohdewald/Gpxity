@@ -390,10 +390,10 @@ class GPSIES(Backend):
             if not any(x in _ for x in ignore_messages):
                 print('WARNING', ':', _)
 
-    def _remove_activity(self, activity):
+    def _remove_ident(self, ident: str):
         """remove on the server"""
         data = {
-            'fileId': activity.id_in_backend,
+            'fileId': ident,
             'delete':'',
             'fileDescription':'n/a',
             'filename':'n/a',

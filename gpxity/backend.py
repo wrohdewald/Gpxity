@@ -155,7 +155,7 @@ class Backend:
         marked as unsupported.
         """
         support_mappings = {
-            '_remove_activity':'remove',
+            '_remove_ident':'remove',
             '_track':'track',
             'get_time':'get_time'}
         cls.supported = set()
@@ -410,7 +410,7 @@ class Backend:
 
         activity = value if hasattr(value, 'id_in_backend') else self[value]
         if activity.id_in_backend:
-            self._remove_activity(activity)
+            self._remove_ident(activity.id_in_backend)
             activity._set_id_in_backend(None)  # pylint: disable=protected-access
         with self._decouple():
             activity._set_backend(None)  # pylint: disable=protected-access
@@ -419,7 +419,7 @@ class Backend:
             except ValueError:
                 pass
 
-    def _remove_activity(self, activity) ->None:
+    def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation"""
         raise NotImplementedError()
 
