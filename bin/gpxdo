@@ -181,6 +181,22 @@ class Utility:
                 if self.options.verbose:
                     print('added {} to {}'.format(kword, _))
 
+    def set_attributes(self):
+        """set/clear some attributes like title"""
+        for _ in self.sources:
+            if self.options.title_from_id:
+                _.title = _.id_in_backend
+            if self.options.title:
+                _.title = self.options.title
+            if self.options.description:
+                _.description = self.options.description
+            if self.options.what:
+                _.what = self.options.what
+            if self.options.public:
+                _.public = True
+            if self.options.private:
+                _.public = False
+
     def merge(self):
         """Merge"""
         for activity in self.sources:
@@ -412,6 +428,19 @@ Dates are expected as YYYY-MM-DD.
                                     action='store_true', default=False)
         keyword_parser.add_argument('keyword', help='a keyword')
         self.add_multi_source(keyword_parser)
+
+        set_parser = subparsers.add_parser('set', help='set attributes')
+        set_parser.set_defaults(func=self.set_attributes)
+        set_parser.add_argument('--title-from-id', help='use id for title',
+                                action='store_true', default=False)
+        set_parser.add_argument('--title', help='set the title', type=str, default=None)
+        set_parser.add_argument('--description', help='set the description', type=str, default=None)
+        set_parser.add_argument('--what', help='set the activity type', type=str, default=None)
+        set_parser.add_argument('--public', help='set the status to public', action='store_true', default=False)
+        set_parser.add_argument('--private', help='set the status to private', action='store_true', default=False)
+        self.add_common_args(set_parser)
+        self.add_range_args(set_parser)
+        self.add_multi_source(set_parser)
 
         merge_parser = subparsers.add_parser(
             'merge', help="""
