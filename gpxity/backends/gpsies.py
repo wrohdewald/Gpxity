@@ -431,7 +431,6 @@ class GPSIES(Backend):
             raise self.BackendException('No fileId= found in response')
         return new_ident
 
-
     def destroy(self):
         """also close session"""
         super(GPSIES, self).destroy()
