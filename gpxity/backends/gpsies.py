@@ -422,10 +422,14 @@ class GPSIES(Backend):
         if 'Created' not in response.text:
             # not created
             raise self.BackendException(response.text)
+        new_ident = None
         for line in response.text.split('\n'):
             if 'fileId=' in line:
-                return line.split('fileId=')[1].split('"')[0]
-        raise self.BackendException('No fileId= found in response')
+                new_ident = line.split('fileId=')[1].split('"')[0]
+                break
+        if not new_ident:
+            raise self.BackendException('No fileId= found in response')
+        return new_ident
 
 
     def destroy(self):

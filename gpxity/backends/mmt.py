@@ -556,21 +556,22 @@ class MMT(Backend):
         Returns:
             The new id_in_backend
         """
-        result = None
         if not activity.gpx.get_track_points_no():
             raise self.BackendException('MMT does not accept an activity without trackpoints:{}'.format(activity))
         response = self.__post(
             request='upload_activity', gpx_file=activity.to_xml(),
             status='public' if activity.public else 'private',
             description=activity.description, activity=self.encode_what(activity.what))
-        result = response.find('id').text
-        with self.override_ident(result):
+        new_ident = response.find('id').text
+        if not new_ident:
+            raise self.BackendException('No id found in response')
+        with self.override_ident(new_ident):
             if '_write_title' in self.supported:
                 self._write_title(activity)
             # MMT can add several keywords at once
             if activity.keywords and '_write_add_keyword' in self.supported:
                 self._write_add_keyword(activity, ','.join(activity.keywords))
-        return result
+        return new_ident
 
     @staticmethod
     def __track_points(points):
