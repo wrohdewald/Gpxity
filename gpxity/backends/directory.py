@@ -130,11 +130,6 @@ class Directory(Backend):
             value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
         return value
 
-    def _make_ident_unique(self, value) ->str:
-        """Change the ident such that its gpx_path does not yet exist"""
-        path = self._make_path_unique(os.path.join(self.url, value + '.gpx'))
-        return os.path.basename(path)[:-4]
-
     @staticmethod
     def _make_path_unique(value):
         """If the file name already exists, apply a serial number. If value
@@ -222,13 +217,22 @@ class Directory(Backend):
         name = activity.title or ident
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
-    def _write_all(self, activity) ->str:
-        """save full gpx track. Since the file name uses title and title may have changed,
-        compute new file name and remove the old files. We also adapt activity.id_in_backend."""
+    def new_ident(self, activity) ->str:
+        """Creates an id for activity.
+
+        Returns: The new ident.
+        """
         ident = activity.id_in_backend
         if ident is None:
             ident = self._new_id_from(activity.title)
-        ident = self._make_ident_unique(ident)
+        # Change the ident such that its gpx_path does not yet exist
+        path = self._make_path_unique(os.path.join(self.url, ident + '.gpx'))
+        return os.path.basename(path)[:-4]
+
+    def _write_all(self, activity) ->str:
+        """save full gpx track. Since the file name uses title and title may have changed,
+        compute new file name and remove the old files. We also adapt activity.id_in_backend."""
+        ident = self.new_ident(activity)
         activity._set_id_in_backend(ident)  # pylint: disable=protected-access
         gpx_pathname = self.gpx_path(ident)
         try:
