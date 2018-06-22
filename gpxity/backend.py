@@ -396,7 +396,12 @@ class Backend:
         return activity
 
     def _write_all(self, activity) ->str:
-        """the actual implementation for the concrete Backend"""
+        """the actual implementation for the concrete Backend.
+        Writes the entire Activity.
+
+        Returns:
+            The new id_in_backend
+        """
         raise NotImplementedError()
 
     def remove(self, value) ->None:
