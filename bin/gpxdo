@@ -37,22 +37,33 @@ class Utility:
     """this is where the work is done"""
 
     def __init__(self):
+        self.exit_code = 0
         self.options = None
         self.parse_commandline()
         self.sources = None
         if self.options.func == self.list_them:
             if not self.options.source:
                 self.options.source = ['.']
-        if self.options.source:
-            self.sources = [self.instantiate_object(x) for x in self.options.source]
-        self.destination = None
-        if hasattr(self.options, 'destination'):
-            self.options.destination = self.options.destination[0]
-            self.destination = self.instantiate_object(self.options.destination)
-            if self.options.func != self.diff:
-                if self.destination.activity_only is not None:
-                    raise Exception('No activity id allowed in destination:{}'.format(self.options.destination))
-        self.options.func()
+        try:
+            if self.options.source:
+                self.sources = [self.instantiate_object(x) for x in self.options.source]
+            self.destination = None
+            if hasattr(self.options, 'destination'):
+                self.options.destination = self.options.destination[0]
+                self.destination = self.instantiate_object(self.options.destination)
+                if self.options.func != self.diff:
+                    if self.destination.activity_only is not None:
+                        raise Exception('No activity id allowed in destination:{}'.format(self.options.destination))
+            self.options.func()
+        except Exception as _: # pylint: disable=broad-except
+            self.error(_)
+
+    def error(self, msg, exit_code=None):
+        """Prints the error message.
+        Sets the process exit code.
+        """
+        print(msg)
+        self.exit_code = exit_code or 1
 
     def _source_activities(self):
         """A copied list with activities combined from all sources, to be used in 'for'-loops"""
@@ -433,4 +444,4 @@ Dates are expected as YYYY-MM-DD.
             self.options.length = True
             self.options.status = True
 
-Utility()
+sys.exit(Utility().exit_code)
