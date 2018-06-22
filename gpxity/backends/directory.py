@@ -230,6 +230,20 @@ class Directory(Backend):
         path = self._make_path_unique(os.path.join(self.url, ident + '.gpx'))
         return os.path.basename(path)[:-4]
 
+    def _make_symlinks(self, activity):
+        """Makes all symlinks for activity"""
+        time = activity.time
+        if time:
+            ident = activity.id_in_backend
+            gpx_pathname = self.gpx_path(ident)
+            os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
+            link_name = self._symlink_path(activity, ident)
+            basename = os.path.basename(gpx_pathname)
+            link_target = os.path.join('..', '..', basename)
+            os.symlink(link_target, link_name)
+            if link_name not in self._symlinks[ident]:
+                self._symlinks[ident].append(link_name)
+
     def _write_all(self, activity) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
@@ -239,15 +253,7 @@ class Directory(Backend):
         try:
             with open(gpx_pathname, 'w', encoding='utf-8') as out_file:
                 out_file.write(activity.to_xml())
-            time = activity.time
-            if time:
-                os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
-                link_name = self._symlink_path(activity, ident)
-                basename = os.path.basename(gpx_pathname)
-                link_target = os.path.join('..', '..', basename)
-                os.symlink(link_target, link_name)
-                if link_name not in self._symlinks[ident]:
-                    self._symlinks[ident].append(link_name)
+            self._make_symlinks(activity)
         except BaseException:
             raise
         return ident
