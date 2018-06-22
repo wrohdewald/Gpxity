@@ -61,9 +61,11 @@ class Utility:
     def error(self, msg, exit_code=None):
         """Prints the error message.
         Sets the process exit code.
-        """
+        With --debug, re-raises the exception."""
         print(msg)
         self.exit_code = exit_code or 1
+        if self.options.debug:
+            raise msg
 
     def _source_activities(self):
         """A copied list with activities combined from all sources, to be used in 'for'-loops"""
