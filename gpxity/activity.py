@@ -813,7 +813,7 @@ class Activity:
         return False
 
 
-    def merge(self, other) ->list:
+    def merge(self, other, dry_run=False) ->list:
         """Merge other activity into this one. The track points must be identical.
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
@@ -821,38 +821,46 @@ class Activity:
 
         Args:
             other (:class:`~gpxity.Activity`): The activity to be merged
+            dry_run: if True, do not really apply the merge
         Returns: list(str)
             Messages about what has been done
         """
+        # pylint: disable=too-many-branches
         if self.points_hash() != other.points_hash():
             raise Exception('Cannot merge, points are different: {} into {}'.format(other, self))
         msg = list()
         with self.batch_changes():
             if not other._has_default_title() and self._has_default_title():  # pylint: disable=protected-access
                 msg.append('Title: {} -> {}'.format(self.title, other.title))
-                self.title = other.title
+                if not dry_run:
+                    self.title = other.title
             if other.description != self.description:
                 msg.append('Additional description: {}'.format(
                     other.description))
-                self.description += '\n'
-                self.description += other.description
+                if not dry_run:
+                    self.description += '\n'
+                    self.description += other.description
             if other.public and not self.public:
                 msg.append('Visibility: private -> public')
-                self.public = True
+                if not dry_run:
+                    self.public = True
             if other.what != self.what:
                 msg.append('What: other={} wins over self={}'.format(other.what, self.what))
             kw_src = set(other.keywords)
             kw_dst = set(self.keywords)
             if kw_src - kw_dst:
                 msg.append('New keywords: {}'.format(','.join(kw_src - kw_dst)))
-                self.keywords = kw_src | kw_dst
+                if not dry_run:
+                    self.keywords = kw_src | kw_dst
             changed_point_times = 0
             for self_point, other_point in zip(self.points(), other.points()):
                 if not self_point.time:
-                    self_point.time = other_point.time
+                    if not dry_run:
+                        self_point.time = other_point.time
                     changed_point_times += 1
             if changed_point_times:
-                self._dirty = 'gpx'
+                if not dry_run:
+                    self._dirty = 'gpx'
                 msg.append('Copied times for {} out of {} points'.format(
                     changed_point_times, self.gpx.get_track_points_no()))
         return msg

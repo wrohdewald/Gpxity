@@ -525,14 +525,17 @@ class Backend:
         other._scan() # pylint: disable=protected-access
         return set(x.key() for x in self) == set(x.key() for x in other)
 
-    def merge(self, other, remove: bool = False) ->list:
+    def merge(self, other, remove: bool = False, dry_run: bool = False) ->list:
         """merge other backend into this one.
         If two activities have identical points, or-ify their other attributes.
         Args:
             remove: If True, remove merged activities
+            dry_run: If True, do not really merge. If True, remove must be False
         Returns: list(str) A list of messages for verbose output
         """
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-locals
+        if dry_run and remove:
+            raise Backend.BackendException('Backend.merge: remove and dry_run must not both be True')
         result = list()
         src_dict = defaultdict(list)
         for _ in other:
@@ -548,12 +551,14 @@ class Backend:
         for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
             # but only the first one of those with same points
             src_activities = src_dict[point_hash]
+            old_activity = src_activities[0]
 
-            new_activity = self.add(src_activities[0])
+            if not dry_run:
+                new_activity = self.add(old_activity)
             result.append('{} {} -> {} / {}'.format(
-                'move' if remove else 'copy', src_activities[0], self, new_activity.id_in_backend))
+                'move' if remove else 'copy', old_activity, self, 'not set' if dry_run else new_activity.id_in_backend))
             if remove:
-                other.remove(src_activities[0])
+                other.remove(old_activity)
             del src_activities[0]
 
         # 2. merge the rest
@@ -566,7 +571,7 @@ class Backend:
             sources = sorted(sources)
             target = dst_dict[point_hash][0]
             for source in sources:
-                msg = target.merge(source)
+                msg = target.merge(source, dry_run=dry_run)
                 if msg:
                     msg.insert(0, 'Merged{} {}:{}'.format(
                         ' and removed' if remove else '', source.backend.url, source))

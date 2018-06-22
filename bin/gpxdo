@@ -51,7 +51,7 @@ class Utility:
             if hasattr(self.options, 'destination'):
                 self.options.destination = self.options.destination[0]
                 self.destination = self.instantiate_object(self.options.destination)
-                if self.options.func != self.diff:
+                if self.options.func not in (self.diff, self.merge):
                     if self.destination.activity_only is not None:
                         raise Exception('No activity id allowed in destination:{}'.format(self.options.destination))
             self.options.func()
@@ -167,8 +167,8 @@ class Utility:
         if self.sources is None:
             self.sources = [self.destination]
         for source in self.sources:
-            msg = self.destination.merge(source, remove=self.options.remove)
-            if self.options.verbose:
+            msg = self.destination.merge(source, remove=self.options.remove, dry_run=self.options.dry_run)
+            if self.options.verbose or self.options.dry_run:
                 for _ in msg:
                     print(_)
 
@@ -408,6 +408,8 @@ Dates are expected as YYYY-MM-DD.
         merge_parser.set_defaults(func=self.merge)
         self.add_common_args(merge_parser)
         self.add_range_args(merge_parser)
+        merge_parser.add_argument('--dry-run', help='only show what would change',
+                                  action='store_true', default=False)
         merge_parser.add_argument('--remove', help='remove merged activities',
                                   action='store_true', default=False)
         self.add_multi_source(merge_parser)
