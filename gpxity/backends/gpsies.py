@@ -322,8 +322,7 @@ class GPSIES(Backend):
         self.__post('editTrack', data)
 
     def _yield_activities(self):
-        """get all activities for this user. If we do not use the generator
-        created by yield_activity, unittest fails. Why?"""
+        """get all activities for this user."""
 
         data = {'username': self.auth[0]}
         response = self.__post('trackList', data=data)

@@ -466,8 +466,7 @@ class MMT(Backend):
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
     def _yield_activities(self):
-        """get all activities for this user. If we do not use the generator
-        created by yield_activity, unittest fails. Why?"""
+        """get all activities for this user."""
 
         while True:
             old_len = self.real_len()
