@@ -539,21 +539,32 @@ class Backend:
         return set(x.key() for x in self) == set(x.key() for x in other)
 
     def merge(self, other, remove: bool = False, dry_run: bool = False) ->list:
-        """merge other backend into this one.
+        """merge other backend or a single activity into this one.
         If two activities have identical points, or-ify their other attributes.
         Args:
+            other: The backend or a single activitiy to be merged
             remove: If True, remove merged activities
             dry_run: If True, do not really merge. If True, remove must be False
         Returns: list(str) A list of messages for verbose output
         """
         # pylint: disable=too-many-branches,too-many-locals
+        # TODO: test for dry_run
+        # TODO: test for merging single activity
+        # TODO: test for merging a backend or an activity with itself. Where
+        # they may be identical instantiations or not. For all backends.
         if dry_run and remove:
             raise Backend.BackendException('Backend.merge: remove and dry_run must not both be True')
         result = list()
         src_dict = defaultdict(list)
-        for _ in other:
+        if isinstance(other, Activity):
+            other_activities = [other]
+            other_backend = other.backend
+        else:
+            other_activities = list(other)
+            other_backend = other
+        for _ in other_activities:
             src_dict[_.points_hash()].append(_)
-        if other.url == self.url and other.auth == self.auth:
+        if other_backend.url == self.url and other_backend.auth == self.auth:
             dst_dict = src_dict
         else:
             dst_dict = defaultdict(list)
@@ -571,7 +582,7 @@ class Backend:
             result.append('{} {} -> {} / {}'.format(
                 'move' if remove else 'copy', old_activity, self, 'not set' if dry_run else new_activity.id_in_backend))
             if remove:
-                other.remove(old_activity)
+                other_backend.remove(old_activity)
             del src_activities[0]
 
         # 2. merge the rest
