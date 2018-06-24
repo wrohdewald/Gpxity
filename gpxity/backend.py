@@ -363,6 +363,14 @@ class Backend:
             raise
         return new_activity
 
+    def _new_ident(self, activity) ->str:
+        """Creates an id for activity.
+
+        Returns: The new ident. If the backend does not
+        create an ident in advance, return None. Such
+        backends will return a new ident after writing.
+        """
+
     def _rewrite(self, activity, attributes):
         """Rewrites the full activity.
 
