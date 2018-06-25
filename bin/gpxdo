@@ -41,9 +41,6 @@ class Utility:
         self.options = None
         self.parse_commandline()
         self.sources = None
-        if self.options.func == self.list_them:
-            if not self.options.source:
-                self.options.source = ['.']
         try:
             if self.options.source:
                 self.sources = [self.instantiate_object(x) for x in self.options.source]
@@ -165,8 +162,6 @@ class Utility:
 
     def merge(self):
         """Merge"""
-        if self.sources is None:
-            self.sources = [self.destination]
         for source in self.sources:
             msg = self.destination.merge(source, remove=self.options.remove, dry_run=self.options.dry_run)
             if self.options.verbose or self.options.dry_run:
@@ -447,5 +442,10 @@ Dates are expected as YYYY-MM-DD.
                 self.options.keywords = True
                 self.options.length = True
                 self.options.status = True
+            if not self.options.source:
+                self.options.source = ['.']
+        elif self.options.func == self.merge:
+            if not self.options.source:
+                self.options.source = [self.options.destination]
 
 sys.exit(Utility().exit_code)
