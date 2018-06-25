@@ -439,12 +439,13 @@ Dates are expected as YYYY-MM-DD.
             else:
                 self.options.timeout = float(self.options.timeout)
 
-        if hasattr(self.options, 'long') and self.options.long:
-            self.options.title = True
-            self.options.time = True
-            self.options.what = True
-            self.options.keywords = True
-            self.options.length = True
-            self.options.status = True
+        if self.options.func == self.list_them:
+            if self.options.long:
+                self.options.title = True
+                self.options.time = True
+                self.options.what = True
+                self.options.keywords = True
+                self.options.length = True
+                self.options.status = True
 
 sys.exit(Utility().exit_code)
