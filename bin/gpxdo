@@ -49,7 +49,6 @@ class Utility:
                 self.sources = [self.instantiate_object(x) for x in self.options.source]
             self.destination = None
             if hasattr(self.options, 'destination'):
-                self.options.destination = self.options.destination[0]
                 self.destination = self.instantiate_object(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
                     if self.destination.activity_only is not None:
@@ -296,7 +295,7 @@ class Utility:
     @staticmethod
     def add_destination(parser):
         """add --destination"""
-        parser.add_argument('destination', help='the destination backend', nargs=1)
+        parser.add_argument('destination', help='the destination backend')
 
     help_epilog = """
 
