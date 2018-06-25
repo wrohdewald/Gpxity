@@ -40,10 +40,13 @@ class Utility:
         self.exit_code = 0
         self.options = None
         self.parse_commandline()
-        self.sources = None
+        self.sources = []
         try:
             if self.options.source:
-                self.sources = [self.instantiate_object(x) for x in self.options.source]
+                objects = []
+                for _ in self.options.source:
+                    objects.append(self.instantiate_object(_))
+                self.sources = self._collect_source_activities(objects)
             self.destination = None
             if hasattr(self.options, 'destination'):
                 self.destination = self.instantiate_object(self.options.destination)
@@ -63,10 +66,10 @@ class Utility:
         if self.options.debug:
             raise msg
 
-    def _source_activities(self):
+    def _collect_source_activities(self, sources):
         """A copied list with activities combined from all sources, to be used in 'for'-loops"""
         result = list()
-        for source in self.sources:
+        for source in sources:
             if self.options.verbose:
                 print('collecting activities from source', source)
             result.extend(source)
@@ -77,7 +80,7 @@ class Utility:
         We cannot just do merge() followed by remove() because
         the source might have gotten new activities meanwhile, and
         they would disappear for good."""
-        for _ in self._source_activities():
+        for _ in self.sources:
             self.destination.add(_, ident=_.id_in_backend)
             _.remove()
             if self.options.verbose:
@@ -85,7 +88,7 @@ class Utility:
 
     def remove(self):
         """remove activities"""
-        for _ in self._source_activities():
+        for _ in self.sources:
             if self.options.dry_run:
                 print('would remove {}'.format(_))
             else:
@@ -97,14 +100,13 @@ class Utility:
         """list activities"""
         header_line = list()
         sort_headers = list()
-        all_activities = self._source_activities()
         output_lines = list()
         def add_field(condition, header, value):
             """Conditionally add value for the column named 'header'"""
             if condition:
                 header_line.append(header)
                 sort_headers.append(header.lower().strip())
-                for idx, _ in enumerate(all_activities):
+                for idx, _ in enumerate(self.sources):
                     if idx == len(output_lines):
                         output_lines.append([])
                     output_lines[idx].append(value(_))
@@ -142,7 +144,7 @@ class Utility:
 
     def fix(self):
         """fix activities"""
-        for _ in self._source_activities():
+        for _ in self.sources:
             self.fix_activity(_)
             if self.options.verbose:
                 print('fixed {}'.format(_))
@@ -150,7 +152,7 @@ class Utility:
     def keyword(self):
         """add/remove a single keyword"""
         kword = self.options.keyword
-        for _ in self._source_activities():
+        for _ in self.sources:
             if self.options.remove:
                 _.remove_keyword(kword)
                 if self.options.verbose:
@@ -162,8 +164,8 @@ class Utility:
 
     def merge(self):
         """Merge"""
-        for source in self.sources:
-            msg = self.destination.merge(source, remove=self.options.remove, dry_run=self.options.dry_run)
+        for activity in self.sources:
+            msg = self.destination.merge(activity, remove=self.options.remove, dry_run=self.options.dry_run)
             if self.options.verbose or self.options.dry_run:
                 for _ in msg:
                     print(_)
