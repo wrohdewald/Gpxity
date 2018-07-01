@@ -4,6 +4,8 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
+# PYTHON_ARGCOMPLETE_OK
+
 """
 gpxdo is a command line tool making use of the Gpxity library
 """
@@ -13,6 +15,11 @@ import argparse
 import os
 import sys
 import datetime
+
+try:
+    import argcomplete
+except ImportError:
+    pass
 
 # This uses not the installed copy but the development files
 _ = os.path.dirname(sys.path[0])
@@ -423,6 +430,11 @@ Dates are expected as YYYY-MM-DD.
         self.add_multi_source(diff_parser, must_have=True)
         self.add_destination(diff_parser)
 
+
+        try:
+            argcomplete.autocomplete(parser)
+        except NameError:
+            pass
 
         if len(sys.argv) < 2:
             parser.print_usage()

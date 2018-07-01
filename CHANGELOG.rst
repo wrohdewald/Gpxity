@@ -5,6 +5,9 @@ Changelog
 ------------------------
   * new: Activity.last_point() avoids having to iterate over the full list
   * new: gpxdo diff
+  * gpxdo: bash completion if argcomplete is installed (pip install argcomplete).
+    Put this into your .bashrc: eval "$(register-python-argcomplete gpxdo)"
+    or see https://argcomplete.readthedocs.io/en/latest/
 
 1.2.6 release 2018-06-05
 ------------------------
