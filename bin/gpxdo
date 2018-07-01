@@ -333,7 +333,7 @@ Dates are expected as YYYY-MM-DD.
         """into self.options"""
         # pylint: disable=too-many-statements
         parser = argparse.ArgumentParser(
-            'gpxity', formatter_class=argparse.RawDescriptionHelpFormatter,
+            'gpxdo', formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=self.help_epilog)
         subparsers = parser.add_subparsers()
 
