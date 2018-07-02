@@ -253,9 +253,7 @@ class TestBackends(BasicTest):
                         backend2 = self.clone_backend(backend)
                         activity = backend[0]
                         self.assertIsNotNone(activity.backend)
-                        self.assertIsNotNone(activity.backend)
                         activity.title = 'Title ' + self.unicode_string1
-                        self.assertIsNotNone(activity.backend)
                         self.assertIsNotNone(activity.backend)
                         self.assertEqual(activity.backend, backend)
                         backend2.scan() # because backend2 does not know about changes thru backend
