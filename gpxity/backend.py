@@ -369,9 +369,6 @@ class Backend:
 
         Used only by Activity when things change.
         """
-
-        # pylint: disable=too-many-branches
-
         assert activity.backend is self
         assert self._has_item(activity.id_in_backend), '{} not in {}'.format(activity, ' / '.join(str(x) for x in self))
         assert activity._dirty  # pylint: disable=protected-access
