@@ -81,7 +81,10 @@ class Directory(Backend):
         """The full identifier with backend name and id_in_backend.
         As used for gpxdo.
         """
-        return '{}{}'.format(self.url, activity.id_in_backend)
+        result = '{}{}'.format(self.url, activity.id_in_backend)
+        if result[:2] == './':
+            result = result[2:]
+        return result
 
     @property
     def legal_whats(self):
