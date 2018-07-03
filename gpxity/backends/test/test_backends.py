@@ -168,16 +168,18 @@ class TestBackends(BasicTest):
                         self.assertNotEqual(first_what, activity2.what)
 
     def xtest_gpsies_bug(self):
-        """This bug only triggers sometimes: title or time will be wrong in activity2"""
-        with self.temp_backend(GPSIES, count=1, what='Horse riding', debug=True) as backend:
-            activity = backend[0]
-            activity.title = 'A new title'
-            activity.description = 'A new description'
-            activity.what = 'Cycling'
-            # make sure there is no cache in the way
-            backend2 = self.clone_backend(backend)
-            activity2 = backend2[0]
-            self.assertEqualActivities(activity, activity2)
+        """This bug only triggers sometimes: title, what or time will be wrong in activity2.
+        Workaround is in GPSIES._edit."""
+        for _ in range(20):
+            with self.temp_backend(GPSIES, count=1, what='Horse riding', debug=True) as backend:
+                activity = backend[0]
+                activity.title = 'A new title'
+                activity.description = 'A new description'
+                activity.what = 'Cycling'
+                # make sure there is no cache in the way
+                backend2 = self.clone_backend(backend)
+                activity2 = backend2[0]
+                self.assertEqualActivities(activity, activity2)
 
     @skip
     def test_zz_all_what(self):

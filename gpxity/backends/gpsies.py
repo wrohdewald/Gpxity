@@ -319,7 +319,17 @@ class GPSIES(Backend):
             'status': '1' if activity.public else '3',
             'trackTypes': self.encode_what(activity.what),
             'websiteUrl':''}
-        self.__post('editTrack', data)
+
+        # in about 1 out of 10 cases this update does not work.
+        # Doing that on the website with firefox shows the same problem.
+        # So reload and compare until both are identical.
+        copy = activity.clone()
+        copy._set_id_in_backend(activity.id_in_backend)  # pylint: disable=protected-access
+        while True:
+            self.__post('editTrack', data)
+            self._read_all(copy)
+            if activity == copy:
+                return
 
     def _yield_activities(self):
         """get all activities for this user."""
