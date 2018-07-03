@@ -184,7 +184,7 @@ class GPSIES(Backend):
         'packAnimalTrekking': 'Pack animal trekking',
         'boating': 'Rowing',
         'motorboat': 'Powerboating',
-        'skiingNordic': 'Cross contry skiing',
+        'skiingNordic': 'Cross country skiing',
         'skiingAlpine': 'Skiing',
         'skiingRandonnee': 'Skiing',
         'snowshoe': 'Snowshoeing',
