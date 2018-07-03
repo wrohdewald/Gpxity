@@ -26,7 +26,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Directory, BackendDiff, MMT, GPSIES
+from gpxity import Activity, Directory, BackendDiff, MMT, GPSIES
 from gpxity.util import uniq
 
 
@@ -48,18 +48,21 @@ class Utility:
         self.options = None
         self.parse_commandline()
         self.sources = []
+        self.destination = None
         try:
             if self.options.source:
                 objects = []
                 for _ in self.options.source:
                     objects.append(self.instantiate_object(_))
+                    # optimize the case where destination is also source
+                    if hasattr(self.options, 'destination') and _ == self.options.destination:
+                        self.destination = objects[-1]
                 self.sources = self._collect_source_activities(objects)
-            self.destination = None
-            if hasattr(self.options, 'destination'):
+            if hasattr(self.options, 'destination') and self.destination is None:
                 self.destination = self.instantiate_object(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
-                    if self.destination.activity_only is not None:
-                        raise Exception('No activity id allowed in destination:{}'.format(self.options.destination))
+                    if isinstance(self.destination, Activity):
+                        raise Exception('Destination must not be a single activity:{}'.format(self.options.destination))
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
@@ -79,7 +82,10 @@ class Utility:
         for source in sources:
             if self.options.verbose:
                 print('collecting activities from source', source)
-            result.extend(source)
+            if isinstance(source, Activity):
+                result.append(source)
+            else:
+                result.extend(source)
         return result
 
     def move(self):
@@ -225,7 +231,6 @@ class Utility:
                 account, activity_id = rest.split('/')
             else:
                 account = rest
-                activity_id = None
             if clsname == 'MMT':
                 result = MMT(auth=account, timeout=self.options.timeout)
             elif clsname == 'GPSIES':
@@ -233,28 +238,25 @@ class Utility:
         else:
             if os.path.isdir(name):
                 account = name
-                activity_id = None
+                result = Directory(url=account)
             else:
                 if name.endswith('.gpx'):
                     name = name[:-4]
                 if os.path.isfile(name + '.gpx'):
-                    activity_id = os.path.basename(name)
                     account = os.path.dirname(name) or '.'
-            result = Directory(url=account)
+                    activity_id = os.path.basename(name)
+                result = Directory(url=account)
         if account is None:
             raise Exception('{} not found'.format(name))
-
+        if activity_id:
+            result = result[activity_id]
         result.match = self.match
-        result.activity_only = activity_id
         result.debug = self.options.debug
         return result
 
     def match(self, activity):
         """Check against the selecting options. Does cheap check first."""
         # pylint: disable=too-many-return-statements
-        activity_only = activity.backend.activity_only
-        if activity_only is not None and activity.id_in_backend != activity_only:
-            return 'id {} is not {}'.format(activity.id_in_backend, activity_only)
         if activity.time:
             if self.options.first_date and activity.time < self.options.first_date:
                 return 'time {} is before {}'.format(activity.time, self.options.first_date)
