@@ -439,6 +439,9 @@ class GPSIES(Backend):
                 break
         if not new_ident:
             raise self.BackendException('No fileId= found in response')
+        if activity.id_in_backend:
+            self._remove_ident(activity.id_in_backend)
+        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         return new_ident
 
     def destroy(self):

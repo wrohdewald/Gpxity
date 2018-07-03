@@ -351,10 +351,8 @@ class Backend:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         try:
             with self._decouple():
-                new_ident = self._write_all(new_activity, ident)
-            new_activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
-            if not self._has_item(new_activity.id_in_backend):
-                self.append(new_activity)
+                self._write_all(new_activity, ident)
+            self.append(new_activity)
             activity._clear_dirty()  # pylint: disable=protected-access
             return new_activity
         except Exception:
@@ -385,13 +383,9 @@ class Backend:
         needs_full_save = self._needs_full_save(attributes)
 
         self.matches(activity, '_rewrite')
-
         if needs_full_save:
-            self.remove(activity)
-            activity._set_backend(self)  # pylint: disable=protected-access
-            new_ident = self._write_all(activity)
-            activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
-            self.append(activity)
+            new_id = self._write_all(activity)
+            activity._set_id_in_backend(new_id)  # pylint: disable=protected-access
         else:
             for attribute in attributes:
                 _ = attribute.split(':')

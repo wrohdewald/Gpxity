@@ -82,7 +82,7 @@ class TestBackends(BasicTest):
                         activity = self.create_test_activity()
                         backend.add(activity)
                         backend.add(activity)
-                        self.assertEqual(len(backend), 1)
+                        self.assertEqual(len(backend), 2)
 
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg"""

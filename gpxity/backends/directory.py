@@ -249,19 +249,45 @@ class Directory(Backend):
             if link_name not in self._symlinks[ident]:
                 self._symlinks[ident].append(link_name)
 
+    def __undo_rename(self, old_ident):
+        """if _write_all fails, undo change of file name and restore old file."""
+        if old_ident:
+            old_pathname = self.gpx_path(old_ident)
+            if os.path.exists(old_pathname):
+                os.remove(old_pathname)
+            if os.path.exists(old_pathname + '.old'):
+                os.rename(old_pathname + '.old', old_pathname)
+
     def _write_all(self, activity, new_ident: str = None) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
+        old_ident = activity.id_in_backend
+        old_pathname = None
+        if old_ident:
+            old_pathname = self.gpx_path(old_ident)
+            if os.path.exists(old_pathname):
+                os.rename(old_pathname, old_pathname + '.old')
         activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
-        ident = self._new_ident(activity)
-        activity._set_id_in_backend(ident)  # pylint: disable=protected-access
-        gpx_pathname = self.gpx_path(ident)
         try:
+            new_ident = self._new_ident(activity)
+        except BaseException:
+            self.__undo_rename(old_ident)
+            raise
+
+        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        gpx_pathname = self.gpx_path(new_ident)
+        try:
+            # only remove the old file after the new one has been written
             with open(gpx_pathname, 'w', encoding='utf-8') as out_file:
                 out_file.write(activity.to_xml())
             self._make_symlinks(activity)
         except BaseException:
+            self.__undo_rename(old_ident)
             raise
-        return ident
+        if old_ident:
+            self._remove_symlinks(old_ident)
+            if old_pathname and os.path.exists(old_pathname + '.old'):
+                os.remove(old_pathname + '.old')
+        return new_ident
 
 Directory._define_support() # pylint: disable=protected-access

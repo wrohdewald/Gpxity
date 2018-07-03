@@ -34,7 +34,6 @@ import html
 from html.parser import HTMLParser
 import datetime
 from collections import defaultdict
-from contextlib import contextmanager
 
 import requests
 
@@ -216,7 +215,6 @@ class MMT(Backend):
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
         self._tracking_activity = None
-        self.__overriding_ident = None
 
     @property
     def legal_whats(self):
@@ -356,7 +354,7 @@ class MMT(Backend):
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<{attr}>{value}</{attr}></message>'.format(
                 attr=attribute,
-                eid=self.__overriding_ident or activity.id_in_backend,
+                eid=activity.id_in_backend,
                 usrid=self.auth[0],
                 value=attr_value,
                 uid=self.session.cookies['exp_uniqueid'])
@@ -374,7 +372,7 @@ class MMT(Backend):
         """changes public/private on remote server"""
         self.__post(
             with_session=True, url='user-embeds/statuschange-track', expect='access granted',
-            mid=self.mid, tid=self.__overriding_ident or activity.id_in_backend,
+            mid=self.mid, tid=activity.id_in_backend,
             hash=self.session.cookies['exp_uniqueid'],
             status=1 if activity.public else 2)
             # what a strange answer
@@ -385,7 +383,7 @@ class MMT(Backend):
         aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
-            eid=self.__overriding_ident or activity.id_in_backend, activity=self.encode_what(activity.what))
+            eid=activity.id_in_backend, activity=self.encode_what(activity.what))
 
     def _current_keywords(self, activity):
         """Read all current keywords (MMT tags).
@@ -415,7 +413,7 @@ class MMT(Backend):
             '<message><nature>add_tag</nature><eid>{eid}</eid>' \
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<tagnames>{value}</tagnames></message>'.format(
-                eid=self.__overriding_ident or activity.id_in_backend,
+                eid=activity.id_in_backend,
                 usrid=self.auth[0],
                 value=value,
                 uid=self.session.cookies['exp_uniqueid'])
@@ -459,7 +457,7 @@ class MMT(Backend):
                 raise self.BackendException('{}: Cannot remove keyword {}, reason: not known'.format(self.url, value))
         self.__post(
             with_session=True, url='handler/delete-tag.php',
-            tag_id=self.__tag_ids[value], entry_id=self.__overriding_ident or activity.id_in_backend)
+            tag_id=self.__tag_ids[value], entry_id=activity.id_in_backend)
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
@@ -539,16 +537,6 @@ class MMT(Backend):
             with_session=True, url='handler/delete_track', expect='access granted',
             tid=ident, hash=self.session.cookies['exp_uniqueid'])
 
-    @contextmanager
-    def override_ident(self, ident: str):
-        """Temporarily override the activity ident. While this is active,
-        only the one activity meant must be used."""
-        try:
-            self.__overriding_ident = ident
-            yield
-        finally:
-            self.__overriding_ident = None
-
     def _write_all(self, activity, new_ident: str = None) ->str:
         """save full gpx track on the MMT server.
         We must upload the title separately.
@@ -565,12 +553,17 @@ class MMT(Backend):
         new_ident = response.find('id').text
         if not new_ident:
             raise self.BackendException('No id found in response')
-        with self.override_ident(new_ident):
-            if '_write_title' in self.supported:
-                self._write_title(activity)
-            # MMT can add several keywords at once
-            if activity.keywords and '_write_add_keyword' in self.supported:
-                self._write_add_keyword(activity, ','.join(activity.keywords))
+        old_ident = activity.id_in_backend
+        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        # the caller will do the above too, never mind
+        if '_write_title' in self.supported:
+            self._write_title(activity)
+        # MMT can add several keywords at once
+        if activity.keywords and '_write_add_keyword' in self.supported:
+            self._write_add_keyword(activity, ','.join(activity.keywords))
+        if old_ident:
+            self._remove_ident(old_ident)
+        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         return new_ident
 
     @staticmethod
