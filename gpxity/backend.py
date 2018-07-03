@@ -380,7 +380,7 @@ class Backend:
         # pylint: disable=too-many-branches
 
         assert activity.backend is self
-        assert activity.id_in_backend in self
+        assert self._has_item(activity.id_in_backend), '{} not in {}'.format(activity, ' / '.join(str(x) for x in self))
         assert activity._dirty  # pylint: disable=protected-access
 
         needs_full_save = self._needs_full_save(attributes)
