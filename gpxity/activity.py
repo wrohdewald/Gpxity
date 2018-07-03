@@ -193,7 +193,6 @@ class Activity:
         result = Activity(gpx=self.gpx.clone())
         result.what = self.what
         result.public = self.public
-        result._set_id_in_backend(self.id_in_backend)  # pylint: disable=protected-access
         return result
 
     def _rewrite(self):

@@ -298,7 +298,7 @@ class ActivityTests(BasicTest):
                 dir2.scan()
                 self.assertEqual(len(directory), 4)
                 trunk = os.path.join(directory.url, 'Random GPX # 0')
-                expected_names = list(trunk + x + '.gpx' for x in ('.1.1', '.1.2', '.1', ''))
+                expected_names = list(trunk + x + '.gpx' for x in ('.1', '.2', '.3', ''))
                 files = sorted(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
                 self.assertEqual(files, expected_names)
                 self.assertEqual(len(dir2), 4)
