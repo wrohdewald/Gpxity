@@ -88,8 +88,6 @@ class Backend:
 
     _legal_whats = None # Override in the backends
 
-    _ident_may_use_title = False # Directory can do that
-
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None):
         self._decoupled = False
         super(Backend, self).__init__()
@@ -307,8 +305,6 @@ class Backend:
         """Do we have to rewrite the entire activity?"""
         for attribute in attributes:
             if attribute == 'all':
-                return True
-            if attribute == 'title' and self._ident_may_use_title:
                 return True
             write_name = '_write_{}'.format(attribute.split(':')[0])
             if write_name not in self.supported:
