@@ -244,9 +244,10 @@ class Directory(Backend):
             if link_name not in self._symlinks[ident]:
                 self._symlinks[ident].append(link_name)
 
-    def _write_all(self, activity) ->str:
+    def _write_all(self, activity, new_ident: str = None) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt activity.id_in_backend."""
+        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         ident = self._new_ident(activity)
         activity._set_id_in_backend(ident)  # pylint: disable=protected-access
         gpx_pathname = self.gpx_path(ident)

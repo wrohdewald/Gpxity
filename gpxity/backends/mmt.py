@@ -549,7 +549,7 @@ class MMT(Backend):
         finally:
             self.__overriding_ident = None
 
-    def _write_all(self, activity) ->str:
+    def _write_all(self, activity, new_ident: str = None) ->str:
         """save full gpx track on the MMT server.
         We must upload the title separately.
 

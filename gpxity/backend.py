@@ -348,11 +348,9 @@ class Backend:
 
         if self._decoupled:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
-        if ident:
-            new_activity._set_id_in_backend(ident)  # pylint: disable=protected-access
         try:
             with self._decouple():
-                new_ident = self._write_all(new_activity)
+                new_ident = self._write_all(new_activity, ident)
             new_activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
             if not self._has_item(new_activity.id_in_backend):
                 self.append(new_activity)
@@ -403,7 +401,7 @@ class Backend:
                     getattr(self, write_name)(activity, ''.join(_[1:]))
         return activity
 
-    def _write_all(self, activity) ->str:
+    def _write_all(self, activity, new_ident: str = None) ->str:
         """the actual implementation for the concrete Backend.
         Writes the entire Activity.
 
@@ -419,6 +417,7 @@ class Backend:
         Args:
             value: If it is not an :class:`~gpxity.Activity`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`
+            new_ident: The backend may use this if it is able to create its own idents.
         """
 
         activity = value if hasattr(value, 'id_in_backend') else self[value]

@@ -412,7 +412,7 @@ class GPSIES(Backend):
             'websiteUrl':''}
         self.__post('editTrack', data=data)
 
-    def _write_all(self, activity) ->str:
+    def _write_all(self, activity, new_ident: str = None) ->str:
         """save full gpx track on the GPSIES server.
 
         Returns:
