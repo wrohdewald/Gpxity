@@ -20,7 +20,8 @@ __all__ = ['Directory']
 
 class Directory(Backend):
     """Uses a directory for storage. The filename minus the .gpx ending is used as the activity id.
-    If the activity has a title, use the title as storage id, making it unique by attaching a number if needed.
+    If the activity has a title but no storage id yet, use the title as storage id.
+    Make the storage id unique by attaching a number if needed.
     An activity without title gets a random name.
 
     The main directory (given by :attr:`Directory.url <gpxity.backend.Backend.url>`) will have

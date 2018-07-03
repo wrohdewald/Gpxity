@@ -319,7 +319,8 @@ class Backend:
         """        We do not check if it already exists in this backend. No activity
         already existing in this backend will be overwritten, the id_in_backend
         of activity will be deduplicated if needed. This is currently only needed
-        for Directory.
+        for Directory. Note that some backends reject an activity if it is very
+        similar to an existing activity even if it belongs to some other user.
 
         If the activity does not pass the current match function, raise an exception.
 
