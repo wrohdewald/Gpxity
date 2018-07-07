@@ -282,7 +282,7 @@ class Utility:
         if activity.time:
             if self.options.first_date and activity.time < self.options.first_date:
                 return 'time {} is before {}'.format(activity.time, self.options.first_date)
-            if self.options.last_date and activity.time > self.options.last_date:
+            if self.options.last_date.date() and activity.time .date() > self.options.last_date.date():
                 return 'time {} is after {}'.format(activity.time, self.options.last_date)
         length = activity.header_data.get('distance', None)
         if length:
