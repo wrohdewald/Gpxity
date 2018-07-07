@@ -36,7 +36,7 @@ def valid_date_argument(arg_date_str):
         return datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
     except ValueError as exc:
         print(exc)
-        msg = "Given Date ({0}) not valid! Expected format, YYYY-MM-DD!".format(arg_date_str)
+        msg = "Given Date ({0}) not valid! Expected format YYYY-MM-DD!".format(arg_date_str)
         raise argparse.ArgumentTypeError(msg)
 
 
