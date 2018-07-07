@@ -207,7 +207,6 @@ class Utility:
 
     def diff(self):
         """Compare"""
-        # TODO: show all activities with backend name but only its last unique part
         def show_exclusive(side):
             """shows activities appearing only on one side."""
             backends = uniq(x.backend for x in side.exclusive)
