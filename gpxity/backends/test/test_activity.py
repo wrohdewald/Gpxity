@@ -511,10 +511,10 @@ class ActivityTests(BasicTest):
         self.assertEqual(activity.keywords, test_activities)
         activity.keywords = reversed(test_activities)
         self.assertEqual(activity.keywords, test_activities)
-        with self.assertRaises(Exception):
-            activity.add_keyword(test_activities[0])
-        with self.assertRaises(Exception):
-            activity.keywords = test_activities * 2
+        activity.add_keyword(test_activities[0])
+        self.assertEqual(activity.keywords, test_activities)
+        activity.keywords = test_activities * 2
+        self.assertEqual(activity.keywords, test_activities)
 
     def test_id(self):
         """id_in_backend must be str"""

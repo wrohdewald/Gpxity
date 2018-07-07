@@ -585,7 +585,7 @@ class Activity:
             raise Exception('No comma allowed within a keyword')
 
     def add_keyword(self, value: str) ->None:
-        """Adds to the comma separated keywords. Duplicate keywords are not allowed.
+        """Adds to the comma separated keywords. Duplicate keywords are silently ignored.
         A keyword may not contain a comma.
 
         Args:
@@ -593,13 +593,12 @@ class Activity:
         """
         self._check_keyword(value)
         self._load_full()
-        if value in self.keywords:
-            raise Exception('Keywords may not be duplicate: {}'.format(value))
-        if self.__gpx.keywords:
-            self.__gpx.keywords += ', {}'.format(value)
-        else:
-            self.__gpx.keywords = value
-        self._dirty = 'add_keyword:{}'.format(value)
+        if value not in self.keywords:
+            if self.__gpx.keywords:
+                self.__gpx.keywords += ', {}'.format(value)
+            else:
+                self.__gpx.keywords = value
+            self._dirty = 'add_keyword:{}'.format(value)
 
     def remove_keyword(self, value: str) ->None:
         """Removes from the keywords.
