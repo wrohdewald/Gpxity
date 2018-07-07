@@ -506,7 +506,7 @@ class Backend:
         if self.auth:
             dirname = self.auth[0] or ''
         result = '{}({} in {}{})'.format(
-            self.__class__.__name__, len(self.__activities), self.url, ' ' + dirname)
+            self.__class__.__name__, len(self.__activities), self.url, dirname)
         return result
 
     def __enter__(self):
