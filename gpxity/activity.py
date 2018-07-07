@@ -638,13 +638,18 @@ class Activity:
     def __str__(self):
         return self.__repr__()
 
-    def identifier(self) ->str:
+    def identifier(self, long: bool = False) ->str:
         """The full identifier with backend name and id_in_backend.
         As used for gpxdo.
+
+        Args:
+            long: If True, give more info
         """
-        if self.backend is None:
-            return 'nobackend'
-        return self.backend._activity_identifier(self)
+        long_info = ' "{}" from {}'.format(self.title, self.time) if long else ''
+        return '{}{}{}'.format(
+            self.backend.identifier() if self.backend else '',
+            self.id_in_backend if self.id_in_backend else ' unsaved ',
+            long_info)
 
     def key(self, with_what: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but
@@ -844,7 +849,8 @@ class Activity:
                 if not dry_run:
                     self.public = True
             if other.what != self.what:
-                msg.append('What: other={} wins over self={}'.format(other.what, self.what))
+                msg.append('What: {}={} wins over {}={}'.format(
+                    other.identifier(), other.what, self.identifier(), self.what))
             kw_src = set(other.keywords)
             kw_dst = set(self.keywords)
             if kw_src - kw_dst:

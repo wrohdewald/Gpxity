@@ -63,6 +63,8 @@ class Utility:
                 if self.options.func not in (self.diff, self.merge):
                     if isinstance(self.destination, Activity):
                         raise Exception('Destination must not be a single activity:{}'.format(self.options.destination))
+                if not isinstance(self.destination, Activity) and self.options.verbose:
+                    print('collecting activities from', self.destination.identifier())
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
@@ -81,7 +83,7 @@ class Utility:
         result = list()
         for source in sources:
             if self.options.verbose:
-                print('collecting activities from source', source)
+                print('collecting activities from', source.identifier())
             if isinstance(source, Activity):
                 result.append(source)
             else:

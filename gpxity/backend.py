@@ -109,6 +109,12 @@ class Backend:
         self.debug = debug
         self.timeout = timeout
 
+    def identifier(self):
+        """Used for formatting strings"""
+        return '{}:{}/'.format(
+            self.__class__.__name__.lower(),
+            self.auth[0] if self.auth and self.auth[0] else '')
+
     @property
     def legal_whats(self):
         """
@@ -116,12 +122,6 @@ class Backend:
             all legal values for this backend
         """
         raise NotImplementedError
-
-    def _activity_identifier(self, activity) ->str:
-        """The full identifier with backend name and id_in_backend.
-        As used for gpxdo.
-        """
-        return '{}:{}/{}'.format(self.__class__.__name__.lower(), self.auth[0], activity.id_in_backend)
 
     @contextmanager
     def _decouple(self):
@@ -566,8 +566,9 @@ class Backend:
 
             if not dry_run:
                 new_activity = self.add(old_activity)
-            result.append('{} {} -> {} / {}'.format(
-                'move' if remove else 'copy', old_activity, self, 'not set' if dry_run else new_activity.id_in_backend))
+            result.append('{} {} -> {} {}'.format(
+                'move' if remove else 'copy', old_activity, self,
+                '' if dry_run else ' / ' + new_activity.id_in_backend))
             if remove:
                 other_backend.remove(old_activity)
             del src_activities[0]
@@ -584,14 +585,15 @@ class Backend:
             for source in sources:
                 msg = target.merge(source, dry_run=dry_run)
                 if msg:
-                    msg.insert(0, 'Merged{} {}:{}'.format(
-                        ' and removed' if remove else '', source.backend.url, source))
-                    msg.insert(1, '{}  into {}:{}'.format(
-                        ' ' * len(' and removed') if remove else '', target.backend.url, target))
+                    msg = list('     ' + x for x in msg)
+                    msg.insert(0, 'Merged{} {}'.format(
+                        ' and removed' if remove else '', source.identifier(long=True)))
+                    msg.insert(1, '{}  into {}'.format(
+                        ' ' * len(' and removed') if remove else '', target.identifier(long=True)))
                     result.extend(msg)
                 if remove:
                     if len(msg) <= 2:
-                        result.append('Removed duplicate {}'.format(source))
+                        result.append('Removed duplicate {}'.format(source.identifier(long=True)))
                     source.remove()
         return result
 
