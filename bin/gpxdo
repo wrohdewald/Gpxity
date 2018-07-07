@@ -170,16 +170,17 @@ class Utility:
 
     def keyword(self):
         """add/remove a single keyword"""
-        kword = self.options.keyword
         for _ in self.sources:
             if self.options.remove:
-                _.remove_keyword(kword)
+                for kword in self.options.keywords.split(','):
+                    _.remove_keyword(kword)
                 if self.options.verbose:
-                    print('removed {} from {}'.format(kword, _))
+                    print('removed {} from {}'.format(self.options.keywords, _))
             else:
-                _.add_keyword(kword)
+                for kword in self.options.keywords.split(','):
+                    _.add_keyword(kword)
                 if self.options.verbose:
-                    print('added {} to {}'.format(kword, _))
+                    print('added {} to {}'.format(self.options.keywords, _))
 
     def set_attributes(self):
         """set/clear some attributes like title"""
@@ -425,7 +426,7 @@ Dates are expected as YYYY-MM-DD.
         self.add_range_args(keyword_parser)
         keyword_parser.add_argument('--remove', help='remove keywords. Default is to add them.',
                                     action='store_true', default=False)
-        keyword_parser.add_argument('keyword', help='a keyword')
+        keyword_parser.add_argument('keywords', help='keywords separated by commas')
         self.add_multi_source(keyword_parser)
 
         set_parser = subparsers.add_parser('set', help='set attributes')
