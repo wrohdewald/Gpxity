@@ -5,6 +5,10 @@
 # See LICENSE for details.
 
 # PYTHON_ARGCOMPLETE_OK
+# for command line argument completion, put this into your .bashrc:
+# eval "$(register-python-argcomplete gpxdo)"
+# or see https://argcomplete.readthedocs.io/en/latest/
+
 
 """
 gpxdo is a command line tool making use of the Gpxity library
