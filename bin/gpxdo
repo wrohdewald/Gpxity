@@ -294,6 +294,8 @@ class Utility:
             return 'point count {} is below {}'.format(activity.gpx.get_track_points_no(), self.options.min_points)
         if self.options.max_points and activity.gpx.get_track_points_no() > self.options.max_points:
             return 'point count {} is above {}'.format(activity.gpx.get_track_points_no(), self.options.max_points)
+        if self.options.only_kw and not self.options.only_kw & set(activity.keywords):
+            return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(activity.keywords))
         return None
 
     @staticmethod
@@ -305,6 +307,7 @@ class Utility:
         parser.add_argument('--max-points', help='Limit activities by maximum number of points', type=int, default=None)
         parser.add_argument('--min-length', help='Limit activities by track length', type=int, default=None)
         parser.add_argument('--max-length', help='Limit activities by track length', type=int, default=None)
+        parser.add_argument('--only-kw', help='Limit activities by keywords', default=None)
 
     @staticmethod
     def add_common_args(parser):
@@ -498,5 +501,7 @@ Dates are expected as YYYY-MM-DD.
         elif self.options.func == self.merge:
             if not self.options.source:
                 self.options.source = [self.options.destination]
+        if self.options.only_kw:
+            self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
 
 sys.exit(Utility().exit_code)
