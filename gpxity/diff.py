@@ -30,13 +30,13 @@ class BackendDiff:
         similar(list(Pair)): Pairs of Activities are on both sides with
             differences. This includes all activities having at least
             100 identical positions without being identical.
-        diff_flags: T=time, P=positions
+        diff_flags: T=time, D=description, W=what, S=status,
+            K=keywords, P=positions, Z=time offset
     """
 
     # pylint: disable=too-few-public-methods
 
-    diff_flags = 'TPZ'
-
+    diff_flags = 'TDWSKPZ'
     class Pair:
         """Holds two comparable Items and the diff result
         Attributes:
@@ -65,8 +65,26 @@ class BackendDiff:
                 time_range[1] = None
 
             result = defaultdict(list)
+
             if self.left.title != self.right.title:
-                result['T'].append('"{}" against "{}"'.format(self.left.title or '', self.right.title or ''))
+                result['T'].append('"{}" <> "{}"'.format(self.left.title or '', self.right.title or ''))
+
+            if self.left.description != self.right.description:
+                result['D'].append('"{}" <> "{}"'.format(self.left.description or '', self.right.description or ''))
+
+            if self.left.what != self.right.what:
+                result['W'].append('"{}" <> "{}"'.format(self.left.what or '', self.right.what or ''))
+
+            if self.left.keywords != self.right.keywords:
+                result['K'].append('"{}" <> "{}"'.format(
+                    ', '.join(self.left.keywords), ', '.join(self.right.keywords)))
+
+            if self.left.public != self.right.public:
+                public_names = {False: 'private', True: 'public'}
+                result['S'].append(
+                    '"{}" <> "{}"'.format(
+                        public_names[self.left.public], public_names[self.right.public]))
+
             for _, (point1, point2) in enumerate(zip(self.left.points(), self.right.points())):
                 # GPXTrackPoint has no __eq__ and no working hash()
                 # those are only the most important attributes:
