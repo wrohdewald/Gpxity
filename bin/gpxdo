@@ -31,7 +31,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 from gpxity import Activity, Directory, BackendDiff, MMT, GPSIES
-from gpxity.util import uniq
+from gpxity.util import uniq, repr_timespan
 
 
 def valid_date_argument(arg_date_str):
@@ -130,6 +130,20 @@ class Utility:
                         output_lines.append([])
                     output_lines[idx].append(value(_))
 
+        def speed(_):
+            """Speed over the entire time"""
+            time_range = (_.time, _.last_time)
+            if time_range[0] is None or time_range[1] is None:
+                return ''
+            duration = time_range[1] - time_range[0]
+            seconds = duration.days * 24 * 3600 + duration.seconds
+            return '{:>6.3f}'.format(_.length() / seconds * 3600)
+
+        def moving_speed(_):
+            """Speed for time in motion"""
+            bounds = _.gpx.get_moving_data()
+            return '{:>6.3f}'.format(bounds.moving_distance / bounds.moving_time * 3.6)
+
         add_field(True, 'Identifier', lambda x: x.identifier())
         add_field(self.options.title, 'Title', lambda x: x.title[:40]  if x.title else '')
         add_field(self.options.time, 'Time', lambda x: str(x.time))
@@ -139,6 +153,10 @@ class Utility:
         add_field(self.options.points, 'Points', lambda x: '{:>6}'.format(x.gpx.get_track_points_no()))
         add_field(self.options.status, 'Status', lambda x: 'public' if x.public else 'private')
         add_field(self.options.description, 'Description', lambda x: x.description)
+        add_field(self.options.duration, 'Duration', lambda x: repr_timespan(x.time, x.last_time))
+        # pylint: disable=unnecessary-lambda
+        add_field(self.options.speed, 'Speed', lambda x: speed(x))
+        add_field(self.options.moving_speed, 'Moving speed', lambda x: moving_speed(x))
 
         if output_lines:
             sort_cols = self.options.sort.split(',')
@@ -282,8 +300,9 @@ class Utility:
         if activity.time:
             if self.options.first_date and activity.time < self.options.first_date:
                 return 'time {} is before {}'.format(activity.time, self.options.first_date)
-            if self.options.last_date.date() and activity.time .date() > self.options.last_date.date():
-                return 'time {} is after {}'.format(activity.time, self.options.last_date)
+            if self.options.last_date:
+                if self.options.last_date.date() and activity.time.date() > self.options.last_date.date():
+                    return 'time {} is after {}'.format(activity.time, self.options.last_date)
         length = activity.header_data.get('distance', None)
         if length:
             if self.options.min_length and length < self.options.min_length:
@@ -398,7 +417,7 @@ Dates are expected as YYYY-MM-DD.
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
                                help="""one or more out of identifier,title,what,time,length,
-                               points,keywords,status,
+                               points,keywords,status,speed,moving_speed,duration
                                separated by commas (no spaces allowed)""",
                                default='identifier')
         ls_parser.add_argument('--long', help='show most useful info',
@@ -418,6 +437,12 @@ Dates are expected as YYYY-MM-DD.
         ls_parser.add_argument('--keywords', help='show the keywords',
                                action='store_true', default=False)
         ls_parser.add_argument('--description', help='show the description',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--speed', help='show the average speed',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--moving-speed', help='show the average speed in motion',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--duration', help='show the entire duration',
                                action='store_true', default=False)
         self.add_common_args(ls_parser)
         self.add_range_args(ls_parser)
