@@ -68,8 +68,6 @@ class Directory(Backend):
             prefix = self.__class__.prefix
         elif url:
             raise Exception('Directory does not accept both url and prefix')
-        if url and url.startswith('./'):
-            url = url[2:]
         super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, debug=debug)
         self.is_temporary = not bool(self.url)
         if self.is_temporary:
@@ -81,7 +79,11 @@ class Directory(Backend):
 
     def identifier(self):
         """Used for formatting strings"""
-        return self.url
+        result = self.url
+        if result:
+            if  result.startswith('./') or result == '.':
+                result = result[2:]
+        return result
 
     @property
     def legal_whats(self):
