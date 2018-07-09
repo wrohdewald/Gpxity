@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This module defines :class:`~gpxity.Activity`
+This module defines :class:`~gpxity.Track`
 """
 
 from math import asin, sqrt, degrees
@@ -31,23 +31,23 @@ GPXTrackSegment = mod_gpx.GPXTrackSegment
 GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 
 
-__all__ = ['Activity']
+__all__ = ['Track']
 
 
 @total_ordering
-class Activity:
+class Track:
 
-    """Represents an activity.
+    """Represents a track.
 
-    An activity is essentially a GPX file. If a backend supports attributes not directly
-    supported by the GPX format like the MapMyTracks activity type, they will
+    An track is essentially a GPX file. If a backend supports attributes not directly
+    supported by the GPX format like the MapMyTracks track type, they will
     transparently be encodeded in existing GPX fields like keywords, see :attr:`keywords`.
 
     The GPX part is done by https://github.com/tkrajina/gpxpy.
 
-    If an activity is assigned to a backend, all changes will by default be written directly to the backend.
+    If a track is assigned to a backend, all changes will by default be written directly to the backend.
     Some backends are able to change only one attribute with little time overhead, others always have
-    to rewrite the entire activity.
+    to rewrite the entire track.
 
     However you can use the context manager :meth:`batch_changes`. This holds back updating the backend until
     leaving the context.
@@ -57,13 +57,13 @@ class Activity:
     Not all backends support everything, you could get the exception NotImplementedError.
 
     Some backends are able to change only one attribute with little time overhead, others always have
-    to rewrite the entire activity.
+    to rewrite the entire track.
 
     All points are always rounded to  6 decimal digits when they are added to the
-    activity.
+    track.
 
     Args:
-        gpx (GPX): Initial content. To be used if you create a new Activity from scratch without
+        gpx (GPX): Initial content. To be used if you create a new Track from scratch without
             loading it from some backend.
 
     The data will only be loaded from the backend when it is needed. Some backends
@@ -71,15 +71,15 @@ class Activity:
     everything as soon as anything is needed.
 
     Attributes:
-        legal_whats (tuple(str)): The legal values for :attr:`~Activity.what`. The first one is used
+        legal_whats (tuple(str)): The legal values for :attr:`~Track.what`. The first one is used
             as default value. This is a mostly a superset of the values for the different backends.
             Every backend maps from its internal values into those when reading and maps them
             back when writing. Since not all backends support all values defined here and since
             some backends may define more values than we know, information may get lost when
-            converting, even if you copy an activity between two backends of the same type.
+            converting, even if you copy a track between two backends of the same type.
 
         header_data (dict): The backend may only deliver some general information about
-            activities, the full data will only be loaded when needed. This general information
+            tracks, the full data will only be loaded when needed. This general information
             can help avoiding having to load the full data. The backend will fill header_data
             if it can. The backends are free to put additional info here. MMT does this for
             time, title, what and distance. You are not supposed to change header_data.
@@ -117,19 +117,19 @@ class Activity:
 
     @property
     def backend(self):
-        """The backend this activity lives in. If the activity was constructed in memory, backend is None.
+        """The backend this track lives in. If the track was constructed in memory, backend is None.
 
         This is a read-only property. It is set with :meth:`Backend.add <gpxity.Backend.add>`.
 
-        It is not possible to decouple an activity from its backend, use :meth:`clone()`.
+        It is not possible to decouple a track from its backend, use :meth:`clone()`.
         """
         return self.__backend
-        # :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>`.
+        # :attr:`Track.id_in_backend <gpxity.Track.id_in_backend>`.
 
     @property
     def id_in_backend(self) ->str:
-        """Every backend has its own scheme for unique activity ids. Some
-        backends may change the id if the activity data changes.
+        """Every backend has its own scheme for unique track ids. Some
+        backends may change the id if the track data changes.
         """
         return self.__id_in_backend
 
@@ -158,13 +158,13 @@ class Activity:
     @property
     def _dirty(self) ->set:
         """
-        Is the activity in sync with the backend?
+        Is the track in sync with the backend?
 
         Setting :attr:`_dirty` will directly write the changed data into the backend.
 
         :attr:`_dirty` can receive an arbitrary string like 'title'. If the backend
         has a method _write_title, that one will be called. Otherwise the
-        entire activity will be written by the backend.
+        entire track will be written by the backend.
 
         Returns:
             set: The names of the attributes currently marked as dirty.
@@ -185,12 +185,12 @@ class Activity:
         self.__dirty = set()
 
     def clone(self):
-        """Creates a new activity with the same content but without backend.
+        """Creates a new track with the same content but without backend.
 
         Returns:
-            ~gpxity.Activity: the new activity
+            ~gpxity.Track: the new track
         """
-        result = Activity(gpx=self.gpx.clone())
+        result = Track(gpx=self.gpx.clone())
         result.what = self.what
         result.public = self.public
         return result
@@ -204,7 +204,7 @@ class Activity:
         - batch_changes is active
         - we have no backend
 
-        Otherwise the backend will save this activity.
+        Otherwise the backend will save this track.
         """
         if self.backend is None:
             self._clear_dirty()
@@ -215,7 +215,7 @@ class Activity:
             self._clear_dirty()
 
     def remove(self):
-        """Removes this activity in the associated backend. If the activity
+        """Removes this track in the associated backend. If the track
         is not coupled with a backend, raise an Exception.
         """
         if self.backend is None:
@@ -224,7 +224,7 @@ class Activity:
 
     @property
     def time(self) ->datetime.datetime:
-        """datetime.datetime: start time of activity.
+        """datetime.datetime: start time of track.
         For a simpler implementation of backends, notably MMT, we ignore
         gpx.time. Instead we return the time of the earliest track point.
         Only if there is no track point, return gpx.time. If that is unknown
@@ -294,8 +294,8 @@ class Activity:
     @property
     def __is_decoupled(self):
         """True if we are currently decoupled from the backend. In that
-        state, changes to Activity are not written to the backend and
-        the activity is not marked dirty.
+        state, changes to Track are not written to the backend and
+        the track is not marked dirty.
         """
         if self.backend is None:
             return True
@@ -304,7 +304,7 @@ class Activity:
     @contextmanager
     def batch_changes(self):
         """This context manager disables  the direct update in the backend
-        and saves the entire activity when done. This may or may not make
+        and saves the entire track when done. This may or may not make
         things faster. Directory and GPSIES profits from this, MMT maybe.
         """
         prev_batch_changes = self._batch_changes
@@ -317,7 +317,7 @@ class Activity:
 
     @property
     def what(self) ->str:
-        """str: What is this activity doing? If we have no current value,
+        """str: What is this track doing? If we have no current value,
         return the default.
 
         The value is automatically translated between our internal value and
@@ -370,27 +370,27 @@ class Activity:
     def track(self, backend=None, points=None) ->None:
         """Life tracking.
 
-        If this activity belongs to a backend supporting
+        If this track belongs to a backend supporting
         life tracking:
 
         * **points** is None: Stop life tracking
         * if life tracking is not active, start it and send all points already known in this \
-            activity. The backend may change :attr:`id_in_backend`.
+            track. The backend may change :attr:`id_in_backend`.
         * if life tracking was already active, just send the new points.
 
         MMT supports simultaneous life tracking for only
-        one activity per account, others may support more.
+        one track per account, others may support more.
 
         For backends not supporting life tracking, the points are
         simply added.
 
         Args:
-            backend: The backend which should track this Activity. Only pass this
+            backend: The backend which should track this Track. Only pass this
               when you start tracking.
             points (list(GPXTrackPoint): The points to be added
         """
         if self.backend is not None and backend is not None:
-            raise Exception('track(): Activity must not have a backend yet')
+            raise Exception('track(): Track must not have a backend yet')
         if backend is not None:
             self.__backend = backend
         if self.backend is None:
@@ -435,7 +435,7 @@ class Activity:
             try:
                 self.__gpx = gpxpy_parse(indata)
             except GPXXMLSyntaxException as exc:
-                print('{}: Activity {} has illegal GPX XML: {}'.format(
+                print('{}: Track {} has illegal GPX XML: {}'.format(
                     self.backend, self.id_in_backend, exc))
                 raise
             self._parse_keywords()
@@ -492,7 +492,7 @@ class Activity:
     @property
     def public(self):
         """
-        bool: Is this a private activity (can only be seen by the account holder) or
+        bool: Is this a private track (can only be seen by the account holder) or
             is it public? Default value is False
         """
         if not self._loaded and 'public' in self.header_data:
@@ -542,11 +542,11 @@ class Activity:
 
             However this is transparent for you. When parsing theGPX file, those are removed
             from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
-            :attr:`Activity.keywords` will never show those special values.
+            :attr:`Track.keywords` will never show those special values.
 
             Some backends may change keywords. :class:`~gpxity.MMT` converts the
             first character into upper case and will return it like that. Gpxity will not try to hide such
-            problems. So if you save an activity in :class:`~gpxity.MMT`, its keywords
+            problems. So if you save a track in :class:`~gpxity.MMT`, its keywords
             will change. But they will not change if you copy from :class:`~gpxity.MMT`
             to :class:`~gpxity.Directory` - so if you copy from DirectoryA
             to :class:`~gpxity.MMT` to DirectoryB, the keywords in
@@ -578,9 +578,9 @@ class Activity:
     def _check_keyword(keyword):
         """Must not be What: or Status:"""
         if keyword.startswith('What:'):
-            raise Exception('Do not use this directly,  use Activity.what')
+            raise Exception('Do not use this directly,  use Track.what')
         if keyword.startswith('Status:'):
-            raise Exception('Do not use this directly,  use Activity.public')
+            raise Exception('Do not use this directly,  use Track.public')
         if ',' in keyword:
             raise Exception('No comma allowed within a keyword')
 
@@ -645,7 +645,7 @@ class Activity:
 
     def __repr__(self):
         with self._decouple():
-            # this should not automatically load the entire activity
+            # this should not automatically load the entire track
             parts = []
             if self.id_in_backend is not None:
                 parts.append('id:{}'.format(self.id_in_backend))
@@ -664,7 +664,7 @@ class Activity:
                     parts.append('{:4.2f}km'.format(self.header_data['distance']))
                 else:
                     parts.append('{} points'.format(self.gpx.get_track_points_no()))
-            return 'Activity({})'.format(' '.join(parts))
+            return 'Track({})'.format(' '.join(parts))
 
     def __str__(self):
         return self.__repr__()
@@ -688,7 +688,7 @@ class Activity:
 
         Args:
             with_what: If False, do not use self.what. Needed for comparing
-                activities for equality like in unittests because values can change
+                tracks for equality like in unittests because values can change
                 and information can get lost while copying between different
                 backends
 
@@ -762,7 +762,7 @@ class Activity:
 
     def last_point(self):
         """Returns the last point of the track."""
-        # TODO: unittest for activity without __gpx or without points
+        # TODO: unittest for track without __gpx or without points
         return self.__gpx.tracks[-1].segments[-1].points[-1]
 
     def adjust_time(self, delta):
@@ -793,7 +793,7 @@ class Activity:
     def points_equal(self, other) ->bool:
         """
         Returns:
-            True if both activities have identical points.
+            True if both tracks have identical points.
 
         All points of all tracks and segments are combined. Elevations are ignored.
         """
@@ -814,16 +814,16 @@ class Activity:
         return True
 
     @staticmethod
-    def overlapping_times(activities):
+    def overlapping_times(tracks):
         """"
         Yields:
-            groups of activities with overlapping times. Sorted by time.
+            groups of tracks with overlapping times. Sorted by time.
 
-        This may be very slow for many long activities.
+        This may be very slow for many long tracks.
         """
         previous = None
-        group = list()  # Activity is  mutable, so a set is no possible
-        for current in sorted(activities, key=lambda x: x.time):
+        group = list()  # Track is  mutable, so a set is no possible
+        for current in sorted(tracks, key=lambda x: x.time):
             if previous and current.time <= previous.last_time:
                 if previous not in group:
                     group.append(previous)
@@ -837,11 +837,11 @@ class Activity:
             yield sorted(group, key=lambda x: x.time)
 
     def _has_default_title(self) ->bool:
-        """Try to check if activity has the default title given by a backend."""
+        """Try to check if track has the default title given by a backend."""
         # the title of MMT might have been copied into another backend:
         if not self.title:
             return True
-        if self.title == '{} activity'.format(self.what):
+        if self.title == '{} track'.format(self.what):
             return True
         if  all(x in '0123456789 :-_' for x in self.title):
             return True
@@ -849,13 +849,13 @@ class Activity:
 
 
     def merge(self, other, dry_run=False) ->list:
-        """Merge other activity into this one. The track points must be identical.
+        """Merge other track into this one. The track points must be identical.
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
         Combine description and keywords.
 
         Args:
-            other (:class:`~gpxity.Activity`): The activity to be merged
+            other (:class:`~gpxity.Track`): The track to be merged
             dry_run: if True, do not really apply the merge
         Returns: list(str)
             Messages about what has been done

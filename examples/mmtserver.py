@@ -41,22 +41,22 @@ GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 
 # pylint: disable=wrong-import-position
 
-from gpxity import Activity
+from gpxity import Track
 from gpxity import ServerDirectory # pylint: disable=no-name-in-module
 
 class Handler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
     directory = ServerDirectory(auth='mmtserver') # define the directory in auth.cfg, using the Url=value
-    tracking_activity = None
+    tracking_track = None
 
-    def send_mail(self, reason,  activity):
+    def send_mail(self, reason,  track):
         """if a mail address is known, send new GPX there"""
         if OPT.mailto:
             msg = b'GPX is attached'
-            subject = 'New GPX: {} {}'.format(reason, activity)
+            subject = 'New GPX: {} {}'.format(reason, track)
             process  = Popen(
-                ['mutt', '-s', subject, '-a', activity.backend.gpx_path(activity),  '--', OPT.mailto],
+                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track),  '--', OPT.mailto],
                 stdin=PIPE)
             process.communicate(msg)
 
@@ -143,20 +143,20 @@ class Handler(BaseHTTPRequestHandler):
         return '<type>time</type><server_time>{}</server_time>'.format(
             int(datetime.datetime.now().timestamp()))
 
-    def xml_get_activities(self, parsed):
+    def xml_get_tracks(self, parsed):
         """as defined by the mapmytracks API"""
         a_list = list()
         if parsed['offset'] == '0':
             for idx, _ in enumerate(Handler.directory):
                 a_list.append(
-                    '<activity{}><id>{}</id>'
+                    '<track{}><id>{}</id>'
                     '<title><![CDATA[ {} ]]></title>'
                     '<activity_type>{}</activity_type>'
                     '<date>{}</date>'
-                    '</activity{}>'.format(
+                    '</track{}>'.format(
                         idx + 1, _.id_in_backend, _.title, _.what,
                         int(_.time.timestamp()), idx + 1))
-        return '<activities>{}</activities>'.format(''.join(a_list))
+        return '<tracks>{}</tracks>'.format(''.join(a_list))
 
     def __points(self, raw):
         """convert raw data back into list(GPXTrackPoint)"""
@@ -184,45 +184,45 @@ class Handler(BaseHTTPRequestHandler):
         result.tracks.append(track)
         return result
 
-    def xml_upload_activity(self, parsed):
+    def xml_upload_track(self, parsed):
         """as defined by the mapmytracks API"""
-        activity = Activity(gpx=gpxpy.parse(parsed['gpx_file']))
-        Handler.directory.add(activity)
-        self.send_mail('upload_activity', activity)
-        return '<type>success</type><id>{}</id>'.format(activity.id_in_backend)
+        track = Track(gpx=gpxpy.parse(parsed['gpx_file']))
+        Handler.directory.add(track)
+        self.send_mail('upload_track', track)
+        return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
-    def xml_start_activity(self, parsed):
+    def xml_start_track(self, parsed):
         try:
-            Handler.tracking_activity = Activity(gpx=self.__starting_Gpx(parsed))
+            Handler.tracking_track = Track(gpx=self.__starting_Gpx(parsed))
         except TypeError:
             return
-        Handler.tracking_activity.title = parsed['title']
+        Handler.tracking_track.title = parsed['title']
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
-        Handler.tracking_activity.public = parsed['privacy'] == 'public'
-        Handler.tracking_activity.what = parsed['activity']
-        Handler.directory.add(Handler.tracking_activity)
-        self.send_mail('start_activity', Handler.tracking_activity)
+        Handler.tracking_track.public = parsed['privacy'] == 'public'
+        Handler.tracking_track.what = parsed['activity']
+        Handler.directory.add(Handler.tracking_track)
+        self.send_mail('start_track', Handler.tracking_track)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
-            Handler.tracking_activity.id_in_backend)
+            Handler.tracking_track.id_in_backend)
 
-    def xml_update_activity(self, parsed):
-        if parsed['activity_id'] != Handler.tracking_activity.id_in_backend:
-            self.return_error(401,  'wrong activity id {}, expected {}'.format(
-                parsed['activity_id'], Handler.tracking_activity.id_in_backend))
+    def xml_update_track(self, parsed):
+        if parsed['activity_id'] != Handler.tracking_track.id_in_backend:
+            self.return_error(401,  'wrong track id {}, expected {}'.format(
+                parsed['activity_id'], Handler.tracking_track.id_in_backend))
         else:
-            Handler.tracking_activity.add_points(self.__points(parsed['points']))
+            Handler.tracking_track.add_points(self.__points(parsed['points']))
             if OPT.debug:
-                print('update_activity:',Handler.tracking_activity)
-                print('  last time:',Handler.tracking_activity.last_time)
+                print('update_track:',Handler.tracking_track)
+                print('  last time:',Handler.tracking_track.last_time)
             return '<type>activity_updated</type>'
 
-    def xml_stop_activity(self, parsed):
-        if Handler.tracking_activity is None:
-            self.return_error(401,  'No activity in tracking mode')
+    def xml_stop_track(self, parsed):
+        if Handler.tracking_track is None:
+            self.return_error(401,  'No track in tracking mode')
         else:
-            self.send_mail('stop_activity', Handler.tracking_activity)
-            Handler.tracking_activity = None
+            self.send_mail('stop_track', Handler.tracking_track)
+            Handler.tracking_track = None
             return '<type>activity_stopped</type>'
 
 
@@ -233,7 +233,7 @@ def options():
         type=int, default=8080, help='Listen on PORT')
     parser.add_option(
         '', '--mailto', dest='mailto', metavar='MAIL',
-        default=None, help='mail new activities to MAIL')
+        default=None, help='mail new tracks to MAIL')
     parser.add_option(
         '', '--debug', action='store_true',
         help='show debug output', dest='debug',

@@ -17,10 +17,10 @@ gpxity.backends.test.basic module
     :undoc-members:
     :show-inheritance:
 
-gpxity.backends.test.test_activity module
+gpxity.backends.test.test_track module
 -----------------------------------------
 
-.. automodule:: gpxity.backends.test.test_activity
+.. automodule:: gpxity.backends.test.test_track
     :members:
     :undoc-members:
     :show-inheritance:

@@ -18,7 +18,7 @@ from unittest import skip
 from .basic import BasicTest
 from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT
 from ...auth import Authenticate
-from ... import Activity
+from ... import Track
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -43,7 +43,7 @@ class TestBackends(BasicTest):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
 
     def test_save_empty(self):
-        """Save empty activity"""
+        """Save empty track"""
         for cls in self._find_backend_classes():
             if cls is TrackMMT:
                 # TODO: automatically start expected local server
@@ -51,37 +51,37 @@ class TestBackends(BasicTest):
             with self.subTest(' {}'.format(cls.__name__)):
                 can_remove = 'remove' in cls.supported
                 with self.temp_backend(cls, cleanup=can_remove, clear_first=can_remove) as backend:
-                    activity = Activity()
+                    track = Track()
                     if cls in (MMT, TrackMMT, GPSIES):
                         with self.assertRaises(cls.BackendException):
-                            backend.add(activity)
+                            backend.add(track)
                     else:
-                        self.assertIsNotNone(backend.add(activity))
+                        self.assertIsNotNone(backend.add(track))
 
     def test_backend(self):
         """Manipulate backend"""
-        activity = self.create_test_activity()
+        track = self.create_test_track()
         with Directory(cleanup=True) as directory1:
             with Directory(cleanup=True) as directory2:
-                saved = directory1.add(activity)
+                saved = directory1.add(track)
                 self.assertEqual(len(directory1), 1)
                 self.assertEqual(saved.backend, directory1)
-                directory1.add(activity)
+                directory1.add(track)
                 self.assertEqual(len(directory1), 2)
-                directory2.add(activity)
+                directory2.add(track)
                 self.assertEqual(len(directory2), 1)
                 directory2.scan()
                 self.assertEqual(len(directory2), 1)
 
-    def test_duplicate_activities(self):
+    def test_duplicate_tracks(self):
         """What happens if we save the same ident twice?"""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
                     with self.temp_backend(cls) as backend:
-                        activity = self.create_test_activity()
-                        backend.add(activity)
-                        backend.add(activity)
+                        track = self.create_test_track()
+                        backend.add(track)
+                        backend.add(track)
                         self.assertEqual(len(backend), 2)
 
     def test_open_wrong_username(self):
@@ -101,23 +101,23 @@ class TestBackends(BasicTest):
 
     def test_match(self):
         """test backend match function"""
-        def match_date(activity):
+        def match_date(track):
             """match against a date"""
-            if activity.time < datetime.datetime(year=2016, month=9, day=5):
-                return 'time {} is before {}'.format(activity.time, '2016-09-05')
+            if track.time < datetime.datetime(year=2016, month=9, day=5):
+                return 'time {} is before {}'.format(track.time, '2016-09-05')
             return None
         for cls in (Directory, ):
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.temp_backend(cls, count=3) as backend:
                     for idx, _ in enumerate(backend):
                         _.adjust_time(datetime.timedelta(hours=idx))
-                    new_activity = backend[0].clone()
-                    self.assertIsNotNone(match_date(new_activity))
+                    new_track = backend[0].clone()
+                    self.assertIsNotNone(match_date(new_track))
                     self.assertEqual(len(backend), 3)
                     backend.match = match_date
                     self.assertEqual(len(backend), 1)
                     with self.assertRaises(cls.NoMatch):
-                        backend.append(new_activity)
+                        backend.append(new_track)
                     self.assertEqual(len(backend), 1)
                     orig_time = backend[0].time
                     delta = datetime.timedelta(days=-5)
@@ -141,50 +141,50 @@ class TestBackends(BasicTest):
                             2, second_time, first_time, second_time - first_time))
 
     def test_slow_write_remoteattr(self):
-        """If we change title, description, public, what in activity, is the backend updated?"""
+        """If we change title, description, public, what in track, is the backend updated?"""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
                     with self.temp_backend(cls, count=1, what='Horse riding') as backend:
-                        activity = backend[0]
-                        first_public = activity.public
-                        first_title = activity.title
-                        first_description = activity.description
-                        first_what = activity.what
+                        track = backend[0]
+                        first_public = track.public
+                        first_title = track.title
+                        first_description = track.description
+                        first_what = track.what
                         self.assertEqual(first_what, 'Horse riding')
-                        self.assertFalse(activity.public)
-                        activity.public = True
-                        activity.title = 'A new title'
-                        self.assertEqual(activity.title, 'A new title')
-                        activity.description = 'A new description'
-                        activity.what = 'Cycling'
+                        self.assertFalse(track.public)
+                        track.public = True
+                        track.title = 'A new title'
+                        self.assertEqual(track.title, 'A new title')
+                        track.description = 'A new description'
+                        track.what = 'Cycling'
                         # make sure there is no cache in the way
                         backend2 = self.clone_backend(backend)
-                        activity2 = backend2[0]
-                        self.assertEqualActivities(activity, activity2)
-                        self.assertNotEqual(first_public, activity2.public)
-                        self.assertNotEqual(first_title, activity2.title)
-                        self.assertNotEqual(first_description, activity2.description)
-                        self.assertNotEqual(first_what, activity2.what)
+                        track2 = backend2[0]
+                        self.assertEqualTracks(track, track2)
+                        self.assertNotEqual(first_public, track2.public)
+                        self.assertNotEqual(first_title, track2.title)
+                        self.assertNotEqual(first_description, track2.description)
+                        self.assertNotEqual(first_what, track2.what)
 
     def xtest_gpsies_bug(self):
-        """This bug only triggers sometimes: title, what or time will be wrong in activity2.
+        """This bug only triggers sometimes: title, what or time will be wrong in track2.
         Workaround is in GPSIES._edit."""
         for _ in range(20):
             with self.temp_backend(GPSIES, count=1, what='Horse riding', debug=True) as backend:
-                activity = backend[0]
-                activity.title = 'A new title'
-                activity.description = 'A new description'
-                activity.what = 'Cycling'
+                track = backend[0]
+                track.title = 'A new title'
+                track.description = 'A new description'
+                track.what = 'Cycling'
                 # make sure there is no cache in the way
                 backend2 = self.clone_backend(backend)
-                activity2 = backend2[0]
-                self.assertEqualActivities(activity, activity2)
+                track2 = backend2[0]
+                self.assertEqualTracks(track, track2)
 
     @skip
     def test_zz_all_what(self):
-        """can we up- and download all values for :attr:`Activity.what`?"""
-        what_count = len(Activity.legal_whats)
+        """can we up- and download all values for :attr:`Track.what`?"""
+        what_count = len(Track.legal_whats)
         backends = list(
             self.setup_backend(x, count=what_count, clear_first=True)
             for x in self._find_backend_classes() if 'remove' in x.supported)
@@ -192,7 +192,7 @@ class TestBackends(BasicTest):
         try:
             first_backend = copies[0]
             for other in copies[1:]:
-                self.assertSameActivities(first_backend, other)
+                self.assertSameTracks(first_backend, other)
         finally:
             for backend in copies:
                 backend.destroy()
@@ -215,33 +215,33 @@ class TestBackends(BasicTest):
                 with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt) as backend:
                     if not backend:
                         continue
-                    activity = backend[0]
-                    activity.keywords = list()
-                    self.assertEqual(activity.keywords, list())
-                    activity.keywords = ([kw_a, kw_b, kw_c])
-                    activity.remove_keyword(kw_b)
-                    self.assertEqual(activity.keywords, ([kw_a, kw_c]))
+                    track = backend[0]
+                    track.keywords = list()
+                    self.assertEqual(track.keywords, list())
+                    track.keywords = ([kw_a, kw_b, kw_c])
+                    track.remove_keyword(kw_b)
+                    self.assertEqual(track.keywords, ([kw_a, kw_c]))
                     with self.assertRaises(Exception):
-                        activity.add_keyword('What:whatever')
-                    activity.add_keyword(kw_d)
-                    self.assertEqual(set(activity.keywords), set([kw_a, kw_c, kw_d]))
+                        track.add_keyword('What:whatever')
+                    track.add_keyword(kw_d)
+                    self.assertEqual(set(track.keywords), set([kw_a, kw_c, kw_d]))
                     backend2 = self.clone_backend(backend)
-                    activity2 = backend2[activity.id_in_backend]
-                    activity2.remove_keyword(kw_d)
-                    self.assertEqual(activity2.keywords, ([kw_a, kw_c]))
-                    self.assertEqual(activity.keywords, ([kw_a, kw_c, kw_d]))
+                    track2 = backend2[track.id_in_backend]
+                    track2.remove_keyword(kw_d)
+                    self.assertEqual(track2.keywords, ([kw_a, kw_c]))
+                    self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
                     backend.scan()
-                    self.assertEqual(activity.keywords, ([kw_a, kw_c, kw_d]))
-                    self.assertEqual(backend[activity.id_in_backend].keywords, ([kw_a, kw_c]))
-                    activity.remove_keyword(kw_a)
-                    # this is tricky: The current implementation assumes that activity.keywords is
-                    # current - which it is not. activity still thinks kw_d is there but it has been
-                    # removed by somebody else. MMT has a work-around for removing activities which
+                    self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
+                    self.assertEqual(backend[track.id_in_backend].keywords, ([kw_a, kw_c]))
+                    track.remove_keyword(kw_a)
+                    # this is tricky: The current implementation assumes that track.keywords is
+                    # current - which it is not. track still thinks kw_d is there but it has been
+                    # removed by somebody else. MMT has a work-around for removing tracks which
                     # removes them all and re-adds all wanted. So we get kw_d back.
-                    self.assertEqual(activity.keywords, ([kw_c, kw_d]))
-                    #activity2.remove_keyword(kw_a)
-                    activity.remove_keyword(kw_c)
-                    activity.remove_keyword(kw_d)
+                    self.assertEqual(track.keywords, ([kw_c, kw_d]))
+                    #track2.remove_keyword(kw_a)
+                    track.remove_keyword(kw_c)
+                    track.remove_keyword(kw_d)
                     backend.scan()
                     self.assertEqual(backend[0].keywords, list())
 
@@ -253,18 +253,18 @@ class TestBackends(BasicTest):
                 with self.subTest(' {}'.format(cls.__name__)):
                     with self.temp_backend(cls, count=1) as backend:
                         backend2 = self.clone_backend(backend)
-                        activity = backend[0]
-                        self.assertIsNotNone(activity.backend)
-                        activity.title = 'Title ' + self.unicode_string1
-                        self.assertIsNotNone(activity.backend)
-                        self.assertEqual(activity.backend, backend)
+                        track = backend[0]
+                        self.assertIsNotNone(track.backend)
+                        track.title = 'Title ' + self.unicode_string1
+                        self.assertIsNotNone(track.backend)
+                        self.assertEqual(track.backend, backend)
                         backend2.scan() # because backend2 does not know about changes thru backend
-                        activity2 = backend2[0]
-                        # activity and activity2 may not be identical. If the original activity
-                        # contains gpx xml data ignored by MMT, it will not be in activity2.
-                        self.assertEqual(activity.title, activity2.title)
-                        activity.description = tstdescr
-                        self.assertEqual(activity.description, tstdescr)
+                        track2 = backend2[0]
+                        # track and track2 may not be identical. If the original track
+                        # contains gpx xml data ignored by MMT, it will not be in track2.
+                        self.assertEqual(track.title, track2.title)
+                        track.description = tstdescr
+                        self.assertEqual(track.description, tstdescr)
                         backend2.scan()
                         self.assertEqual(backend2[0].description, tstdescr)
                         backend2.destroy()
@@ -276,13 +276,13 @@ class TestBackends(BasicTest):
         is not always as trivial as it should be."""
 
     def test_slow_download_many(self):
-        """Download many activities"""
+        """Download many tracks"""
         many = 150
-        backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=False)
+        backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
         self.assertEqual(len(backend), many)
 
     def test_duplicate_title(self):
-        """two activities having the same title"""
+        """two tracks having the same title"""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
@@ -291,13 +291,13 @@ class TestBackends(BasicTest):
                         backend[1].title = 'TITLE'
 
     def test_private(self):
-        """Up- and download private activities"""
+        """Up- and download private tracks"""
         with self.temp_backend(Directory, count=5, what='Cycling') as local:
-            activity = Activity(gpx=self._get_gpx_from_test_file('test2'))
-            self.assertTrue(activity.public) # as defined in test2.gpx keywords
-            activity.public = False
-            self.assertFalse(activity.public)
-            local.add(activity)
+            track = Track(gpx=self._get_gpx_from_test_file('test2'))
+            self.assertTrue(track.public) # as defined in test2.gpx keywords
+            track.public = False
+            self.assertFalse(track.public)
+            local.add(track)
             for cls in self._find_backend_classes():
                 if 'remove' in cls.supported:
                     with self.subTest(' {}'.format(cls.__name__)):
@@ -308,7 +308,7 @@ class TestBackends(BasicTest):
                             backend2 = self.clone_backend(backend)
                             with Directory(cleanup=True) as copy:
                                 copy.merge(backend2)
-                                self.assertSameActivities(local, copy)
+                                self.assertSameTracks(local, copy)
 
     def test_merge(self):
         """merge backends"""
@@ -318,8 +318,8 @@ class TestBackends(BasicTest):
                 for _ in sink:
                     self.move_times(_, datetime.timedelta(hours=100))
                 sink.merge(source)
-                # the first activity created by temp_backend always has the same points,
-                # so one of the sink activities will be merged
+                # the first track created by temp_backend always has the same points,
+                # so one of the sink tracks will be merged
                 self.assertEqual(len(source), 5)
                 self.assertEqual(len(sink), 8)
                 sink.merge(source, remove=True)
@@ -329,8 +329,8 @@ class TestBackends(BasicTest):
         """some tests about Backend.scan()"""
         with self.temp_backend(Directory, count=5) as source:
             backend2 = self.clone_backend(source)
-            activity = self.create_test_activity()
-            backend2.add(activity)
+            track = self.create_test_track()
+            backend2.add(track)
             self.assertEqual(len(backend2), 6)
             source.scan() # because it cannot know backend2 added something
 
@@ -346,18 +346,18 @@ class TestBackends(BasicTest):
 
     def xtest_track(self):
         """test life tracking. TODO: automatically start the expected local server"""
-        activity = self.create_test_activity()
+        track = self.create_test_track()
         with TrackMMT(auth='test') as uplink:
-            activity.track(uplink, self.some_random_points())
-            new_id = activity.id_in_backend
+            track.track(uplink, self.some_random_points())
+            new_id = track.id_in_backend
             time.sleep(2)
-            activity.track(points=self.some_random_points())
-            activity.track()
+            track.track(points=self.some_random_points())
+            track.track()
             self.assertIn(new_id, uplink)
 
     def test_directory_dirty(self):
         """test gpx._dirty where id_in_backend is not the default. Currently
-        activity._dirty = 'gpx' changes the file name which is wrong."""
+        track._dirty = 'gpx' changes the file name which is wrong."""
         pass
 
     def test_directory(self):
@@ -393,8 +393,8 @@ class TestBackends(BasicTest):
 
     def test_mmt_empty(self):
         """MMT refuses upload without a specific error message if there is no track point"""
-        activity = self.create_test_activity()
-        del activity.gpx.tracks[0]
+        track = self.create_test_track()
+        del track.gpx.tracks[0]
         with MMT(auth='gpxitytest', cleanup=True) as mmt:
             with self.assertRaises(mmt.BackendException):
-                mmt.add(activity)
+                mmt.add(track)

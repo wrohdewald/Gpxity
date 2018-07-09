@@ -17,29 +17,29 @@ import logging
 from http.client import HTTPConnection
 
 from .auth import Authenticate
-from .activity import Activity
+from .track import Track
 
 __all__ = ['Backend']
 
 
 class Backend:
-    """A place where activities live. Something like the filesystem or
+    """A place where tracks live. Something like the filesystem or
     http://mapmytracks.com.
 
-    A Backend should hold only activities for one person, and they
+    A Backend should hold only tracks for one person, and they
     should not overlap in time. This is not enforced but sometimes
     behaviour is undefined if you ignore this.
 
-    A Backend be used as a context manager. Upon termination, all activities
+    A Backend be used as a context manager. Upon termination, all tracks
     may be removed automatically by setting cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
-    A Backend allows indexing by normal int index, by :class:`Activity <gpxity.Activity>`
-    and by :attr:`Activity.id_in_backend <gpxity.Activity.id_in_backend>`.
+    A Backend allows indexing by normal int index, by :class:`Track <gpxity.Track>`
+    and by :attr:`Track.id_in_backend <gpxity.Track.id_in_backend>`.
     :literal:`if 'ident' in backend` is possible.
-    len(backend) shows the number of activities. Please note that Code
+    len(backend) shows the number of tracks. Please note that Code
     like :literal:`if backend:` may not behave as expected. This will be False if the backend
-    has no activity. If that is not what you want, consider :literal:`if backend is not None`
+    has no track. If that is not what you want, consider :literal:`if backend is not None`
 
     The backend will automatically synchronize. So something like :literal:`len(Backend())` will work.
     However, some other Backend pointing to the same storage or even a different process
@@ -59,15 +59,15 @@ class Backend:
         url (str): Initial value for :attr:`url`
         auth (tuple(str, str)): (username, password). Alternatively you can pass the username as a single string.
             This will lookup the password from :class:`Authenticate <gpxity.auth.Authenticate>`.
-        cleanup (bool): If true, :meth:`destroy` will remove all activities.
+        cleanup (bool): If true, :meth:`destroy` will remove all tracks.
 
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
             Those are: remove, track, get_time, _write_title, _write_public, _write_what,
             _write_gpx, _write_description, _write_keywords, _write_add_keyword, _write_remove_keyword.
-            If a particular _write_* like _write_public does not exist, the entire activity is written instead
-            which normally results in a new ident for the activity.
+            If a particular _write_* like _write_public does not exist, the entire track is written instead
+            which normally results in a new ident for the track.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
         debug: If True, print debugging information
@@ -76,7 +76,7 @@ class Backend:
     """
 
     class NoMatch(Exception):
-        """Is raised if an activity is expected to pass the match filter but does not"""
+        """Is raised if a track is expected to pass the match filter but does not"""
 
     class BackendException(Exception):
         """Is raised for general backend exceptions, especially error messages from a remote server"""
@@ -91,8 +91,8 @@ class Backend:
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None):
         self._decoupled = False
         super(Backend, self).__init__()
-        self.__activities = list()
-        self._activities_fully_listed = False
+        self.__tracks = list()
+        self._tracks_fully_listed = False
         self.url = url or ''
         if isinstance(auth, str):
             _ = Authenticate(self.__class__, auth)
@@ -190,10 +190,10 @@ class Backend:
     @property
     def match(self):
         """A function with one argument returning None or str. The backend will call
-            this with every activity and ignore activities where match does not return None.
-            The returned str should explain why the activity does not match.
+            this with every track and ignore tracks where match does not return None.
+            The returned str should explain why the track does not match.
 
-            If you change an activity such that it does not match anymore, the exception
+            If you change a track such that it does not match anymore, the exception
             NoMatch will be raised and the match stays unchanged.
         """
         return self.__match
@@ -222,73 +222,73 @@ class Backend:
         raise NotImplementedError()
 
     def scan(self, now: bool = False) ->None:
-        """Enforces a reload of the list of all activities in the backend.
+        """Enforces a reload of the list of all tracks in the backend.
         This will be delayed until the list is actually needed again.
 
-        If this finds an unsaved activity not matching the current match
+        If this finds an unsaved track not matching the current match
         function, an exception is thrown.
-        Saved Activities not matching the current match will no be loaded.
+        Saved Tracks not matching the current match will no be loaded.
 
         Args:
             now: If True, do not delay scanning.
         """
-        self._activities_fully_listed = False
+        self._tracks_fully_listed = False
         if now:
             self._scan()
 
     def _scan(self) ->None:
-        """loads the list of all activities in the backend if not yet done.
+        """loads the list of all tracks in the backend if not yet done.
         Enforce this by calling :meth:`scan` first.
         """
-        if not self._activities_fully_listed and not self._decoupled:
-            self._activities_fully_listed = True
-            unsaved = list(x for x in self.__activities if x.id_in_backend is None)
+        if not self._tracks_fully_listed and not self._decoupled:
+            self._tracks_fully_listed = True
+            unsaved = list(x for x in self.__tracks if x.id_in_backend is None)
             if self.__match is not None:
-                for activity in unsaved:
-                    self.matches(activity, 'scan')
-            self.__activities = unsaved
+                for track in unsaved:
+                    self.matches(track, 'scan')
+            self.__tracks = unsaved
             match_function = self.__match
             self.__match = None
             try:
-                # _yield_activities should return ALL activities, match will be
+                # _yield_tracks should return ALL tracks, match will be
                 # applied in a second loop. This way the Backend implementations
                 # do not have to worry about the match code.
                 with self._decouple():
-                    list(self._yield_activities())
+                    list(self._yield_tracks())
             finally:
                 self.__match = match_function
             if self.__match is not None:
-                self.__activities = list(x for x in self.__activities if self.matches(x))
+                self.__tracks = list(x for x in self.__tracks if self.matches(x))
 
-    def _found_activity(self, ident: str):
-        """Creates an empty activity for ident and inserts it into this backend."""
-        result = Activity()
+    def _found_track(self, ident: str):
+        """Creates an empty track for ident and inserts it into this backend."""
+        result = Track()
         with self._decouple():
             result._set_backend(self)  # pylint: disable=protected-access
             result._set_id_in_backend(ident)  # pylint: disable=protected-access
         self.append(result)
         return result
 
-    def _yield_activities(self):
-        """A generator for all activities. It yields the next found and appends it to activities.
-        The activities will not be loaded if possible.
+    def _yield_tracks(self):
+        """A generator for all tracks. It yields the next found and appends it to tracks.
+        The tracks will not be loaded if possible.
 
         Yields:
-            the next activity
+            the next track
         """
         raise NotImplementedError()
 
-    def _read_all_decoupled(self, activity) ->None:
+    def _read_all_decoupled(self, track) ->None:
         """Decouples and calls the backend specific _read_all"""
         with self._decouple():
-            self._read_all(activity)
+            self._read_all(track)
 
-    def _read_all(self, activity) ->None:
-        """fills the activity with all its data from source"""
+    def _read_all(self, track) ->None:
+        """fills the track with all its data from source"""
         raise NotImplementedError()
 
-    def matches(self, activity, exc_prefix: str = None):
-        """Does activity match the current match function?
+    def matches(self, track, exc_prefix: str = None):
+        """Does track match the current match function?
 
         Args:
             exc_prefix: If not None, use it for the beginning of an exception message.
@@ -296,13 +296,13 @@ class Backend:
         """
         if self.__match is None:
             return True
-        match_error = self.__match(activity)
+        match_error = self.__match(track)
         if match_error and exc_prefix:
-            raise Backend.NoMatch('{}: {} does not match: {}'.format(exc_prefix, activity, match_error))
+            raise Backend.NoMatch('{}: {} does not match: {}'.format(exc_prefix, track, match_error))
         return match_error is None
 
     def _needs_full_save(self, attributes) ->bool:
-        """Do we have to rewrite the entire activity?"""
+        """Do we have to rewrite the entire track?"""
         for attribute in attributes:
             if attribute == 'all':
                 return True
@@ -311,87 +311,87 @@ class Backend:
                 return True
         return False
 
-    def add(self, activity, ident: str = None):
-        """        We do not check if it already exists in this backend. No activity
+    def add(self, track, ident: str = None):
+        """        We do not check if it already exists in this backend. No track
         already existing in this backend will be overwritten, the id_in_backend
-        of activity will be deduplicated if needed. This is currently only needed
-        for Directory. Note that some backends reject an activity if it is very
-        similar to an existing activity even if it belongs to some other user.
+        of track will be deduplicated if needed. This is currently only needed
+        for Directory. Note that some backends reject a track if it is very
+        similar to an existing track even if it belongs to some other user.
 
-        If the activity does not pass the current match function, raise an exception.
+        If the track does not pass the current match function, raise an exception.
 
         Args:
-            activity (~gpxity.Activity): The activity we want to save in this backend.
+            track (~gpxity.Track): The track we want to save in this backend.
             ident: If given, a backend may use this as id_in_backend.
                 :class:`~gpxity.Directory` might but it will prefer the id_in_backend the
-                activity might already have. Other backends always create their own new
-                unique identifier when the full activity is saved/uploaded.
+                track might already have. Other backends always create their own new
+                unique identifier when the full track is saved/uploaded.
             attributes (set(str)): If given and the backend supports specific saving for all given attributes,
                 save only those.
-                Otherwise, save the entire activity.
+                Otherwise, save the entire track.
 
         Returns:
-            ~gpxity.Activity: The saved activity. If the original activity lives in a different
-            backend, a new activity living in this backend will be created
+            ~gpxity.Track: The saved track. If the original track lives in a different
+            backend, a new track living in this backend will be created
             and returned.
         """
-        self.matches(activity, 'add')
-        if activity.backend is not self and activity.backend is not None:
-            new_activity = activity.clone()
+        self.matches(track, 'add')
+        if track.backend is not self and track.backend is not None:
+            new_track = track.clone()
         else:
-            new_activity = activity
+            new_track = track
         with self._decouple():
-            new_activity._set_backend(self)  # pylint: disable=protected-access
+            new_track._set_backend(self)  # pylint: disable=protected-access
 
         if self._decoupled:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         try:
             with self._decouple():
-                self._write_all(new_activity, ident)
-            self.append(new_activity)
-            activity._clear_dirty()  # pylint: disable=protected-access
-            return new_activity
+                self._write_all(new_track, ident)
+            self.append(new_track)
+            track._clear_dirty()  # pylint: disable=protected-access
+            return new_track
         except Exception:
-            self.remove(new_activity)
+            self.remove(new_track)
             raise
-        return new_activity
+        return new_track
 
-    def _new_ident(self, activity) ->str:
-        """Creates an id for activity.
+    def _new_ident(self, track) ->str:
+        """Creates an id for track.
 
         Returns: The new ident. If the backend does not
         create an ident in advance, return None. Such
         backends will return a new ident after writing.
         """
 
-    def _rewrite(self, activity, attributes):
-        """Rewrites the full activity.
+    def _rewrite(self, track, attributes):
+        """Rewrites the full track.
 
-        Used only by Activity when things change.
+        Used only by Track when things change.
         """
-        assert activity.backend is self
-        assert self._has_item(activity.id_in_backend), '{} not in {}'.format(activity, ' / '.join(str(x) for x in self))
-        assert activity._dirty  # pylint: disable=protected-access
+        assert track.backend is self
+        assert self._has_item(track.id_in_backend), '{} not in {}'.format(track, ' / '.join(str(x) for x in self))
+        assert track._dirty  # pylint: disable=protected-access
 
         needs_full_save = self._needs_full_save(attributes)
 
-        self.matches(activity, '_rewrite')
+        self.matches(track, '_rewrite')
         if needs_full_save:
-            new_id = self._write_all(activity)
-            activity._set_id_in_backend(new_id)  # pylint: disable=protected-access
+            new_id = self._write_all(track)
+            track._set_id_in_backend(new_id)  # pylint: disable=protected-access
         else:
             for attribute in attributes:
                 _ = attribute.split(':')
                 write_name = '_write_{}'.format(_[0])
                 if len(_) == 1:
-                    getattr(self, write_name)(activity)
+                    getattr(self, write_name)(track)
                 else:
-                    getattr(self, write_name)(activity, ''.join(_[1:]))
-        return activity
+                    getattr(self, write_name)(track, ''.join(_[1:]))
+        return track
 
-    def _write_all(self, activity, new_ident: str = None) ->str:
+    def _write_all(self, track, new_ident: str = None) ->str:
         """the actual implementation for the concrete Backend.
-        Writes the entire Activity.
+        Writes the entire Track.
 
         Returns:
             The new id_in_backend
@@ -399,23 +399,23 @@ class Backend:
         raise NotImplementedError()
 
     def remove(self, value) ->None:
-        """Removes activity. This can also be done for activities
+        """Removes track. This can also be done for tracks
         not passing the current match function.
 
         Args:
-            value: If it is not an :class:`~gpxity.Activity`, :meth:`remove` looks
+            value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`
             new_ident: The backend may use this if it is able to create its own idents.
         """
 
-        activity = value if hasattr(value, 'id_in_backend') else self[value]
-        if activity.id_in_backend:
-            self._remove_ident(activity.id_in_backend)
-            activity._set_id_in_backend(None)  # pylint: disable=protected-access
+        track = value if hasattr(value, 'id_in_backend') else self[value]
+        if track.id_in_backend:
+            self._remove_ident(track.id_in_backend)
+            track._set_id_in_backend(None)  # pylint: disable=protected-access
         with self._decouple():
-            activity._set_backend(None)  # pylint: disable=protected-access
+            track._set_backend(None)  # pylint: disable=protected-access
             try:
-                self.__activities.remove(activity)
+                self.__tracks.remove(track)
             except ValueError:
                 pass
 
@@ -423,53 +423,53 @@ class Backend:
         """backend dependent implementation"""
         raise NotImplementedError()
 
-    def _track(self, activity, points):
+    def _track(self, track, points):
         """Modelled after MapMyTracks. I hope this matches other
         services too.
 
-        This will always produce a new activity in the backend.supported
+        This will always produce a new track in the backend.supported
 
         Args:
-            activity(Activity): Holds initial data
+            track(Track): Holds initial data
             points: If None, stop tracking. Otherwise, start tracking
                 and add points.
 
-        For details see :meth:`Activity.track() <gpxity.Activity.track>`.
+        For details see :meth:`Track.track() <gpxity.Track.track>`.
 
         """
         raise NotImplementedError()
 
     def remove_all(self):
-        """Removes all activities we know about. If their :attr:`id_in_backend`
+        """Removes all tracks we know about. If their :attr:`id_in_backend`
         has meanwhile been changed through another backend instance
         or another process, we cannot find it anymore. We do **not**
-        rescan all activities in the backend. If you want to make sure it
+        rescan all tracks in the backend. If you want to make sure it
         will be empty, call :meth:`scan` first.
 
-        If you use a match function, only matching activities will be removed."""
-        for activity in list(self):
-            if self.matches(activity):
-                self.remove(activity)
+        If you use a match function, only matching tracks will be removed."""
+        for track in list(self):
+            if self.matches(track):
+                self.remove(track)
 
     def destroy(self):
-        """If `cleanup` was set at init time, removes all activities. Some backends
+        """If `cleanup` was set at init time, removes all tracks. Some backends
        (example: :class:`Directory <gpxity.Directory.destroy>`)
        may also remove the account (or directory). See also :meth:`remove_all`."""
         if self._cleanup:
             self.remove_all()
 
     def __contains__(self, value) ->bool:
-        """value is either an an activity or an activity id.
-        Does NOT load activities, only checks what is already known."""
+        """value is either an a track or a track id.
+        Does NOT load tracks, only checks what is already known."""
         self._scan()
         return self._has_item(value)
 
     def _has_item(self, index) ->bool:
         """like __contains__ but for internal use: does not call _scan first.
         Must not call self._scan."""
-        if hasattr(index, 'id_in_backend') and index in self.__activities:
+        if hasattr(index, 'id_in_backend') and index in self.__tracks:
             return True
-        if isinstance(index, str) and index in list(x.id_in_backend for x in self.__activities):
+        if isinstance(index, str) and index in list(x.id_in_backend for x in self.__tracks):
             return True
         return False
 
@@ -478,8 +478,8 @@ class Backend:
         a backend because this always calls scan() first. Instead use :meth:`_has_item`."""
         self._scan()
         if isinstance(index, int):
-            return self.__activities[index]
-        for _ in self.__activities:
+            return self.__tracks[index]
+        for _ in self.__tracks:
             if _ is index or _.id_in_backend == index:
                 return _
         raise IndexError
@@ -487,16 +487,16 @@ class Backend:
     def __len__(self):
         """do not call this when implementing a backend because this calls scan()"""
         self._scan()
-        return len(self.__activities)
+        return len(self.__tracks)
 
     def real_len(self):
         """len(backend) without calling scan() first"""
-        return len(self.__activities)
+        return len(self.__tracks)
 
     def append(self, value):
-        """Appends an activity to the cached list."""
+        """Appends a track to the cached list."""
         self.matches(value, 'append')
-        self.__activities.append(value)
+        self.__tracks.append(value)
         if value.id_in_backend is not None and not isinstance(value.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
 
@@ -506,7 +506,7 @@ class Backend:
         if self.auth:
             dirname = self.auth[0] or ''
         result = '{}({} in {}{})'.format(
-            self.__class__.__name__, len(self.__activities), self.url, dirname)
+            self.__class__.__name__, len(self.__tracks), self.url, dirname)
         return result
 
     def __enter__(self):
@@ -517,39 +517,39 @@ class Backend:
 
     def __iter__(self):
         self._scan()
-        return iter(self.__activities)
+        return iter(self.__tracks)
 
     def __eq__(self, other):
-        """True if both backends have the same activities."""
+        """True if both backends have the same tracks."""
         self._scan()
         other._scan() # pylint: disable=protected-access
         return set(x.key() for x in self) == set(x.key() for x in other)
 
     def merge(self, other, remove: bool = False, dry_run: bool = False) ->list:
-        """merge other backend or a single activity into this one.
-        If two activities have identical points, or-ify their other attributes.
+        """merge other backend or a single track into this one.
+        If two tracks have identical points, or-ify their other attributes.
         Args:
-            other: The backend or a single activitiy to be merged
-            remove: If True, remove merged activities
+            other: The backend or a single track to be merged
+            remove: If True, remove merged tracks
             dry_run: If True, do not really merge. If True, remove must be False
         Returns: list(str) A list of messages for verbose output
         """
         # pylint: disable=too-many-branches,too-many-locals
         # TODO: test for dry_run
-        # TODO: test for merging single activity
-        # TODO: test for merging a backend or an activity with itself. Where
+        # TODO: test for merging single track
+        # TODO: test for merging a backend or a track with itself. Where
         # they may be identical instantiations or not. For all backends.
         if dry_run and remove:
             raise Backend.BackendException('Backend.merge: remove and dry_run must not both be True')
         result = list()
         src_dict = defaultdict(list)
-        if isinstance(other, Activity):
-            other_activities = [other]
+        if isinstance(other, Track):
+            other_tracks = [other]
             other_backend = other.backend
         else:
-            other_activities = list(other)
+            other_tracks = list(other)
             other_backend = other
-        for _ in other_activities:
+        for _ in other_tracks:
             src_dict[_.points_hash()].append(_)
         if other_backend.url == self.url and other_backend.auth == self.auth:
             dst_dict = src_dict
@@ -558,20 +558,20 @@ class Backend:
             for _ in self:
                 dst_dict[_.points_hash()].append(_)
 
-        # 1. get all activities existing only in other
+        # 1. get all tracks existing only in other
         for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
             # but only the first one of those with same points
-            src_activities = src_dict[point_hash]
-            old_activity = src_activities[0]
+            src_tracks = src_dict[point_hash]
+            old_track = src_tracks[0]
 
             if not dry_run:
-                new_activity = self.add(old_activity)
+                new_track = self.add(old_track)
             result.append('{} {} -> {} {}'.format(
-                'move' if remove else 'copy', old_activity, self,
-                '' if dry_run else ' / ' + new_activity.id_in_backend))
+                'move' if remove else 'copy', old_track, self,
+                '' if dry_run else ' / ' + new_track.id_in_backend))
             if remove:
-                other_backend.remove(old_activity)
-            del src_activities[0]
+                other_backend.remove(old_track)
+            del src_tracks[0]
 
         # 2. merge the rest
         for point_hash in sorted(set(src_dict.keys()) & set(dst_dict.keys())):

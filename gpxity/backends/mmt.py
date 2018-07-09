@@ -8,8 +8,8 @@
 This implements :class:`gpxity.MMT` for http://www.mapmytracks.com
 
 There are some problems with the server running at mapmytracks.com:
-    * it is not possible to change an existing activity - if the track changes, the
-      activity must be re-uploaded and gets a new activity id This invalididates
+    * it is not possible to change an existing track - if the track changes, the
+      track must be re-uploaded and gets a new track id This invalididates
       references held by other backend instances (maybe on other clients).
       But I could imagine that most similar services have this problem too.
     * does not support GPX very well beyond track data. One problem is that
@@ -22,7 +22,7 @@ There are some problems with the server running at mapmytracks.com:
       :meth:`MMT._write_attribute`. Of course that could fail if MMT changes its site.
       Which is true for the api itself, it can and does get incompatible changes at
       any time without notice to users or deprecation periods.
-    * downloading activities with that abi is very slow and hangs forever for big activities
+    * downloading tracks with that abi is very slow and hangs forever for big tracks
       (at least this was so in Feb 2017, maybe have to test again occasionally).
     * not all parts of MMT data are supported like images (not interesting for me,
       at least not now).
@@ -37,7 +37,7 @@ from collections import defaultdict
 
 import requests
 
-from .. import Backend, Activity
+from .. import Backend, Track
 from ..version import VERSION
 
 
@@ -58,7 +58,7 @@ class ParseMMTWhats(HTMLParser): # pylint: disable=abstract-method
 
     def __init__(self):
         super(ParseMMTWhats, self).__init__()
-        self.seeing_activities = False
+        self.seeing_tracks = False
         self.result = ['Cycling'] # The default value
 
     def handle_starttag(self, tag, attrs):
@@ -66,18 +66,18 @@ class ParseMMTWhats(HTMLParser): # pylint: disable=abstract-method
         # pylint: disable=too-many-branches
         attributes = dict(attrs)
         if tag == 'select' and attributes['name'] == 'activity':
-            self.seeing_activities = True
-        if self.seeing_activities and tag == 'option':
+            self.seeing_tracks = True
+        if self.seeing_tracks and tag == 'option':
             _ = attributes['value']
             if _ not in self.result:
                 self.result.append(_)
 
     def handle_endtag(self, tag):
-        if self.seeing_activities and tag == 'select':
-            self.seeing_activities = False
+        if self.seeing_tracks and tag == 'select':
+            self.seeing_tracks = False
 
 
-class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
+class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
 
     """get some attributes available only on the web page. Of course,
     this is highly unreliable. Just use what we can get."""
@@ -85,7 +85,7 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
     result = dict()
 
     def __init__(self):
-        super(ParseMMTActivity, self).__init__()
+        super(ParseMMTTrack, self).__init__()
         self.seeing_what = False
         self.seeing_title = False
         self.seeing_description = False
@@ -154,13 +154,13 @@ class ParseMMTActivity(HTMLParser): # pylint: disable=abstract-method
             self.result['tags'][data.strip()] = self.seeing_tag
 
 
-class MMTRawActivity:
+class MMTRawTrack:
 
-    """raw data from mapmytracks.get_activities"""
+    """raw data from mapmytracks.get_tracks"""
 
     # pylint: disable=too-few-public-methods
     def __init__(self, xml):
-        self.activity_id = xml.find('id').text
+        self.track_id = xml.find('id').text
         self.title = html.unescape(xml.find('title').text)
         self.time = _convert_time(xml.find('date').text)
         self.what = html.unescape(xml.find('activity_type').text)
@@ -169,16 +169,16 @@ class MMTRawActivity:
 
 class MMT(Backend):
     """The implementation for MapMyTracks.
-    The activity ident is the number given by MapMyTracks.
+    The track ident is the number given by MapMyTracks.
 
-    MMT knows tags. We map :attr:`Activity.keywords <gpxity.Activity.keywords>` to MMT tags. MMT will
+    MMT knows tags. We map :attr:`Track.keywords <gpxity.Track.keywords>` to MMT tags. MMT will
     change keywords: It converts the first character to upper case. See
-    :attr:`Activity.keywords <gpxity.Activity.keywords>` for how Gpxity handles this.
+    :attr:`Track.keywords <gpxity.Track.keywords>` for how Gpxity handles this.
 
     Args:
         url (str): The Url of the server. Default is http://mapmytracks.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all activities in the
+        cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all tracks in the
             user account.
          timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
@@ -214,7 +214,7 @@ class MMT(Backend):
             # the same ID. We use this fact.
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
-        self._tracking_activity = None
+        self._tracking_track = None
 
     @property
     def legal_whats(self):
@@ -246,8 +246,8 @@ class MMT(Backend):
 
     def decode_what(self, value: str) ->str:
         """Translate the value from MMT into internal one.
-        Since gpxity once decided to use MMT definitions for activities, this should mostly be 1:1 here."""
-        if value not in Activity.legal_whats:
+        Since gpxity once decided to use MMT definitions for tracks, this should mostly be 1:1 here."""
+        if value not in Track.legal_whats:
             raise self.BackendException('MMT gave us an unknown what={}'.format(value))
         return value
 
@@ -264,7 +264,7 @@ class MMT(Backend):
         """the member id on MMT belonging to auth"""
         if self.__mid == -1:
             response = self.session.get(self.url)
-            page_parser = ParseMMTActivity()
+            page_parser = ParseMMTTrack()
             page_parser.feed(response.text)
             self.__mid = page_parser.result['mid']
             self.__tag_ids.update(page_parser.result['tags'])
@@ -342,11 +342,11 @@ class MMT(Backend):
                 _ = data
             raise cls.BackendException('{}: {} {} {}'.format(exc, url, _, result.text))
 
-    def _write_attribute(self, activity, attribute):
+    def _write_attribute(self, track, attribute):
         """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
-        attr_value = getattr(activity, attribute)
+        attr_value = getattr(track, attribute)
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
         data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
@@ -354,57 +354,57 @@ class MMT(Backend):
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<{attr}>{value}</{attr}></message>'.format(
                 attr=attribute,
-                eid=activity.id_in_backend,
+                eid=track.id_in_backend,
                 usrid=self.auth[0],
                 value=attr_value,
                 uid=self.session.cookies['exp_uniqueid'])
         self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
 
-    def _write_title(self, activity):
+    def _write_title(self, track):
         """changes title on remote server"""
-        self._write_attribute(activity, 'title')
+        self._write_attribute(track, 'title')
 
-    def _write_description(self, activity):
+    def _write_description(self, track):
         """changes description on remote server"""
-        self._write_attribute(activity, 'description')
+        self._write_attribute(track, 'description')
 
-    def _write_public(self, activity):
+    def _write_public(self, track):
         """changes public/private on remote server"""
         self.__post(
             with_session=True, url='user-embeds/statuschange-track', expect='access granted',
-            mid=self.mid, tid=activity.id_in_backend,
+            mid=self.mid, tid=track.id_in_backend,
             hash=self.session.cookies['exp_uniqueid'],
-            status=1 if activity.public else 2)
+            status=1 if track.public else 2)
             # what a strange answer
 
-    def _write_what(self, activity):
+    def _write_what(self, track):
         """change what directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
-            eid=activity.id_in_backend, activity=self.encode_what(activity.what))
+            eid=track.id_in_backend, activity=self.encode_what(track.what))
 
-    def _current_keywords(self, activity):
+    def _current_keywords(self, track):
         """Read all current keywords (MMT tags).
 
         Returns:
             A sorted unique list"""
-        page_scan = self._scan_activity_page(activity)
+        page_scan = self._scan_track_page(track)
         return list(sorted(set(page_scan['tags'])))
 
-    def _write_keywords(self, activity):
-        """Sync activity keywords to MMT tags."""
-        current_tags = self._current_keywords(activity)
-        new_tags = set(self._kw_to_tag(x) for x in activity.keywords)
+    def _write_keywords(self, track):
+        """Sync track keywords to MMT tags."""
+        current_tags = self._current_keywords(track)
+        new_tags = set(self._kw_to_tag(x) for x in track.keywords)
         # This should really only remove unwanted tags and only add missing tags,
         # like #for remove_tag in current_tags-new_tags, for new_tag in new_tags-current_tags
         # but that does not work, see __remove_one_keyword
         for remove_tag in current_tags:
-            self.__remove_one_keyword(activity, remove_tag)
-        self._write_add_keyword(activity, ','.join(new_tags))
+            self.__remove_one_keyword(track, remove_tag)
+        self._write_add_keyword(track, ','.join(new_tags))
 
-    def _write_add_keyword(self, activity, value):
+    def _write_add_keyword(self, track, value):
         """Add keyword as MMT tag. MMT allows adding several at once, comma separated,
         and we allow this too. But do not expect this to work with all backends."""
         if not value:
@@ -413,7 +413,7 @@ class MMT(Backend):
             '<message><nature>add_tag</nature><eid>{eid}</eid>' \
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<tagnames>{value}</tagnames></message>'.format(
-                eid=activity.id_in_backend,
+                eid=track.id_in_backend,
                 usrid=self.auth[0],
                 value=value,
                 uid=self.session.cookies['exp_uniqueid'])
@@ -430,20 +430,20 @@ class MMT(Backend):
         for key, id_ in zip(values, ids):
             self._found_tag_id(key, id_)
 
-    def _write_remove_keyword(self, activity, value):
+    def _write_remove_keyword(self, track, value):
         """Remove an MTT tag. This is flawed, see __remove_one_keyword, so
         we rewrite all keywords instead.
         """
         # Our list of keywords may not be current, reload it
-   #     activity.keywords = set(self._current_keywords(activity)) - set([value])
-        # activity.keywords is assumed to be current (see Activity.remove_keyword())
-        for remove_tag in activity.keywords:
-            self.__remove_one_keyword(activity, remove_tag)
-        self.__remove_one_keyword(activity, value)
+   #     track.keywords = set(self._current_keywords(track)) - set([value])
+        # track.keywords is assumed to be current (see Track.remove_keyword())
+        for remove_tag in track.keywords:
+            self.__remove_one_keyword(track, remove_tag)
+        self.__remove_one_keyword(track, value)
         # sort for reproducibility in tests
-        self._write_add_keyword(activity, ','.join(sorted(activity.keywords)))
+        self._write_add_keyword(track, ','.join(sorted(track.keywords)))
 
-    def __remove_one_keyword(self, activity, value):
+    def __remove_one_keyword(self, track, value):
         """Here I have a problem. This seems to do exactly what happens in a
         browser but MMT always removes the wrong tag. However it always
         **does** remove a tag, so we can still use this: Repeat calling it until
@@ -451,20 +451,20 @@ class MMT(Backend):
         Sadly, MMT never returns anything for this POST."""
         value = self._kw_to_tag(value)
         if value not in self.__tag_ids:
-            self.__tag_ids.update(self._scan_activity_page(activity)['tags'])
+            self.__tag_ids.update(self._scan_track_page(track)['tags'])
             self._check_tag_ids()
             if value not in self.__tag_ids:
                 raise self.BackendException('{}: Cannot remove keyword {}, reason: not known'.format(self.url, value))
         self.__post(
             with_session=True, url='handler/delete-tag.php',
-            tag_id=self.__tag_ids[value], entry_id=activity.id_in_backend)
+            tag_id=self.__tag_ids[value], entry_id=track.id_in_backend)
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
-    def _yield_activities(self):
-        """get all activities for this user."""
+    def _yield_tracks(self):
+        """get all tracks for this user."""
 
         while True:
             old_len = self.real_len()
@@ -475,61 +475,61 @@ class MMT(Backend):
             if not chunk:
                 return
             for _ in chunk:
-                raw_data = MMTRawActivity(_)
-                activity = self._found_activity(raw_data.activity_id)
-                activity.header_data['title'] = raw_data.title
-                activity.header_data['what'] = self.decode_what(raw_data.what)
-                activity.header_data['time'] = raw_data.time
-                activity.header_data['distance'] = raw_data.distance
-                yield activity
+                raw_data = MMTRawTrack(_)
+                track = self._found_track(raw_data.track_id)
+                track.header_data['title'] = raw_data.title
+                track.header_data['what'] = self.decode_what(raw_data.what)
+                track.header_data['time'] = raw_data.time
+                track.header_data['distance'] = raw_data.distance
+                yield track
             assert self.real_len() > old_len
 
-    def _scan_activity_page(self, activity):
+    def _scan_track_page(self, track):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
         response = self.session.get('{}/explore/activity/{}'.format(
-            self.url, activity.id_in_backend))
-        page_parser = ParseMMTActivity()
+            self.url, track.id_in_backend))
+        page_parser = ParseMMTTrack()
         page_parser.feed(response.text)
         return page_parser.result
 
-    def _use_webpage_results(self, activity):
-        """if the title has not been set, get_activities says something like "Activity 2016-09-04 ..."
+    def _use_webpage_results(self, track):
+        """if the title has not been set, get_activities says something like "Track 2016-09-04 ..."
             while the home page says "Cycling activity". We prefer the value from the home page
             and silently ignore this inconsistency.
          """
-        page_scan = self._scan_activity_page(activity)
+        page_scan = self._scan_track_page(track)
         if page_scan['title']:
-            activity.title = page_scan['title']
+            track.title = page_scan['title']
         if page_scan['description']:
             _ = page_scan['description']
             if _ == self._default_description:
                 _ = ''
-            activity.description = _
+            track.description = _
         if page_scan['tags']:
-            activity.keywords = page_scan['tags'].keys()
-        # MMT sends different values of the current activity type, hopefully what_3 is always the
+            track.keywords = page_scan['tags'].keys()
+        # MMT sends different values of the current track type, hopefully what_3 is always the
         # correct one.
         if page_scan['what_3']:
-            activity.what = self.decode_what(page_scan['what_3'])
+            track.what = self.decode_what(page_scan['what_3'])
         if page_scan['public'] is not None:
-            activity.public = page_scan['public']
+            track.public = page_scan['public']
 
-    def _read_all(self, activity):
-        """get the entire activity"""
+    def _read_all(self, track):
+        """get the entire track"""
         session = self.session
         if session is None:
             # https access not implemented for TrackMMT
             return
         response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
-            self.url, activity.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
-            # some activities download only a few points if mid/uid are not given, but I
+            self.url, track.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
+            # some tracks download only a few points if mid/uid are not given, but I
             # have not been able to write a unittest triggering that ...
-        activity.parse(response.text)
-        # but this does not give us activity type and other things,
+        track.parse(response.text)
+        # but this does not give us track type and other things,
         # get them from the web page.
-        self._use_webpage_results(activity)
+        self._use_webpage_results(track)
 
     def _remove_ident(self, ident: str):
         """remove on the server"""
@@ -537,33 +537,33 @@ class MMT(Backend):
             with_session=True, url='handler/delete_track', expect='access granted',
             tid=ident, hash=self.session.cookies['exp_uniqueid'])
 
-    def _write_all(self, activity, new_ident: str = None) ->str:
+    def _write_all(self, track, new_ident: str = None) ->str:
         """save full gpx track on the MMT server.
         We must upload the title separately.
 
         Returns:
             The new id_in_backend
         """
-        if not activity.gpx.get_track_points_no():
-            raise self.BackendException('MMT does not accept an activity without trackpoints:{}'.format(activity))
+        if not track.gpx.get_track_points_no():
+            raise self.BackendException('MMT does not accept a track without trackpoints:{}'.format(track))
         response = self.__post(
-            request='upload_activity', gpx_file=activity.to_xml(),
-            status='public' if activity.public else 'private',
-            description=activity.description, activity=self.encode_what(activity.what))
+            request='upload_activity', gpx_file=track.to_xml(),
+            status='public' if track.public else 'private',
+            description=track.description, activity=self.encode_what(track.what))
         new_ident = response.find('id').text
         if not new_ident:
             raise self.BackendException('No id found in response')
-        old_ident = activity.id_in_backend
-        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        old_ident = track.id_in_backend
+        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         # the caller will do the above too, never mind
         if '_write_title' in self.supported:
-            self._write_title(activity)
+            self._write_title(track)
         # MMT can add several keywords at once
-        if activity.keywords and '_write_add_keyword' in self.supported:
-            self._write_add_keyword(activity, ','.join(activity.keywords))
+        if track.keywords and '_write_add_keyword' in self.supported:
+            self._write_add_keyword(track, ','.join(track.keywords))
         if old_ident:
             self._remove_ident(old_ident)
-        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         return new_ident
 
     @staticmethod
@@ -578,39 +578,39 @@ class MMT(Backend):
                 point.time.timestamp()))
         return ' '.join(_)
 
-    def _track(self, activity, points):
-        """Supports only one activity per account. We ensure that only
-        one activity is tracked by this backend instance, you have to
+    def _track(self, track, points):
+        """Supports only one track per account. We ensure that only
+        one track is tracked by this backend instance, you have to
         make sure there are no other processes interfering. The MMT
         API does not help you with that.
 
-        points are not yet added to activity."
+        points are not yet added to track."
         """
         if points is None:
-            if self._tracking_activity:
+            if self._tracking_track:
                 self.__post(request='stop_activity')
-                self._tracking_activity = None
+                self._tracking_track = None
             return
-        if not self._tracking_activity:
+        if not self._tracking_track:
             result = self.__post(
                 request='start_activity',
-                title=activity.title,
-                privacy='public' if activity.public else 'private',
-                activity=self.encode_what(activity.what),
-                points=self.__track_points(activity.points()),
+                title=track.title,
+                privacy='public' if track.public else 'private',
+                activity=self.encode_what(track.what),
+                points=self.__track_points(track.points()),
                 source='Gpxity',
                 version=VERSION,
                 # tags='TODO',
-                unique_token='{}'.format(id(activity)))
+                unique_token='{}'.format(id(track)))
             if result.find('type').text != 'activity_started':
                 raise self.BackendException('activity_started failed')
-            activity.id_in_backend = result.find('activity_id').text
-            self._tracking_activity = activity
-            self.append(activity)
-        if activity != self._tracking_activity:
-            raise self.BackendException('MMT._track() got wrong activity')
+            track.id_in_backend = result.find('activity_id').text
+            self._tracking_track = track
+            self.append(track)
+        if track != self._tracking_track:
+            raise self.BackendException('MMT._track() got wrong track')
         self.__post(
-            request='update_activity', activity_id=activity.id_in_backend,
+            request='update_activity', activity_id=track.id_in_backend,
             points=self.__track_points(points))
 
     def destroy(self):

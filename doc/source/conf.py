@@ -173,7 +173,7 @@ this should work - why doesn't it?
 
 def autodoc_skip_member(app, what, name, obj, skip, option):
     try:
-        if obj.__qualname__ == 'Activity.loading':
+        if obj.__qualname__ == 'Track.loading':
             return True
     except Exception:
         pass

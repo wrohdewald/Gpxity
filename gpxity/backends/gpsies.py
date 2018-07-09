@@ -17,17 +17,17 @@ from collections import defaultdict
 
 import requests
 
-from .. import Backend, Activity
+from .. import Backend, Track
 
 __all__ = ['GPSIES']
 
-class GPSIESRawActivity:
+class GPSIESRawTrack:
 
     """raw data from the gpies html page"""
 
     # pylint: disable=too-few-public-methods
     def __init__(self):
-        self.activity_id = None
+        self.track_id = None
         self.title = None
         self.time = None
         self.distance = None
@@ -53,7 +53,7 @@ class ParseGPSIESWhats(HTMLParser): # pylint: disable=abstract-method
 
 class ParseGPIESEditPage(HTMLParser): # pylint: disable=abstract-method
 
-    """Parse the what value for an activity from html"""
+    """Parse the what value for a track from html"""
 
     def __init__(self):
         super(ParseGPIESEditPage, self).__init__()
@@ -74,8 +74,8 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
     def __init__(self):
         super(ParseGPSIESList, self).__init__()
         self.result = dict()
-        self.result['activities'] = list()
-        self.activity = None
+        self.result['tracks'] = list()
+        self.track = None
         self.column = 0
         self.current_tag = None
         self.seeing_list = False
@@ -84,7 +84,7 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
         self.seeing_warning = False
 
     def feed(self, data):
-        self.activity = None
+        self.track = None
         self.column = 0
         self.current_tag = None
         self.seeing_list = False
@@ -106,7 +106,7 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
         if not self.seeing_list:
             return
         if tag == 'tr':
-            self.activity = GPSIESRawActivity()
+            self.track = GPSIESRawTrack()
             self.column = 0
             self.seeing_a = False
         elif tag == 'td':
@@ -114,10 +114,10 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
         elif self.after_list and tag == 'a':
             self.seeing_a = True
             value = attributes['value'].strip()
-        elif tag == 'a' and 'href' in attributes and self.activity.activity_id is None:
-            self.activity.activity_id = attributes['href'].split('fileId=')[1]
-        elif tag == 'img' and self.activity and 'lock.png' in attributes['src']:
-            self.activity.public = False
+        elif tag == 'a' and 'href' in attributes and self.track.track_id is None:
+            self.track.track_id = attributes['href'].split('fileId=')[1]
+        elif tag == 'img' and self.track and 'lock.png' in attributes['src']:
+            self.track.public = False
 
     def handle_endtag(self, tag):
         """handle end of track list"""
@@ -136,19 +136,19 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
 
         if self.seeing_list:
             if self.column == 3:
-                if self.current_tag == 'i' and self.activity.title is None:
-                    self.activity.title = data
+                if self.current_tag == 'i' and self.track.title is None:
+                    self.track.title = data
             elif self.column == 4:
                 if data.endswith('km'):
-                    self.activity.distance = float(data.replace(' km', '').replace(',', ''))
+                    self.track.distance = float(data.replace(' km', '').replace(',', ''))
             elif self.column == 5:
-                self.activity.time = datetime.datetime.strptime(data, '%m/%d/%y')
-                self.result['activities'].append(self.activity)
+                self.track.time = datetime.datetime.strptime(data, '%m/%d/%y')
+                self.result['tracks'].append(self.track)
 
 
 class GPSIES(Backend):
     """The implementation for gpsies.com.
-    The activity ident is the fileId given by gpsies.
+    The track ident is the fileId given by gpsies.
 
     Searching arbitrary tracks is not supported. GPSIES only looks at the
     tracks of a specific user.
@@ -156,7 +156,7 @@ class GPSIES(Backend):
     Args:
         url (str): The Url of the server. Default is https://gpsies.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all activities in the
+        cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all tracks in the
             user account.
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
@@ -276,10 +276,10 @@ class GPSIES(Backend):
 
     def decode_what(self, value: str) ->str:
         """Translate the value from Gpsies into internal one."""
-        if value.capitalize() in Activity.legal_whats:
+        if value.capitalize() in Track.legal_whats:
             return value.capitalize()
         if value not in self._what_decoding:
-            raise self.BackendException('Gpsies gave us an unknown activity type {}'.format(value))
+            raise self.BackendException('Gpsies gave us an unknown track type {}'.format(value))
         return self._what_decoding[value]
 
     def encode_what(self, value: str) ->str:
@@ -292,47 +292,47 @@ class GPSIES(Backend):
             raise self.BackendException('Gpsies has no equivalent for {}'.format(value))
         return self._what_encoding[value]
 
-    def _write_what(self, activity):
+    def _write_what(self, track):
         """change what on gpsies"""
-        self._edit(activity)
+        self._edit(track)
 
-    def _write_description(self, activity):
+    def _write_description(self, track):
         """change description on gpsies"""
-        self._edit(activity)
+        self._edit(track)
 
-    def _write_title(self, activity):
+    def _write_title(self, track):
         """change title on gpsies"""
-        self._edit(activity)
+        self._edit(track)
 
-    def _write_public(self, activity):
+    def _write_public(self, track):
         """change public on gpsies"""
-        self._edit(activity)
+        self._edit(track)
 
-    def _edit(self, activity):
+    def _edit(self, track):
         """edit directly on gpsies."""
-        assert activity.id_in_backend
+        assert track.id_in_backend
         data = {
             'edit':'',
-            'fileId': activity.id_in_backend,
-            'fileDescription': activity.description,
-            'filename': activity.title,
-            'status': '1' if activity.public else '3',
-            'trackTypes': self.encode_what(activity.what),
+            'fileId': track.id_in_backend,
+            'fileDescription': track.description,
+            'filename': track.title,
+            'status': '1' if track.public else '3',
+            'trackTypes': self.encode_what(track.what),
             'websiteUrl':''}
 
         # in about 1 out of 10 cases this update does not work.
         # Doing that on the website with firefox shows the same problem.
         # So reload and compare until both are identical.
-        copy = activity.clone()
-        copy._set_id_in_backend(activity.id_in_backend)  # pylint: disable=protected-access
+        copy = track.clone()
+        copy._set_id_in_backend(track.id_in_backend)  # pylint: disable=protected-access
         while True:
             self.__post('editTrack', data)
             self._read_all(copy)
-            if activity == copy:
+            if track == copy:
                 return
 
-    def _yield_activities(self):
-        """get all activities for this user."""
+    def _yield_tracks(self):
+        """get all tracks for this user."""
 
         data = {'username': self.auth[0]}
         response = self.__post('trackList', data=data)
@@ -349,37 +349,37 @@ class GPSIES(Backend):
             data = dict(x.split('=') for x in parts)
             response = self.__post('userList', data=data)
             page_parser.feed(response.text)
-        for raw_data in page_parser.result['activities']:
-            activity = self._found_activity(raw_data.activity_id)
-            activity.header_data['title'] = raw_data.title
-            activity.header_data['time'] = raw_data.time
+        for raw_data in page_parser.result['tracks']:
+            track = self._found_track(raw_data.track_id)
+            track.header_data['title'] = raw_data.title
+            track.header_data['time'] = raw_data.time
             if raw_data.distance:
-                activity.header_data['distance'] = raw_data.distance
-            activity.header_data['public'] = raw_data.public
+                track.header_data['distance'] = raw_data.distance
+            track.header_data['public'] = raw_data.public
             if self.__session is None: # anonymous, no login
-                activity.public = True
-            yield activity
+                track.public = True
+            yield track
 
-    def _read_what(self, activity):
+    def _read_what(self, track):
         """I found no way to download all attributes in one go"""
-        data = {'fileId': activity.id_in_backend}
+        data = {'fileId': track.id_in_backend}
         response = self.__post('editTrack', data)
         page_parser = ParseGPIESEditPage()
         page_parser.feed(response.text)
-        activity.what = self.decode_what(page_parser.what)
+        track.what = self.decode_what(page_parser.what)
 
-    def _read_all(self, activity):
-        """get the entire activity. For gpies, we only need the gpx file"""
-        data = {'fileId': activity.id_in_backend, 'keepOriginalTimestamps': 'true'}
+    def _read_all(self, track):
+        """get the entire track. For gpies, we only need the gpx file"""
+        data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data)
-        activity.parse(response.text)
-        # in Activity, the results of a full load override header_data
-        if 'public' in activity.header_data:
-            # header_data is empty if this is a new activity we just wrote
-            _ = activity.header_data['public']
-            del activity.header_data['public']
-            activity.public = _
-        self._read_what(activity)
+        track.parse(response.text)
+        # in Track, the results of a full load override header_data
+        if 'public' in track.header_data:
+            # header_data is empty if this is a new track we just wrote
+            _ = track.header_data['public']
+            del track.header_data['public']
+            track.public = _
+        self._read_what(track)
 
     def _check_response(self, response):
         """are there error messages?"""
@@ -412,19 +412,19 @@ class GPSIES(Backend):
             'websiteUrl':''}
         self.__post('editTrack', data=data)
 
-    def _write_all(self, activity, new_ident: str = None) ->str:
+    def _write_all(self, track, new_ident: str = None) ->str:
         """save full gpx track on the GPSIES server.
 
         Returns:
             The new id_in_backend
         """
         files = {'formFile': (
-            '{}.gpx'.format(self._html_encode(activity.title)), activity.to_xml(), 'application/gpx+xml')}
+            '{}.gpx'.format(self._html_encode(track.title)), track.to_xml(), 'application/gpx+xml')}
         data = {
-            'filename': activity.title,
-            'status': '1' if activity.public else '3',
-            'fileDescription': activity.description,
-            'trackTypes': self.encode_what(activity.what),
+            'filename': track.title,
+            'status': '1' if track.public else '3',
+            'fileDescription': track.description,
+            'trackTypes': self.encode_what(track.what),
             'trackClassification':'withoutClassification',
             'trackSimplification': '0',
             'uploadButton':''}
@@ -439,9 +439,9 @@ class GPSIES(Backend):
                 break
         if not new_ident:
             raise self.BackendException('No fileId= found in response')
-        if activity.id_in_backend:
-            self._remove_ident(activity.id_in_backend)
-        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        if track.id_in_backend:
+            self._remove_ident(track.id_in_backend)
+        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         return new_ident
 
     def destroy(self):

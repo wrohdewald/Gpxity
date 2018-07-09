@@ -22,7 +22,7 @@ from contextlib import contextmanager
 import  gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
-from ...activity import Activity
+from ...track import Track
 from ...backend import Backend
 from ...auth import Authenticate
 
@@ -75,10 +75,10 @@ class BasicTest(unittest.TestCase):
         return gpxpy.parse(io.StringIO(get_data(__package__, '{}.gpx'.format(name)).decode('utf-8')))
 
     @classmethod
-    def create_test_activity(
+    def create_test_track(
             cls, count: int = 1, idx: int = 0, what: str = None, public: bool = False,
             start_time=None, end_time=None):
-        """creates an :class:`~gpxity.Activity`. It starts off with **test.gpx** and appends a
+        """creates an :class:`~gpxity.Track`. It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
         looking at the tracks, they all go in a different direction clockwise, with an angle
@@ -87,16 +87,16 @@ class BasicTest(unittest.TestCase):
         Args:
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
-            what: The wanted value for the activity.
-                Default: if count == len(:attr:`Activity.legal_whats <gpxity.Activity.legal_whats>`),
+            what: The wanted value for the track.
+                Default: if count == len(:attr:`Track.legal_whats <gpxity.Track.legal_whats>`),
                 the default value will be legal_whats[idx].
                 Otherwise a random value will be applied.
-            public: should the activities be public or private?
+            public: should the tracks be public or private?
             start_time: If given, assign it to the first point and adjust all following times
             end_time: explicit time for the last point. If None: See above.
 
         Returns:
-            (~gpxity.Activity): A new activity not bound to a backend
+            (~gpxity.Track): A new track not bound to a backend
         """
         if BasicTest.all_backend_classes is None:
             BasicTest.all_backend_classes = BasicTest._find_backend_classes()
@@ -113,21 +113,21 @@ class BasicTest(unittest.TestCase):
         new_point.move(_)
         gpx.tracks[-1].segments[-1].points.append(new_point)
 
-        # now set all times such that they are in order with this activity and do not overlap
-        # with other test activities
+        # now set all times such that they are in order with this track and do not overlap
+        # with other test tracks
         duration = new_point.time - gpx.tracks[0].segments[0].points[0].time + datetime.timedelta(seconds=10)
         for point in gpx.walk(only_points=True):
             point.time += duration * idx
 
-        result = Activity(gpx=gpx)
+        result = Track(gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(gpx.name)
         if what:
             result.what = what
-        elif count == len(Activity.legal_whats):
-            result.what = Activity.legal_whats[idx]
+        elif count == len(Track.legal_whats):
+            result.what = Track.legal_whats[idx]
         else:
-            result.what = random.choice(Activity.legal_whats)
+            result.what = random.choice(Track.legal_whats)
         result.public = public
         return result
 
@@ -158,48 +158,48 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
-    def assertSameActivities(self, backend1, backend2, with_what=True): # pylint: disable=invalid-name
-        """both backends must hold identical activities"""
+    def assertSameTracks(self, backend1, backend2, with_what=True): # pylint: disable=invalid-name
+        """both backends must hold identical tracks"""
         self.maxDiff = None # pylint: disable=invalid-name
         if backend1 != backend2:
             keys1 = sorted(x.key(with_what) for x in backend1)
             keys2 = sorted(x.key(with_what) for x in backend2)
             self.assertEqual(keys1, keys2)
 
-    def assertEqualActivities(self, activity1, activity2, xml: bool = False): # pylint: disable=invalid-name
-        """both activities must be identical. We test more than necessary for better test coverage.
+    def assertEqualTracks(self, track1, track2, xml: bool = False): # pylint: disable=invalid-name
+        """both tracks must be identical. We test more than necessary for better test coverage.
 
         Args:
             xml: if True, also compare to_xml()"""
         self.maxDiff = None
-        self.assertEqual(activity1.key(), activity2.key())
-        self.assertTrue(activity1.points_equal(activity2))
+        self.assertEqual(track1.key(), track2.key())
+        self.assertTrue(track1.points_equal(track2))
         if xml:
-            self.assertEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
+            self.assertEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
-    def assertNotEqualActivities(self, activity1, activity2): # pylint: disable=invalid-name
-        """both activities must be identical. We test more than necessary for better test coverage."""
-        self.assertNotEqual(activity1.key(), activity2.key())
-        self.assertFalse(activity1.points_equal(activity2))
-        self.assertNotEqual(activity1.gpx.to_xml(), activity2.gpx.to_xml())
+    def assertNotEqualTracks(self, track1, track2): # pylint: disable=invalid-name
+        """both tracks must be identical. We test more than necessary for better test coverage."""
+        self.assertNotEqual(track1.key(), track2.key())
+        self.assertFalse(track1.points_equal(track2))
+        self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
     def setup_backend(self, cls_, username: str = None, url: str = None, count: int = 0,  # pylint: disable=too-many-arguments
                       cleanup: bool = True, clear_first: bool = True, what: str = None,
                       public: bool = False, debug: bool = False):
-        """sets up an instance of a backend with count activities.
+        """sets up an instance of a backend with count tracks.
 
-        If count == len(:attr:`Activity.legal_whats <gpxity.Activity.legal_whats>`),
-        the list of activities will always be identical. For an example
+        If count == len(:attr:`Track.legal_whats <gpxity.Track.legal_whats>`),
+        the list of tracks will always be identical. For an example
         see :meth:`TestBackends.test_all_what <gpxity.backends.test.test_backends.TestBackends.test_all_what>`.
 
         Args:
             cls_ (Backend): the class of the backend to be created
             username: use this to for a specific accout name. Default is 'gpxitytest'
             url: for the backend
-            count: how many random activities should be inserted?
-            cleanup: If True, remove all activities when done. Passed to the backend.
-            clear_first: if True, first remove all existing activities
-            public: should the activities be public or private?
+            count: how many random tracks should be inserted?
+            cleanup: If True, remove all tracks when done. Passed to the backend.
+            clear_first: if True, first remove all existing tracks
+            public: should the tracks be public or private?
 
         Returns:
             the prepared Backend
@@ -209,8 +209,8 @@ class BasicTest(unittest.TestCase):
         if clear_first:
             result.remove_all()
         while count > len(result):
-            activity = self.create_test_activity(count, len(result), what=what, public=public)
-            result.add(activity)
+            track = self.create_test_track(count, len(result), what=what, public=public)
+            result.add(track)
         self.assertGreaterEqual(len(result), count)
         if clear_first:
             self.assertEqual(len(result), count)
@@ -268,7 +268,7 @@ class BasicTest(unittest.TestCase):
         return sorted(set(result), key=lambda x: x.__class__.__name__)
 
     @staticmethod
-    def move_times(activity, delta):
+    def move_times(track, delta):
         """move all times by delta"""
-        for point in activity.points():
+        for point in track.points():
             point.time += delta

@@ -14,24 +14,24 @@ import datetime
 import tempfile
 from collections import defaultdict
 
-from .. import Backend, Activity
+from .. import Backend, Track
 
 __all__ = ['Directory']
 
 class Directory(Backend):
-    """Uses a directory for storage. The filename minus the .gpx ending is used as the activity id.
-    If the activity has a title but no storage id yet, use the title as storage id.
+    """Uses a directory for storage. The filename minus the .gpx ending is used as the track id.
+    If the track has a title but no storage id yet, use the title as storage id.
     Make the storage id unique by attaching a number if needed.
-    An activity without title gets a random name.
+    An track without title gets a random name.
 
     The main directory (given by :attr:`Directory.url <gpxity.backend.Backend.url>`) will have
-    subdirectories YYYY/MM (year/month) with only the activities for one month.
+    subdirectories YYYY/MM (year/month) with only the tracks for one month.
     Those are symbolic links to the main file and have the same file name.
 
     If :meth:`~gpxity.backend.Backend.save` is given a value for ident, this
     is used as id, the file name will be :literal:`id.gpx`.
-    Otherwise, this backend uses :attr:`Activity.title <gpxity.Activity.title>` for the id.
-    If an activity has no title, it uses a random sequence of characters.
+    Otherwise, this backend uses :attr:`Track.title <gpxity.Track.title>` for the id.
+    If a track has no title, it uses a random sequence of characters.
     Changing the title also changes the id.
 
     Args:
@@ -40,7 +40,7 @@ class Directory(Backend):
             :attr:`prefix`.X where X are some random characters.
             If the directory does not exist, it is created.
         auth (str): You can use this as in every backend to define Url= in auth.cfg
-        cleanup (bool): If True, :meth:`destroy` will remove all activities. If url was
+        cleanup (bool): If True, :meth:`destroy` will remove all tracks. If url was
             not given, it will also remove the directory.
         prefix: The prefix for a temporary directory path. Must not be given if url is given.
 
@@ -90,7 +90,7 @@ class Directory(Backend):
         """
         Returns: list(str)
             all legal values for what for this backend."""
-        return Activity.legal_whats
+        return Track.legal_whats
 
     def decode_what(self, value: str) ->str:
         """Not needed for directory, this is always the internal value."""
@@ -102,7 +102,7 @@ class Directory(Backend):
 
     def _load_symlinks(self, directory=None):
         """scan the subdirectories with the symlinks. If the content of an
-        activity changes, the symlinks might have to be adapted. But
+        track changes, the symlinks might have to be adapted. But
         we do not know the name of the existing symlink anymore. So
         just scan them all and assign them to id_in_backend."""
         if directory is None:
@@ -155,7 +155,7 @@ class Directory(Backend):
         return value.replace('/', '_')
 
     def destroy(self):
-        """If `cleanup` was set at init time, removes all activities.
+        """If `cleanup` was set at init time, removes all tracks.
         If :attr:`~gpxity.Directory.url` was set at init time,
         also removes the directory."""
         super(Directory, self).destroy()
@@ -165,7 +165,7 @@ class Directory(Backend):
                 os.rmdir(self.url)
 
     def gpx_path(self, ident):
-        """The full path name for the local copy of an activity"""
+        """The full path name for the local copy of a track"""
         return os.path.join(self.url, '{}.gpx'.format(ident))
 
     def _list_gpx(self):
@@ -173,22 +173,22 @@ class Directory(Backend):
         gpx_names = (x for x in os.listdir(self.url) if x.endswith('.gpx'))
         return (x.replace('.gpx', '') for x in gpx_names)
 
-    def _yield_activities(self):
-        """get all activities for this user."""
+    def _yield_tracks(self):
+        """get all tracks for this user."""
         self._symlinks = defaultdict(list)
         self._load_symlinks()
         for _ in self._list_gpx():
-            yield self._found_activity(_)
+            yield self._found_track(_)
 
     def get_time(self) ->datetime.datetime:
         """get server time as a Linux timestamp"""
         return datetime.datetime.now()
 
-    def _read_all(self, activity):
-        """fills the activity with all its data from source."""
-        assert activity.id_in_backend
-        with open(self.gpx_path(activity.id_in_backend), encoding='utf-8') as in_file:
-            activity.parse(in_file)
+    def _read_all(self, track):
+        """fills the track with all its data from source."""
+        assert track.id_in_backend
+        with open(self.gpx_path(track.id_in_backend), encoding='utf-8') as in_file:
+            track.parse(in_file)
 
     def _remove_symlinks(self, ident: str):
         """Removes its symlinks, empty symlink parent directories"""
@@ -209,40 +209,40 @@ class Directory(Backend):
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 
-    def _symlink_path(self, activity, ident):
+    def _symlink_path(self, track, ident):
         """The path for the speaking symbolic link: YYYY/MM/title.gpx.
         Missing directories YYYY/MM are created.
-        activity.time must be set."""
-        time = activity.time
+        track.time must be set."""
+        time = track.time
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
         else:
             # make sure there is no dead symlink with our wanted name.
             self._load_symlinks(by_month_dir)
-        name = activity.title or ident
+        name = track.title or ident
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
-    def _new_ident(self, activity) ->str:
-        """Creates an id for activity.
+    def _new_ident(self, track) ->str:
+        """Creates an id for track.
 
         Returns: The new ident.
         """
-        ident = activity.id_in_backend
+        ident = track.id_in_backend
         if ident is None:
-            ident = self._new_id_from(activity.title)
+            ident = self._new_id_from(track.title)
         # Change the ident such that its gpx_path does not yet exist
         path = self._make_path_unique(os.path.join(self.url, ident + '.gpx'))
         return os.path.basename(path)[:-4]
 
-    def _make_symlinks(self, activity):
-        """Makes all symlinks for activity"""
-        time = activity.time
+    def _make_symlinks(self, track):
+        """Makes all symlinks for track"""
+        time = track.time
         if time:
-            ident = activity.id_in_backend
+            ident = track.id_in_backend
             gpx_pathname = self.gpx_path(ident)
             os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
-            link_name = self._symlink_path(activity, ident)
+            link_name = self._symlink_path(track, ident)
             basename = os.path.basename(gpx_pathname)
             link_target = os.path.join('..', '..', basename)
             os.symlink(link_target, link_name)
@@ -258,29 +258,29 @@ class Directory(Backend):
             if os.path.exists(old_pathname + '.old'):
                 os.rename(old_pathname + '.old', old_pathname)
 
-    def _write_all(self, activity, new_ident: str = None) ->str:
+    def _write_all(self, track, new_ident: str = None) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,
-        compute new file name and remove the old files. We also adapt activity.id_in_backend."""
-        old_ident = activity.id_in_backend
+        compute new file name and remove the old files. We also adapt track.id_in_backend."""
+        old_ident = track.id_in_backend
         old_pathname = None
         if old_ident:
             old_pathname = self.gpx_path(old_ident)
             if os.path.exists(old_pathname):
                 os.rename(old_pathname, old_pathname + '.old')
-        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         try:
-            new_ident = self._new_ident(activity)
+            new_ident = self._new_ident(track)
         except BaseException:
             self.__undo_rename(old_ident)
             raise
 
-        activity._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
         gpx_pathname = self.gpx_path(new_ident)
         try:
             # only remove the old file after the new one has been written
             with open(gpx_pathname, 'w', encoding='utf-8') as out_file:
-                out_file.write(activity.to_xml())
-            self._make_symlinks(activity)
+                out_file.write(track.to_xml())
+            self._make_symlinks(track)
         except BaseException:
             self.__undo_rename(old_ident)
             raise

@@ -19,7 +19,7 @@ __all__ = ['TrackMMT']
 
 class TrackMMT(MMT):
     """This is a minimal implementation, it only supports listing
-    and retrieving activities and life tracking. This is used for
+    and retrieving tracks and life tracking. This is used for
     testing examples/mmtserver.py which in turn is used to
     receive life tracking data from smartphone apps like
     oruxmaps.
@@ -29,28 +29,28 @@ class TrackMMT(MMT):
 
    #  skip_test = True
 
-    def _write_attribute(self, activity, attribute):
+    def _write_attribute(self, track, attribute):
         raise NotImplementedError()
 
-    def _write_title(self, activity):
+    def _write_title(self, track):
         raise NotImplementedError()
 
-    def _write_description(self, activity):
+    def _write_description(self, track):
         raise NotImplementedError()
 
-    def _write_public(self, activity):
+    def _write_public(self, track):
         raise NotImplementedError()
 
-    def _write_what(self, activity):
+    def _write_what(self, track):
         raise NotImplementedError()
 
-    def _write_keywords(self, activity):
+    def _write_keywords(self, track):
         raise NotImplementedError()
 
-    def _write_add_keyword(self, activity, value):
+    def _write_add_keyword(self, track, value):
         raise NotImplementedError()
 
-    def _write_remove_keyword(self, activity, value):
+    def _write_remove_keyword(self, track, value):
         raise NotImplementedError()
 
     def _remove_ident(self, ident: str) ->None:

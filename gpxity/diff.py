@@ -11,7 +11,7 @@ This module defines :class:`~gpxity.Backend`
 from collections import defaultdict
 
 from .backend import Backend
-from .activity import Activity
+from .track import Track
 
 __all__ = ['BackendDiff']
 
@@ -20,15 +20,15 @@ class BackendDiff:
     """Compares two backends.directory
 
     Args:
-        left (Backend): A backend, an activity or a list of either
+        left (Backend): A backend, a track or a list of either
         right (Backend): Same as for the left side
 
     Attributes:
         left(:class:`BackendDiffSide`): Attributes for the left side
         right(:class:`BackendDiffSide`): Attributes for the right side
-        identical(list(Activity)): Activities appearing on both sides.
-        similar(list(Pair)): Pairs of Activities are on both sides with
-            differences. This includes all activities having at least
+        identical(list(Track)): Tracks appearing on both sides.
+        similar(list(Pair)): Pairs of Tracks are on both sides with
+            differences. This includes all tracks having at least
             100 identical positions without being identical.
         diff_flags: T=time, D=description, W=what, S=status,
             K=keywords, P=positions, Z=time offset
@@ -49,7 +49,7 @@ class BackendDiff:
             self.differences = self.__compare()
 
         def __compare(self):
-            """Compare both activities
+            """Compare both tracks
             Returns:
                 defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
                     Values is a list(str) with additional info
@@ -118,29 +118,29 @@ class BackendDiff:
         """Represents a side (left or right) in BackendDiff.
 
         Attributes:
-            activities: An activitiy, a list of activities, a backend or a list of backends
+            tracks: An Track, a list of tracks, a backend or a list of backends
             exclusive(list): Acivities existing only on this side
         """
 
         # pylint: disable=too-few-public-methods
 
-        def __init__(self, activities):
-            self.activities = list(self.flatten(activities))
+        def __init__(self, tracks):
+            self.tracks = list(self.flatten(tracks))
             self.build_positions()
             self.exclusive = []
 
         @staticmethod
         def flatten(whatever):
-            """Flattens Backends or Activities into a list of activities"""
+            """Flattens Backends or Tracks into a list of tracks"""
             if isinstance(whatever, list):
                 for list_item in whatever:
-                    if isinstance(list_item, Activity):
+                    if isinstance(list_item, Track):
                         yield list_item
                     elif isinstance(list_item, Backend):
                         for _ in list_item:
                             yield _
             else:
-                if isinstance(whatever, Activity):
+                if isinstance(whatever, Track):
                     yield whatever
                 elif isinstance(whatever, Backend):
                     for _ in whatever:
@@ -148,12 +148,12 @@ class BackendDiff:
 
         def build_positions(self):
             """Returns a set of long/lat tuples"""
-            for _ in self.activities:
+            for _ in self.tracks:
                 _.positions = set([(x.longitude, x.latitude) for x in _.points()])
 
         def _find_exclusives(self, matched):
             """use data from the other side"""
-            for _ in self.activities:
+            for _ in self.tracks:
                 if _ not in matched:
                     self.exclusive.append(_)
 
@@ -165,17 +165,17 @@ class BackendDiff:
         self.left = BackendDiff.BackendDiffSide(left)
         self.right = BackendDiff.BackendDiffSide(right)
         # pylint: disable=too-many-nested-blocks
-        for left_activity in self.left.activities:
-            for right_activity in self.right.activities:
-                if left_activity == right_activity:
-                    self.identical.append(left_activity)
-                    matched.append(left_activity)
-                    matched.append(right_activity)
+        for left_track in self.left.tracks:
+            for right_track in self.right.tracks:
+                if left_track == right_track:
+                    self.identical.append(left_track)
+                    matched.append(left_track)
+                    matched.append(right_track)
                 else:
-                    if len(left_activity.positions & right_activity.positions) >= 100:
-                        self.similar.append(BackendDiff.Pair(left_activity, right_activity))
-                        matched.append(left_activity)
-                        matched.append(right_activity)
+                    if len(left_track.positions & right_track.positions) >= 100:
+                        self.similar.append(BackendDiff.Pair(left_track, right_track))
+                        matched.append(left_track)
+                        matched.append(right_track)
         # pylint: disable=protected-access
         self.left._find_exclusives(matched)
         self.right._find_exclusives(matched)

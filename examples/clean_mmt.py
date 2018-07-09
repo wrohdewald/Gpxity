@@ -5,15 +5,15 @@
 # See LICENSE for details.
 
 """
-This module cleans my MMT activities:
+This module cleans my MMT tracks:
 
 1. creates a Directory backend if it does not exist
-2. downloads all MMT activities and saves them in Directory using
-    the MMT activity_id for the file name. Only for activities we
+2. downloads all MMT tracks and saves them in Directory using
+    the MMT track_id for the file name. Only for tracks we
     do not have yet.
-3. removes activities with less than 10 points
-4. lists overlapping activities
-5. say which activities are in Dokumente but not in MMT and vice versa. Use activity.time for compares.
+3. removes tracks with less than 10 points
+4. lists overlapping tracks
+5. say which tracks are in Dokumente but not in MMT and vice versa. Use track.time for compares.
 
 To be done:
 6. apply geofencing
@@ -27,7 +27,7 @@ import datetime
 # This uses not the installed copy but the development files
 sys.path.insert(0,  '..')
 
-from gpxity import Activity, Directory, MMT, BackendDiff
+from gpxity import Track, Directory, MMT, BackendDiff
 
 def copy_from_mmt(mmt, local):
     for a in mmt:
@@ -35,20 +35,20 @@ def copy_from_mmt(mmt, local):
             local.add(a, ident=a.id_in_backend)
 
 def remove_shorties(local, remote=None, min_points=10):
-    for local_activity in local:
-        has_points = local_activity.gpx.get_points_no()
+    for local_track in local:
+        has_points = local_track.gpx.get_points_no()
         if  has_points < min_points:
-            print('*** {} had only {} points'.format(local_activity, has_points))
-            ident = local_activity.id_in_backend
-            webbrowser.open('http://www.mapmytracks.com/explore/activity/{}'.format(ident))
+            print('*** {} had only {} points'.format(local_track, has_points))
+            ident = local_track.id_in_backend
+            webbrowser.open('http://www.mapmytracks.com/explore/track/{}'.format(ident))
             local.remove(ident)
             if remote and ident in remote:
                 remote.remove(ident)
 
 
 def remove_overlaps(backend):
-    """when times between activities overlap, remove all but the longest activity"""
-    for group in Activity.overlapping_times(backend):
+    """when times between tracks overlap, remove all but the longest track"""
+    for group in Track.overlapping_times(backend):
         print('Keeping: {}: {}-{}'.format(group[0].id_in_backend, group[0].time, group[0].last_time))
         for acti in group[1:]:
             print('remove: {}: {}-{}'.format(acti.id_in_backend, acti.time, acti.last_time))

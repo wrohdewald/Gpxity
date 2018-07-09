@@ -30,7 +30,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Activity, Directory, BackendDiff, MMT, GPSIES
+from gpxity import Track, Directory, BackendDiff, MMT, GPSIES
 from gpxity.util import uniq
 
 
@@ -61,14 +61,14 @@ class Utility:
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
                         self.destination = objects[-1]
-                self.sources = self._collect_source_activities(objects)
+                self.sources = self._collect_source_tracks(objects)
             if hasattr(self.options, 'destination') and self.destination is None:
                 self.destination = self.instantiate_object(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
-                    if isinstance(self.destination, Activity):
-                        raise Exception('Destination must not be a single activity:{}'.format(self.options.destination))
-                if not isinstance(self.destination, Activity) and self.options.verbose:
-                    print('collecting activities from', self.destination.identifier())
+                    if isinstance(self.destination, Track):
+                        raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
+                if not isinstance(self.destination, Track) and self.options.verbose:
+                    print('collecting tracks from', self.destination.identifier())
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
@@ -82,13 +82,13 @@ class Utility:
         if self.options.debug:
             raise msg
 
-    def _collect_source_activities(self, sources):
-        """A copied list with activities combined from all sources, to be used in 'for'-loops"""
+    def _collect_source_tracks(self, sources):
+        """A copied list with tracks combined from all sources, to be used in 'for'-loops"""
         result = list()
         for source in sources:
             if self.options.verbose:
-                print('collecting activities from', source.identifier())
-            if isinstance(source, Activity):
+                print('collecting tracks from', source.identifier())
+            if isinstance(source, Track):
                 result.append(source)
             else:
                 result.extend(source)
@@ -97,7 +97,7 @@ class Utility:
     def move(self):
         """move gpx files.
         We cannot just do merge() followed by remove() because
-        the source might have gotten new activities meanwhile, and
+        the source might have gotten new tracks meanwhile, and
         they would disappear for good."""
         for _ in self.sources:
             self.destination.add(_, ident=_.id_in_backend)
@@ -106,7 +106,7 @@ class Utility:
                 print('moved {} to {}'.format(_, self.destination))
 
     def remove(self):
-        """remove activities"""
+        """remove tracks"""
         for _ in self.sources:
             if self.options.dry_run:
                 print('would remove {}'.format(_))
@@ -116,7 +116,7 @@ class Utility:
                     print('removed {}'.format(_))
 
     def list_them(self):
-        """list activities"""
+        """list tracks"""
         # pylint: disable=too-many-locals
         header_line = list()
         formats = dict() # key: lower_header, value: format
@@ -177,7 +177,7 @@ class Utility:
                 duration = total['moving_duration']
                 seconds = duration.days * 24 * 3600 + duration.seconds
                 total['moving_speed'] = total['moving_length'] / seconds * 3600 if seconds else 0
-            total['identifier'] = 'TOTAL {} activities'.format(len(output_lines) - 1)
+            total['identifier'] = 'TOTAL {} tracks'.format(len(output_lines) - 1)
             return list(fmt(formats.get(col), total.get(col)) for col in sort_headers)
 
         def add_warnings():
@@ -227,17 +227,17 @@ class Utility:
                 print()
 
     @staticmethod
-    def fix_activity(activity):
+    def fix_track(track):
         """fix some bugs in the GPX file"""
-        if isinstance(activity.backend, Directory):
+        if isinstance(track.backend, Directory):
             # make Directory build a new file name from the title
-            activity._set_id_in_backend(None)  # pylint: disable=protected-access
-        activity.rewrite()
+            track._set_id_in_backend(None)  # pylint: disable=protected-access
+        track.rewrite()
 
     def fix(self):
-        """fix activities"""
+        """fix tracks"""
         for _ in self.sources:
-            self.fix_activity(_)
+            self.fix_track(_)
             if self.options.verbose:
                 print('fixed {}'.format(_))
 
@@ -275,8 +275,8 @@ class Utility:
 
     def merge(self):
         """Merge"""
-        for activity in self.sources:
-            msg = self.destination.merge(activity, remove=self.options.remove, dry_run=self.options.dry_run)
+        for track in self.sources:
+            msg = self.destination.merge(track, remove=self.options.remove, dry_run=self.options.dry_run)
             if self.options.verbose or self.options.dry_run:
                 for _ in msg:
                     print(_)
@@ -284,7 +284,7 @@ class Utility:
     def diff(self):
         """Compare"""
         def show_exclusive(side):
-            """shows activities appearing only on one side."""
+            """shows tracks appearing only on one side."""
             backends = uniq(x.backend for x in side.exclusive)
             for backend in backends:
                 print('only in {}:'.format(backend.url))
@@ -316,16 +316,16 @@ class Utility:
 
     def instantiate_object(self, name):
         """returns a backend for name.
-        If name is a single activity, the returned backend has a match filtering
-        only this one wanted activity."""
-        result = account = activity_id = None
+        If name is a single track, the returned backend has a match filtering
+        only this one wanted track."""
+        result = account = track_id = None
         if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES'):
             clsname = name.split(':')[0].upper()
             rest = name[len(clsname) + 1:]
             if '/' in rest:
                 if rest.count('/') > 1:
                     raise Exception('wrong syntax in {}'.format(name))
-                account, activity_id = rest.split('/')
+                account, track_id = rest.split('/')
             else:
                 account = rest
             if clsname == 'MMT':
@@ -341,52 +341,52 @@ class Utility:
                     name = name[:-4]
                 if os.path.isfile(name + '.gpx'):
                     account = os.path.dirname(name) or '.'
-                    activity_id = os.path.basename(name)
+                    track_id = os.path.basename(name)
                 result = Directory(url=account)
         if account is None:
             raise Exception('{} not found'.format(name))
-        if activity_id:
-            result = result[activity_id]
+        if track_id:
+            result = result[track_id]
         result.match = self.match
         result.debug = self.options.debug
         return result
 
-    def match(self, activity):
+    def match(self, track):
         """Check against the selecting options. Does cheap check first."""
         # pylint: disable=too-many-return-statements
-        if activity.time:
-            if self.options.first_date and activity.time < self.options.first_date:
-                return 'time {} is before {}'.format(activity.time, self.options.first_date)
+        if track.time:
+            if self.options.first_date and track.time < self.options.first_date:
+                return 'time {} is before {}'.format(track.time, self.options.first_date)
             if self.options.last_date:
-                if self.options.last_date.date() and activity.time.date() > self.options.last_date.date():
-                    return 'time {} is after {}'.format(activity.time, self.options.last_date)
-        length = activity.header_data.get('distance', None)
+                if self.options.last_date.date() and track.time.date() > self.options.last_date.date():
+                    return 'time {} is after {}'.format(track.time, self.options.last_date)
+        length = track.header_data.get('distance', None)
         if length:
             if self.options.min_length and length < self.options.min_length:
                 return 'length {} is below {}'.format(length, self.options.min_length)
             if self.options.max_length and length > self.options.max_length:
                 return 'length {} is above {}'.format(length, self.options.max_length)
-        if self.options.min_points and activity.gpx.get_track_points_no() < self.options.min_points:
-            return 'point count {} is below {}'.format(activity.gpx.get_track_points_no(), self.options.min_points)
-        if self.options.max_points and activity.gpx.get_track_points_no() > self.options.max_points:
-            return 'point count {} is above {}'.format(activity.gpx.get_track_points_no(), self.options.max_points)
-        if self.options.only_kw and not self.options.only_kw & set(activity.keywords):
-            return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(activity.keywords))
-        if self.options.only_what and activity.what not in self.options.only_what:
-            return '{} is different from {}'.format(','.join(self.options.only_what), ','.join(activity.what))
+        if self.options.min_points and track.gpx.get_track_points_no() < self.options.min_points:
+            return 'point count {} is below {}'.format(track.gpx.get_track_points_no(), self.options.min_points)
+        if self.options.max_points and track.gpx.get_track_points_no() > self.options.max_points:
+            return 'point count {} is above {}'.format(track.gpx.get_track_points_no(), self.options.max_points)
+        if self.options.only_kw and not self.options.only_kw & set(track.keywords):
+            return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(track.keywords))
+        if self.options.only_what and track.what not in self.options.only_what:
+            return '{} is different from {}'.format(','.join(self.options.only_what), ','.join(track.what))
         return None
 
     @staticmethod
     def add_range_args(parser):
         """Add common range arguments"""
-        parser.add_argument('--first-date', help='Limit activities by date', type=valid_date_argument, default=None)
-        parser.add_argument('--last-date', help='Limit activities by date', type=valid_date_argument, default=None)
-        parser.add_argument('--min-points', help='Limit activities by minimum number of points', type=int, default=None)
-        parser.add_argument('--max-points', help='Limit activities by maximum number of points', type=int, default=None)
-        parser.add_argument('--min-length', help='Limit activities by track length', type=int, default=None)
-        parser.add_argument('--max-length', help='Limit activities by track length', type=int, default=None)
-        parser.add_argument('--only-kw', help='Limit activities by keywords', default=None)
-        parser.add_argument('--only-what', help='Limit activities by what', default=None)
+        parser.add_argument('--first-date', help='Limit tracks by date', type=valid_date_argument, default=None)
+        parser.add_argument('--last-date', help='Limit tracks by date', type=valid_date_argument, default=None)
+        parser.add_argument('--min-points', help='Limit tracks by minimum number of points', type=int, default=None)
+        parser.add_argument('--max-points', help='Limit tracks by maximum number of points', type=int, default=None)
+        parser.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
+        parser.add_argument('--max-length', help='Limit tracks by track length', type=int, default=None)
+        parser.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
+        parser.add_argument('--only-what', help='Limit tracks by what', default=None)
 
     @staticmethod
     def add_common_args(parser):
@@ -399,8 +399,8 @@ class Utility:
 
     @staticmethod
     def add_multi_source(parser, must_have=False):
-        """add --source for one or more activities or backends"""
-        parser.add_argument('source', help='one ore more activities or backends', nargs='+' if must_have else '*')
+        """add --source for one or more tracks or backends"""
+        parser.add_argument('source', help='one ore more tracks or backends', nargs='+' if must_have else '*')
 
     @staticmethod
     def add_destination(parser):
@@ -410,15 +410,15 @@ class Utility:
     help_epilog = """
 
 source and destination arguments may be single
-activities or entire backend instances.
+tracks or entire backend instances.
 Local files and directories are given as usual.
 For all other backends, the syntax is:
 
-backend:username  for all activities in a backend
+backend:username  for all tracks in a backend
 
 or
 
-backend:username/activity_id for one specific activity in a backend
+backend:username/track_id for one specific track in a backend
 
 Available backends are:
 
@@ -437,7 +437,7 @@ Dates are expected as YYYY-MM-DD.
 
     def parse_commandline(self):
         """into self.options"""
-        # pylint: disable=too-many-statements
+        # pylint: disable=too-many-statements, too-many-branches
         parser = argparse.ArgumentParser(
             'gpxdo', formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=self.help_epilog)
@@ -453,7 +453,7 @@ Dates are expected as YYYY-MM-DD.
         self.add_destination(mv_parser)
 
         rm_parser = subparsers.add_parser(
-            'rm', help='remove activities',
+            'rm', help='remove tracks',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         rm_parser.set_defaults(func=self.remove)
         self.add_common_args(rm_parser)
@@ -464,7 +464,7 @@ Dates are expected as YYYY-MM-DD.
 
         if False: # pylint: disable=using-constant-test
             fix_parser = subparsers.add_parser(
-                'fix', help='fix some GPX format bugs in activities',
+                'fix', help='fix some GPX format bugs in tracks',
                 epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
             fix_parser.set_defaults(func=self.fix)
             self.add_common_args(fix_parser)
@@ -472,7 +472,7 @@ Dates are expected as YYYY-MM-DD.
             self.add_multi_source(fix_parser)
 
         ls_parser = subparsers.add_parser(
-            'ls', help='list activities',
+            'ls', help='list tracks',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
@@ -487,7 +487,7 @@ Dates are expected as YYYY-MM-DD.
                                action='store_true', default=False)
         ls_parser.add_argument('--title', help='show the title',
                                action='store_true', default=False)
-        ls_parser.add_argument('--what', help='show the activity type',
+        ls_parser.add_argument('--what', help='show the track type',
                                action='store_true', default=False)
         ls_parser.add_argument('--time', help='show the time',
                                action='store_true', default=False)
@@ -528,7 +528,7 @@ Dates are expected as YYYY-MM-DD.
                                 action='store_true', default=False)
         set_parser.add_argument('--title', help='set the title', type=str, default=None)
         set_parser.add_argument('--description', help='set the description', type=str, default=None)
-        set_parser.add_argument('--what', help='set the activity type', type=str, default=None)
+        set_parser.add_argument('--what', help='set the track type', type=str, default=None)
         set_parser.add_argument('--public', help='set the status to public', action='store_true', default=False)
         set_parser.add_argument('--private', help='set the status to private', action='store_true', default=False)
         self.add_common_args(set_parser)
@@ -537,7 +537,7 @@ Dates are expected as YYYY-MM-DD.
 
         merge_parser = subparsers.add_parser(
             'merge', help="""
-            merge activities: If their trackpoints are identical, add metadata like name,
+            merge tracks: If their trackpoints are identical, add metadata like name,
             description or keywords from source to destination""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         merge_parser.set_defaults(func=self.merge)
@@ -545,14 +545,14 @@ Dates are expected as YYYY-MM-DD.
         self.add_range_args(merge_parser)
         merge_parser.add_argument('--dry-run', help='only show what would change',
                                   action='store_true', default=False)
-        merge_parser.add_argument('--remove', help='remove merged activities',
+        merge_parser.add_argument('--remove', help='remove merged tracks',
                                   action='store_true', default=False)
         self.add_multi_source(merge_parser)
         self.add_destination(merge_parser)
 
         diff_parser = subparsers.add_parser(
             'diff', help="""
-            copmpare activities between source and destination""",
+            copmpare tracks between source and destination""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         diff_parser.set_defaults(func=self.diff)
         self.add_common_args(diff_parser)

@@ -16,10 +16,10 @@ Subpackages
 Submodules
 ----------
 
-gpxity.activity module
+gpxity.track module
 ----------------------
 
-.. automodule:: gpxity.activity
+.. automodule:: gpxity.track
     :members:
     :undoc-members:
     :show-inheritance:
