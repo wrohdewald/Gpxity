@@ -372,6 +372,8 @@ class Utility:
             return 'point count {} is above {}'.format(activity.gpx.get_track_points_no(), self.options.max_points)
         if self.options.only_kw and not self.options.only_kw & set(activity.keywords):
             return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(activity.keywords))
+        if self.options.only_what and activity.what not in self.options.only_what:
+            return '{} is different from {}'.format(','.join(self.options.only_what), ','.join(activity.what))
         return None
 
     @staticmethod
@@ -384,6 +386,7 @@ class Utility:
         parser.add_argument('--min-length', help='Limit activities by track length', type=int, default=None)
         parser.add_argument('--max-length', help='Limit activities by track length', type=int, default=None)
         parser.add_argument('--only-kw', help='Limit activities by keywords', default=None)
+        parser.add_argument('--only-what', help='Limit activities by what', default=None)
 
     @staticmethod
     def add_common_args(parser):
@@ -590,5 +593,7 @@ Dates are expected as YYYY-MM-DD.
                 self.options.source = [self.options.destination]
         if self.options.only_kw:
             self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
+        if self.options.only_what:
+            self.options.only_what = set(x.strip() for x in self.options.only_what.split(','))
 
 sys.exit(Utility().exit_code)
