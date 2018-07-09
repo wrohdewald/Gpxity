@@ -245,14 +245,16 @@ class Utility:
         """add/remove a single keyword"""
         for _ in self.sources:
             if self.options.remove:
-                for kword in self.options.keywords.split(','):
-                    _.remove_keyword(kword)
-                if self.options.verbose:
+                if not self.options.dry_run:
+                    for kword in self.options.keywords.split(','):
+                        _.remove_keyword(kword)
+                if self.options.verbose or self.options.dry_run:
                     print('removed {} from {}'.format(self.options.keywords, _))
             else:
-                for kword in self.options.keywords.split(','):
-                    _.add_keyword(kword)
-                if self.options.verbose:
+                if not self.options.dry_run:
+                    for kword in self.options.keywords.split(','):
+                        _.add_keyword(kword)
+                if self.options.verbose or self.options.dry_run:
                     print('added {} to {}'.format(self.options.keywords, _))
 
     def set_attributes(self):
@@ -510,6 +512,8 @@ Dates are expected as YYYY-MM-DD.
         keyword_parser.set_defaults(func=self.keyword)
         self.add_common_args(keyword_parser)
         self.add_range_args(keyword_parser)
+        keyword_parser.add_argument('--dry-run', help='only show what would be done',
+                                    action='store_true', default=False)
         keyword_parser.add_argument('--remove', help='remove keywords. Default is to add them.',
                                     action='store_true', default=False)
         keyword_parser.add_argument('keywords', help='keywords separated by commas')
