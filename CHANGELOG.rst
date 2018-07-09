@@ -8,6 +8,7 @@ Changelog
   * gpxdo: bash completion if argcomplete is installed (pip install argcomplete).
     Put this into your .bashrc: eval "$(register-python-argcomplete gpxdo)"
     or see https://argcomplete.readthedocs.io/en/latest/
+  * new in Activity: speed(), moving_speed(), warnings()
 
 1.2.6 release 2018-06-05
 ------------------------

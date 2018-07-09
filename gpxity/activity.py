@@ -611,6 +611,38 @@ class Activity:
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
         self._dirty = 'remove_keyword:{}'.format(value)
 
+    def speed(self):
+        """Speed over the entire time in km/h"""
+        time_range = (self.time, self.last_time)
+        if time_range[0] is None or time_range[1] is None:
+            return 0.0
+        duration = time_range[1] - time_range[0]
+        seconds = duration.days * 24 * 3600 + duration.seconds
+        return self.length() / seconds * 3600
+
+    def moving_speed(self):
+        """Speed for time in motion in km/h"""
+        bounds = self.gpx.get_moving_data()
+        if not bounds.moving_time:
+            return 0.0
+        return bounds.moving_distance / bounds.moving_time * 3.6
+
+    def warnings(self):
+        """Returns a list of strings with easy to find problems."""
+        result = list()
+        if self.speed() > self.moving_speed():
+            result.append('Speed {:.3f} must not be above Moving speed {:.3f}'.format(
+                self.speed(), self.moving_speed()))
+        if 'Cycling' in self.what and self.speed() < 10:
+            result.append('{}: Speed {:.3f} is very slow'.format(self.what, self.speed()))
+        if 'Mountain biking' in self.what and self.speed() < 7:
+            result.append('{}: Speed {:.3f} is very slow'.format(self.what, self.speed()))
+        if 'Cycling' in self.what and self.moving_speed() < 15:
+            result.append('{}: Moving speed {:.3f} is very slow'.format(self.what, self.moving_speed()))
+        if 'Mountain biking' in self.what and self.moving_speed() < 10:
+            result.append('{}: Moving speed {:.3f} is very slow'.format(self.what, self.moving_speed()))
+        return result
+
     def __repr__(self):
         with self._decouple():
             # this should not automatically load the entire activity

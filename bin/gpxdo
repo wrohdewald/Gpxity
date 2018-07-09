@@ -132,17 +132,11 @@ class Utility:
 
         def speed(_):
             """Speed over the entire time"""
-            time_range = (_.time, _.last_time)
-            if time_range[0] is None or time_range[1] is None:
-                return ''
-            duration = time_range[1] - time_range[0]
-            seconds = duration.days * 24 * 3600 + duration.seconds
-            return '{:>6.3f}'.format(_.length() / seconds * 3600)
+            return '{:>6.3f}'.format(_.speed())
 
         def moving_speed(_):
             """Speed for time in motion"""
-            bounds = _.gpx.get_moving_data()
-            return '{:>6.3f}'.format(bounds.moving_distance / bounds.moving_time * 3.6)
+            return '{:>6.3f}'.format(_.moving_speed())
 
         add_field(True, 'Identifier', lambda x: x.identifier())
         add_field(self.options.title, 'Title', lambda x: x.title[:40]  if x.title else '')
