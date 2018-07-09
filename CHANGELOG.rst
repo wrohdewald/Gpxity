@@ -9,6 +9,23 @@ Changelog
     Put this into your .bashrc: eval "$(register-python-argcomplete gpxdo)"
     or see https://argcomplete.readthedocs.io/en/latest/
   * new in Activity: speed(), moving_speed(), warnings()
+  * gpxdo --long shows warnings about strange activities
+  * gpxdo --total
+  * gpxdo ls: if no file/directory given, use "."
+  * gpxdo: unify how backends/activities are displayed. Remove leading "./" from names.
+  * gpxdo --debug shows backtrace for errors
+  * Backend.merge() now also accepts a single Activity
+  * Backend.diff() now accepts an Activity, a Backend or a list of any of them on for both sides
+  * GPSIES: workaround for sporadic bug in editTrack
+  * Activity.clone() does not pass id_in_backend anymore
+  * Backend.scan() tries to keep known activities
+  * Backend.diff() now compares all attributes
+  * new: Activity.identifier() and Backend.identifier() and use them for better output in gpxdo
+  * new: gpxdo set for setting/clearing any attributes
+  * Activity.add_keyword(): given a duplicate, silently ignore it
+  * gpxdo kw now accepts a list of comma separated keywords
+  * gpxdo: filter by keywords: --only-kw
+  * gpxdo --last-date now includes that date
 
 1.2.6 release 2018-06-05
 ------------------------
