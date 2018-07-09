@@ -36,7 +36,7 @@ def repr_timespan(start, end):
     hours = duration.seconds // 3600
     minutes = (duration.seconds - hours * 3600) // 60
     hours += duration.days * 24
-    return '{}h{}m'.format(hours, minutes)
+    return '{}:{:02}'.format(hours, minutes)
 
 def uniq(lst):
     """returns lst with unique elements"""
