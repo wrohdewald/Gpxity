@@ -110,37 +110,37 @@ class TrackTests(BasicTest):
         track2.gpx.tracks.clear()
         self.assertEqualTracks(track1, track2)
 
-    def test_no_what(self):
-        """what must return default value if not present in gpx.keywords"""
-        what_default = Track.legal_whats[0]
+    def test_no_category(self):
+        """category must return default value if not present in gpx.keywords"""
+        category_default = Track.legal_categories[0]
         track = Track()
-        self.assertEqual(track.what, what_default)
-        track.what = None
-        self.assertEqual(track.what, what_default)
+        self.assertEqual(track.category, category_default)
+        track.category = None
+        self.assertEqual(track.category, category_default)
         with self.assertRaises(Exception):
-            track.what = 'illegal value'
-        self.assertEqual(track.what, what_default)
+            track.category = 'illegal value'
+        self.assertEqual(track.category, category_default)
         with self.assertRaises(Exception):
-            track.add_keyword('What:illegal value')
-        self.assertEqual(track.what, what_default)
+            track.add_keyword('Category:illegal value')
+        self.assertEqual(track.category, category_default)
 
-    def test_duplicate_what(self):
-        """try to add two whats to Track"""
-        what_other = Track.legal_whats[5]
+    def test_duplicate_category(self):
+        """try to add two categories to Track"""
+        category_other = Track.legal_categories[5]
         track = Track()
-        track.what = what_other
+        track.category = category_other
         with self.assertRaises(Exception):
-            track.add_keyword('What:{}'.format(what_other))
+            track.add_keyword('Category:{}'.format(category_other))
 
-    def test_remove_what(self):
-        """remove what from Track"""
-        what_default = Track.legal_whats[0]
-        what_other = Track.legal_whats[5]
+    def test_remove_category(self):
+        """remove category from Track"""
+        category_default = Track.legal_categories[0]
+        category_other = Track.legal_categories[5]
         track = Track()
-        track.what = what_other
-        self.assertEqual(track.what, what_other)
-        track.what = None
-        self.assertEqual(track.what, what_default)
+        track.category = category_other
+        self.assertEqual(track.category, category_other)
+        track.category = None
+        self.assertEqual(track.category, category_default)
 
     def test_no_public(self):
         """public must return False if not present in gpx.keywords"""
@@ -205,20 +205,20 @@ class TrackTests(BasicTest):
         # first, does it overwrite?
         track = self.create_test_track()
         xml = track.to_xml()
-        if track.what == 'Cycling':
-            other_what = 'Running'
+        if track.category == 'Cycling':
+            other_category = 'Running'
         else:
-            other_what = 'Cycling'
+            other_category = 'Cycling'
 
         track2 = Track()
         track2.title = 'Title2'
         track2.description = 'Description2'
-        track2.what = other_what
+        track2.category = other_category
         track2.public = True
         track2.parse(xml)
         self.assertEqual(track2.title, track.title)
         self.assertEqual(track2.description, track.description)
-        self.assertEqual(track2.what, track.what)
+        self.assertEqual(track2.category, track.category)
         self.assertTrue(track2.public)
         self.assertEqual(track2.keywords, list())
 
@@ -226,7 +226,7 @@ class TrackTests(BasicTest):
         xml = track2.to_xml()
         self.assertIn('Status:public', xml)
         track2 = Track()
-        track2.what = Track.legal_whats[3]
+        track2.category = Track.legal_categories[3]
         track2.public = False
         track2.parse(xml)
         self.assertTrue(track2.public)
@@ -236,10 +236,10 @@ class TrackTests(BasicTest):
         track.title = ''
         track.description = ''
         xml = track.to_xml()
-        if track.what == 'Cycling':
-            other_what = 'Running'
+        if track.category == 'Cycling':
+            other_category = 'Running'
         else:
-            other_what = 'Cycling'
+            other_category = 'Cycling'
 
         track2 = Track()
         track2.title = 'Title2'
@@ -374,7 +374,7 @@ class TrackTests(BasicTest):
         with Directory(cleanup=True) as directory:
             track = Track()
             track.title = 'Title'
-            track.what = 'Running'
+            track.category = 'Running'
             track.add_points(self.some_random_points(10))
             self.assertIn('Title', str(track))
             self.assertIn('public' if track.public else 'private', str(track))
@@ -424,19 +424,19 @@ class TrackTests(BasicTest):
         """Track.key()"""
         title = 'This is a niße title'
         description = title + ' NOT - it is the description'
-        what = Track.legal_whats[3]
+        category = Track.legal_categories[3]
         public = True
         points = self.some_random_points(10)
         track = Track()
         track.title = title
         track.description = description
-        track.what = what
+        track.category = category
         track.public = public
         track.add_points(points)
         key = track.key()
         self.assertIn('title:{}'.format(title), key)
         self.assertIn('description:{}'.format(description), key)
-        self.assertIn('what:{}'.format(what), key)
+        self.assertIn('category:{}'.format(category), key)
         self.assertIn('public:True', key)
         self.assertIn('last_time:{}'.format(track.last_time), key)
         self.assertIn('angle:{}'.format(track.angle()), key)
@@ -482,9 +482,9 @@ class TrackTests(BasicTest):
 
     def test_local_keywords(self):
         """Some keyword tests. More see in test_backends"""
-        # What: and Status: are special
+        # Category: and Status: are special
         gpx = self._get_gpx_from_test_file('test')
-        gpx.keywords = 'What:Cycling, Status:public'
+        gpx.keywords = 'Category:Cycling, Status:public'
         track = Track(gpx=gpx)
         self.assertEqual(track.keywords, list())
 

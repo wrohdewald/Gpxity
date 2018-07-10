@@ -71,7 +71,7 @@ class Track:
     everything as soon as anything is needed.
 
     Attributes:
-        legal_whats (tuple(str)): The legal values for :attr:`~Track.what`. The first one is used
+        legal_categories (tuple(str)): The legal values for :attr:`~Track.category`. The first one is used
             as default value. This is a mostly a superset of the values for the different backends.
             Every backend maps from its internal values into those when reading and maps them
             back when writing. Since not all backends support all values defined here and since
@@ -82,12 +82,12 @@ class Track:
             tracks, the full data will only be loaded when needed. This general information
             can help avoiding having to load the full data. The backend will fill header_data
             if it can. The backends are free to put additional info here. MMT does this for
-            time, title, what and distance. You are not supposed to change header_data.
+            time, title, category and distance. You are not supposed to change header_data.
     """
 
     # pylint: disable = too-many-instance-attributes
 
-    legal_whats = (
+    legal_categories = (
         # values from MMT
         'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
         'Swimming', 'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
@@ -103,7 +103,7 @@ class Track:
     def __init__(self, gpx=None):
         self.__dirty = set()
         self._batch_changes = False
-        self.__what = self.legal_whats[0]
+        self.__category = self.legal_categories[0]
         self.__public = False
         self.__id_in_backend = None
         self.__backend = None
@@ -191,7 +191,7 @@ class Track:
             ~gpxity.Track: the new track
         """
         result = Track(gpx=self.gpx.clone())
-        result.what = self.what
+        result.category = self.category
         result.public = self.public
         return result
 
@@ -316,7 +316,7 @@ class Track:
             self._rewrite()
 
     @property
-    def what(self) ->str:
+    def category(self) ->str:
         """str: What is this track doing? If we have no current value,
         return the default.
 
@@ -324,22 +324,22 @@ class Track:
         the value used by the backend. This happens when reading from
         or writing to the backend.
         Returns:
-            The current value or the default value (see :attr:`legal_whats`)
+            The current value or the default value (see :attr:`legal_categories`)
         """
-        if not self._loaded and 'what' in self.header_data:
-            return self.header_data['what']
+        if not self._loaded and 'category' in self.header_data:
+            return self.header_data['category']
         self._load_full()
-        return self.__what
+        return self.__category
 
-    @what.setter
-    def what(self, value: str):
+    @category.setter
+    def category(self, value: str):
         if value is None:
-            value = self.legal_whats[0]
-        if value != self.what:
-            if value not in self.legal_whats:
-                raise Exception('What {} is not known'.format(value))
-            self.__what = value
-            self._dirty = 'what'
+            value = self.legal_categories[0]
+        if value != self.category:
+            if value not in self.legal_categories:
+                raise Exception('Category {} is not known'.format(value))
+            self.__category = value
+            self._dirty = 'category'
 
     def _load_full(self) ->None:
         """Loads the full track from source_backend if not yet loaded."""
@@ -404,11 +404,11 @@ class Track:
 
     def _parse_keywords(self):
         """self.keywords is 1:1 as parsed from xml. Here we extract
-        our special keywords What: and Status:"""
+        our special keywords Category: and Status:"""
         new_keywords = list()
         for keyword in self.keywords:
-            if keyword.startswith('What:'):
-                self.what = keyword.split(':')[1]
+            if keyword.startswith('Category:'):
+                self.category = keyword.split(':')[1]
             elif keyword.startswith('Status:'):
                 self.public = keyword.split(':')[1] == 'public'
             else:
@@ -418,7 +418,7 @@ class Track:
     def parse(self, indata):
         """Parses GPX.
 
-        :attr:`title`, :attr:`description` and :attr:`what` from indata have precedence over the current values.
+        :attr:`title`, :attr:`description` and :attr:`category` from indata have precedence over the current values.
         :attr:`public` will be or-ed
 
         Args:
@@ -466,7 +466,7 @@ class Track:
         """
         self._load_full()
         new_keywords = self.keywords
-        new_keywords.append('What:{}'.format(self.what))
+        new_keywords.append('Category:{}'.format(self.category))
         new_keywords.append('Status:{}'.format('public' if self.public else 'private'))
         old_keywords = self.__gpx.keywords
         try:
@@ -538,7 +538,7 @@ class Track:
             Because the GPX format does not have attributes for everything used by all backends,
             we encode some of the backend arguments in keywords.
 
-            Example for mapmytracks: keywords = 'Status:public, What:Cycling'.
+            Example for mapmytracks: keywords = 'Status:public, Category:Cycling'.
 
             However this is transparent for you. When parsing theGPX file, those are removed
             from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
@@ -569,16 +569,16 @@ class Track:
         with self.batch_changes():
             self.__gpx.keywords = ''
             for keyword in sorted(value):
-                # add_keyword ensures we do not get unwanted things like What:
+                # add_keyword ensures we do not get unwanted things like Category:
                 self.add_keyword(keyword)
             self.__dirty = set()
             self._dirty = 'keywords'
 
     @staticmethod
     def _check_keyword(keyword):
-        """Must not be What: or Status:"""
-        if keyword.startswith('What:'):
-            raise Exception('Do not use this directly,  use Track.what')
+        """Must not be Category: or Status:"""
+        if keyword.startswith('Category:'):
+            raise Exception('Do not use this directly,  use Track.category')
         if keyword.startswith('Status:'):
             raise Exception('Do not use this directly,  use Track.public')
         if ',' in keyword:
@@ -633,14 +633,14 @@ class Track:
         if self.speed() > self.moving_speed():
             result.append('Speed {:.3f} must not be above Moving speed {:.3f}'.format(
                 self.speed(), self.moving_speed()))
-        if 'Cycling' in self.what and self.speed() < 10:
-            result.append('{}: Speed {:.3f} is very slow'.format(self.what, self.speed()))
-        if 'Mountain biking' in self.what and self.speed() < 7:
-            result.append('{}: Speed {:.3f} is very slow'.format(self.what, self.speed()))
-        if 'Cycling' in self.what and self.moving_speed() < 15:
-            result.append('{}: Moving speed {:.3f} is very slow'.format(self.what, self.moving_speed()))
-        if 'Mountain biking' in self.what and self.moving_speed() < 10:
-            result.append('{}: Moving speed {:.3f} is very slow'.format(self.what, self.moving_speed()))
+        if 'Cycling' in self.category and self.speed() < 10:
+            result.append('{}: Speed {:.3f} is very slow'.format(self.category, self.speed()))
+        if 'Mountain biking' in self.category and self.speed() < 7:
+            result.append('{}: Speed {:.3f} is very slow'.format(self.category, self.speed()))
+        if 'Cycling' in self.category and self.moving_speed() < 15:
+            result.append('{}: Moving speed {:.3f} is very slow'.format(self.category, self.moving_speed()))
+        if 'Mountain biking' in self.category and self.moving_speed() < 10:
+            result.append('{}: Moving speed {:.3f} is very slow'.format(self.category, self.moving_speed()))
         return result
 
     def __repr__(self):
@@ -651,7 +651,7 @@ class Track:
                 parts.append('id:{}'.format(self.id_in_backend))
             parts.append('public' if self.public else 'private')
             if self.__gpx:
-                parts.append(self.what)
+                parts.append(self.category)
                 if self.keywords:
                     parts.append(','.join(self.keywords))
                 if self.title:
@@ -682,12 +682,12 @@ class Track:
             self.id_in_backend if self.id_in_backend else ' unsaved ',
             long_info)
 
-    def key(self, with_what: bool = True) ->str:
+    def key(self, with_category: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but
         sufficiently safe IMHO.
 
         Args:
-            with_what: If False, do not use self.what. Needed for comparing
+            with_category: If False, do not use self.category. Needed for comparing
                 tracks for equality like in unittests because values can change
                 and information can get lost while copying between different
                 backends
@@ -696,9 +696,9 @@ class Track:
             a string with selected attributes in printable form.
         """
         self._load_full()
-        return 'title:{} description:{} keywords:{} what:{}: public:{} last_time:{} angle:{} points:{}'.format(
+        return 'title:{} description:{} keywords:{} category:{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.what if with_what else '', self.public, self.last_time,
+            ','.join(self.keywords), self.category if with_category else '', self.public, self.last_time,
             self.angle(), self.gpx.get_track_points_no())
 
     def __eq__(self, other):
@@ -841,7 +841,7 @@ class Track:
         # the title of MMT might have been copied into another backend:
         if not self.title:
             return True
-        if self.title == '{} track'.format(self.what):
+        if self.title == '{} track'.format(self.category):
             return True
         if  all(x in '0123456789 :-_' for x in self.title):
             return True
@@ -858,7 +858,7 @@ class Track:
             other (:class:`~gpxity.Track`): The track to be merged
             dry_run: if True, do not really apply the merge
         Returns: list(str)
-            Messages about what has been done
+            Messages about category has been done
         """
         # pylint: disable=too-many-branches
         if self.points_hash() != other.points_hash():
@@ -879,9 +879,9 @@ class Track:
                 msg.append('Visibility: private -> public')
                 if not dry_run:
                     self.public = True
-            if other.what != self.what:
-                msg.append('What: {}={} wins over {}={}'.format(
-                    other.identifier(), other.what, self.identifier(), self.what))
+            if other.category != self.category:
+                msg.append('Category: {}={} wins over {}={}'.format(
+                    other.identifier(), other.category, self.identifier(), self.category))
             kw_src = set(other.keywords)
             kw_dst = set(self.keywords)
             if kw_src - kw_dst:

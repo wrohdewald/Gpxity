@@ -41,7 +41,7 @@ class TrackMMT(MMT):
     def _write_public(self, track):
         raise NotImplementedError()
 
-    def _write_what(self, track):
+    def _write_category(self, track):
         raise NotImplementedError()
 
     def _write_keywords(self, track):

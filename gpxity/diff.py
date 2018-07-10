@@ -30,13 +30,13 @@ class BackendDiff:
         similar(list(Pair)): Pairs of Tracks are on both sides with
             differences. This includes all tracks having at least
             100 identical positions without being identical.
-        diff_flags: T=time, D=description, W=what, S=status,
+        diff_flags: T=time, D=description, C=category, S=status,
             K=keywords, P=positions, Z=time offset
     """
 
     # pylint: disable=too-few-public-methods
 
-    diff_flags = 'TDWSKPZ'
+    diff_flags = 'TDCSKPZ'
     class Pair:
         """Holds two comparable Items and the diff result
         Attributes:
@@ -72,8 +72,8 @@ class BackendDiff:
             if self.left.description != self.right.description:
                 result['D'].append('"{}" <> "{}"'.format(self.left.description or '', self.right.description or ''))
 
-            if self.left.what != self.right.what:
-                result['W'].append('"{}" <> "{}"'.format(self.left.what or '', self.right.what or ''))
+            if self.left.category != self.right.category:
+                result['C'].append('"{}" <> "{}"'.format(self.left.category or '', self.right.category or ''))
 
             if self.left.keywords != self.right.keywords:
                 result['K'].append('"{}" <> "{}"'.format(

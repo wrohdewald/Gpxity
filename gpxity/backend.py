@@ -64,7 +64,7 @@ class Backend:
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
-            Those are: remove, track, get_time, _write_title, _write_public, _write_what,
+            Those are: remove, track, get_time, _write_title, _write_public, _write_category,
             _write_gpx, _write_description, _write_keywords, _write_add_keyword, _write_remove_keyword.
             If a particular _write_* like _write_public does not exist, the entire track is written instead
             which normally results in a new ident for the track.
@@ -86,7 +86,7 @@ class Backend:
 
     skip_test = False
 
-    _legal_whats = None # Override in the backends
+    _legal_categories = None # Override in the backends
 
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None):
         self._decoupled = False
@@ -116,7 +116,7 @@ class Backend:
             self.auth[0] if self.auth and self.auth[0] else '')
 
     @property
-    def legal_whats(self):
+    def legal_categories(self):
         """
         Returns: list(str)
             all legal values for this backend
@@ -208,11 +208,11 @@ class Backend:
             self.__match = old_match
             raise
 
-    def decode_what(self, value: str) ->str:
+    def decode_category(self, value: str) ->str:
         """Translate the value from the backend into internal one."""
         raise NotImplementedError
 
-    def encode_what(self, value: str) ->str:
+    def encode_category(self, value: str) ->str:
         """Translate internal value into the backend specific value."""
         raise NotImplementedError
 

@@ -52,12 +52,12 @@ def _convert_time(raw_time) ->datetime.datetime:
     return datetime.datetime.utcfromtimestamp(float(raw_time))
 
 
-class ParseMMTWhats(HTMLParser): # pylint: disable=abstract-method
+class ParseMMTCategories(HTMLParser): # pylint: disable=abstract-method
 
-    """Parse the legal values for what from html"""
+    """Parse the legal values for category from html"""
 
     def __init__(self):
-        super(ParseMMTWhats, self).__init__()
+        super(ParseMMTCategories, self).__init__()
         self.seeing_tracks = False
         self.result = ['Cycling'] # The default value
 
@@ -86,7 +86,7 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
 
     def __init__(self):
         super(ParseMMTTrack, self).__init__()
-        self.seeing_what = False
+        self.seeing_category = False
         self.seeing_title = False
         self.seeing_description = False
         self.seeing_status = False
@@ -94,9 +94,9 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
         self.result['mid'] = None
         self.result['title'] = None
         self.result['description'] = None
-        self.result['what'] = None
-        self.result['what_from_title'] = None
-        self.result['what_3'] = None
+        self.result['category'] = None
+        self.result['category_from_title'] = None
+        self.result['category_3'] = None
         self.result['public'] = None
         self.result['tags'] = dict() # key: name, value: id
 
@@ -105,7 +105,7 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
         # pylint: disable=too-many-branches
         self.seeing_title = False
         self.seeing_description = False
-        self.seeing_what = False
+        self.seeing_category = False
         self.seeing_status = False
         self.seeing_tag = None
         attributes = defaultdict(str)
@@ -115,16 +115,16 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
             value = attributes['value'].strip()
             if (attributes['id'] == 'activity_type' and attributes['type'] == 'hidden'
                     and attributes['name'] == 'activity_type' and value):
-                self.result['what_3'] = value
+                self.result['category_3'] = value
             elif (attributes['id'] == 'mid' and attributes['type'] == 'hidden'
                   and attributes['name'] == 'mid'and value):
                 self.result['mid'] = value
         elif tag == 'div' and attributes['class'] == 'panel' and 'data-activity' in attributes:
-            self.result['what'] = attributes['data-activity']
+            self.result['category'] = attributes['data-activity']
         elif tag == 'span' and attributes['class'] == 'privacy-status':
             self.seeing_status = True
         elif tag == 'title':
-            self.seeing_what = True
+            self.seeing_category = True
         elif tag == 'h2' and attributes['id'] == 'track-title':
             self.seeing_title = True
         elif tag == 'p' and attributes['id'] == 'track-desc':
@@ -141,13 +141,13 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
             self.result['title'] = data.strip()
         if self.seeing_description:
             self.result['description'] = data.strip()
-        if self.seeing_what:
+        if self.seeing_category:
             try:
                 _ = data.split('|')[1].split('@')[0].strip()
-                self.result['what_from_title'] = ' '.join(_.split(' ')[:-2])
+                self.result['category_from_title'] = ' '.join(_.split(' ')[:-2])
             except BaseException:
                 print('cannot parse', data)
-                self.result['what_from_title'] = ''
+                self.result['category_from_title'] = ''
         if self.seeing_status:
             self.result['public'] = data.strip() != 'Only you can see this activity'
         if self.seeing_tag:
@@ -163,7 +163,7 @@ class MMTRawTrack:
         self.track_id = xml.find('id').text
         self.title = html.unescape(xml.find('title').text)
         self.time = _convert_time(xml.find('date').text)
-        self.what = html.unescape(xml.find('activity_type').text)
+        self.category = html.unescape(xml.find('activity_type').text)
         self.distance = float(xml.find('distance').text)
 
 
@@ -190,9 +190,9 @@ class MMT(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    _legal_whats = list()
+    _legal_categories = list()
 
-    _what_encoding = {
+    _category_encoding = {
         'Pedelec': 'Cycling',
         'Crossskating': 'Skating',
         'Handcycle': 'Cycling',
@@ -217,16 +217,16 @@ class MMT(Backend):
         self._tracking_track = None
 
     @property
-    def legal_whats(self):
+    def legal_categories(self):
         """
         Returns: list(str)
-            all legal values for what."""
-        if not self._legal_whats:
+            all legal values for category."""
+        if not self._legal_categories:
             response = self.session.post('{}/profile/upload/manual'.format(self.url), timeout=self.timeout)
-            whats_parser = ParseMMTWhats()
-            whats_parser.feed(response.text)
-            self._legal_whats.extend(whats_parser.result)
-        return self._legal_whats
+            category_parser = ParseMMTCategories()
+            category_parser.feed(response.text)
+            self._legal_categories.extend(category_parser.result)
+        return self._legal_categories
 
     @property
     def session(self):
@@ -244,20 +244,20 @@ class MMT(Backend):
                 raise self.BackendException('Login as {} failed'.format(self.auth[0]))
         return self.__session
 
-    def decode_what(self, value: str) ->str:
+    def decode_category(self, value: str) ->str:
         """Translate the value from MMT into internal one.
         Since gpxity once decided to use MMT definitions for tracks, this should mostly be 1:1 here."""
-        if value not in Track.legal_whats:
-            raise self.BackendException('MMT gave us an unknown what={}'.format(value))
+        if value not in Track.legal_categories:
+            raise self.BackendException('MMT gave us an unknown category={}'.format(value))
         return value
 
-    def encode_what(self, value: str) ->str:
+    def encode_category(self, value: str) ->str:
         """Translate internal value into MMT value"""
-        if value in self.legal_whats:
+        if value in self.legal_categories:
             return value
-        if value not in self._what_encoding:
+        if value not in self._category_encoding:
             raise self.BackendException('MMT has no equivalent for {}'.format(value))
-        return self._what_encoding[value]
+        return self._category_encoding[value]
 
     @property
     def mid(self):
@@ -377,13 +377,13 @@ class MMT(Backend):
             status=1 if track.public else 2)
             # what a strange answer
 
-    def _write_what(self, track):
-        """change what directly on mapmytracks. Note that we specify iso-8859-1 but
+    def _write_category(self, track):
+        """change category directly on mapmytracks. Note that we specify iso-8859-1 but
         use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
         aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
-            eid=track.id_in_backend, activity=self.encode_what(track.what))
+            eid=track.id_in_backend, activity=self.encode_category(track.category))
 
     def _current_keywords(self, track):
         """Read all current keywords (MMT tags).
@@ -478,7 +478,7 @@ class MMT(Backend):
                 raw_data = MMTRawTrack(_)
                 track = self._found_track(raw_data.track_id)
                 track.header_data['title'] = raw_data.title
-                track.header_data['what'] = self.decode_what(raw_data.what)
+                track.header_data['category'] = self.decode_category(raw_data.category)
                 track.header_data['time'] = raw_data.time
                 track.header_data['distance'] = raw_data.distance
                 yield track
@@ -509,10 +509,10 @@ class MMT(Backend):
             track.description = _
         if page_scan['tags']:
             track.keywords = page_scan['tags'].keys()
-        # MMT sends different values of the current track type, hopefully what_3 is always the
+        # MMT sends different values of the current track type, hopefully category_3 is always the
         # correct one.
-        if page_scan['what_3']:
-            track.what = self.decode_what(page_scan['what_3'])
+        if page_scan['category_3']:
+            track.category = self.decode_category(page_scan['category_3'])
         if page_scan['public'] is not None:
             track.public = page_scan['public']
 
@@ -549,7 +549,7 @@ class MMT(Backend):
         response = self.__post(
             request='upload_activity', gpx_file=track.to_xml(),
             status='public' if track.public else 'private',
-            description=track.description, activity=self.encode_what(track.what))
+            description=track.description, activity=self.encode_category(track.category))
         new_ident = response.find('id').text
         if not new_ident:
             raise self.BackendException('No id found in response')
@@ -596,7 +596,7 @@ class MMT(Backend):
                 request='start_activity',
                 title=track.title,
                 privacy='public' if track.public else 'private',
-                activity=self.encode_what(track.what),
+                activity=self.encode_category(track.category),
                 points=self.__track_points(track.points()),
                 source='Gpxity',
                 version=VERSION,

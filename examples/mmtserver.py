@@ -154,7 +154,7 @@ class Handler(BaseHTTPRequestHandler):
                     '<activity_type>{}</activity_type>'
                     '<date>{}</date>'
                     '</track{}>'.format(
-                        idx + 1, _.id_in_backend, _.title, _.what,
+                        idx + 1, _.id_in_backend, _.title, _.category,
                         int(_.time.timestamp()), idx + 1))
         return '<tracks>{}</tracks>'.format(''.join(a_list))
 
@@ -200,7 +200,7 @@ class Handler(BaseHTTPRequestHandler):
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
         Handler.tracking_track.public = parsed['privacy'] == 'public'
-        Handler.tracking_track.what = parsed['activity']
+        Handler.tracking_track.category = parsed['activity']
         Handler.directory.add(Handler.tracking_track)
         self.send_mail('start_track', Handler.tracking_track)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(

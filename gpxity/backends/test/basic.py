@@ -76,7 +76,7 @@ class BasicTest(unittest.TestCase):
 
     @classmethod
     def create_test_track(
-            cls, count: int = 1, idx: int = 0, what: str = None, public: bool = False,
+            cls, count: int = 1, idx: int = 0, category: str = None, public: bool = False,
             start_time=None, end_time=None):
         """creates an :class:`~gpxity.Track`. It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
@@ -87,9 +87,9 @@ class BasicTest(unittest.TestCase):
         Args:
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
-            what: The wanted value for the track.
-                Default: if count == len(:attr:`Track.legal_whats <gpxity.Track.legal_whats>`),
-                the default value will be legal_whats[idx].
+            category: The wanted value for the track.
+                Default: if count == len(:attr:`Track.legal_categories <gpxity.Track.legal_categories>`),
+                the default value will be legal_categories[idx].
                 Otherwise a random value will be applied.
             public: should the tracks be public or private?
             start_time: If given, assign it to the first point and adjust all following times
@@ -122,12 +122,12 @@ class BasicTest(unittest.TestCase):
         result = Track(gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(gpx.name)
-        if what:
-            result.what = what
-        elif count == len(Track.legal_whats):
-            result.what = Track.legal_whats[idx]
+        if category:
+            result.category = category
+        elif count == len(Track.legal_categories):
+            result.category = Track.legal_categories[idx]
         else:
-            result.what = random.choice(Track.legal_whats)
+            result.category = random.choice(Track.legal_categories)
         result.public = public
         return result
 
@@ -158,12 +158,12 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
-    def assertSameTracks(self, backend1, backend2, with_what=True): # pylint: disable=invalid-name
+    def assertSameTracks(self, backend1, backend2, with_category=True): # pylint: disable=invalid-name
         """both backends must hold identical tracks"""
         self.maxDiff = None # pylint: disable=invalid-name
         if backend1 != backend2:
-            keys1 = sorted(x.key(with_what) for x in backend1)
-            keys2 = sorted(x.key(with_what) for x in backend2)
+            keys1 = sorted(x.key(with_category) for x in backend1)
+            keys2 = sorted(x.key(with_category) for x in backend2)
             self.assertEqual(keys1, keys2)
 
     def assertEqualTracks(self, track1, track2, xml: bool = False): # pylint: disable=invalid-name
@@ -184,13 +184,13 @@ class BasicTest(unittest.TestCase):
         self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
     def setup_backend(self, cls_, username: str = None, url: str = None, count: int = 0,  # pylint: disable=too-many-arguments
-                      cleanup: bool = True, clear_first: bool = True, what: str = None,
+                      cleanup: bool = True, clear_first: bool = True, category: str = None,
                       public: bool = False, debug: bool = False):
         """sets up an instance of a backend with count tracks.
 
-        If count == len(:attr:`Track.legal_whats <gpxity.Track.legal_whats>`),
+        If count == len(:attr:`Track.legal_categories <gpxity.Track.legal_categories>`),
         the list of tracks will always be identical. For an example
-        see :meth:`TestBackends.test_all_what <gpxity.backends.test.test_backends.TestBackends.test_all_what>`.
+        see :meth:`TestBackends.test_all_category <gpxity.backends.test.test_backends.TestBackends.test_all_category>`.
 
         Args:
             cls_ (Backend): the class of the backend to be created
@@ -209,7 +209,7 @@ class BasicTest(unittest.TestCase):
         if clear_first:
             result.remove_all()
         while count > len(result):
-            track = self.create_test_track(count, len(result), what=what, public=public)
+            track = self.create_test_track(count, len(result), category=category, public=public)
             result.add(track)
         self.assertGreaterEqual(len(result), count)
         if clear_first:
@@ -218,12 +218,12 @@ class BasicTest(unittest.TestCase):
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
-                     cleanup=True, clear_first=True, what=None,
+                     cleanup=True, clear_first=True, category=None,
                      public: bool = False, debug: bool = False, username=None):
         """Just like setup_backend but usable as a context manager. which will
         call destroy() when done.
         """
-        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, what, public, debug)
+        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public, debug)
         try:
             yield tmp_backend
         finally:

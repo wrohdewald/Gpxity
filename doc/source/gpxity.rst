@@ -23,7 +23,7 @@ gpxity.track module
     :members:
     :undoc-members:
     :show-inheritance:
-    :exclude-members: loading, is_loading, legal_what, append, skip_test
+    :exclude-members: loading, is_loading, legal_categories, append, skip_test
 
 gpxity.auth module
 ------------------

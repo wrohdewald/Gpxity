@@ -197,7 +197,7 @@ class Utility:
         add_field(True, 'Identifier', lambda x: x.identifier())
         add_field(self.options.title, 'Title', lambda x: x.title if x.title else '', field_fmt='{:.40}')
         add_field(self.options.time, 'Time', lambda x: x.time)
-        add_field(self.options.what, 'What', lambda x: x.what)
+        add_field(self.options.category, 'Category', lambda x: x.category)
         add_field(self.options.keywords, 'Keywords', lambda x: ','.join(y for y in x.keywords))
         add_field(self.options.length or self.options.length, 'Length', lambda x: x.length(), field_fmt='{:>8.3f}km')
         add_field(self.options.points, 'Points', lambda x: x.gpx.get_track_points_no(), field_fmt='{:>6}')
@@ -266,8 +266,8 @@ class Utility:
                 _.title = self.options.title
             if self.options.description:
                 _.description = self.options.description
-            if self.options.what:
-                _.what = self.options.what
+            if self.options.category:
+                _.category = self.options.category
             if self.options.public:
                 _.public = True
             if self.options.private:
@@ -372,8 +372,8 @@ class Utility:
             return 'point count {} is above {}'.format(track.gpx.get_track_points_no(), self.options.max_points)
         if self.options.only_kw and not self.options.only_kw & set(track.keywords):
             return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(track.keywords))
-        if self.options.only_what and track.what not in self.options.only_what:
-            return '{} is different from {}'.format(','.join(self.options.only_what), ','.join(track.what))
+        if self.options.only_category and track.category not in self.options.only_category:
+            return '{} is different from {}'.format(','.join(self.options.only_category), ','.join(track.category))
         return None
 
     @staticmethod
@@ -386,7 +386,7 @@ class Utility:
         parser.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
         parser.add_argument('--max-length', help='Limit tracks by track length', type=int, default=None)
         parser.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
-        parser.add_argument('--only-what', help='Limit tracks by what', default=None)
+        parser.add_argument('--only-category', help='Limit tracks by category', default=None)
 
     @staticmethod
     def add_common_args(parser):
@@ -476,7 +476,7 @@ Dates are expected as YYYY-MM-DD.
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
-                               help="""one or more out of identifier,title,what,time,length,
+                               help="""one or more out of identifier,title,category,time,length,
                                points,keywords,status,speed,moving_speed,duration
                                separated by commas (no spaces allowed)""",
                                default='identifier')
@@ -487,7 +487,7 @@ Dates are expected as YYYY-MM-DD.
                                action='store_true', default=False)
         ls_parser.add_argument('--title', help='show the title',
                                action='store_true', default=False)
-        ls_parser.add_argument('--what', help='show the track type',
+        ls_parser.add_argument('--category', help='show the track type',
                                action='store_true', default=False)
         ls_parser.add_argument('--time', help='show the time',
                                action='store_true', default=False)
@@ -528,7 +528,7 @@ Dates are expected as YYYY-MM-DD.
                                 action='store_true', default=False)
         set_parser.add_argument('--title', help='set the title', type=str, default=None)
         set_parser.add_argument('--description', help='set the description', type=str, default=None)
-        set_parser.add_argument('--what', help='set the track type', type=str, default=None)
+        set_parser.add_argument('--category', help='set the track type', type=str, default=None)
         set_parser.add_argument('--public', help='set the status to public', action='store_true', default=False)
         set_parser.add_argument('--private', help='set the status to private', action='store_true', default=False)
         self.add_common_args(set_parser)
@@ -582,7 +582,7 @@ Dates are expected as YYYY-MM-DD.
             if self.options.long:
                 self.options.title = True
                 self.options.time = True
-                self.options.what = True
+                self.options.category = True
                 self.options.keywords = True
                 self.options.length = True
                 self.options.status = True
@@ -593,7 +593,7 @@ Dates are expected as YYYY-MM-DD.
                 self.options.source = [self.options.destination]
         if self.options.only_kw:
             self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
-        if self.options.only_what:
-            self.options.only_what = set(x.strip() for x in self.options.only_what.split(','))
+        if self.options.only_category:
+            self.options.only_category = set(x.strip() for x in self.options.only_category.split(','))
 
 sys.exit(Utility().exit_code)

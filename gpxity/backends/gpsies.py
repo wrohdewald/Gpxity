@@ -34,12 +34,12 @@ class GPSIESRawTrack:
         self.public = True
         self.description = None
 
-class ParseGPSIESWhats(HTMLParser): # pylint: disable=abstract-method
+class ParseGPSIESCategories(HTMLParser): # pylint: disable=abstract-method
 
-    """Parse the legal values for what from html"""
+    """Parse the legal values for category from html"""
 
     def __init__(self):
-        super(ParseGPSIESWhats, self).__init__()
+        super(ParseGPSIESCategories, self).__init__()
         self.result = list(['biking'])
 
     def handle_starttag(self, tag, attrs):
@@ -53,17 +53,17 @@ class ParseGPSIESWhats(HTMLParser): # pylint: disable=abstract-method
 
 class ParseGPIESEditPage(HTMLParser): # pylint: disable=abstract-method
 
-    """Parse the what value for a track from html"""
+    """Parse the category value for a track from html"""
 
     def __init__(self):
         super(ParseGPIESEditPage, self).__init__()
-        self.what = None
+        self.category = None
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser"""
         attributes = dict(attrs)
         if tag == 'input' and attributes['name'] == 'trackTypes' and 'checked' in attributes:
-            self.what = attributes['id']
+            self.category = attributes['id']
 
 
 class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
@@ -168,9 +168,9 @@ class GPSIES(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    _legal_whats = list()
+    _legal_categories = list()
 
-    _what_decoding = {
+    _category_decoding = {
         'trekking': 'Hiking',
         'jogging': 'Running',
         'climbing': 'Mountaineering',
@@ -193,7 +193,7 @@ class GPSIES(Backend):
         'geocaching': 'Miscellaneous'
     }
 
-    _what_encoding = {
+    _category_encoding = {
         'Cycling': 'biking',
         'Running': 'jogging',
         'Mountain biking': 'mountainbiking',
@@ -236,16 +236,16 @@ class GPSIES(Backend):
         self.session_response = None
 
     @property
-    def legal_whats(self):
+    def legal_categories(self):
         """
         Returns: list(str)
-            all legal values for what."""
-        if not self._legal_whats:
+            all legal values for category."""
+        if not self._legal_categories:
             response = requests.post('{}?trackList.do'.format(self.url), timeout=self.timeout)
-            whats_parser = ParseGPSIESWhats()
-            whats_parser.feed(response.text)
-            self._legal_whats.extend(whats_parser.result)
-        return self._legal_whats
+            category_parser = ParseGPSIESCategories()
+            category_parser.feed(response.text)
+            self._legal_categories.extend(category_parser.result)
+        return self._legal_categories
 
     @property
     def session(self):
@@ -274,26 +274,26 @@ class GPSIES(Backend):
         self._check_response(response)
         return response
 
-    def decode_what(self, value: str) ->str:
+    def decode_category(self, value: str) ->str:
         """Translate the value from Gpsies into internal one."""
-        if value.capitalize() in Track.legal_whats:
+        if value.capitalize() in Track.legal_categories:
             return value.capitalize()
-        if value not in self._what_decoding:
+        if value not in self._category_decoding:
             raise self.BackendException('Gpsies gave us an unknown track type {}'.format(value))
-        return self._what_decoding[value]
+        return self._category_decoding[value]
 
-    def encode_what(self, value: str) ->str:
+    def encode_category(self, value: str) ->str:
         """Translate internal value into Gpsies value"""
-        if value in self.legal_whats:
+        if value in self.legal_categories:
             return value
-        if value.lower() in self.legal_whats:
+        if value.lower() in self.legal_categories:
             return value.lower()
-        if value not in self._what_encoding:
+        if value not in self._category_encoding:
             raise self.BackendException('Gpsies has no equivalent for {}'.format(value))
-        return self._what_encoding[value]
+        return self._category_encoding[value]
 
-    def _write_what(self, track):
-        """change what on gpsies"""
+    def _write_category(self, track):
+        """change category on gpsies"""
         self._edit(track)
 
     def _write_description(self, track):
@@ -317,7 +317,7 @@ class GPSIES(Backend):
             'fileDescription': track.description,
             'filename': track.title,
             'status': '1' if track.public else '3',
-            'trackTypes': self.encode_what(track.what),
+            'trackTypes': self.encode_category(track.category),
             'websiteUrl':''}
 
         # in about 1 out of 10 cases this update does not work.
@@ -360,13 +360,13 @@ class GPSIES(Backend):
                 track.public = True
             yield track
 
-    def _read_what(self, track):
+    def _read_category(self, track):
         """I found no way to download all attributes in one go"""
         data = {'fileId': track.id_in_backend}
         response = self.__post('editTrack', data)
         page_parser = ParseGPIESEditPage()
         page_parser.feed(response.text)
-        track.what = self.decode_what(page_parser.what)
+        track.category = self.decode_category(page_parser.category)
 
     def _read_all(self, track):
         """get the entire track. For gpies, we only need the gpx file"""
@@ -379,7 +379,7 @@ class GPSIES(Backend):
             _ = track.header_data['public']
             del track.header_data['public']
             track.public = _
-        self._read_what(track)
+        self._read_category(track)
 
     def _check_response(self, response):
         """are there error messages?"""
@@ -424,7 +424,7 @@ class GPSIES(Backend):
             'filename': track.title,
             'status': '1' if track.public else '3',
             'fileDescription': track.description,
-            'trackTypes': self.encode_what(track.what),
+            'trackTypes': self.encode_category(track.category),
             'trackClassification':'withoutClassification',
             'trackSimplification': '0',
             'uploadButton':''}

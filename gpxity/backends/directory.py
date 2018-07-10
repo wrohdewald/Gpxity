@@ -86,17 +86,17 @@ class Directory(Backend):
         return result
 
     @property
-    def legal_whats(self):
+    def legal_categories(self):
         """
         Returns: list(str)
-            all legal values for what for this backend."""
-        return Track.legal_whats
+            all legal values for category for this backend."""
+        return Track.legal_categories
 
-    def decode_what(self, value: str) ->str:
+    def decode_category(self, value: str) ->str:
         """Not needed for directory, this is always the internal value."""
         return value
 
-    def encode_what(self, value: str) ->str:
+    def encode_category(self, value: str) ->str:
         """Not needed for directory, this is always the internal value."""
         return value
 

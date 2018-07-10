@@ -36,7 +36,7 @@ class TestBackends(BasicTest):
         expect_unsupported[TrackMMT] = set([
             'remove', '_write_attribute',
             '_write_title', '_write_description', '_write_public',
-            '_write_what', '_write_keyword', '_write_add_keyword',
+            '_write_category', '_write_keyword', '_write_add_keyword',
             '_write_remove_keyword'])
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
@@ -141,23 +141,23 @@ class TestBackends(BasicTest):
                             2, second_time, first_time, second_time - first_time))
 
     def test_slow_write_remoteattr(self):
-        """If we change title, description, public, what in track, is the backend updated?"""
+        """If we change title, description, public, category in track, is the backend updated?"""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
-                    with self.temp_backend(cls, count=1, what='Horse riding') as backend:
+                    with self.temp_backend(cls, count=1, category='Horse riding') as backend:
                         track = backend[0]
                         first_public = track.public
                         first_title = track.title
                         first_description = track.description
-                        first_what = track.what
-                        self.assertEqual(first_what, 'Horse riding')
+                        first_category = track.category
+                        self.assertEqual(first_category, 'Horse riding')
                         self.assertFalse(track.public)
                         track.public = True
                         track.title = 'A new title'
                         self.assertEqual(track.title, 'A new title')
                         track.description = 'A new description'
-                        track.what = 'Cycling'
+                        track.category = 'Cycling'
                         # make sure there is no cache in the way
                         backend2 = self.clone_backend(backend)
                         track2 = backend2[0]
@@ -165,28 +165,28 @@ class TestBackends(BasicTest):
                         self.assertNotEqual(first_public, track2.public)
                         self.assertNotEqual(first_title, track2.title)
                         self.assertNotEqual(first_description, track2.description)
-                        self.assertNotEqual(first_what, track2.what)
+                        self.assertNotEqual(first_category, track2.category)
 
     def xtest_gpsies_bug(self):
-        """This bug only triggers sometimes: title, what or time will be wrong in track2.
+        """This bug only triggers sometimes: title, category or time will be wrong in track2.
         Workaround is in GPSIES._edit."""
         for _ in range(20):
-            with self.temp_backend(GPSIES, count=1, what='Horse riding', debug=True) as backend:
+            with self.temp_backend(GPSIES, count=1, category='Horse riding', debug=True) as backend:
                 track = backend[0]
                 track.title = 'A new title'
                 track.description = 'A new description'
-                track.what = 'Cycling'
+                track.category = 'Cycling'
                 # make sure there is no cache in the way
                 backend2 = self.clone_backend(backend)
                 track2 = backend2[0]
                 self.assertEqualTracks(track, track2)
 
     @skip
-    def test_zz_all_what(self):
-        """can we up- and download all values for :attr:`Track.what`?"""
-        what_count = len(Track.legal_whats)
+    def test_zz_all_category(self):
+        """can we up- and download all values for :attr:`Track.category`?"""
+        category_count = len(Track.legal_categories)
         backends = list(
-            self.setup_backend(x, count=what_count, clear_first=True)
+            self.setup_backend(x, count=category_count, clear_first=True)
             for x in self._find_backend_classes() if 'remove' in x.supported)
         copies = list(self.clone_backend(x) for x in backends)
         try:
@@ -222,7 +222,7 @@ class TestBackends(BasicTest):
                     track.remove_keyword(kw_b)
                     self.assertEqual(track.keywords, ([kw_a, kw_c]))
                     with self.assertRaises(Exception):
-                        track.add_keyword('What:whatever')
+                        track.add_keyword('Category:whatever')
                     track.add_keyword(kw_d)
                     self.assertEqual(set(track.keywords), set([kw_a, kw_c, kw_d]))
                     backend2 = self.clone_backend(backend)
@@ -292,7 +292,7 @@ class TestBackends(BasicTest):
 
     def test_private(self):
         """Up- and download private tracks"""
-        with self.temp_backend(Directory, count=5, what='Cycling') as local:
+        with self.temp_backend(Directory, count=5, category='Cycling') as local:
             track = Track(gpx=self._get_gpx_from_test_file('test2'))
             self.assertTrue(track.public) # as defined in test2.gpx keywords
             track.public = False
