@@ -869,7 +869,7 @@ class Track:
                 msg.append('Title: {} -> {}'.format(self.title, other.title))
                 if not dry_run:
                     self.title = other.title
-            if other.description != self.description:
+            if other.description and other.description != self.description:
                 msg.append('Additional description: {}'.format(
                     other.description))
                 if not dry_run:
