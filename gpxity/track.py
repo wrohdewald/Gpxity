@@ -863,7 +863,7 @@ class Track:
         return False
 
 
-    def merge(self, other, dry_run=False) ->list:
+    def merge(self, other, remove: bool = False, dry_run: bool = False) ->list:
         """Merge other track into this one. The track points must be identical.
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
@@ -871,11 +871,14 @@ class Track:
 
         Args:
             other (:class:`~gpxity.Track`): The track to be merged
+            remove: After merging succeeded, remove other
             dry_run: if True, do not really apply the merge
         Returns: list(str)
             Messages about category has been done
         """
         # pylint: disable=too-many-branches
+        if dry_run and remove:
+            raise Exception('Track.merge: remove and dry_run must not both be True')
         if self.points_hash() != other.points_hash():
             raise Exception('Cannot merge, points are different: {} into {}'.format(other, self))
         msg = list()
@@ -914,4 +917,14 @@ class Track:
                     self._dirty = 'gpx'
                 msg.append('Copied times for {} out of {} points'.format(
                     changed_point_times, self.gpx.get_track_points_no()))
+            if msg:
+                msg = list('     ' + x for x in msg)
+                msg.insert(0, 'Merged{} {}'.format(
+                    ' and removed' if remove else '', other.identifier(long=True)))
+                msg.insert(1, '{}  into {}'.format(
+                    ' ' * len(' and removed') if remove else '', self.identifier(long=True)))
+            if remove:
+                if len(msg) <= 2:
+                    msg.append('Removed duplicate {}'.format(other.identifier(long=True)))
+                other.remove()
         return msg

@@ -583,18 +583,7 @@ class Backend:
             sources = sorted(sources)
             target = dst_dict[point_hash][0]
             for source in sources:
-                msg = target.merge(source, dry_run=dry_run)
-                if msg:
-                    msg = list('     ' + x for x in msg)
-                    msg.insert(0, 'Merged{} {}'.format(
-                        ' and removed' if remove else '', source.identifier(long=True)))
-                    msg.insert(1, '{}  into {}'.format(
-                        ' ' * len(' and removed') if remove else '', target.identifier(long=True)))
-                    result.extend(msg)
-                if remove:
-                    if len(msg) <= 2:
-                        result.append('Removed duplicate {}'.format(source.identifier(long=True)))
-                    source.remove()
+                result.extend(target.merge(source, remove=remove, dry_run=dry_run))
         return result
 
     @staticmethod
