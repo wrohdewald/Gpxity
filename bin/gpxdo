@@ -366,6 +366,10 @@ class Utility:
                 return 'length {} is below {}'.format(length, self.options.min_length)
             if self.options.max_length and length > self.options.max_length:
                 return 'length {} is above {}'.format(length, self.options.max_length)
+        if self.options.min_speed and track.speed() < self.options.min_speed:
+            return 'Speed is below {}'.format(self.options.min_speed)
+        if self.options.max_speed and track.speed() > self.options.max_speed:
+            return 'Speed is above {}'.format(self.options.max_speed)
         if self.options.min_points and track.gpx.get_track_points_no() < self.options.min_points:
             return 'point count {} is below {}'.format(track.gpx.get_track_points_no(), self.options.min_points)
         if self.options.max_points and track.gpx.get_track_points_no() > self.options.max_points:
@@ -385,6 +389,8 @@ class Utility:
         parser.add_argument('--max-points', help='Limit tracks by maximum number of points', type=int, default=None)
         parser.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
         parser.add_argument('--max-length', help='Limit tracks by track length', type=int, default=None)
+        parser.add_argument('--min-speed', help='Limit tracks by speed', type=int, default=None)
+        parser.add_argument('--max-speed', help='Limit tracks by speed', type=int, default=None)
         parser.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
         parser.add_argument('--only-category', help='Limit tracks by category', default=None)
 
