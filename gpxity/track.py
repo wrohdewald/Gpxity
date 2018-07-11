@@ -648,14 +648,16 @@ class Track:
         if self.speed() > self.moving_speed():
             result.append('Speed {:.3f} must not be above Moving speed {:.3f}'.format(
                 self.speed(), self.moving_speed()))
-        if 'Cycling' in self.category and self.speed() < 10:
-            result.append('{}: Speed {:.3f} is very slow'.format(self.category, self.speed()))
-        if 'Mountain biking' in self.category and self.speed() < 7:
-            result.append('{}: Speed {:.3f} is very slow'.format(self.category, self.speed()))
-        if 'Cycling' in self.category and self.moving_speed() < 15:
-            result.append('{}: Moving speed {:.3f} is very slow'.format(self.category, self.moving_speed()))
-        if 'Mountain biking' in self.category and self.moving_speed() < 10:
-            result.append('{}: Moving speed {:.3f} is very slow'.format(self.category, self.moving_speed()))
+        if self.category == 'Cycling':
+            if not 3 <= self.speed() <= 60:
+                result.append('Speed {:.3f} is out of expected range 3..60'.format(self.speed()))
+            if not 10 <= self.moving_speed() <= 50:
+                result.append('Moving speed {:.3f} is out of expected range 10..50'.format(self.moving_speed()))
+        if self.category == 'Mountain biking':
+            if not 3 <= self.speed() <= 50:
+                result.append('Speed {:.3f} is out of expected range 3..50'.format(self.speed()))
+            if not 10 <= self.moving_speed() <= 40:
+                result.append('Moving speed {:.3f} is out of expected range 10..40'.format(self.moving_speed()))
         return result
 
     def __repr__(self):
