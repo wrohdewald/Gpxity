@@ -531,7 +531,7 @@ class Backend:
         Args:
             other: The backend or a single track to be merged
             remove: If True, remove merged tracks
-            dry_run: If True, do not really merge. If True, remove must be False
+            dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching track, just copy other into this Backend
         Returns: list(str) A list of messages for verbose output
         """
@@ -540,8 +540,6 @@ class Backend:
         # TODO: test for merging single track
         # TODO: test for merging a backend or a track with itself. Where
         # they may be identical instantiations or not. For all backends.
-        if dry_run and remove:
-            raise Backend.BackendException('Backend.merge: remove and dry_run must not both be True')
         result = list()
         src_dict = defaultdict(list)
         if isinstance(other, Track):
@@ -558,7 +556,8 @@ class Backend:
                     'blind move' if remove else 'blind copy', old_track, self,
                     '' if dry_run else ' / ' + new_track.id_in_backend))
                 if remove:
-                    other_backend.remove(old_track)
+                    if not dry_run:
+                        other_backend.remove(old_track)
             return result
 
         for _ in other_tracks:
@@ -582,7 +581,8 @@ class Backend:
                 'move' if remove else 'copy', old_track, self,
                 '' if dry_run else ' / ' + new_track.id_in_backend))
             if remove:
-                other_backend.remove(old_track)
+                if not dry_run:
+                    other_backend.remove(old_track)
             del src_tracks[0]
 
         # 2. merge the rest

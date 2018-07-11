@@ -865,7 +865,7 @@ class Track:
         return False
 
 
-    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
+    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:  # pylint: disable=unused-argument
         """Merge other track into this one. The track points must be identical.
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
@@ -881,8 +881,6 @@ class Track:
             Messages about category has been done
         """
         # pylint: disable=too-many-branches
-        if dry_run and remove:
-            raise Exception('Track.merge: remove and dry_run must not both be True')
         if self.points_hash() != other.points_hash():
             raise Exception('Cannot merge, points are different: {} into {}'.format(other, self))
         msg = list()
@@ -930,5 +928,6 @@ class Track:
             if remove:
                 if len(msg) <= 2:
                     msg.append('Removed duplicate {}'.format(other.identifier(long=True)))
-                other.remove()
+                if not dry_run:
+                    other.remove()
         return msg
