@@ -67,7 +67,7 @@ class Utility:
                 if self.options.func not in (self.diff, self.merge):
                     if isinstance(self.destination, Track):
                         raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
-                if not isinstance(self.destination, Track) and self.options.verbose:
+                if not isinstance(self.destination, Track) and self.options.verbose and not self.options.copy:
                     print('collecting tracks from', self.destination.identifier())
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
@@ -278,7 +278,8 @@ class Utility:
     def merge(self):
         """Merge"""
         for track in self.sources:
-            msg = self.destination.merge(track, remove=self.options.remove, dry_run=self.options.dry_run)
+            msg = self.destination.merge(
+                track, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
             if self.options.verbose or self.options.dry_run:
                 for _ in msg:
                     print(_)
@@ -355,7 +356,7 @@ class Utility:
 
     def match(self, track):
         """Check against the selecting options. Does cheap check first."""
-        # pylint: disable=too-many-return-statements
+        # pylint: disable=too-many-return-statements, too-many-branches
         if track.time:
             if self.options.first_date and track.time < self.options.first_date:
                 return 'time {} is before {}'.format(track.time, self.options.first_date)
@@ -555,6 +556,10 @@ Dates are expected as YYYY-MM-DD.
                                   action='store_true', default=False)
         merge_parser.add_argument('--remove', help='remove merged tracks',
                                   action='store_true', default=False)
+        merge_parser.add_argument(
+            '--copy', help='If the target is a backend, do not look for similar track. '
+            'Just copy. This is much faster for remote backends.',
+            action='store_true', default=False)
         self.add_multi_source(merge_parser)
         self.add_destination(merge_parser)
 
@@ -603,5 +608,7 @@ Dates are expected as YYYY-MM-DD.
             self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
         if self.options.only_category:
             self.options.only_category = set(x.strip() for x in self.options.only_category.split(','))
+        if not hasattr(self.options, 'copy'):
+            self.options.copy = False
 
 sys.exit(Utility().exit_code)

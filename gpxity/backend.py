@@ -525,13 +525,14 @@ class Backend:
         other._scan() # pylint: disable=protected-access
         return set(x.key() for x in self) == set(x.key() for x in other)
 
-    def merge(self, other, remove: bool = False, dry_run: bool = False) ->list:
+    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
         """merge other backend or a single track into this one.
         If two tracks have identical points, or-ify their other attributes.
         Args:
             other: The backend or a single track to be merged
             remove: If True, remove merged tracks
             dry_run: If True, do not really merge. If True, remove must be False
+            copy: Do not try to find a matching track, just copy other into this Backend
         Returns: list(str) A list of messages for verbose output
         """
         # pylint: disable=too-many-branches,too-many-locals
@@ -549,6 +550,17 @@ class Backend:
         else:
             other_tracks = list(other)
             other_backend = other
+        if copy:
+            for old_track in other_tracks:
+                if not dry_run:
+                    new_track = self.add(old_track)
+                result.append('{} {} -> {} {}'.format(
+                    'blind move' if remove else 'blind copy', old_track, self,
+                    '' if dry_run else ' / ' + new_track.id_in_backend))
+                if remove:
+                    other_backend.remove(old_track)
+            return result
+
         for _ in other_tracks:
             src_dict[_.points_hash()].append(_)
         if other_backend.url == self.url and other_backend.auth == self.auth:

@@ -865,7 +865,7 @@ class Track:
         return False
 
 
-    def merge(self, other, remove: bool = False, dry_run: bool = False) ->list:
+    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
         """Merge other track into this one. The track points must be identical.
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
@@ -875,6 +875,8 @@ class Track:
             other (:class:`~gpxity.Track`): The track to be merged
             remove: After merging succeeded, remove other
             dry_run: if True, do not really apply the merge
+            copy: This argument is ignored. It is only here to give Track.merge() and Backend.merge()
+                the same interface.
         Returns: list(str)
             Messages about category has been done
         """
