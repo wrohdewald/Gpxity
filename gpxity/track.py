@@ -405,6 +405,8 @@ class Track:
         """
         if self.backend is not None and backend is not None:
             raise Exception('lifetrack(): Track must not have a backend yet')
+        if self.backend is None and self.__gpx.tracks:
+            raise Exception('lifetrack(): Track must be empty')
         if backend is not None:
             self.__backend = backend
         if self.backend is None:
