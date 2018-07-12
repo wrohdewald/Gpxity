@@ -51,17 +51,17 @@ class Utility:
         self.exit_code = 0
         self.options = None
         self.parse_commandline()
+        self.sources = []
         self.source_tracks = []
         self.destination = None
         try:
             if self.options.source:
-                objects = []
                 for _ in self.options.source:
-                    objects.append(self.instantiate_object(_))
+                    self.sources.append(self.instantiate_object(_))
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
-                        self.destination = objects[-1]
-                self.source_tracks = self._collect_source_tracks(objects)
+                        self.destination = self.sources[-1]
+                self.source_tracks = self._collect_source_tracks(self.sources)
             if hasattr(self.options, 'destination') and self.destination is None:
                 self.destination = self.instantiate_object(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
@@ -277,9 +277,9 @@ class Utility:
 
     def merge(self):
         """Merge"""
-        for track in self.source_tracks:
+        for source in self.sources:
             msg = self.destination.merge(
-                track, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
+                source, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
             if self.options.verbose or self.options.dry_run:
                 for _ in msg:
                     print(_)
