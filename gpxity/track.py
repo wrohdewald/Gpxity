@@ -384,24 +384,18 @@ class Track:
     def lifetrack(self, backend=None, points=None) ->None:
         """Life tracking.
 
-        If this track belongs to a backend supporting
-        life tracking:
+        When starting lifetracking, the track must have no points yet
+        and must not yet be assigned to a backend.
 
-        * **points** is None: Stop life tracking
-        * if life tracking is not active, start it and send all points already known in this \
-            track. The backend may change :attr:`id_in_backend`.
-        * if life tracking was already active, just send the new points.
-
-        MMT supports simultaneous life tracking for only
-        one track per account, others may support more.
-
-        For backends not supporting life tracking, the points are
-        simply added.
+        Some backends may have a separate interface for life tracking like MMT.
+        Others may simply watch an activity and notice if it gets more points.
+        This is fully transparent, usage of lifetrack is always identical.
 
         Args:
-            backend: The backend which should track this Track. Only pass this
-              when you start tracking.
-            points (list(GPXTrackPoint): The points to be added
+            backend: The backend which should lifetrack this Track. Only pass this
+              when you start tracking. The backend may change :attr:`id_in_backend`.
+            points (list(GPXTrackPoint): The points to be added.
+                If None: Stop life tracking.
         """
         if self.backend is not None and backend is not None:
             raise Exception('lifetrack(): Track must not have a backend yet')
