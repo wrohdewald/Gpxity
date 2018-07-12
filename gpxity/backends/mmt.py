@@ -214,7 +214,7 @@ class MMT(Backend):
             # the same ID. We use this fact.
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
-        self._tracking_track = None
+        self._current_lifetrack = None
 
     @property
     def legal_categories(self):
@@ -567,7 +567,7 @@ class MMT(Backend):
         return new_ident
 
     @staticmethod
-    def __track_points(points):
+    def __formatted_lifetrack_points(points):
         """formats points for life tracking"""
         _ = list()
         for point in points:
@@ -578,7 +578,7 @@ class MMT(Backend):
                 point.time.timestamp()))
         return ' '.join(_)
 
-    def _track(self, track, points):
+    def _lifetrack(self, track, points):
         """Supports only one track per account. We ensure that only
         one track is tracked by this backend instance, you have to
         make sure there are no other processes interfering. The MMT
@@ -587,17 +587,17 @@ class MMT(Backend):
         points are not yet added to track."
         """
         if points is None:
-            if self._tracking_track:
+            if self._current_lifetrack:
                 self.__post(request='stop_activity')
-                self._tracking_track = None
+                self._current_lifetrack = None
             return
-        if not self._tracking_track:
+        if not self._current_lifetrack:
             result = self.__post(
                 request='start_activity',
                 title=track.title,
                 privacy='public' if track.public else 'private',
                 activity=self.encode_category(track.category),
-                points=self.__track_points(track.points()),
+                points=self.__formatted_lifetrack_points(track.points()),
                 source='Gpxity',
                 version=VERSION,
                 # tags='TODO',
@@ -605,13 +605,13 @@ class MMT(Backend):
             if result.find('type').text != 'activity_started':
                 raise self.BackendException('activity_started failed')
             track.id_in_backend = result.find('activity_id').text
-            self._tracking_track = track
+            self._current_lifetrack = track
             self.append(track)
-        if track != self._tracking_track:
-            raise self.BackendException('MMT._track() got wrong track')
+        if track != self._current_lifetrack:
+            raise self.BackendException('MMT._lifetrack() got wrong track')
         self.__post(
             request='update_activity', activity_id=track.id_in_backend,
-            points=self.__track_points(points))
+            points=self.__formatted_lifetrack_points(points))
 
     def destroy(self):
         """also close session"""

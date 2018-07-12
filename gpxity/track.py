@@ -381,7 +381,7 @@ class Track:
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
             self._dirty = 'gpx'
 
-    def track(self, backend=None, points=None) ->None:
+    def lifetrack(self, backend=None, points=None) ->None:
         """Life tracking.
 
         If this track belongs to a backend supporting
@@ -404,15 +404,15 @@ class Track:
             points (list(GPXTrackPoint): The points to be added
         """
         if self.backend is not None and backend is not None:
-            raise Exception('track(): Track must not have a backend yet')
+            raise Exception('lifetrack(): Track must not have a backend yet')
         if backend is not None:
             self.__backend = backend
         if self.backend is None:
-            raise Exception('track(): backend unknown')
+            raise Exception('lifetrack(): backend unknown')
         # pylint: disable=no-member
         if 'track' in self.backend.supported:
             self._round_points(points)
-            self.backend._track(self, points) # pylint: disable=protected-access
+            self.backend._lifetrack(self, points) # pylint: disable=protected-access
         else:
             self.add_points(points)
 

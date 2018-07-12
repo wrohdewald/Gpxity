@@ -348,11 +348,11 @@ class TestBackends(BasicTest):
         """test life tracking. TODO: automatically start the expected local server"""
         track = self.create_test_track()
         with TrackMMT(auth='test') as uplink:
-            track.track(uplink, self.some_random_points())
+            track.lifetrack(uplink, self.some_random_points())
             new_id = track.id_in_backend
             time.sleep(2)
-            track.track(points=self.some_random_points())
-            track.track()
+            track.lifetrack(points=self.some_random_points())
+            track.lifetrack()
             self.assertIn(new_id, uplink)
 
     def test_directory_dirty(self):

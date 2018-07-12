@@ -64,7 +64,7 @@ class Backend:
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
-            Those are: remove, track, get_time, _write_title, _write_public, _write_category,
+            Those are: remove, lifetrack, get_time, _write_title, _write_public, _write_category,
             _write_gpx, _write_description, _write_keywords, _write_add_keyword, _write_remove_keyword.
             If a particular _write_* like _write_public does not exist, the entire track is written instead
             which normally results in a new ident for the track.
@@ -153,8 +153,10 @@ class Backend:
         marked as unsupported.
         """
         support_mappings = {
+            # map internal names to more user friendly ones. See doc for
+            # Backend.supported.
             '_remove_ident':'remove',
-            '_track':'track',
+            '_lifetrack':'lifetrack',
             'get_time':'get_time'}
         cls.supported = set()
         for name, method in getmembers(cls, isfunction):
@@ -423,7 +425,7 @@ class Backend:
         """backend dependent implementation"""
         raise NotImplementedError()
 
-    def _track(self, track, points):
+    def _lifetrack(self, track, points):
         """Modelled after MapMyTracks. I hope this matches other
         services too.
 
