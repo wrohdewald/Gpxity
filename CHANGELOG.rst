@@ -16,6 +16,7 @@ where the keywords now contain "What:", change that to "Category:".
   * new in Track: speed(), moving_speed(), warnings()
   * gpxdo --long shows warnings about strange tracks
   * gpxdo --total
+  * gpxdo set --help shows all legal categories
   * gpxdo ls: if no file/directory given, use "."
   * gpxdo: unify how backends/tracks are displayed. Remove leading "./" from names.
   * gpxdo --debug shows backtrace for errors

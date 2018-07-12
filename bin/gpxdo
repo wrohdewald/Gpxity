@@ -22,6 +22,7 @@ import datetime
 
 try:
     import argcomplete
+    from argcomplete import ChoicesCompleter  # pylint: disable=unused-import
 except ImportError:
     pass
 
@@ -537,7 +538,8 @@ Dates are expected as YYYY-MM-DD.
                                 action='store_true', default=False)
         set_parser.add_argument('--title', help='set the title', type=str, default=None)
         set_parser.add_argument('--description', help='set the description', type=str, default=None)
-        set_parser.add_argument('--category', help='set the track type', type=str, default=None)
+        set_parser.add_argument('--category', help='set the track type',
+                                type=str, default=None, choices=Track.legal_categories)
         set_parser.add_argument('--public', help='set the status to public', action='store_true', default=False)
         set_parser.add_argument('--private', help='set the status to private', action='store_true', default=False)
         self.add_common_args(set_parser)
