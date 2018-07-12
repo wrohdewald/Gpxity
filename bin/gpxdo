@@ -51,7 +51,7 @@ class Utility:
         self.exit_code = 0
         self.options = None
         self.parse_commandline()
-        self.sources = []
+        self.source_tracks = []
         self.destination = None
         try:
             if self.options.source:
@@ -61,7 +61,7 @@ class Utility:
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
                         self.destination = objects[-1]
-                self.sources = self._collect_source_tracks(objects)
+                self.source_tracks = self._collect_source_tracks(objects)
             if hasattr(self.options, 'destination') and self.destination is None:
                 self.destination = self.instantiate_object(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
@@ -99,7 +99,7 @@ class Utility:
         We cannot just do merge() followed by remove() because
         the source might have gotten new tracks meanwhile, and
         they would disappear for good."""
-        for _ in self.sources:
+        for _ in self.source_tracks:
             self.destination.add(_, ident=_.id_in_backend)
             _.remove()
             if self.options.verbose:
@@ -107,7 +107,7 @@ class Utility:
 
     def remove(self):
         """remove tracks"""
-        for _ in self.sources:
+        for _ in self.source_tracks:
             if self.options.dry_run:
                 print('would remove {}'.format(_))
             else:
@@ -151,7 +151,7 @@ class Utility:
                 lower_header = header.lower().strip().replace(' ', '_')
                 sort_headers.append(lower_header)
                 formats[lower_header] = field_fmt
-                for idx, _ in enumerate(self.sources):
+                for idx, _ in enumerate(self.source_tracks):
                     if idx == len(output_lines):
                         output_lines.append([])
                     output_lines[idx].append(fmt(field_fmt, value(_)))
@@ -185,7 +185,7 @@ class Utility:
             warnings = list()
             if not self.options.long:
                 return
-            for _ in self.sources:
+            for _ in self.source_tracks:
                 warnings.append('  '.join(_.warnings()))
             if any(x for x in warnings):
                 header_line.append('Warnings')
@@ -238,14 +238,14 @@ class Utility:
 
     def fix(self):
         """fix tracks"""
-        for _ in self.sources:
+        for _ in self.source_tracks:
             self.fix_track(_)
             if self.options.verbose:
                 print('fixed {}'.format(_))
 
     def keyword(self):
         """add/remove a single keyword"""
-        for _ in self.sources:
+        for _ in self.source_tracks:
             if self.options.remove:
                 if not self.options.dry_run:
                     for kword in self.options.keywords.split(','):
@@ -261,7 +261,7 @@ class Utility:
 
     def set_attributes(self):
         """set/clear some attributes like title"""
-        for _ in self.sources:
+        for _ in self.source_tracks:
             if self.options.title_from_id:
                 _.title = _.id_in_backend
             if self.options.title:
@@ -277,7 +277,7 @@ class Utility:
 
     def merge(self):
         """Merge"""
-        for track in self.sources:
+        for track in self.source_tracks:
             msg = self.destination.merge(
                 track, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
             if self.options.verbose or self.options.dry_run:
@@ -296,7 +296,7 @@ class Utility:
                         print('    {}'.format(_))
                 print()
 
-        differ = BackendDiff(self.sources, self.destination)
+        differ = BackendDiff(self.source_tracks, self.destination)
         show_exclusive(differ.left)
         show_exclusive(differ.right)
 
