@@ -41,7 +41,7 @@ def __last_month_day(date):
     last_day = (next_month_1 - datetime.timedelta(days=1)).day
     return date + datetime.timedelta(days=last_day - day)
 
-def valid_date_argument(arg_date_str, last: bool):
+def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
     """custom argparse type for date as YYYY-MM-DD"""
     try:
         result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
@@ -59,7 +59,7 @@ def valid_date_argument(arg_date_str, last: bool):
                 print(exc)
                 msg = "Given Date ({0}) not valid! Expected format YYYY-MM-DD or YYYY-MM or YYYY".format(arg_date_str)
                 raise argparse.ArgumentTypeError(msg)
-    return result
+    return arg_date_str if return_raw else result
 
 
 class Utility:
@@ -69,6 +69,8 @@ class Utility:
         self.exit_code = 0
         self.options = None
         self.parse_commandline()
+        if self.exit_code:
+            return
         self.sources = []
         self.source_tracks = []
         self.destination = None
@@ -408,6 +410,8 @@ class Utility:
                             type=lambda x: valid_date_argument(x, False), default=None)
         parser.add_argument('--last-date', help='Limit tracks by date',
                             type=lambda x: valid_date_argument(x, True), default=None)
+        parser.add_argument('--date', help='Limit tracks by specific date',
+                            type=lambda x: valid_date_argument(x, False), default=None)
         parser.add_argument('--min-points', help='Limit tracks by minimum number of points', type=int, default=None)
         parser.add_argument('--max-points', help='Limit tracks by maximum number of points', type=int, default=None)
         parser.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
@@ -631,5 +635,18 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             self.options.only_category = set(x.strip() for x in self.options.only_category.split(','))
         if not hasattr(self.options, 'copy'):
             self.options.copy = False
+        if self.options.date:
+            if self.options.first_date or self.options.last_date:
+                print('gpxdo: error: cannot have --date with --first-date or --last-date')
+                self.exit_code = 2
+                return
+            self.options.first_date = valid_date_argument(self.options.date, last=False, return_raw=False)
+            self.options.last_date = valid_date_argument(self.options.date, last=True, return_raw=False)
+        else:
+            if self.options.first_date:
+                self.options.first_date = valid_date_argument(self.options.first_date, last=False, return_raw=False)
+            if self.options.last_date:
+                self.options.last_date = valid_date_argument(self.options.last_date, last=True, return_raw=False)
+
 
 sys.exit(Utility().exit_code)
