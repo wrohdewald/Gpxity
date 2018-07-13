@@ -34,15 +34,32 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
 from gpxity import Track, Directory, BackendDiff, MMT, GPSIES
 from gpxity.util import uniq
 
+def __last_month_day(date):
+    """Change to the last day of month"""
+    year, month, day = date.year, date.month, date.day
+    next_month_1 = datetime.date(year, month+1, day)
+    last_day = (next_month_1 - datetime.timedelta(days=1)).day
+    return date + datetime.timedelta(days=last_day - day)
 
-def valid_date_argument(arg_date_str):
+def valid_date_argument(arg_date_str, last: bool):
     """custom argparse type for date as YYYY-MM-DD"""
     try:
-        return datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
+        result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
     except ValueError as exc:
-        print(exc)
-        msg = "Given Date ({0}) not valid! Expected format YYYY-MM-DD!".format(arg_date_str)
-        raise argparse.ArgumentTypeError(msg)
+        try:
+            result = datetime.datetime.strptime(arg_date_str, "%Y-%m")
+            if last:
+                result = __last_month_day(result)
+        except ValueError as exc:
+            try:
+                result = datetime.datetime.strptime(arg_date_str, "%Y")
+                if last:
+                    result += datetime.timedelta(months=12, days=31)
+            except ValueError as exc:
+                print(exc)
+                msg = "Given Date ({0}) not valid! Expected format YYYY-MM-DD or YYYY-MM or YYYY".format(arg_date_str)
+                raise argparse.ArgumentTypeError(msg)
+    return result
 
 
 class Utility:
@@ -387,8 +404,10 @@ class Utility:
     @staticmethod
     def add_range_args(parser):
         """Add common range arguments"""
-        parser.add_argument('--first-date', help='Limit tracks by date', type=valid_date_argument, default=None)
-        parser.add_argument('--last-date', help='Limit tracks by date', type=valid_date_argument, default=None)
+        parser.add_argument('--first-date', help='Limit tracks by date',
+                            type=lambda x: valid_date_argument(x, False), default=None)
+        parser.add_argument('--last-date', help='Limit tracks by date',
+                            type=lambda x: valid_date_argument(x, True), default=None)
         parser.add_argument('--min-points', help='Limit tracks by minimum number of points', type=int, default=None)
         parser.add_argument('--max-points', help='Limit tracks by maximum number of points', type=int, default=None)
         parser.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
@@ -441,7 +460,7 @@ defines the type of the backend, username and password. Example:
 [MMT:username]
 Password = whatever
 
-Dates are expected as YYYY-MM-DD.
+Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
 """
 
