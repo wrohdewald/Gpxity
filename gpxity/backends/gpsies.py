@@ -325,11 +325,17 @@ class GPSIES(Backend):
         # So reload and compare until both are identical.
         copy = track.clone()
         copy._set_id_in_backend(track.id_in_backend)  # pylint: disable=protected-access
+        ctr = 0
         while True:
             self.__post('editTrack', data)
             self._read_all(copy)
             if track == copy:
                 return
+            ctr += 1
+            if not ctr % 10:
+                print('GPSIES._edit: {} tries'.format(ctr))
+                if ctr > 50:
+                    raise Backend.BackendException('GPSIES: _edit fails to change track {}'.format(track))
 
     def _yield_tracks(self):
         """get all tracks for this user."""
