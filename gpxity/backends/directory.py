@@ -122,10 +122,15 @@ class Directory(Backend):
                     else:
                         os.remove(full_name)
 
-    def _new_id_from(self, ident_proposal):
-        """a not yet existant file name"""
-        if self.fs_encoding is not None:
-            raise Exception('No support for fs_encoding={}'.format(self.fs_encoding))
+    def _new_id_from(self, ident_proposal: str) ->str:
+        """Returns not yet existant file name.
+
+        Args:
+            ident_proposal: If this proposal does not lead to a valid ident, create unique random ident.
+
+        Returns:
+            The new unique ident
+        """
         value = self._sanitize_name(ident_proposal)
         if not value:
             value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
