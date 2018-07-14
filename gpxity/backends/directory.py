@@ -223,8 +223,8 @@ class Directory(Backend):
     def _symlink_path(self, track, ident):
         """The path for the speaking symbolic link: YYYY/MM/title.gpx.
         Missing directories YYYY/MM are created.
-        track.time must be set."""
-        time = track.time
+        """
+        time = datetime.datetime.fromtimestamp(os.path.getmtime(self.gpx_path(ident)))
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
@@ -246,17 +246,22 @@ class Directory(Backend):
 
     def _make_symlinks(self, track):
         """Makes all symlinks for track"""
+        ident = track.id_in_backend
+        gpx_pathname = self.gpx_path(ident)
+        link_name = self._symlink_path(track, ident)
+        basename = os.path.basename(gpx_pathname)
+        link_target = os.path.join('..', '..', basename)
+        os.symlink(link_target, link_name)
+        if link_name not in self._symlinks[ident]:
+            self._symlinks[ident].append(link_name)
+
+    def __set_filetime(self, track):
+        """Sets the file modification time to track start time.
+        If the track has no start time, do nothing."""
         time = track.time
         if time:
-            ident = track.id_in_backend
-            gpx_pathname = self.gpx_path(ident)
-            os.utime(gpx_pathname, (time.timestamp(), time.timestamp()))
-            link_name = self._symlink_path(track, ident)
-            basename = os.path.basename(gpx_pathname)
-            link_target = os.path.join('..', '..', basename)
-            os.symlink(link_target, link_name)
-            if link_name not in self._symlinks[ident]:
-                self._symlinks[ident].append(link_name)
+            _ = self.gpx_path(track.id_in_backend)
+            os.utime(_, (time.timestamp(), time.timestamp()))
 
     def __undo_rename(self, old_ident):
         """if _write_all fails, undo change of file name and restore old file."""
@@ -293,6 +298,7 @@ class Directory(Backend):
             # only remove the old file after the new one has been written
             with open(gpx_pathname, 'w', encoding='utf-8') as out_file:
                 out_file.write(track.to_xml())
+            self.__set_filetime(track)
             self._make_symlinks(track)
         except BaseException:
             self.__undo_rename(old_ident)
