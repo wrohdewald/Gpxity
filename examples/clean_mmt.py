@@ -32,7 +32,9 @@ from gpxity import Track, Directory, MMT, BackendDiff
 def copy_from_mmt(mmt, local):
     for a in mmt:
         if a.id_in_backend not in local:
-            local.add(a, ident=a.id_in_backend)
+            new_track = local.add(a)
+            new_track.id_in_backend =a.id_in_backend
+
 
 def remove_shorties(local, remote=None, min_points=10):
     for local_track in local:

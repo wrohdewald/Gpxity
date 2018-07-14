@@ -521,19 +521,19 @@ class TrackTests(BasicTest):
         with Directory(cleanup=True) as directory:
             track = Track()
             with self.assertRaises(Exception):
-                directory.add(track, ident=56)
-            directory.add(track, ident='56')
+                directory.add(track).id_in_backend = 56
             self.assertEqual(len(directory), 1)
             with self.assertRaises(ValueError):
                 new_track = directory.add(track)
-            new_track = directory.add(track.clone(), ident='56')
+            new_track = directory.add(track.clone())
+            # TODO: reactivate later new_track.id_in_backend = '56'
             self.assertEqual(len(directory), 2)
 
     def test_in(self):
         """x in backend"""
         with Directory(cleanup=True) as directory:
             track = Track()
-            directory.add(track, '56')
+            directory.add(track).id_in_backend = '56'
             self.assertEqual(track.id_in_backend, '56')
             self.assertIn(track, directory)
             self.assertIn(track.id_in_backend, directory)
@@ -546,7 +546,7 @@ class TrackTests(BasicTest):
         with Directory(cleanup=True) as directory:
             directory.scan(now=True)
             track = Track()
-            directory.add(track, '56')
+            directory.add(track).id_in_backend = '56'
             self.assertIs(directory[0], track)
             self.assertIs(directory[track], track)
             self.assertIs(directory['56'], track)

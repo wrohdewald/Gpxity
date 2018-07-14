@@ -317,7 +317,7 @@ class Backend:
                 return True
         return False
 
-    def add(self, track, ident: str = None):
+    def add(self, track):
         """        We do not check if it already exists in this backend. No track
         already existing in this backend will be overwritten, the id_in_backend
         of track will be deduplicated if needed. This is currently only needed
@@ -330,10 +330,6 @@ class Backend:
 
         Args:
             track (~gpxity.Track): The track we want to save in this backend.
-            ident: If given, a backend may use this as id_in_backend.
-                :class:`~gpxity.Directory` might but it will prefer the id_in_backend the
-                track might already have. Other backends always create their own new
-                unique identifier when the full track is saved/uploaded.
 
         Returns:
             ~gpxity.Track: The saved track. If the original track lives in a different
@@ -349,17 +345,13 @@ class Backend:
         else:
             if any(x is track for x in self.__tracks):
                 raise ValueError('Already in list: Track {} with id={}'.format(track, id(track)))
-            if track.id_in_backend is not None and any(x.id_in_backend == track.id_in_backend for x in self.__tracks):
-                # cannot do "in self" because we are not decoupled, so that would call _scan()
-                raise ValueError('Backend.append(track): its id_in_backend {} is already in list: Track={}, list={}'.format(
-                    track.id_in_backend, self[track.id_in_backend], self.__tracks))
             new_track = track
         with self._decouple():
             new_track._set_backend(self)  # pylint: disable=protected-access
 
         try:
             with self._decouple():
-                self._write_all(new_track, ident)
+                self._write_all(new_track)
             self.__append(new_track)
             track._clear_dirty()  # pylint: disable=protected-access
             return new_track
@@ -408,7 +400,7 @@ class Backend:
                     getattr(self, write_name)(track, ''.join(_[1:]))
         return track
 
-    def _write_all(self, track, new_ident: str = None) ->str:
+    def _write_all(self, track) ->str:
         """the actual implementation for the concrete Backend.
         Writes the entire Track.
 

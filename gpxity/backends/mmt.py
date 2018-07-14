@@ -537,7 +537,7 @@ class MMT(Backend):
             with_session=True, url='handler/delete_track', expect='access granted',
             tid=ident, hash=self.session.cookies['exp_uniqueid'])
 
-    def _write_all(self, track, new_ident: str = None) ->str:
+    def _write_all(self, track) ->str:
         """save full gpx track on the MMT server.
         We must upload the title separately.
 

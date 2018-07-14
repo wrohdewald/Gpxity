@@ -120,7 +120,11 @@ class Utility:
         the source might have gotten new tracks meanwhile, and
         they would disappear for good."""
         for _ in self.source_tracks:
-            self.destination.add(_, ident=_.id_in_backend)
+            new_track = self.destination.add(_)
+            try:
+                new_track.id_in_backend = _.id_in_backend
+            except NotImplementedError:
+                pass
             _.remove()
             if self.options.verbose:
                 print('moved {} to {}'.format(_, self.destination))

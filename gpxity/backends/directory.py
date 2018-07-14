@@ -220,10 +220,11 @@ class Directory(Backend):
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 
-    def _symlink_path(self, track, ident):
+    def _symlink_path(self, track):
         """The path for the speaking symbolic link: YYYY/MM/title.gpx.
         Missing directories YYYY/MM are created.
         """
+        ident = track.id_in_backend
         time = datetime.datetime.fromtimestamp(os.path.getmtime(self.gpx_path(ident)))
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
         if not os.path.exists(by_month_dir):
@@ -248,7 +249,7 @@ class Directory(Backend):
         """Makes all symlinks for track"""
         ident = track.id_in_backend
         gpx_pathname = self.gpx_path(ident)
-        link_name = self._symlink_path(track, ident)
+        link_name = self._symlink_path(track)
         basename = os.path.basename(gpx_pathname)
         link_target = os.path.join('..', '..', basename)
         os.symlink(link_target, link_name)
@@ -276,7 +277,7 @@ class Directory(Backend):
         """Changes the id in the backend."""
         raise NotImplementedError
 
-    def _write_all(self, track, new_ident: str = None) ->str:
+    def _write_all(self, track) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt track.id_in_backend."""
         old_ident = track.id_in_backend
@@ -285,7 +286,6 @@ class Directory(Backend):
             old_pathname = self.gpx_path(old_ident)
             if os.path.exists(old_pathname):
                 os.rename(old_pathname, old_pathname + '.old')
-        track.id_in_backend = new_ident
         try:
             new_ident = self._new_ident(track)
         except BaseException:
