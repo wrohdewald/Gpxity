@@ -285,7 +285,7 @@ class TrackTests(BasicTest):
                 dir2.add(track2)
                 self.assertEqual(len(dir2), 2)
 
-                track2_copy = dir2.add(track2)
+                track2_copy = dir2.add(track2.clone())
                 self.assertEqualTracks(track, track2_copy)
                 self.assertEqualTracks(track2, track2_copy)
                 self.assertIs(track.backend, directory)
@@ -524,6 +524,10 @@ class TrackTests(BasicTest):
                 directory.add(track, ident=56)
             directory.add(track, ident='56')
             self.assertEqual(len(directory), 1)
+            with self.assertRaises(ValueError):
+                new_track = directory.add(track)
+            new_track = directory.add(track.clone(), ident='56')
+            self.assertEqual(len(directory), 2)
 
     def test_in(self):
         """x in backend"""

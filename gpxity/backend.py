@@ -324,6 +324,8 @@ class Backend:
         for Directory. Note that some backends reject a track if it is very
         similar to an existing track even if it belongs to some other user.
 
+        If the track object is already in the list of tracks, raise ValueError.
+
         If the track does not pass the current match function, raise an exception.
 
         Args:
@@ -345,6 +347,12 @@ class Backend:
         if track.backend is not self and track.backend is not None:
             new_track = track.clone()
         else:
+            if any(x is track for x in self.__tracks):
+                raise ValueError('Already in list: Track {} with id={}'.format(track, id(track)))
+            if track.id_in_backend is not None and any(x.id_in_backend == track.id_in_backend for x in self.__tracks):
+                # cannot do "in self" because we are not decoupled, so that would call _scan()
+                raise ValueError('Backend.append(track): its id_in_backend {} is already in list: Track={}, list={}'.format(
+                    track.id_in_backend, self[track.id_in_backend], self.__tracks))
             new_track = track
         with self._decouple():
             new_track._set_backend(self)  # pylint: disable=protected-access
@@ -507,6 +515,10 @@ class Backend:
         """Appends a track to the cached list."""
         if value.id_in_backend is not None and not isinstance(value.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
+        if value.id_in_backend is not None and any(x.id_in_backend == value.id_in_backend for x in self.__tracks):
+            # cannot do "in self" because we are not decoupled, so that would call _scan()
+            raise ValueError('Backend.append(track): its id_in_backend {} is already in list: Track={}, list={}'.format(
+                value.id_in_backend, self[value.id_in_backend], self.__tracks))
         self.matches(value, 'append')
         self.__tracks.append(value)
 

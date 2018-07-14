@@ -66,7 +66,7 @@ class TestBackends(BasicTest):
                 saved = directory1.add(track)
                 self.assertEqual(len(directory1), 1)
                 self.assertEqual(saved.backend, directory1)
-                directory1.add(track)
+                directory1.add(track.clone())
                 self.assertEqual(len(directory1), 2)
                 directory2.add(track)
                 self.assertEqual(len(directory2), 1)
@@ -81,8 +81,18 @@ class TestBackends(BasicTest):
                     with self.temp_backend(cls) as backend:
                         track = self.create_test_track()
                         backend.add(track)
-                        backend.add(track)
-                        self.assertEqual(len(backend), 2)
+                        self.assertEqual(len(backend), 1)
+                        with self.assertRaises(ValueError):
+                            backend.add(track)
+                        self.assertEqual(len(backend), 1)
+                        if cls is GPSIES:
+                            # if the same track data is uploaded again, we get the same id_in_backend.
+                            with self.assertRaises(ValueError):
+                                backend.add(track.clone())
+                            self.assertEqual(len(backend), 1)
+                        else:
+                            backend.add(track.clone())
+                            self.assertEqual(len(backend), 2)
 
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg"""
