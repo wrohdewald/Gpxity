@@ -134,7 +134,7 @@ class Directory(Backend):
         value = self._sanitize_name(ident_proposal)
         if not value:
             value = os.path.basename(tempfile.NamedTemporaryFile(dir=self.url, prefix='').name)
-        return value
+        return self._make_ident_unique(value)
 
     @staticmethod
     def _make_path_unique(value):
@@ -150,6 +150,11 @@ class Directory(Backend):
             else:
                 unique_value = '{}.{}'.format(value, ctr)
         return unique_value
+
+    def _make_ident_unique(self, value):
+        """Returns a unique ident"""
+        path = Directory._make_path_unique(os.path.join(self.url, value + '.gpx'))
+        return os.path.basename(path)[:-4]
 
     def _sanitize_name(self, value):
         """Change it to legal file name characters"""
@@ -235,10 +240,8 @@ class Directory(Backend):
         """
         ident = track.id_in_backend
         if ident is None:
-            ident = self._new_id_from(track.title)
-        # Change the ident such that its gpx_path does not yet exist
-        path = self._make_path_unique(os.path.join(self.url, ident + '.gpx'))
-        return os.path.basename(path)[:-4]
+            ident = self._new_id_from(None)
+        return ident
 
     def _make_symlinks(self, track):
         """Makes all symlinks for track"""
