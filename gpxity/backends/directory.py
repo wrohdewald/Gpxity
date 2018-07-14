@@ -15,6 +15,7 @@ import tempfile
 from collections import defaultdict
 
 from .. import Backend, Track
+from ..util import remove_directory
 
 __all__ = ['Directory']
 
@@ -172,7 +173,7 @@ class Directory(Backend):
         if self._cleanup:
             self.remove_all()
             if self.is_temporary:
-                os.rmdir(self.url)
+                remove_directory(self.url)
 
     def gpx_path(self, ident):
         """The full path name for the local copy of a track"""

@@ -8,9 +8,10 @@
 This module defines some helpers.
 """
 
+import os
 import datetime
 
-__all__ = ['Duration', 'repr_timespan', 'uniq']
+__all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory']
 
 class Duration:
     """A context manager showing time information for debugging."""
@@ -45,3 +46,13 @@ def uniq(lst):
         if _ not in seen:
             seen.append(_)
             yield _
+
+def remove_directory(path):
+    """If this fails, show directory content."""
+    try:
+        os.rmdir(path)
+    except OSError as exc:
+        print('rmdir: errno: {} cannot remove directory: {}'.format(exc.errno, path))
+        if os.path.exists(path):
+            for _ in os.listdir(path):
+                print('  ', _)
