@@ -332,9 +332,6 @@ class Backend:
                 :class:`~gpxity.Directory` might but it will prefer the id_in_backend the
                 track might already have. Other backends always create their own new
                 unique identifier when the full track is saved/uploaded.
-            attributes (set(str)): If given and the backend supports specific saving for all given attributes,
-                save only those.
-                Otherwise, save the entire track.
 
         Returns:
             ~gpxity.Track: The saved track. If the original track lives in a different
