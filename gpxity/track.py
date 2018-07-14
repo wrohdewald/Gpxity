@@ -136,7 +136,7 @@ class Track:
     @id_in_backend.setter
     def id_in_backend(self, value: str) ->None:
         """Changes the id in the backend. Currently supported
-        only for internal use.
+        only by Directory.
 
         Args:
             value: The new value
@@ -144,7 +144,12 @@ class Track:
         if value is not None and not isinstance(value, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
         assert self.__is_decoupled
-        self.__id_in_backend = value
+        if self.__is_decoupled:
+            # internal use
+            self.__id_in_backend = value
+        else:
+            with self._decouple():
+                self.backend._change_id(self, value)  # pylint: disable=protected-access
 
     def _set_backend(self, value):
         """To be used only by backend implementations"""

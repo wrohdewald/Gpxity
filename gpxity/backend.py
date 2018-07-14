@@ -223,6 +223,10 @@ class Backend:
         A backend implementation does not have to support this."""
         raise NotImplementedError()
 
+    def _change_id(self, track, new_ident: str):
+        """Changes the id in the backend."""
+        raise NotImplementedError
+
     def scan(self, now: bool = False) ->None:
         """Enforces a reload of the list of all tracks in the backend.
         This will be delayed until the list is actually needed again.

@@ -258,6 +258,10 @@ class Directory(Backend):
             if os.path.exists(old_pathname + '.old'):
                 os.rename(old_pathname + '.old', old_pathname)
 
+    def _change_id(self, track, new_ident: str):
+        """Changes the id in the backend."""
+        raise NotImplementedError
+
     def _write_all(self, track, new_ident: str = None) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt track.id_in_backend."""
