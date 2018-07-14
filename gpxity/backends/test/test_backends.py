@@ -58,7 +58,7 @@ class TestBackends(BasicTest):
                     else:
                         self.assertIsNotNone(backend.add(track))
 
-    def test_backend(self):
+    def test_directory_backend(self):
         """Manipulate backend"""
         track = self.create_test_track()
         with Directory(cleanup=True) as directory1:
