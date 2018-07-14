@@ -267,7 +267,7 @@ class Backend:
         result = Track()
         with self._decouple():
             result._set_backend(self)  # pylint: disable=protected-access
-            result._set_id_in_backend(ident)  # pylint: disable=protected-access
+            result.id_in_backend = ident
         self.append(result)
         return result
 
@@ -380,7 +380,7 @@ class Backend:
         self.matches(track, '_rewrite')
         if needs_full_save:
             new_id = self._write_all(track)
-            track._set_id_in_backend(new_id)  # pylint: disable=protected-access
+            track.id_in_backend = new_id
         else:
             for attribute in attributes:
                 _ = attribute.split(':')
@@ -413,7 +413,6 @@ class Backend:
         track = value if hasattr(value, 'id_in_backend') else self[value]
         if track.id_in_backend:
             self._remove_ident(track.id_in_backend)
-            track._set_id_in_backend(None)  # pylint: disable=protected-access
         with self._decouple():
             track._set_backend(None)  # pylint: disable=protected-access
             try:

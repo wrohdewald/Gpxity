@@ -324,7 +324,7 @@ class GPSIES(Backend):
         # Doing that on the website with firefox shows the same problem.
         # So reload and compare until both are identical.
         copy = track.clone()
-        copy._set_id_in_backend(track.id_in_backend)  # pylint: disable=protected-access
+        copy.id_in_backend = track.id_in_backend
         ctr = 0
         while True:
             self.__post('editTrack', data)
@@ -447,7 +447,7 @@ class GPSIES(Backend):
             raise self.BackendException('No fileId= found in response')
         if track.id_in_backend:
             self._remove_ident(track.id_in_backend)
-        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track.id_in_backend = new_ident
         return new_ident
 
     def destroy(self):

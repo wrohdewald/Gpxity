@@ -554,7 +554,7 @@ class MMT(Backend):
         if not new_ident:
             raise self.BackendException('No id found in response')
         old_ident = track.id_in_backend
-        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track.id_in_backend = new_ident
         # the caller will do the above too, never mind
         if '_write_title' in self.supported:
             self._write_title(track)
@@ -563,7 +563,7 @@ class MMT(Backend):
             self._write_add_keyword(track, ','.join(track.keywords))
         if old_ident:
             self._remove_ident(old_ident)
-        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track.id_in_backend = new_ident
         return new_ident
 
     @staticmethod

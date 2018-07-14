@@ -267,14 +267,14 @@ class Directory(Backend):
             old_pathname = self.gpx_path(old_ident)
             if os.path.exists(old_pathname):
                 os.rename(old_pathname, old_pathname + '.old')
-        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track.id_in_backend = new_ident
         try:
             new_ident = self._new_ident(track)
         except BaseException:
             self.__undo_rename(old_ident)
             raise
 
-        track._set_id_in_backend(new_ident)  # pylint: disable=protected-access
+        track.id_in_backend = new_ident
         gpx_pathname = self.gpx_path(new_ident)
         try:
             # only remove the old file after the new one has been written

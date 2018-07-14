@@ -133,18 +133,18 @@ class Track:
         """
         return self.__id_in_backend
 
-    def _set_id_in_backend(self, value: str) ->None:
-        """To be used only by backend implementations.
+    @id_in_backend.setter
+    def id_in_backend(self, value: str) ->None:
+        """Changes the id in the backend. Currently supported
+        only for internal use.
 
         Args:
             value: The new value
         """
         if value is not None and not isinstance(value, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
+        assert self.__is_decoupled
         self.__id_in_backend = value
- #       if self.backend is not None and not self.backend._has_item(value): # pylint:disable=protected-access
-    #         # do not say self in backend because that would do a full load of self.
-       #     self.backend.append(self)
 
     def _set_backend(self, value):
         """To be used only by backend implementations"""
@@ -215,7 +215,8 @@ class Track:
         if not self.__dirty:
             return
         if not self.__is_decoupled and not self._batch_changes:
-            self.backend._rewrite(self, self.__dirty)  # pylint: disable=protected-access
+            with self._decouple():
+                self.backend._rewrite(self, self.__dirty)  # pylint: disable=protected-access
             self._clear_dirty()
 
     def remove(self):
