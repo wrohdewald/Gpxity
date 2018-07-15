@@ -140,7 +140,7 @@ class TestBackends(BasicTest):
                         self.assertTrue(1 < total_seconds < 8, 'Time difference should be {}, is {}-{}={}'.format(
                             2, second_time, first_time, second_time - first_time))
 
-    def test_write_remote_attributes(self):
+    def test_slow_write_remoteattr(self):
         """If we change title, description, public, what in activity, is the backend updated?"""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
@@ -275,7 +275,7 @@ class TestBackends(BasicTest):
         For MMT this means re-uploading and removing the previous instance, so this
         is not always as trivial as it should be."""
 
-    def test_download_many(self):
+    def test_slow_download_many(self):
         """Download many activities"""
         many = 150
         backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=False)
