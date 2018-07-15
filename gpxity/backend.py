@@ -356,7 +356,14 @@ class Backend:
             track._clear_dirty()  # pylint: disable=protected-access
             return new_track
         except Exception:
-            self.remove(new_track)
+            # do not do self.remove. If we try to upload the same track to gpsies,
+            # gpsies will assign the same trackid, and we come here. __tracks will
+            # only hold the first uploaded track, and remove would remove that
+            # instance instead of this one.
+            self.__tracks = list(x for x in self.__tracks if x is not new_track)
+            with self._decouple():
+                new_track.id_in_backend = None
+                new_track._set_backend(None)  # pylint: disable=protected-access
             raise
         return new_track
 
