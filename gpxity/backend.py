@@ -338,6 +338,9 @@ class Backend:
             backend, a new track living in this backend will be created
             and returned.
         """
+        if self._decoupled:
+            raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
+
         self.matches(track, 'add')
         if track.backend is not self and track.backend is not None:
             new_track = track.clone()
@@ -346,8 +349,6 @@ class Backend:
         with self._decouple():
             new_track._set_backend(self)  # pylint: disable=protected-access
 
-        if self._decoupled:
-            raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         try:
             with self._decouple():
                 self._write_all(new_track, ident)
