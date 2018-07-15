@@ -424,7 +424,6 @@ class Backend:
         Args:
             value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`
-            new_ident: The backend may use this if it is able to create its own idents.
         """
 
         track = value if hasattr(value, 'id_in_backend') else self[value]
