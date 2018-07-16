@@ -275,6 +275,8 @@ class TestBackends(BasicTest):
                         self.assertEqual(track.title, track2.title)
                         track.description = tstdescr
                         self.assertEqual(track.description, tstdescr)
+                        if cls is Directory:
+                            self.assertTrackFileContains(track, tstdescr)
                         backend2.scan()
                         self.assertEqual(backend2[0].description, tstdescr)
                         backend2.destroy()

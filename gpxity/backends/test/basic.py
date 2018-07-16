@@ -183,6 +183,12 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(track1.points_equal(track2))
         self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
+    def assertTrackFileContains(self, track, string): # pylint: disable=invalid-name
+        """Assert that string is in the physical file. Works only for Directory backend."""
+        with open(track.backend.gpx_path(track.id_in_backend)) as trackfile:
+            data = trackfile.read()
+        self.assertIn(string, data)
+
     def setup_backend(self, cls_, username: str = None, url: str = None, count: int = 0,  # pylint: disable=too-many-arguments
                       cleanup: bool = True, clear_first: bool = True, category: str = None,
                       public: bool = False, debug: bool = False):
