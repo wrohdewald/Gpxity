@@ -272,7 +272,7 @@ class Backend:
         with self._decouple():
             result._set_backend(self)  # pylint: disable=protected-access
             result.id_in_backend = ident
-        self.append(result)
+        self.__append(result)
         return result
 
     def _yield_tracks(self):
@@ -360,7 +360,7 @@ class Backend:
         try:
             with self._decouple():
                 self._write_all(new_track, ident)
-            self.append(new_track)
+            self.__append(new_track)
             track._clear_dirty()  # pylint: disable=protected-access
             return new_track
         except Exception:
@@ -510,7 +510,7 @@ class Backend:
         """len(backend) without calling scan() first"""
         return len(self.__tracks)
 
-    def append(self, value):
+    def __append(self, value):
         """Appends a track to the cached list."""
         if value.id_in_backend is not None and not isinstance(value.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(value))

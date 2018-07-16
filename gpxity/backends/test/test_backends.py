@@ -127,7 +127,7 @@ class TestBackends(BasicTest):
                     backend.match = match_date
                     self.assertEqual(len(backend), 1)
                     with self.assertRaises(cls.NoMatch):
-                        backend.append(new_track)
+                        backend.add(new_track)
                     self.assertEqual(len(backend), 1)
                     orig_time = backend[0].time
                     delta = datetime.timedelta(days=-5)

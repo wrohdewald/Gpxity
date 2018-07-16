@@ -606,7 +606,6 @@ class MMT(Backend):
                 raise self.BackendException('activity_started failed')
             track.id_in_backend = result.find('activity_id').text
             self._current_lifetrack = track
-            self.append(track)
         if track != self._current_lifetrack:
             raise self.BackendException('MMT._lifetrack() got wrong track')
         self.__post(
