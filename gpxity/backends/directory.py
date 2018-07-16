@@ -299,7 +299,13 @@ class Directory(Backend):
 
     def _change_id(self, track, new_ident: str):
         """Changes the id in the backend."""
-        raise NotImplementedError
+        assert track.id_in_backend != new_ident
+        unique_id = self._new_id_from(new_ident)
+        self._remove_symlinks(track.id_in_backend)
+        os.rename(self.gpx_path(track.id_in_backend), self.gpx_path(unique_id))
+        track.id_in_backend = unique_id
+        assert any(x is track for x in self._Backend__tracks)
+        self._make_symlinks(track)
 
     def _write_all(self, track) ->str:
         """save full gpx track. Since the file name uses title and title may have changed,

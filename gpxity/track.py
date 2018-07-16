@@ -143,11 +143,16 @@ class Track:
         """
         if value is not None and not isinstance(value, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
-        assert self.__is_decoupled
+        if self.__id_in_backend == value:
+            return
         if self.__is_decoupled:
             # internal use
             self.__id_in_backend = value
         else:
+            if not self.__id_in_backend:
+                raise Exception('Cannot set id_in_backend for yet unsaved track {}'.format(self))
+            if not value:
+                raise Exception('Cannot remove id_in_backend for saved track {}'.format(self))
             with self._decouple():
                 self.backend._change_id(self, value)  # pylint: disable=protected-access
 

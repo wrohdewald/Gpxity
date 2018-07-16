@@ -297,11 +297,15 @@ class TrackTests(BasicTest):
                 self.assertEqual(len(directory), 4)
                 dir2.scan()
                 self.assertEqual(len(directory), 4)
-                trunk = os.path.join(directory.url, 'Random GPX # 0')
+                title = 'whatevertitle'
+                for _ in dir2:
+                    _.id_in_backend = title
+                trunk = os.path.join(directory.url, title)
                 expected_names = list(trunk + x + '.gpx' for x in ('.1', '.2', '.3', ''))
                 files = sorted(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
                 self.assertEqual(files, expected_names)
                 self.assertEqual(len(dir2), 4)
+                directory.scan()
                 dir2.merge(directory, remove=True)
                 self.assertEqual(len(dir2), 1)
                 filecmp.clear_cache()
@@ -460,23 +464,23 @@ class TrackTests(BasicTest):
         with Directory(cleanup=True) as directory:
             track = Track()
             directory.add(track)
-            for title in ('TITLE', 'Tätel'):
-                track.title = title
-                self.assertEqual(track.title, title)
-                self.assertEqual(track.id_in_backend, title)
+            org_ident = track.id_in_backend
+            track.title = 'TITLE'
+            self.assertEqual(track.id_in_backend, org_ident)
+            self.assertEqual(track.title, 'TITLE')
+            track.title = 'Tätel'
+            self.assertEqual(track.title, 'Tätel')
             for title in ('a/b', '//', 'Ä/Ü', '...'):
                 track.title = title
                 self.assertEqual(track.title, title)
-                self.assertEqual(track.id_in_backend, title.replace('/', '_'))
-            for title in ('a/b', '//', 'Ä/Ü'):
-                track.title = title
-                self.assertEqual(track.title, title)
                 self.assertNotEqual(track.id_in_backend, title)
+                track.id_in_backend = track.title
+                self.assertEqual(track.id_in_backend, title.replace('/', '_'))
             prev_encoding = directory.fs_encoding
             directory.fs_encoding = 'whatever'
             try:
                 with self.assertRaises(Exception):
-                    track.title = 'TITLE'
+                    track.id_in_backend = 'TITLE'
             finally:
                 directory.fs_encoding = prev_encoding
 
@@ -524,9 +528,8 @@ class TrackTests(BasicTest):
                 directory.add(track).id_in_backend = 56
             self.assertEqual(len(directory), 1)
             with self.assertRaises(ValueError):
-                new_track = directory.add(track)
-            new_track = directory.add(track.clone())
-            # TODO: reactivate later new_track.id_in_backend = '56'
+                directory.add(track)
+            directory.add(track.clone())
             self.assertEqual(len(directory), 2)
 
     def test_in(self):
