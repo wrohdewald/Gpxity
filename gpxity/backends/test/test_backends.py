@@ -74,7 +74,7 @@ class TestBackends(BasicTest):
                 self.assertEqual(len(directory2), 1)
 
     def test_duplicate_tracks(self):
-        """What happens if we save the same ident twice?"""
+        """What happens if we save the same track twice?"""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
