@@ -19,6 +19,39 @@ from ..util import remove_directory
 
 __all__ = ['Directory']
 
+class Backup:
+    """A context manager making a backup of the gpx file
+
+    If an exception happened, restore the backup.
+    Otherwise, remove it again.
+    """
+
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, track):
+        self.track = track
+        self.old_id = track.id_in_backend
+        self.old_pathname = track.backend.gpx_path(track.id_in_backend)
+        if os.path.exists(self.old_pathname):
+            os.rename(self.old_pathname, self.old_pathname + '.old')
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, trback):
+        if exc_value:
+            self.undo_rename()
+            with self.track._decoupled():  # pylint: disable=protected-access
+                self.track.id_in_backend = self.old_id
+
+    def undo_rename(self):
+        """if something failed, undo change of file name and restore old file."""
+        if os.path.exists(self.old_pathname):
+            os.remove(self.old_pathname)
+        if os.path.exists(self.old_pathname + '.old'):
+            os.rename(self.old_pathname + '.old', self.old_pathname)
+
+
 class Directory(Backend):
     """Uses a directory for storage. The filename minus the .gpx ending is used as the track id.
     If the track has a title but no storage id yet, use the title as storage id.
@@ -264,15 +297,6 @@ class Directory(Backend):
             _ = self.gpx_path(track.id_in_backend)
             os.utime(_, (time.timestamp(), time.timestamp()))
 
-    def __undo_rename(self, old_ident):
-        """if _write_all fails, undo change of file name and restore old file."""
-        if old_ident:
-            old_pathname = self.gpx_path(old_ident)
-            if os.path.exists(old_pathname):
-                os.remove(old_pathname)
-            if os.path.exists(old_pathname + '.old'):
-                os.rename(old_pathname + '.old', old_pathname)
-
     def _change_id(self, track, new_ident: str):
         """Changes the id in the backend."""
         raise NotImplementedError
@@ -281,32 +305,17 @@ class Directory(Backend):
         """save full gpx track. Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt track.id_in_backend."""
         old_ident = track.id_in_backend
-        old_pathname = None
-        if old_ident:
-            old_pathname = self.gpx_path(old_ident)
-            if os.path.exists(old_pathname):
-                os.rename(old_pathname, old_pathname + '.old')
-        try:
-            new_ident = self._new_ident(track)
-        except BaseException:
-            self.__undo_rename(old_ident)
-            raise
+        new_ident = self._new_ident(track)
 
-        track.id_in_backend = new_ident
-        gpx_pathname = self.gpx_path(new_ident)
-        try:
-            # only remove the old file after the new one has been written
-            with open(gpx_pathname, 'w', encoding='utf-8') as out_file:
+        with Backup(track):
+            track.id_in_backend = new_ident
+            with open(self.gpx_path(new_ident), 'w', encoding='utf-8') as out_file:
                 out_file.write(track.to_xml())
             self.__set_filetime(track)
-            self._make_symlinks(track)
-        except BaseException:
-            self.__undo_rename(old_ident)
-            raise
-        if old_ident:
+
+        if old_ident and new_ident != old_ident:
             self._remove_symlinks(old_ident)
-            if old_pathname and os.path.exists(old_pathname + '.old'):
-                os.remove(old_pathname + '.old')
+            self._make_symlinks(track)
         return new_ident
 
 Directory._define_support() # pylint: disable=protected-access
