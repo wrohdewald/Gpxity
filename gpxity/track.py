@@ -408,7 +408,7 @@ class Track:
         if self.backend is None and self.__gpx.tracks:
             raise Exception('lifetrack(): Track must be empty')
         if backend is not None:
-            self.__backend = backend
+            self.backend.add(self)
         if self.backend is None:
             raise Exception('lifetrack(): backend unknown')
         # pylint: disable=no-member
