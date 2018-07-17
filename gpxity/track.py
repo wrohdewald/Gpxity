@@ -163,6 +163,7 @@ class Track:
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`"""
+        self._load_full()
         self._dirty = 'gpx'
 
     @property
