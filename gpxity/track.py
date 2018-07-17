@@ -23,7 +23,7 @@ from gpxpy import gpx as mod_gpx
 from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length
 
-from .util import repr_timespan
+from .util import repr_timespan, uniq
 
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
@@ -938,3 +938,67 @@ class Track:
                 if not dry_run:
                     other.remove()
         return msg
+
+    @staticmethod
+    def __time_diff(last_point, point):
+        """Returns difference in seconds, ignoring the date."""
+        result = abs(last_point.hhmmss - point.hhmmss)
+        if result > 33200: # seconds in 12 hours
+            result = 86400 - result
+        return result
+
+    @staticmethod
+    def __point_is_near(last_point, point, delta_meter):
+        """Returns True if distance < delta_meter"""
+        return abs(last_point.distance_2d(point)) < delta_meter
+
+    def fix(self, orux24: bool = False):
+        """Fix bugs. This may fix them or produce more bugs.
+        Please backup your track before doing this.
+
+        Args:
+            orux24: Older Oruxmaps switched the day back by one
+                day after exactly 24 hours.
+
+        Returns:
+            A list of message strings, usable for verbose output.
+            """
+        if orux24:
+            self.__fix_orux24()
+        return []
+
+    def __fix_orux24(self):
+        """Try to fix Oruxmaps 24hour bug."""
+        all_points = list(uniq(self.points()))
+        for _ in all_points:
+            _.hhmmss = _.time.hour * 3600.0 + _.time.minute * 60 + _.time.second + _.time.microsecond / 1000000
+        new_points = list([all_points.pop(0)])
+        while all_points:
+            last_point = new_points[-1]
+            near_points = list(x for x in all_points if self.__point_is_near(last_point, x, 10000))
+            if not near_points:
+                near_points = all_points[:]
+            nearest = min(near_points, key=lambda x: Track.__time_diff(last_point, x))
+            new_points.append(nearest)
+            all_points.remove(nearest)
+
+        day_offset = 0
+        point1 = None
+        for point in new_points:
+            if point1 is None:
+                point1 = point
+            else:
+                point2 = point
+                if point1.time - point2.time > datetime.timedelta(days=day_offset, hours=23):
+                    day_offset += 1
+                if day_offset:
+                    point2.time += datetime.timedelta(days=day_offset)
+                point1 = point2
+
+        segment = GPXTrackSegment()
+        segment.points.extend(new_points)
+
+        self.__gpx.tracks = list()
+        self.__gpx.tracks.append(GPXTrack())
+        self.__gpx.tracks[0].segments.append(segment)
+        self._dirty = 'gpx'

@@ -255,17 +255,16 @@ class Utility:
     @staticmethod
     def fix_track(track):
         """fix some bugs in the GPX file"""
-        if isinstance(track.backend, Directory):
-            # make Directory build a new file name
-            track.id_in_backend = None
-        track.rewrite()
+        track.fix()
 
     def fix(self):
         """fix tracks"""
+        output_lines = []
         for _ in self.source_tracks:
-            self.fix_track(_)
-            if self.options.verbose:
-                print('fixed {}'.format(_))
+            output_lines.extend(_.fix(orux24=self.options.orux24))
+        if self.options.verbose:
+            for _ in output_lines:
+                print(_)
 
     def keyword(self):
         """add/remove a single keyword"""
@@ -499,14 +498,19 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         self.add_multi_source(rm_parser)
 
-        if False: # pylint: disable=using-constant-test
-            fix_parser = subparsers.add_parser(
-                'fix', help='fix some GPX format bugs in tracks',
-                epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-            fix_parser.set_defaults(func=self.fix)
-            self.add_common_args(fix_parser)
-            self.add_range_args(fix_parser)
-            self.add_multi_source(fix_parser)
+        fix_parser = subparsers.add_parser(
+            'fix', help="""try to fix some GPX format bugs in tracks.
+                First BACKUP the tracks! This can destroy them!""",
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        fix_parser.set_defaults(func=self.fix)
+        fix_parser.add_argument(
+            '--orux24',
+            help="""BACKUP your tracks first! This can destroy them!
+            Try to fix old oruxmaps bug where the date jumps back by one day""",
+            action='store_true', default=False)
+        self.add_common_args(fix_parser)
+        self.add_range_args(fix_parser)
+        self.add_multi_source(fix_parser)
 
         ls_parser = subparsers.add_parser(
             'ls', help='list tracks',
