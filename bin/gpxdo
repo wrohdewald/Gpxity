@@ -292,6 +292,8 @@ class Utility:
         for _ in self.source_tracks:
             if self.options.title_from_id:
                 _.title = _.id_in_backend
+            if self.options.id_from_title:
+                _.id_in_backend = _.title
             if self.options.title:
                 _.title = self.options.title
             if self.options.description:
@@ -572,6 +574,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         set_parser.set_defaults(func=self.set_attributes)
         set_parser.add_argument('--title-from-id', help='use id for title',
                                 action='store_true', default=False)
+        set_parser.add_argument('--id-from-title', help='use title for id, works only for Directory',
+                                action='store_true', default=False)
         set_parser.add_argument('--title', help='set the title', type=str, default=None)
         set_parser.add_argument('--description', help='set the description', type=str, default=None)
         set_parser.add_argument('--category', help='set the track type',
@@ -642,6 +646,11 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         elif self.options.func == self.merge:
             if not self.options.source:
                 self.options.source = [self.options.destination]
+        elif self.options.func == self.set_attributes:
+            if self.options.title_from_id and self.options.id_from_title:
+                print('gpxdo: error: title-from-id and id-from-title cannot be combined')
+            if self.options.title_from_id and self.options.title:
+                print('gpxdo: error: title-from-id and title cannot be combined')
         if self.options.only_kw:
             self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
         if self.options.only_category:
