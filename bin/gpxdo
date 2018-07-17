@@ -151,18 +151,26 @@ class Utility:
         formats = dict() # key: lower_header, value: format
         sort_headers = list()
         output_lines = list()
-        total = dict()
+        total = dict()  # TODO: defaultdict(list)
 
-        def add_to_total(header, value):
+        def add_to_total(header, month, value):
             """Add to the total dict."""
             if header not in total:
-                total[header] = value
+                total[header] = [''] * 13
+            if total[header][month] == '':
+                total[header][month] = value
             else:
-                total[header] += value
+                total[header][month] += value
+            if total[header][0] == '':
+                total[header][0] = value
+            else:
+                total[header][0] += value
 
         def fmt(fmt, value):
             """custom formatting"""
             if value is None:
+                return ''
+            if value == '':
                 return ''
             if fmt is None:
                 fmt = '{}'
@@ -179,35 +187,52 @@ class Utility:
                 header_line.append(header)
                 lower_header = header.lower().strip().replace(' ', '_')
                 sort_headers.append(lower_header)
+                total[lower_header] = [''] * 13
                 formats[lower_header] = field_fmt
                 for idx, _ in enumerate(self.source_tracks):
                     if idx == len(output_lines):
                         output_lines.append([])
                     output_lines[idx].append(fmt(field_fmt, value(_)))
-                    if self.options.total:
+                    if self.options.total and _.time:
+                        month = _.time.month
                         if lower_header == 'duration' or (lower_header == 'speed' and 'duration' not in sort_headers):
-                            add_to_total('duration', _.last_time - _.time)
+                            add_to_total('duration', month, _.last_time - _.time)
                         elif lower_header == 'length' or (lower_header == 'speed' and 'length' not in sort_headers):
-                            add_to_total('length', _.length())
+                            add_to_total('length', month, _.length())
                         elif lower_header == 'moving_speed':
                             bounds = _.gpx.get_moving_data()
-                            add_to_total('moving_duration', datetime.timedelta(seconds=bounds.moving_time))
-                            add_to_total('moving_length', bounds.moving_distance / 1000.0)
+                            add_to_total('moving_duration', month, datetime.timedelta(seconds=bounds.moving_time))
+                            add_to_total('moving_length', month, bounds.moving_distance / 1000.0)
+
+        def totalspeed(dur_name, len_name, speed_name, month):
+            """Compute total speed or moving_speed"""
+            duration = total[dur_name][month]
+            if duration:
+                seconds = duration.days * 24 * 3600 + duration.seconds
+                if speed_name not in total:
+                    total[speed_name] = [None] * 13
+                total[speed_name][month] = total[len_name][month] / seconds * 3600 if seconds else 0
 
         def add_totals():
             """Add totals"""
 
             # compute additional totals using other totals
+            result = list()
             if 'speed' in sort_headers:
-                duration = total['duration']
-                seconds = duration.days * 24 * 3600 + duration.seconds
-                total['speed'] = total['length'] / seconds * 3600 if seconds else 0
+                for month in range(13):
+                    totalspeed('duration', 'length', 'speed', month)
             if 'moving_speed' in sort_headers:
-                duration = total['moving_duration']
-                seconds = duration.days * 24 * 3600 + duration.seconds
-                total['moving_speed'] = total['moving_length'] / seconds * 3600 if seconds else 0
-            total['identifier'] = 'TOTAL {} tracks'.format(len(output_lines) - 1)
-            return list(fmt(formats.get(col), total.get(col)) for col in sort_headers)
+                for month in range(13):
+                    totalspeed('moving_duration', 'moving_length', 'moving_speed', month)
+            for month in range(1, 13):
+                if 'identifier' not in total:
+                    total['identifier'] = [None] * 13
+                if any(total[x][month] for x in sort_headers):
+                    total['identifier'][month] = 'TOTAL month {}'.format(month)
+                    result.append(list(fmt(formats.get(col), total[col][month]) for col in sort_headers))
+            total['identifier'][0] = 'TOTAL {} tracks'.format(len(output_lines) - 1)
+            result.append(list(fmt(formats.get(col), total[col][0]) for col in sort_headers))
+            return result
 
         def add_warnings():
             """If we see an obvious problem with a track, add a warnings column."""
@@ -221,7 +246,8 @@ class Utility:
                 sort_headers.append('warnings')
                 for idx, _ in enumerate(warnings):
                     output_lines[idx].append(_)
-            total['warnings'] = len([x for x in warnings if x.strip()])
+            total['warnings'] = [''] * 13
+            total['warnings'][0] = len([x for x in warnings if x.strip()])
 
         add_field(True, 'Identifier', lambda x: x.identifier())
         add_field(self.options.title, 'Title', lambda x: x.title if x.title else '', field_fmt='{:.40}')
@@ -233,7 +259,7 @@ class Utility:
         add_field(self.options.status, 'Status', lambda x: 'public' if x.public else 'private')
         add_field(self.options.description, 'Description', lambda x: x.description)
         add_field(self.options.duration or self.options.speed, 'Duration',
-                  lambda x: x.last_time - x.time, field_fmt='duration')
+                  lambda x: x.last_time - x.time if x.time else datetime.timedelta(), field_fmt='duration')
         # pylint: disable=unnecessary-lambda
         add_field(self.options.speed, 'Speed', lambda x: x.speed(), field_fmt='{:>5.2f}km/h')
         add_field(self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), field_fmt='{:>5.2f}km/h')
@@ -244,14 +270,13 @@ class Utility:
             sort_cols = self.options.sort.split(',')
             output_lines.sort(
                 key=lambda x: ','.join('{:100}'.format(x[sort_headers.index(y)]) for y in sort_cols))
-            print('sort_headers:', sort_headers)
             if sort_headers != ['identifier', ]:
                 output_lines.insert(0, header_line)
             if self.options.total:
-                output_lines.append(add_totals())
-            field_lengths = list()
+                output_lines.extend(add_totals())
+            field_lengths = [0] * len(output_lines[0])
             for column in range(len(output_lines[0])):
-                field_lengths.append(max(len(x[column]) for x in output_lines))
+                field_lengths[column] = max(len(x[column]) for x in output_lines)
             for _ in output_lines:
                 for idx, field in enumerate(_):
                     print('{field:{width}}'.format(width=field_lengths[idx], field=field), end='  ')
