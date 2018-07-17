@@ -37,6 +37,10 @@ from gpxity.util import uniq
 def __last_month_day(date):
     """Change to the last day of month"""
     year, month, day = date.year, date.month, date.day
+    month1 = month + 1
+    if month1 == 13:
+        year += 1
+        month = 1
     next_month_1 = datetime.date(year, month+1, day)
     last_day = (next_month_1 - datetime.timedelta(days=1)).day
     return date + datetime.timedelta(days=last_day - day)
@@ -54,7 +58,8 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
             try:
                 result = datetime.datetime.strptime(arg_date_str, "%Y")
                 if last:
-                    result += datetime.timedelta(months=12, days=31)
+                    result = datetime.datetime(year=result.year+1, month=1, day=1)
+                    result -= datetime.timedelta(days=1)
             except ValueError as exc:
                 print(exc)
                 msg = "Given Date ({0}) not valid! Expected format YYYY-MM-DD or YYYY-MM or YYYY".format(arg_date_str)
