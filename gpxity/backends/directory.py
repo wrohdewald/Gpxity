@@ -43,6 +43,9 @@ class Backup:
             self.undo_rename()
             with self.track._decoupled():  # pylint: disable=protected-access
                 self.track.id_in_backend = self.old_id
+        else:
+            if os.path.exists(self.old_pathname + '.old'):
+                os.remove(self.old_pathname + '.old')
 
     def undo_rename(self):
         """if something failed, undo change of file name and restore old file."""
