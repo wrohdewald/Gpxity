@@ -306,11 +306,11 @@ class Utility:
 
     def fix(self):
         """fix tracks"""
-        output_lines = []
+        result_lines = []
         for _ in self.source_tracks:
-            output_lines.extend(_.fix(orux24=self.options.orux24))
+            result_lines.extend(_.fix(orux24=self.options.orux24))
         if self.options.verbose:
-            for _ in output_lines:
+            for _ in result_lines:
                 print(_)
 
     def keyword(self):
