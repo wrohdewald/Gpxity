@@ -66,6 +66,14 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
                 raise argparse.ArgumentTypeError(msg)
     return arg_date_str if return_raw else result
 
+class LsField:
+    """Abstracts a column in the ls output."""
+    # pylint: disable=too-few-public-methods
+    def __init__(self, condition, header, value, field_fmt=None):
+        self.condition = condition
+        self.header = header
+        self.value = value
+        self.field_fmt = field_fmt or '{}'
 
 class Utility:
     """this is where the work is done"""
@@ -249,20 +257,23 @@ class Utility:
             total['warnings'] = [''] * 13
             total['warnings'][0] = len([x for x in warnings if x.strip()])
 
-        add_field(True, 'Identifier', lambda x: x.identifier())
-        add_field(self.options.title, 'Title', lambda x: x.title if x.title else '', field_fmt='{:.40}')
-        add_field(self.options.time, 'Time', lambda x: x.time)
-        add_field(self.options.category, 'Category', lambda x: x.category)
-        add_field(self.options.keywords, 'Keywords', lambda x: ','.join(y for y in x.keywords))
-        add_field(self.options.length or self.options.length, 'Length', lambda x: x.length(), field_fmt='{:>8.3f}km')
-        add_field(self.options.points, 'Points', lambda x: x.gpx.get_track_points_no(), field_fmt='{:>6}')
-        add_field(self.options.status, 'Status', lambda x: 'public' if x.public else 'private')
-        add_field(self.options.description, 'Description', lambda x: x.description)
-        add_field(self.options.duration or self.options.speed, 'Duration',
-                  lambda x: x.last_time - x.time if x.time else datetime.timedelta(), field_fmt='duration')
-        # pylint: disable=unnecessary-lambda
-        add_field(self.options.speed, 'Speed', lambda x: x.speed(), field_fmt='{:>5.2f}km/h')
-        add_field(self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), field_fmt='{:>5.2f}km/h')
+        fields = list(LsField(*x) for x in (
+            (True, 'Identifier', lambda x: x.identifier()),
+            (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
+            (self.options.time, 'Time', lambda x: x.time),
+            (self.options.category, 'Category', lambda x: x.category),
+            (self.options.keywords, 'Keywords', lambda x: ','.join(y for y in x.keywords)),
+            (self.options.length or self.options.length, 'Length', lambda x: x.length(), '{:>8.3f}km'),
+            (self.options.points, 'Points', lambda x: x.gpx.get_track_points_no(), '{:>6}'),
+            (self.options.status, 'Status', lambda x: 'public' if x.public else 'private'),
+            (self.options.description, 'Description', lambda x: x.description),
+            (self.options.duration or self.options.speed, 'Duration',
+             lambda x: x.last_time - x.time if x.time else datetime.timedelta(), 'duration'),
+            (self.options.speed, 'Speed', lambda x: x.speed(), '{:>5.2f}km/h'),
+            (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h')))
+
+        for field in fields:
+            add_field(field.condition, field.header, field.value, field.field_fmt)
 
         add_warnings()
 
