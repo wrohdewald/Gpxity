@@ -35,6 +35,7 @@ where the keywords now contain "What:", change that to "Category:".
   * gpxdo --first-date and --last-date now also accept YYYY-MM and YYYY
   * gpxdo --date is new: specific date YYYY, YYYY-MM or YYYY-MM-DD
   * gpxdo --set --id-from-title is new
+  * gpxdo --set --id-from-time is new
 
 1.2.6 release 2018-06-05
 ------------------------

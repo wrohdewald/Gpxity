@@ -319,6 +319,9 @@ class Utility:
                 _.title = _.id_in_backend
             if self.options.id_from_title:
                 _.id_in_backend = _.title
+            if self.options.id_from_time:
+                if _.time:
+                    _.id_in_backend = str(_.time).replace(' ', '_')
             if self.options.title:
                 _.title = self.options.title
             if self.options.description:
@@ -601,6 +604,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                 action='store_true', default=False)
         set_parser.add_argument('--id-from-title', help='use title for id, works only for Directory',
                                 action='store_true', default=False)
+        set_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
+                                action='store_true', default=False)
         set_parser.add_argument('--title', help='set the title', type=str, default=None)
         set_parser.add_argument('--description', help='set the description', type=str, default=None)
         set_parser.add_argument('--category', help='set the track type',
@@ -676,6 +681,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                 print('gpxdo: error: title-from-id and id-from-title cannot be combined')
             if self.options.title_from_id and self.options.title:
                 print('gpxdo: error: title-from-id and title cannot be combined')
+            if self.options.id_from_title and self.options.id_from_time:
+                print('gpxdo: error: id_from_title and id_from_time cannot be combined')
         if self.options.only_kw:
             self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
         if self.options.only_category:
