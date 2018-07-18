@@ -171,7 +171,6 @@ class Utility:
         """list tracks"""
         # pylint: disable=too-many-locals
         header_line = list()
-        formats = dict() # key: lower_header, value: format
         sort_headers = list()
         output_lines = list()
         total = dict()  # TODO: defaultdict(list)
@@ -210,7 +209,6 @@ class Utility:
             lower_header = field.header.lower().strip().replace(' ', '_')
             sort_headers.append(lower_header)
             total[lower_header] = [''] * 13
-            formats[lower_header] = field.field_fmt
             for idx, _ in enumerate(self.source_tracks):
                 if idx == len(output_lines):
                     output_lines.append([])
@@ -253,9 +251,10 @@ class Utility:
                     total['identifier'] = [None] * 13
                 if any(total[x][month] for x in LsField.active_headers()):
                     total['identifier'][month] = 'TOTAL month {}'.format(month)
-                    result.append(list(fmt(formats.get(col), total[col][month]) for col in LsField.active_headers()))
+                    result.append(list(
+                        fmt(col.field_fmt, total[col.head_ident][month]) for col in LsField.active_fields()))
             total['identifier'][0] = 'TOTAL {} tracks'.format(len(output_lines) - 1)
-            result.append(list(fmt(formats.get(col), total[col][0]) for col in LsField.active_headers()))
+            result.append(list(fmt(col.field_fmt, total[col.head_ident][0]) for col in LsField.active_fields()))
             return result
 
         def add_warnings():
