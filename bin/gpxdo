@@ -72,11 +72,11 @@ class LsField:
 
     fields = list()
 
-    def __init__(self, is_active, header, value, field_fmt=None):
+    def __init__(self, is_active, header, value_function, field_fmt=None):
         self.is_active = is_active
         self.header = header
         self.head_ident = header.lower().strip().replace(' ', '_')
-        self.value = value
+        self.value_function = value_function
         self.field_fmt = field_fmt or '{}'
         LsField.fields.append(self)
 
@@ -89,6 +89,7 @@ class LsField:
     def active_headers(cls):
         """Yields all active header ident strings"""
         return (x.head_ident for x in cls.active_fields())
+
 
 class Utility:
     """this is where the work is done"""
@@ -212,7 +213,7 @@ class Utility:
             for idx, _ in enumerate(self.source_tracks):
                 if idx == len(output_lines):
                     output_lines.append([])
-                output_lines[idx].append(fmt(field.field_fmt, field.value(_)))
+                output_lines[idx].append(fmt(field.field_fmt, field.value_function(_)))
                 if self.options.total and _.time:
                     month = _.time.month
                     if lower_header == 'duration' or (
