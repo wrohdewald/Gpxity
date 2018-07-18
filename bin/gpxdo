@@ -206,22 +206,21 @@ class Utility:
         def add_field(field):
             """Conditionally add value for the column named 'header'"""
             header_line.append(field.header)
-            lower_header = field.header.lower().strip().replace(' ', '_')
-            sort_headers.append(lower_header)
-            total[lower_header] = [''] * 13
+            sort_headers.append(field.head_ident)
+            total[field.head_ident] = [''] * 13
             for idx, _ in enumerate(self.source_tracks):
                 if idx == len(output_lines):
                     output_lines.append([])
                 output_lines[idx].append(field.format_value((_)))
                 if self.options.total and _.time:
                     month = _.time.month
-                    if lower_header == 'duration' or (
-                            lower_header == 'speed' and 'duration' not in LsField.active_headers()):
+                    if field.head_ident == 'duration' or (
+                            field.head_ident == 'speed' and 'duration' not in LsField.active_headers()):
                         add_to_total('duration', month, _.last_time - _.time)
-                    elif lower_header == 'length' or (
-                            lower_header == 'speed' and 'length' not in LsField.active_headers()):
+                    elif field.head_ident == 'length' or (
+                            field.head_ident == 'speed' and 'length' not in LsField.active_headers()):
                         add_to_total('length', month, _.length())
-                    elif lower_header == 'moving_speed':
+                    elif field.head_ident == 'moving_speed':
                         bounds = _.gpx.get_moving_data()
                         add_to_total('moving_duration', month, datetime.timedelta(seconds=bounds.moving_time))
                         add_to_total('moving_length', month, bounds.moving_distance / 1000.0)
