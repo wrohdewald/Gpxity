@@ -189,18 +189,18 @@ class Utility:
                 return '{:3}:{:02}'.format(hours, minutes)
             return fmt.format(value)
 
-        def add_field(condition, header, value, field_fmt=None):
+        def add_field(field):
             """Conditionally add value for the column named 'header'"""
-            if condition:
-                header_line.append(header)
-                lower_header = header.lower().strip().replace(' ', '_')
+            if field.condition:
+                header_line.append(field.header)
+                lower_header = field.header.lower().strip().replace(' ', '_')
                 sort_headers.append(lower_header)
                 total[lower_header] = [''] * 13
-                formats[lower_header] = field_fmt
+                formats[lower_header] = field.field_fmt
                 for idx, _ in enumerate(self.source_tracks):
                     if idx == len(output_lines):
                         output_lines.append([])
-                    output_lines[idx].append(fmt(field_fmt, value(_)))
+                    output_lines[idx].append(fmt(field.field_fmt, field.value(_)))
                     if self.options.total and _.time:
                         month = _.time.month
                         if lower_header == 'duration' or (lower_header == 'speed' and 'duration' not in sort_headers):
@@ -273,7 +273,7 @@ class Utility:
             (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h')))
 
         for field in fields:
-            add_field(field.condition, field.header, field.value, field.field_fmt)
+            add_field(field)
 
         add_warnings()
 
