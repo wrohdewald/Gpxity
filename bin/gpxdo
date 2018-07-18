@@ -195,7 +195,6 @@ class Utility:
     def list_them(self):
         """list tracks"""
         # pylint: disable=too-many-locals
-        header_line = list()
         output_lines = list()
         total = dict()  # TODO: defaultdict(list)
 
@@ -214,7 +213,6 @@ class Utility:
 
         def add_field(field):
             """Conditionally add value for the column named 'header'"""
-            header_line.append(field.header)
             total[field.head_ident] = [''] * 13
             for idx, _ in enumerate(self.source_tracks):
                 if idx == len(output_lines):
@@ -290,7 +288,7 @@ class Utility:
                 key=lambda x: ','.join('{:100}'.format(
                     x[list(LsField.active_headers()).index(y.head_ident)]) for y in sort_fields))
             if list(LsField.active_headers()) != ['identifier', ]:
-                output_lines.insert(0, header_line)
+                output_lines.insert(0, list(x.header for x in LsField.active_fields()))
             if self.options.total:
                 output_lines.extend(add_totals())
             field_lengths = [0] * len(output_lines[0])
