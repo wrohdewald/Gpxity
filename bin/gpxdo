@@ -90,6 +90,20 @@ class LsField:
         """Yields all active header ident strings"""
         return (x.head_ident for x in cls.active_fields())
 
+    def format_value(self, value):
+        """Format value according to field rules"""
+        value = self.value_function(value)
+        if value is None:
+            return ''
+        if value == '':
+            return ''
+        if self.field_fmt == 'duration':
+            hours = value.seconds // 3600
+            minutes = (value.seconds - hours * 3600) // 60
+            hours += value.days * 24
+            return '{:3}:{:02}'.format(hours, minutes)
+        return self.field_fmt.format(value)
+
 
 class Utility:
     """this is where the work is done"""
@@ -189,21 +203,6 @@ class Utility:
             else:
                 total[header][0] += value
 
-        def fmt(fmt, value):
-            """custom formatting"""
-            if value is None:
-                return ''
-            if value == '':
-                return ''
-            if fmt is None:
-                fmt = '{}'
-            if fmt == 'duration':
-                hours = value.seconds // 3600
-                minutes = (value.seconds - hours * 3600) // 60
-                hours += value.days * 24
-                return '{:3}:{:02}'.format(hours, minutes)
-            return fmt.format(value)
-
         def add_field(field):
             """Conditionally add value for the column named 'header'"""
             header_line.append(field.header)
@@ -213,7 +212,7 @@ class Utility:
             for idx, _ in enumerate(self.source_tracks):
                 if idx == len(output_lines):
                     output_lines.append([])
-                output_lines[idx].append(fmt(field.field_fmt, field.value_function(_)))
+                output_lines[idx].append(field.format_value((_)))
                 if self.options.total and _.time:
                     month = _.time.month
                     if lower_header == 'duration' or (
@@ -252,10 +251,11 @@ class Utility:
                     total['identifier'] = [None] * 13
                 if any(total[x][month] for x in LsField.active_headers()):
                     total['identifier'][month] = 'TOTAL month {}'.format(month)
-                    result.append(list(
-                        fmt(col.field_fmt, total[col.head_ident][month]) for col in LsField.active_fields()))
+                    result.append(
+                        list(col.field_fmt.format(total[col.head_ident][month])
+                             for col in LsField.active_fields()))
             total['identifier'][0] = 'TOTAL {} tracks'.format(len(output_lines) - 1)
-            result.append(list(fmt(col.field_fmt, total[col.head_ident][0]) for col in LsField.active_fields()))
+            result.append(list(col.field_fmt.format(total[col.head_ident][0]) for col in LsField.active_fields()))
             return result
 
         def add_warnings():
