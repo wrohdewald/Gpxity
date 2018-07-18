@@ -72,8 +72,8 @@ class LsField:
 
     fields = list()
 
-    def __init__(self, is_active, header, value_function, field_fmt=None):
-        self.is_active = is_active
+    def __init__(self, is_visible, header, value_function, field_fmt=None):
+        self.is_visible = is_visible
         self.header = header
         self.head_ident = header.lower().strip().replace(' ', '_')
         self.value_function = value_function
@@ -81,14 +81,14 @@ class LsField:
         LsField.fields.append(self)
 
     @classmethod
-    def active_fields(cls):
+    def visible_fields(cls):
         """Yields all active fields"""
-        return (x for x in cls.fields if x.is_active)
+        return (x for x in cls.fields if x.is_visible)
 
     @classmethod
-    def active_headers(cls):
+    def visible_headers(cls):
         """Yields all active header ident strings"""
-        return (x.head_ident for x in cls.active_fields())
+        return (x.head_ident for x in cls.visible_fields())
 
     def format_value(self, value):
         """Format value according to field rules"""
@@ -225,10 +225,10 @@ class Utility:
                 if self.options.total and _.time:
                     month = _.time.month
                     if field.head_ident == 'duration' or (
-                            field.head_ident == 'speed' and 'duration' not in LsField.active_headers()):
+                            field.head_ident == 'speed' and 'duration' not in LsField.visible_headers()):
                         add_to_total('duration', month, _.last_time - _.time)
                     elif field.head_ident == 'length' or (
-                            field.head_ident == 'speed' and 'length' not in LsField.active_headers()):
+                            field.head_ident == 'speed' and 'length' not in LsField.visible_headers()):
                         add_to_total('length', month, _.length())
                     elif field.head_ident == 'moving_speed':
                         bounds = _.gpx.get_moving_data()
@@ -249,21 +249,21 @@ class Utility:
 
             # compute additional totals using other totals
             result = list()
-            if 'speed' in LsField.active_headers():
+            if 'speed' in LsField.visible_headers():
                 for month in range(13):
                     totalspeed('duration', 'length', 'speed', month)
-            if 'moving_speed' in LsField.active_headers():
+            if 'moving_speed' in LsField.visible_headers():
                 for month in range(13):
                     totalspeed('moving_duration', 'moving_length', 'moving_speed', month)
             for month in range(1, 13):
                 if 'identifier' not in total:
                     total['identifier'] = [None] * 13
-                if any(total[x][month] for x in LsField.active_headers()):
+                if any(total[x][month] for x in LsField.visible_headers()):
                     total['identifier'][month] = 'TOTAL month {}'.format(month)
                     result.append(
-                        {x.head_ident: x.format_raw(total[x.head_ident][month]) for x in LsField.active_fields()})
+                        {x.head_ident: x.format_raw(total[x.head_ident][month]) for x in LsField.visible_fields()})
             total['identifier'][0] = 'TOTAL {} tracks'.format(len(output_lines) - 1)
-            result.append({x.head_ident: x.format_raw(total[x.head_ident][0]) for x in LsField.active_fields()})
+            result.append({x.head_ident: x.format_raw(total[x.head_ident][0]) for x in LsField.visible_fields()})
             return result
 
         list(LsField(*x) for x in (
@@ -282,21 +282,21 @@ class Utility:
             (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h'),
             (any(x.warnings() for x in self.source_tracks), 'Warnings', lambda x: x.warnings(), 'warnings')))
 
-        for field in LsField.active_fields():
+        for field in LsField.visible_fields():
             add_field(field)
 
         if output_lines:
             sort_fields = (LsField.find_by_head_ident(x) for x in self.options.sort.split(','))
             output_lines.sort(
                 key=lambda x: ','.join('{:100}'.format(x[y.head_ident]) for y in sort_fields))
-            if list(LsField.active_headers()) != ['identifier', ]:
-                output_lines.insert(0, {x.head_ident: x.header for x in LsField.active_fields()})
+            if list(LsField.visible_headers()) != ['identifier', ]:
+                output_lines.insert(0, {x.head_ident: x.header for x in LsField.visible_fields()})
             if self.options.total:
                 output_lines.extend(add_totals())
-            for field in LsField.active_fields():
+            for field in LsField.visible_fields():
                 field.max_length = max(len(x[field.head_ident]) for x in output_lines)
             for _ in output_lines:
-                for field in LsField.active_fields():
+                for field in LsField.visible_fields():
                     print('{fieldname:{width}}'.format(width=field.max_length, fieldname=_[field.head_ident]), end='  ')
                 print()
 
