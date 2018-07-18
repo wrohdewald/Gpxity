@@ -102,6 +102,8 @@ class LsField:
             minutes = (value.seconds - hours * 3600) // 60
             hours += value.days * 24
             return '{:3}:{:02}'.format(hours, minutes)
+        if self.field_fmt == 'warnings':
+            return '  '.join(value)
         return self.field_fmt.format(value)
 
 
@@ -257,21 +259,6 @@ class Utility:
             result.append(list(col.field_fmt.format(total[col.head_ident][0]) for col in LsField.active_fields()))
             return result
 
-        def add_warnings():
-            """If we see an obvious problem with a track, add a warnings column."""
-            warnings = list()
-            if not self.options.long:
-                return
-            for _ in self.source_tracks:
-                warnings.append('  '.join(_.warnings()))
-            if any(x for x in warnings):
-                header_line.append('Warnings')
-                sort_headers.append('warnings')
-                for idx, _ in enumerate(warnings):
-                    output_lines[idx].append(_)
-            total['warnings'] = [''] * 13
-            total['warnings'][0] = len([x for x in warnings if x.strip()])
-
         list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.identifier()),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
@@ -285,12 +272,11 @@ class Utility:
             (self.options.duration or self.options.speed, 'Duration',
              lambda x: x.last_time - x.time if x.time else datetime.timedelta(), 'duration'),
             (self.options.speed, 'Speed', lambda x: x.speed(), '{:>5.2f}km/h'),
-            (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h')))
+            (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h'),
+            (any(x.warnings() for x in self.source_tracks), 'Warnings', lambda x: x.warnings(), 'warnings')))
 
         for field in LsField.active_fields():
             add_field(field)
-
-        add_warnings()
 
         if output_lines:
             sort_cols = self.options.sort.split(',')
