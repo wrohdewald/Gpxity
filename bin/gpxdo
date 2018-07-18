@@ -69,11 +69,21 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
 class LsField:
     """Abstracts a column in the ls output."""
     # pylint: disable=too-few-public-methods
-    def __init__(self, condition, header, value, field_fmt=None):
-        self.condition = condition
+
+    fields = list()
+
+    def __init__(self, is_active, header, value, field_fmt=None):
+        self.is_active = is_active
         self.header = header
         self.value = value
         self.field_fmt = field_fmt or '{}'
+        LsField.fields.append(self)
+
+    @classmethod
+    def active_fields(cls):
+        """Yields all active fields"""
+        return (x for x in cls.fields if x.is_active)
+
 
 class Utility:
     """this is where the work is done"""
@@ -191,26 +201,25 @@ class Utility:
 
         def add_field(field):
             """Conditionally add value for the column named 'header'"""
-            if field.condition:
-                header_line.append(field.header)
-                lower_header = field.header.lower().strip().replace(' ', '_')
-                sort_headers.append(lower_header)
-                total[lower_header] = [''] * 13
-                formats[lower_header] = field.field_fmt
-                for idx, _ in enumerate(self.source_tracks):
-                    if idx == len(output_lines):
-                        output_lines.append([])
-                    output_lines[idx].append(fmt(field.field_fmt, field.value(_)))
-                    if self.options.total and _.time:
-                        month = _.time.month
-                        if lower_header == 'duration' or (lower_header == 'speed' and 'duration' not in sort_headers):
-                            add_to_total('duration', month, _.last_time - _.time)
-                        elif lower_header == 'length' or (lower_header == 'speed' and 'length' not in sort_headers):
-                            add_to_total('length', month, _.length())
-                        elif lower_header == 'moving_speed':
-                            bounds = _.gpx.get_moving_data()
-                            add_to_total('moving_duration', month, datetime.timedelta(seconds=bounds.moving_time))
-                            add_to_total('moving_length', month, bounds.moving_distance / 1000.0)
+            header_line.append(field.header)
+            lower_header = field.header.lower().strip().replace(' ', '_')
+            sort_headers.append(lower_header)
+            total[lower_header] = [''] * 13
+            formats[lower_header] = field.field_fmt
+            for idx, _ in enumerate(self.source_tracks):
+                if idx == len(output_lines):
+                    output_lines.append([])
+                output_lines[idx].append(fmt(field.field_fmt, field.value(_)))
+                if self.options.total and _.time:
+                    month = _.time.month
+                    if lower_header == 'duration' or (lower_header == 'speed' and 'duration' not in sort_headers):
+                        add_to_total('duration', month, _.last_time - _.time)
+                    elif lower_header == 'length' or (lower_header == 'speed' and 'length' not in sort_headers):
+                        add_to_total('length', month, _.length())
+                    elif lower_header == 'moving_speed':
+                        bounds = _.gpx.get_moving_data()
+                        add_to_total('moving_duration', month, datetime.timedelta(seconds=bounds.moving_time))
+                        add_to_total('moving_length', month, bounds.moving_distance / 1000.0)
 
         def totalspeed(dur_name, len_name, speed_name, month):
             """Compute total speed or moving_speed"""
@@ -257,7 +266,7 @@ class Utility:
             total['warnings'] = [''] * 13
             total['warnings'][0] = len([x for x in warnings if x.strip()])
 
-        fields = list(LsField(*x) for x in (
+        list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.identifier()),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
             (self.options.time, 'Time', lambda x: x.time),
@@ -272,7 +281,7 @@ class Utility:
             (self.options.speed, 'Speed', lambda x: x.speed(), '{:>5.2f}km/h'),
             (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h')))
 
-        for field in fields:
+        for field in LsField.active_fields():
             add_field(field)
 
         add_warnings()
