@@ -75,6 +75,7 @@ class LsField:
     def __init__(self, is_active, header, value, field_fmt=None):
         self.is_active = is_active
         self.header = header
+        self.head_ident = header.lower().strip().replace(' ', '_')
         self.value = value
         self.field_fmt = field_fmt or '{}'
         LsField.fields.append(self)
@@ -84,6 +85,10 @@ class LsField:
         """Yields all active fields"""
         return (x for x in cls.fields if x.is_active)
 
+    @classmethod
+    def active_headers(cls):
+        """Yields all active header ident strings"""
+        return (x.head_ident for x in cls.active_fields())
 
 class Utility:
     """this is where the work is done"""
@@ -212,9 +217,11 @@ class Utility:
                 output_lines[idx].append(fmt(field.field_fmt, field.value(_)))
                 if self.options.total and _.time:
                     month = _.time.month
-                    if lower_header == 'duration' or (lower_header == 'speed' and 'duration' not in sort_headers):
+                    if lower_header == 'duration' or (
+                            lower_header == 'speed' and 'duration' not in LsField.active_headers()):
                         add_to_total('duration', month, _.last_time - _.time)
-                    elif lower_header == 'length' or (lower_header == 'speed' and 'length' not in sort_headers):
+                    elif lower_header == 'length' or (
+                            lower_header == 'speed' and 'length' not in LsField.active_headers()):
                         add_to_total('length', month, _.length())
                     elif lower_header == 'moving_speed':
                         bounds = _.gpx.get_moving_data()
@@ -235,20 +242,20 @@ class Utility:
 
             # compute additional totals using other totals
             result = list()
-            if 'speed' in sort_headers:
+            if 'speed' in LsField.active_headers():
                 for month in range(13):
                     totalspeed('duration', 'length', 'speed', month)
-            if 'moving_speed' in sort_headers:
+            if 'moving_speed' in LsField.active_headers():
                 for month in range(13):
                     totalspeed('moving_duration', 'moving_length', 'moving_speed', month)
             for month in range(1, 13):
                 if 'identifier' not in total:
                     total['identifier'] = [None] * 13
-                if any(total[x][month] for x in sort_headers):
+                if any(total[x][month] for x in LsField.active_headers()):
                     total['identifier'][month] = 'TOTAL month {}'.format(month)
-                    result.append(list(fmt(formats.get(col), total[col][month]) for col in sort_headers))
+                    result.append(list(fmt(formats.get(col), total[col][month]) for col in LsField.active_headers()))
             total['identifier'][0] = 'TOTAL {} tracks'.format(len(output_lines) - 1)
-            result.append(list(fmt(formats.get(col), total[col][0]) for col in sort_headers))
+            result.append(list(fmt(formats.get(col), total[col][0]) for col in LsField.active_headers()))
             return result
 
         def add_warnings():
