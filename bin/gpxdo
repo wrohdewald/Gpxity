@@ -106,6 +106,14 @@ class LsField:
             return '  '.join(value)
         return self.field_fmt.format(value)
 
+    @classmethod
+    def find_by_head_ident(cls, head_ident):
+        """Returns the field with head_ident."""
+        for _ in cls.fields:
+            if _.head_ident == head_ident:
+                return _
+        raise IndexError
+
 
 class Utility:
     """this is where the work is done"""
@@ -188,7 +196,6 @@ class Utility:
         """list tracks"""
         # pylint: disable=too-many-locals
         header_line = list()
-        sort_headers = list()
         output_lines = list()
         total = dict()  # TODO: defaultdict(list)
 
@@ -208,7 +215,6 @@ class Utility:
         def add_field(field):
             """Conditionally add value for the column named 'header'"""
             header_line.append(field.header)
-            sort_headers.append(field.head_ident)
             total[field.head_ident] = [''] * 13
             for idx, _ in enumerate(self.source_tracks):
                 if idx == len(output_lines):
@@ -279,10 +285,11 @@ class Utility:
             add_field(field)
 
         if output_lines:
-            sort_cols = self.options.sort.split(',')
+            sort_fields = (LsField.find_by_head_ident(x) for x in self.options.sort.split(','))
             output_lines.sort(
-                key=lambda x: ','.join('{:100}'.format(x[sort_headers.index(y)]) for y in sort_cols))
-            if sort_headers != ['identifier', ]:
+                key=lambda x: ','.join('{:100}'.format(
+                    x[list(LsField.active_headers()).index(y.head_ident)]) for y in sort_fields))
+            if list(LsField.active_headers()) != ['identifier', ]:
                 output_lines.insert(0, header_line)
             if self.options.total:
                 output_lines.extend(add_totals())
