@@ -162,7 +162,8 @@ class LsRow(dict):
         """Sets the maximum field widths"""
         for field in cls.visible_fields():
             field.max_length = max(list(
-                len(field.format_raw(x[field.head_ident])) for x in rows if isinstance(x, LsRow)))
+                len(field.format_raw(x[field.head_ident])) for x in rows
+                if isinstance(x, LsRow) and not isinstance(x, SeparatorRow)))
 
     def print_row(self):
         """print to stdout"""
@@ -181,7 +182,6 @@ class TotalRow(LsRow):
             if field.summable:
                 for _ in rows:
                     self[field.head_ident] += _[field.head_ident]
-        self['identifier'] = 'TOTAL'
         for speed_ident, duration_ident, length_ident in (
                 ('speed', 'duration', 'length'), ('moving_speed', 'moving_duration', 'moving_length')):
             if speed_ident in self:
@@ -190,6 +190,16 @@ class TotalRow(LsRow):
                     seconds = duration.days * 24 * 3600 + duration.seconds
                     speed = self[length_ident] / seconds * 3600 if seconds else 0
                     self[speed_ident] = speed
+        self['identifier'] = 'TOTAL'
+
+
+class SubTotalRow(TotalRow):
+
+    """A row with a subtotal"""
+    def __init__(self, rows, mainsort, group_key):
+        super(SubTotalRow, self).__init__(rows)
+        self[mainsort] = group_key
+        self['identifier'] = 'TOTAL {}'.format(group_key)
 
 
 class SegmentRow(LsRow):
@@ -398,9 +408,7 @@ class Utility:
                         group_lines.extend(seg_lines)
 
             if self.options.total and mainsort != 'keywords':
-                total_line = TotalRow(group_tracks)
-                total_line[mainsort] = group_key
-                total_line['identifier'] = 'TOTAL {}'.format(group_key)
+                total_line = SubTotalRow(group_tracks, mainsort, group_key)
                 group_lines.append(total_line)
                 group_lines.append(SeparatorRow('-'))
             all_lines.extend(group_lines)
@@ -412,7 +420,7 @@ class Utility:
             if mainsort == 'keywords':
                 all_lines.append(SeparatorRow('='))
                 for group_key in group_keys:
-                    all_lines.append(TotalRow(track_groups[group_key]))
+                    all_lines.append(SubTotalRow(track_groups[group_key], mainsort, group_key or 'No keyword'))
 
         LsRow.set_max_lengths(all_lines)
 
