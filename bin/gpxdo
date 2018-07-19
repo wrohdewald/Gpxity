@@ -27,6 +27,11 @@ try:
 except ImportError:
     pass
 
+from gpxpy import gpx as mod_gpx
+GPX = mod_gpx.GPX
+GPXTrack = mod_gpx.GPXTrack
+GPXTrackSegment = mod_gpx.GPXTrackSegment
+
 # This uses not the installed copy but the development files
 _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
@@ -258,6 +263,14 @@ class Utility:
                         yield groupkey
                         seen.add(groupkey)
 
+        def add_computed_track_data(tracks):
+            """Add more info we need for display. This is a cache for speed."""
+            if any(x.head_ident.startswith('moving') for x in LsField.needed_fields()):
+                for _ in tracks:
+                    bounds = _.gpx.get_moving_data()
+                    _.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
+                    _.moving_length = bounds.moving_distance / 1000.0
+
         def track_total(tracks):
             """Returns a row with totals over tracks."""
             result = LsField.empty_row()
@@ -300,12 +313,10 @@ class Utility:
         if 'moving_speed' in LsField.visible_headers():
             LsField.find_by_head_ident('moving_duration').is_needed = True
             LsField.find_by_head_ident('moving_length').is_needed = True
+        if self.options.segments:
+            LsField(False, 'track', lambda x: x).is_needed = True
 
-        if any(x.head_ident.startswith('moving') for x in LsField.needed_fields()):
-            for _ in self.source_tracks:
-                bounds = _.gpx.get_moving_data()
-                _.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
-                _.moving_length = bounds.moving_distance / 1000.0
+        add_computed_track_data(self.source_tracks)
 
         sort_fields = list(LsField.find_by_head_ident(x) for x in self.options.sort.split(','))
         for _ in sort_fields:
@@ -327,17 +338,41 @@ class Utility:
 
         all_lines = list()
         for group_key in group_keys:
-            lines = track_groups[group_key][:]
+            group_tracks = track_groups[group_key][:]
+            group_lines = list()
             if sort_fields:
-                lines.sort(
+                group_tracks.sort(
                     key=lambda x: tuple(x[y.head_ident] for y in sort_fields))
+            for line in group_tracks:
+                group_lines.append(line)
+                if self.options.segments:
+                    gpx = line['track'].gpx
+                    seg_lines = list()
+                    for track_idx, track in enumerate(gpx.tracks):
+                        for seg_idx, segment in enumerate(track.segments):
+                            gpx_track = GPXTrack()
+                            gpx_track.segments.append(segment)
+                            gpx_data = GPX()
+                            gpx_data.tracks.append(gpx_track)
+                            seg_track = Track(gpx_data)
+                            add_computed_track_data([seg_track])
+                            segment_line = LsField.from_track(seg_track)
+                            segment_line['title'] = ''
+                            segment_line['category'] = ''
+                            segment_line['keywords'] = ''
+                            segment_line['status'] = ''
+                            segment_line['identifier'] = '  Track/Segment {}/{}'.format(track_idx + 1, seg_idx + 1)
+                            seg_lines.append(segment_line)
+                    if len(seg_lines) > 1:
+                        group_lines.extend(seg_lines)
+
             if self.options.total and mainsort != 'keywords':
-                total_line = track_total(lines)
+                total_line = track_total(group_tracks)
                 total_line[mainsort] = group_key
                 total_line['identifier'] = 'TOTAL {}'.format(group_key)
-                lines.append(total_line)
-                lines.append('-')
-            all_lines.extend(lines)
+                group_lines.append(total_line)
+                group_lines.append('-')
+            all_lines.extend(group_lines)
 
         if list(LsField.visible_headers()) != ['identifier', ]:
             all_lines.insert(0, {x.head_ident: x.header for x in LsField.visible_fields()})
@@ -637,6 +672,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                default='identifier')
         ls_parser.add_argument('--total',
                                help="""Show a total line""",
+                               action='store_true', default=False)
+        ls_parser.add_argument('--segments', help='show track segments',
                                action='store_true', default=False)
         ls_parser.add_argument('--long', help='show most useful info',
                                action='store_true', default=False)
