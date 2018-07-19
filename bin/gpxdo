@@ -82,28 +82,13 @@ class LsField:
         self.is_needed = is_visible
         self.header = header
         self.head_ident = header.lower().strip().replace(' ', '_')
-        if self.find_by_head_ident(self.head_ident):
+        if LsRow.find_by_head_ident(self.head_ident):
             raise Exception('LsField already exists:{}'.format(self.head_ident))
         self.value_function = value_function
         self.field_fmt = field_fmt or '{}'
         self.summable = summable
         self.max_length = 0
         LsRow.fields.append(self)
-
-    @classmethod
-    def visible_fields(cls):
-        """Yields all fields to be printed"""
-        return (x for x in LsRow.fields if x.is_visible)
-
-    @classmethod
-    def needed_fields(cls):
-        """Yields all fields needed for print or for computation"""
-        return (x for x in LsRow.fields if x.is_needed)
-
-    @classmethod
-    def visible_headers(cls):
-        """Yields all active header ident strings"""
-        return (x.head_ident for x in cls.visible_fields())
 
     def format_value(self, value):
         """Format value according to field rules"""
@@ -125,41 +110,6 @@ class LsField:
             return '  '.join(value)
         return self.field_fmt.format(value)
 
-    @classmethod
-    def find_by_head_ident(cls, head_ident):
-        """Returns the field with head_ident."""
-        for _ in LsRow.fields:
-            if _.head_ident == head_ident:
-                return _
-        return None
-
-    @classmethod
-    def empty_row(cls):
-        """Returns an empty row with matching values"""
-        result = dict()
-        for field in cls.needed_fields():
-            if field.summable is not None:
-                _ = field.summable()
-            else:
-                _ = ''
-            result[field.head_ident] = _
-        return result
-
-    @classmethod
-    def separator_row(cls, separator):
-        """Returns a row to be used as separator line"""
-        result = dict()
-        for field in cls.visible_fields():
-            result[field.head_ident] = separator * field.max_length
-        return result
-
-    @classmethod
-    def from_track(cls, track):
-        """Returns a row from track"""
-        result = dict()
-        for field in LsField.needed_fields():
-            result[field.head_ident] = field.value_function(track)
-        return result
 
 class LsRow(dict):
     """Represents a row for gpxdo ls. The field order is determined
@@ -167,8 +117,49 @@ class LsRow(dict):
 
     fields = list()
 
-    def __init__(self):
-        pass
+    def __init__(self, track=None):
+        super(LsRow, self).__init__()
+        self.track = track
+        for field in self.needed_fields():
+            if field.summable is not None:
+                _ = field.summable()
+            else:
+                _ = ''
+            self[field.head_ident] = _
+        if track:
+            for field in self.needed_fields():
+                self[field.head_ident] = field.value_function(track)
+
+    @classmethod
+    def visible_fields(cls):
+        """Yields all fields to be printed"""
+        return (x for x in cls.fields if x.is_visible)
+
+    @classmethod
+    def needed_fields(cls):
+        """Yields all fields needed for print or for computation"""
+        return (x for x in cls.fields if x.is_needed)
+
+    @classmethod
+    def visible_headers(cls):
+        """Yields all active header ident strings"""
+        return (x.head_ident for x in cls.visible_fields())
+
+    @classmethod
+    def find_by_head_ident(cls, head_ident):
+        """Returns the field with head_ident."""
+        for _ in cls.fields:
+            if _.head_ident == head_ident:
+                return _
+        return None
+
+class SeparatorRow(LsRow):
+    """A separator line for use before or after totals"""
+
+    def __init__(self, separator):
+        super(SeparatorRow, self).__init__()
+        for field in self.visible_fields():
+            self[field.head_ident] = separator * field.max_length
 
 
 class Utility:
@@ -274,7 +265,7 @@ class Utility:
 
         def add_computed_track_data(tracks):
             """Add more info we need for display. This is a cache for speed."""
-            if any(x.head_ident.startswith('moving') for x in LsField.needed_fields()):
+            if any(x.head_ident.startswith('moving') for x in LsRow.needed_fields()):
                 for _ in tracks:
                     bounds = _.gpx.get_moving_data()
                     _.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
@@ -282,8 +273,8 @@ class Utility:
 
         def track_total(tracks):
             """Returns a row with totals over tracks."""
-            result = LsField.empty_row()
-            for field in LsField.needed_fields():
+            result = LsRow()
+            for field in LsRow.needed_fields():
                 if field.summable:
                     for _ in tracks:
                         result[field.head_ident] += _[field.head_ident]
@@ -316,18 +307,18 @@ class Utility:
             (False, 'Moving length', lambda x: x.moving_length, '{}', float),
             (any(x.warnings() for x in self.source_tracks), 'Warnings', lambda x: x.warnings(), 'warnings')))
 
-        if 'speed' in LsField.visible_headers():
-            LsField.find_by_head_ident('duration').is_needed = True
-            LsField.find_by_head_ident('length').is_needed = True
-        if 'moving_speed' in LsField.visible_headers():
-            LsField.find_by_head_ident('moving_duration').is_needed = True
-            LsField.find_by_head_ident('moving_length').is_needed = True
+        if 'speed' in LsRow.visible_headers():
+            LsRow.find_by_head_ident('duration').is_needed = True
+            LsRow.find_by_head_ident('length').is_needed = True
+        if 'moving_speed' in LsRow.visible_headers():
+            LsRow.find_by_head_ident('moving_duration').is_needed = True
+            LsRow.find_by_head_ident('moving_length').is_needed = True
         if self.options.segments:
             LsField(False, 'track', lambda x: x).is_needed = True
 
         add_computed_track_data(self.source_tracks)
 
-        sort_fields = list(LsField.find_by_head_ident(x) for x in self.options.sort.split(','))
+        sort_fields = list(LsRow.find_by_head_ident(x) for x in self.options.sort.split(','))
         for _ in sort_fields:
             _.is_needed = True
 
@@ -340,7 +331,7 @@ class Utility:
         track_groups = defaultdict(list)
         all_tracks = list()
         for _ in self.source_tracks:
-            row = LsField.from_track(_)
+            row = LsRow(_)
             for group in yield_track_group_keys(_, mainsort):
                 track_groups[group].append(row)
             all_tracks.append(row)
@@ -365,7 +356,7 @@ class Utility:
                             gpx_data.tracks.append(gpx_track)
                             seg_track = Track(gpx_data)
                             add_computed_track_data([seg_track])
-                            segment_line = LsField.from_track(seg_track)
+                            segment_line = LsRow(seg_track)
                             segment_line['title'] = ''
                             segment_line['category'] = ''
                             segment_line['keywords'] = ''
@@ -380,24 +371,24 @@ class Utility:
                 total_line[mainsort] = group_key
                 total_line['identifier'] = 'TOTAL {}'.format(group_key)
                 group_lines.append(total_line)
-                group_lines.append('-')
+                group_lines.append(SeparatorRow('-'))
             all_lines.extend(group_lines)
 
-        if list(LsField.visible_headers()) != ['identifier', ]:
-            all_lines.insert(0, {x.head_ident: x.header for x in LsField.visible_fields()})
+        if list(LsRow.visible_headers()) != ['identifier', ]:
+            all_lines.insert(0, {x.head_ident: x.header for x in LsRow.visible_fields()})
         if self.options.total:
             all_lines.append(track_total(all_tracks))
             if mainsort == 'keywords':
-                all_lines.append('=')
+                all_lines.append(SeparatorRow('='))
                 for group_key in group_keys:
                     all_lines.append(track_total(track_groups[group_key]))
 
-        for field in LsField.visible_fields():
+        for field in LsRow.visible_fields():
             field.max_length = max(list(
                 len(field.format_raw(x[field.head_ident])) for x in all_lines if isinstance(x, dict)))
 
         for line in all_lines:
-            for field in LsField.visible_fields():
+            for field in LsRow.visible_fields():
                 if isinstance(line, str):
                     print(line * field.max_length, end='  ')
                 else:
