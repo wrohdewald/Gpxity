@@ -178,6 +178,22 @@ class TotalRow(LsRow):
                     self[speed_ident] = speed
 
 
+class SegmentRow(LsRow):
+    """Shows a single track segment"""
+
+    def __init__(self, segment):
+        gpx_track = GPXTrack()
+        gpx_track.segments.append(segment)
+        gpx_data = GPX()
+        gpx_data.tracks.append(gpx_track)
+        seg_track = Track(gpx_data)
+        super(SegmentRow, self).__init__(seg_track)
+        self['title'] = ''
+        self['category'] = ''
+        self['keywords'] = ''
+        self['status'] = ''
+
+
 class SeparatorRow(LsRow):
     """A separator line for use before or after totals"""
 
@@ -347,16 +363,7 @@ class Utility:
                     seg_lines = list()
                     for track_idx, track in enumerate(gpx.tracks):
                         for seg_idx, segment in enumerate(track.segments):
-                            gpx_track = GPXTrack()
-                            gpx_track.segments.append(segment)
-                            gpx_data = GPX()
-                            gpx_data.tracks.append(gpx_track)
-                            seg_track = Track(gpx_data)
-                            segment_line = LsRow(seg_track)
-                            segment_line['title'] = ''
-                            segment_line['category'] = ''
-                            segment_line['keywords'] = ''
-                            segment_line['status'] = ''
+                            segment_line = SegmentRow(segment)
                             segment_line['identifier'] = '  Track/Segment {}/{}'.format(track_idx + 1, seg_idx + 1)
                             seg_lines.append(segment_line)
                     if len(seg_lines) > 1:
