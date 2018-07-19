@@ -312,12 +312,12 @@ class Utility:
         track_groups = defaultdict(list)
         all_tracks = list()
         for _ in self.source_tracks:
-            track = dict()
+            row = dict()
             for field in LsField.needed_fields():
-                track[field.head_ident] = field.value_function((_))
+                row[field.head_ident] = field.value_function((_))
             for group in yield_track_group_keys(_, mainsort):
-                track_groups[group].append(track)
-            all_tracks.append(track)
+                track_groups[group].append(row)
+            all_tracks.append(row)
 
         all_lines = list()
         for group_key in group_keys:
