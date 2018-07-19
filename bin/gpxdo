@@ -164,6 +164,13 @@ class LsRow(dict):
             field.max_length = max(list(
                 len(field.format_raw(x[field.head_ident])) for x in rows if isinstance(x, LsRow)))
 
+    def print_row(self):
+        """print to stdout"""
+        for field in LsRow.visible_fields():
+            _ = field.format_raw(self[field.head_ident])
+            print('{value:{width}}'.format(width=field.max_length, value=_), end='  ')
+        print()
+
 
 class TotalRow(LsRow):
     """A row with totals over tracks."""
@@ -206,8 +213,14 @@ class SeparatorRow(LsRow):
 
     def __init__(self, separator):
         super(SeparatorRow, self).__init__()
+        self.separator = separator
+
+    def print_row(self):
+        """print to stdout"""
         for field in self.visible_fields():
-            self[field.head_ident] = separator * field.max_length
+            print(self.separator * field.max_length, end='  ')
+        print()
+
 
 class HeaderRow(LsRow):
     """The column headers"""
@@ -404,13 +417,7 @@ class Utility:
         LsRow.set_max_lengths(all_lines)
 
         for line in all_lines:
-            for field in LsRow.visible_fields():
-                if isinstance(line, str):
-                    print(line * field.max_length, end='  ')
-                else:
-                    _ = field.format_raw(line[field.head_ident])
-                    print('{value:{width}}'.format(width=field.max_length, value=_), end='  ')
-            print()
+            line.print_row()
 
     @staticmethod
     def fix_track(track):
