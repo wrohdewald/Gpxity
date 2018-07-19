@@ -76,7 +76,6 @@ class LsField:
     """Abstracts a column in the ls output."""
     # pylint: disable=too-few-public-methods
 
-    fields = list()
 
     def __init__(self, is_visible, header, value_function, field_fmt=None, summable=None):
         self.is_visible = is_visible
@@ -89,17 +88,17 @@ class LsField:
         self.field_fmt = field_fmt or '{}'
         self.summable = summable
         self.max_length = 0
-        LsField.fields.append(self)
+        LsRow.fields.append(self)
 
     @classmethod
     def visible_fields(cls):
         """Yields all fields to be printed"""
-        return (x for x in cls.fields if x.is_visible)
+        return (x for x in LsRow.fields if x.is_visible)
 
     @classmethod
     def needed_fields(cls):
         """Yields all fields needed for print or for computation"""
-        return (x for x in cls.fields if x.is_needed)
+        return (x for x in LsRow.fields if x.is_needed)
 
     @classmethod
     def visible_headers(cls):
@@ -129,7 +128,7 @@ class LsField:
     @classmethod
     def find_by_head_ident(cls, head_ident):
         """Returns the field with head_ident."""
-        for _ in cls.fields:
+        for _ in LsRow.fields:
             if _.head_ident == head_ident:
                 return _
         return None
@@ -161,6 +160,16 @@ class LsField:
         for field in LsField.needed_fields():
             result[field.head_ident] = field.value_function(track)
         return result
+
+class LsRow(dict):
+    """Represents a row for gpxdo ls. The field order is determined
+    by the order in which the LsFields are defined."""
+
+    fields = list()
+
+    def __init__(self):
+        pass
+
 
 class Utility:
     """this is where the work is done"""
