@@ -157,6 +157,13 @@ class LsRow(dict):
                 return _
         return None
 
+    @classmethod
+    def set_max_lengths(cls, rows):
+        """Sets the maximum field widths"""
+        for field in cls.visible_fields():
+            field.max_length = max(list(
+                len(field.format_raw(x[field.head_ident])) for x in rows if isinstance(x, LsRow)))
+
 
 class TotalRow(LsRow):
     """A row with totals over tracks."""
@@ -386,9 +393,7 @@ class Utility:
                 for group_key in group_keys:
                     all_lines.append(TotalRow(track_groups[group_key]))
 
-        for field in LsRow.visible_fields():
-            field.max_length = max(list(
-                len(field.format_raw(x[field.head_ident])) for x in all_lines if isinstance(x, dict)))
+        LsRow.set_max_lengths(all_lines)
 
         for line in all_lines:
             for field in LsRow.visible_fields():
