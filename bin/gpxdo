@@ -209,6 +209,14 @@ class SeparatorRow(LsRow):
         for field in self.visible_fields():
             self[field.head_ident] = separator * field.max_length
 
+class HeaderRow(LsRow):
+    """The column headers"""
+
+    def __init__(self):
+        super(HeaderRow, self).__init__()
+        for field in LsRow.visible_fields():
+            self[field.head_ident] = field.header
+
 
 class Utility:
     """this is where the work is done"""
@@ -385,7 +393,7 @@ class Utility:
             all_lines.extend(group_lines)
 
         if list(LsRow.visible_headers()) != ['identifier', ]:
-            all_lines.insert(0, {x.head_ident: x.header for x in LsRow.visible_fields()})
+            all_lines.insert(0, HeaderRow())
         if self.options.total:
             all_lines.append(TotalRow(all_tracks))
             if mainsort == 'keywords':
