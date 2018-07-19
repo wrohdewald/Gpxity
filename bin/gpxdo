@@ -301,7 +301,7 @@ class Utility:
             LsField.find_by_head_ident('moving_duration').is_needed = True
             LsField.find_by_head_ident('moving_length').is_needed = True
 
-        if any(x.startswith('moving') for x in LsField.visible_headers()):
+        if any(x.head_ident.startswith('moving') for x in LsField.visible_fields()):
             for _ in self.source_tracks:
                 bounds = _.gpx.get_moving_data()
                 _.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
