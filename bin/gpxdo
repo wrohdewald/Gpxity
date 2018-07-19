@@ -149,6 +149,14 @@ class LsField:
             result[field.head_ident] = separator * field.max_length
         return result
 
+    @classmethod
+    def from_track(cls, track):
+        """Returns a row from track"""
+        result = dict()
+        for field in LsField.needed_fields():
+            result[field.head_ident] = field.value_function(track)
+        return result
+
 class Utility:
     """this is where the work is done"""
 
@@ -312,9 +320,7 @@ class Utility:
         track_groups = defaultdict(list)
         all_tracks = list()
         for _ in self.source_tracks:
-            row = dict()
-            for field in LsField.needed_fields():
-                row[field.head_ident] = field.value_function((_))
+            row = LsField.from_track(_)
             for group in yield_track_group_keys(_, mainsort):
                 track_groups[group].append(row)
             all_tracks.append(row)
