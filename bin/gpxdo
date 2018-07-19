@@ -153,6 +153,27 @@ class LsRow(dict):
                 return _
         return None
 
+
+class TotalRow(LsRow):
+    """A row with totals over tracks."""
+
+    def __init__(self, rows):
+        super(TotalRow, self).__init__()
+        for field in LsRow.needed_fields():
+            if field.summable:
+                for _ in rows:
+                    self[field.head_ident] += _[field.head_ident]
+        self['identifier'] = 'TOTAL'
+        for speed_ident, duration_ident, length_ident in (
+                ('speed', 'duration', 'length'), ('moving_speed', 'moving_duration', 'moving_length')):
+            if speed_ident in self:
+                duration = self[duration_ident]
+                if duration:
+                    seconds = duration.days * 24 * 3600 + duration.seconds
+                    speed = self[length_ident] / seconds * 3600 if seconds else 0
+                    self[speed_ident] = speed
+
+
 class SeparatorRow(LsRow):
     """A separator line for use before or after totals"""
 
@@ -271,24 +292,6 @@ class Utility:
                     _.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
                     _.moving_length = bounds.moving_distance / 1000.0
 
-        def track_total(tracks):
-            """Returns a row with totals over tracks."""
-            result = LsRow()
-            for field in LsRow.needed_fields():
-                if field.summable:
-                    for _ in tracks:
-                        result[field.head_ident] += _[field.head_ident]
-            result['identifier'] = 'TOTAL'
-            for speed_ident, duration_ident, length_ident in (
-                    ('speed', 'duration', 'length'), ('moving_speed', 'moving_duration', 'moving_length')):
-                if speed_ident in result:
-                    duration = result[duration_ident]
-                    if duration:
-                        seconds = duration.days * 24 * 3600 + duration.seconds
-                        speed = result[length_ident] / seconds * 3600 if seconds else 0
-                        result[speed_ident] = speed
-            return result
-
         list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.identifier()),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
@@ -367,7 +370,7 @@ class Utility:
                         group_lines.extend(seg_lines)
 
             if self.options.total and mainsort != 'keywords':
-                total_line = track_total(group_tracks)
+                total_line = TotalRow(group_tracks)
                 total_line[mainsort] = group_key
                 total_line['identifier'] = 'TOTAL {}'.format(group_key)
                 group_lines.append(total_line)
@@ -377,11 +380,11 @@ class Utility:
         if list(LsRow.visible_headers()) != ['identifier', ]:
             all_lines.insert(0, {x.head_ident: x.header for x in LsRow.visible_fields()})
         if self.options.total:
-            all_lines.append(track_total(all_tracks))
+            all_lines.append(TotalRow(all_tracks))
             if mainsort == 'keywords':
                 all_lines.append(SeparatorRow('='))
                 for group_key in group_keys:
-                    all_lines.append(track_total(track_groups[group_key]))
+                    all_lines.append(TotalRow(track_groups[group_key]))
 
         for field in LsRow.visible_fields():
             field.max_length = max(list(
