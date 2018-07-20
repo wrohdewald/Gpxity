@@ -169,7 +169,8 @@ class LsRow(dict):
         """print to stdout"""
         for field in LsRow.visible_fields():
             _ = field.format_raw(self[field.head_ident])
-            print('{value:{width}}'.format(width=field.max_length, value=_), end='  ')
+            right = '>' if field.summable in (int, float) else ''
+            print('{value:{right}{width}}'.format(right=right, width=field.max_length, value=_), end='  ')
         print()
 
 
@@ -354,8 +355,8 @@ class Utility:
             (self.options.description, 'Description', lambda x: x.description),
             (self.options.duration, 'Duration',
              lambda x: x.last_time - x.time if x.time else datetime.timedelta(), 'duration', datetime.timedelta),
-            (self.options.speed, 'Speed', lambda x: x.speed(), '{:>5.2f}km/h'),
-            (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h'),
+            (self.options.speed, 'Speed', lambda x: x.speed(), '{:>5.2f}km/h', float),
+            (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h', float),
             (False, 'Moving duration', lambda x: x.moving_duration, '{}', datetime.timedelta),
             (False, 'Moving length', lambda x: x.moving_length, '{}', float),
             (any(x.warnings() for x in self.source_tracks), 'Warnings', lambda x: x.warnings(), 'warnings')))
