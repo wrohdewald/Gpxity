@@ -250,6 +250,7 @@ class Utility:
         # pylint: disable=too-many-branches
         self.exit_code = 0
         self.options = None
+        self.subparsers = None
         self.parse_commandline()
         if self.exit_code:
             return
@@ -664,9 +665,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         parser = argparse.ArgumentParser(
             'gpxdo', formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=self.help_epilog)
-        subparsers = parser.add_subparsers()
+        self.subparsers = parser.add_subparsers()
 
-        mv_parser = subparsers.add_parser(
+        mv_parser = self.subparsers.add_parser(
             'mv', help='move sources to a destination backend',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         mv_parser.set_defaults(func=self.move)
@@ -675,7 +676,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_multi_source(mv_parser)
         self.add_destination(mv_parser)
 
-        rm_parser = subparsers.add_parser(
+        rm_parser = self.subparsers.add_parser(
             'rm', help='remove tracks',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         rm_parser.set_defaults(func=self.remove)
@@ -685,7 +686,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         self.add_multi_source(rm_parser)
 
-        fix_parser = subparsers.add_parser(
+        fix_parser = self.subparsers.add_parser(
             'fix', help="""try to fix some GPX format bugs in tracks.
                 First BACKUP the tracks! This can destroy them!""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -699,7 +700,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_range_args(fix_parser)
         self.add_multi_source(fix_parser)
 
-        ls_parser = subparsers.add_parser(
+        ls_parser = self.subparsers.add_parser(
             'ls', help='list tracks',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
@@ -741,7 +742,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_range_args(ls_parser)
         self.add_multi_source(ls_parser)
 
-        keyword_parser = subparsers.add_parser('kw', help='add or remove keywords')
+        keyword_parser = self.subparsers.add_parser('kw', help='add or remove keywords')
         keyword_parser.set_defaults(func=self.keyword)
         self.add_common_args(keyword_parser)
         self.add_range_args(keyword_parser)
@@ -752,7 +753,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         keyword_parser.add_argument('keywords', help='keywords separated by commas')
         self.add_multi_source(keyword_parser)
 
-        set_parser = subparsers.add_parser('set', help='set attributes')
+        set_parser = self.subparsers.add_parser('set', help='set attributes')
         set_parser.set_defaults(func=self.set_attributes)
         set_parser.add_argument('--title-from-id', help='use id for title',
                                 action='store_true', default=False)
@@ -770,7 +771,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_range_args(set_parser)
         self.add_multi_source(set_parser)
 
-        merge_parser = subparsers.add_parser(
+        merge_parser = self.subparsers.add_parser(
             'merge', help="""
             merge tracks: If their trackpoints are identical, add metadata like name,
             description or keywords from source to destination""",
@@ -789,7 +790,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_multi_source(merge_parser)
         self.add_destination(merge_parser)
 
-        diff_parser = subparsers.add_parser(
+        diff_parser = self.subparsers.add_parser(
             'diff', help="""
             compare tracks between source and destination""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
