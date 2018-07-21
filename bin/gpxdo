@@ -247,6 +247,7 @@ class Utility:
     """this is where the work is done"""
 
     def __init__(self):
+        # pylint: disable=too-many-branches
         self.exit_code = 0
         self.options = None
         self.parse_commandline()
@@ -262,7 +263,14 @@ class Utility:
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
                         self.destination = self.sources[-1]
-                self.source_tracks = collect_tracks(self.sources, verbose=self.options.verbose)
+                tracks = collect_tracks(self.sources, verbose=self.options.verbose)
+                for track in tracks:
+                    msg = self.match(track)
+                    if msg:
+                        if self.options.verbose:
+                            print('{}: {}'.format(track.identifier(), msg))
+                    else:
+                        self.source_tracks.append(track)
             if hasattr(self.options, 'destination') and self.destination is None:
                 self.destination = self.instantiate_object(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
@@ -544,7 +552,6 @@ class Utility:
             raise Exception('{} not found'.format(name))
         if track_id:
             result = result[track_id]
-        result.match = self.match
         result.debug = self.options.debug
         return result
 
