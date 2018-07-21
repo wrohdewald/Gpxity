@@ -567,7 +567,7 @@ class Backend:
                     '' if dry_run else ' / ' + new_track.id_in_backend))
                 if remove:
                     if not dry_run:
-                        other_backend.remove(old_track)
+                        old_track.remove()
             return result
 
         for _ in other_tracks:
