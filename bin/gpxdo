@@ -645,8 +645,8 @@ backend:username/track_id for one specific track in a backend
 
 Available backends are:
 
-  - MMT     MapMytracks
-  - GPSIES gpsies
+  - mmt       MapMytracks
+  - gpsies    gpsies.com
 
 The file $HOME/.config/Gpxity/auth.cfg
 defines the type of the backend, username and password. Example:
