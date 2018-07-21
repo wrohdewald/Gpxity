@@ -18,6 +18,7 @@ from http.client import HTTPConnection
 
 from .auth import Authenticate
 from .track import Track
+from .util import collect_tracks
 
 __all__ = ['Backend']
 
@@ -555,12 +556,8 @@ class Backend:
         # they may be identical instantiations or not. For all backends.
         result = list()
         src_dict = defaultdict(list)
-        if isinstance(other, Track):
-            other_tracks = [other]
-            other_backend = other.backend
-        else:
-            other_tracks = list(other)
-            other_backend = other
+        other_tracks = collect_tracks(other, multi_backends=False)
+        other_backend = other_tracks[0].backend
         if copy:
             for old_track in other_tracks:
                 if not dry_run:

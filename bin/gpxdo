@@ -38,7 +38,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 from gpxity import Track, Directory, BackendDiff, MMT, GPSIES
-from gpxity.util import uniq
+from gpxity.util import uniq, collect_tracks
 
 def __last_month_day(date):
     """Change to the last day of month"""
@@ -262,7 +262,7 @@ class Utility:
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
                         self.destination = self.sources[-1]
-                self.source_tracks = self._collect_source_tracks(self.sources)
+                self.source_tracks = collect_tracks(self.sources, verbose=self.options.verbose)
             if hasattr(self.options, 'destination') and self.destination is None:
                 self.destination = self.instantiate_object(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
@@ -282,18 +282,6 @@ class Utility:
         self.exit_code = exit_code or 1
         if self.options.debug:
             raise msg
-
-    def _collect_source_tracks(self, sources):
-        """A copied list with tracks combined from all sources, to be used in 'for'-loops"""
-        result = list()
-        for source in sources:
-            if self.options.verbose:
-                print('collecting tracks from', source.identifier())
-            if isinstance(source, Track):
-                result.append(source)
-            else:
-                result.extend(source)
-        return result
 
     def move(self):
         """move gpx files.
