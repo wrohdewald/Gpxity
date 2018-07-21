@@ -440,6 +440,13 @@ class Utility:
         """fix tracks"""
         result_lines = []
         for _ in self.source_tracks:
+            if self.options.title_from_id:
+                _.title = _.id_in_backend
+            if self.options.id_from_title:
+                _.id_in_backend = _.title
+            if self.options.id_from_time:
+                if _.time:
+                    _.id_in_backend = str(_.time).replace(' ', '_')
             result_lines.extend(_.fix(orux24=self.options.orux24))
         if self.options.verbose:
             for _ in result_lines:
@@ -461,26 +468,37 @@ class Utility:
                 if self.options.verbose or self.options.dry_run:
                     print('added {} to {}'.format(self.options.keywords, _))
 
-    def set_attributes(self):
-        """set/clear some attributes like title"""
+    def title(self):
+        """Sets the title."""
         for _ in self.source_tracks:
-            if self.options.title_from_id:
-                _.title = _.id_in_backend
-            if self.options.id_from_title:
-                _.id_in_backend = _.title
-            if self.options.id_from_time:
-                if _.time:
-                    _.id_in_backend = str(_.time).replace(' ', '_')
-            if self.options.title:
-                _.title = self.options.title
-            if self.options.description:
-                _.description = self.options.description
-            if self.options.category:
-                _.category = self.options.category
-            if self.options.public:
-                _.public = True
-            if self.options.private:
-                _.public = False
+            _.title = self.options.title
+            if self.options.verbose:
+                print('set title {} for {}'.format(self.options.title, _))
+
+    def description(self):
+        """Sets the description."""
+        for _ in self.source_tracks:
+            _.description = self.options.description
+            if self.options.verbose:
+                print('set description {} for {}'.format(self.options.description, _))
+
+    def category(self):
+        """Sets the category."""
+        for _ in self.source_tracks:
+            _.category = self.options.category
+            if self.options.verbose:
+                print('set category {} for {}'.format(self.options.category, _))
+
+    def set_public(self, value=True):
+        """Sets the status."""
+        for _ in self.source_tracks:
+            _.public = value
+            if self.options.verbose:
+                print('set status {} for {}'.format('public' if value else 'private', _))
+
+    def set_private(self):
+        """Sets the status."""
+        self.set_public(False)
 
     def merge(self):
         """Merge"""
@@ -659,12 +677,14 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
 """
 
-    def define_attr_parser(self, cmd, helptext, func):
+    def define_attr_parser(self, cmd, helptext, func, arg_name=None, arg_help=None, choices=None):
         """Common code for defining a command for attributes"""
         result = self.subparsers.add_parser(cmd, help=helptext)
         result.set_defaults(func=func)
         self.add_common_args(result)
         self.add_range_args(result)
+        if arg_name:
+            result.add_argument(arg_name, help=arg_help, choices=choices)
         self.add_multi_source(result)
         return result
 
@@ -705,6 +725,12 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             help="""BACKUP your tracks first! This can destroy them!
             Try to fix old oruxmaps bug where the date jumps back by one day""",
             action='store_true', default=False)
+        fix_parser.add_argument('--title-from-id', help='use id for title',
+                                action='store_true', default=False)
+        fix_parser.add_argument('--id-from-title', help='use title for id, works only for Directory',
+                                action='store_true', default=False)
+        fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
+                                action='store_true', default=False)
         self.add_common_args(fix_parser)
         self.add_range_args(fix_parser)
         self.add_multi_source(fix_parser)
@@ -751,30 +777,31 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_range_args(ls_parser)
         self.add_multi_source(ls_parser)
 
-        keyword_parser = self.define_attr_parser('kw', helptext='add or remove keywords', func=self.keyword)
+        keyword_parser = self.define_attr_parser(
+            'kw', helptext='add or remove keywords', func=self.keyword,
+            arg_name='keywords', arg_help='keywords separated by commas')
         keyword_parser.add_argument('--dry-run', help='only show what would be done',
                                     action='store_true', default=False)
         keyword_parser.add_argument('--remove', help='remove keywords. Default is to add them.',
                                     action='store_true', default=False)
-        keyword_parser.add_argument('keywords', help='keywords separated by commas')
 
-        set_parser = self.subparsers.add_parser('set', help='set attributes')
-        set_parser.set_defaults(func=self.set_attributes)
-        set_parser.add_argument('--title-from-id', help='use id for title',
-                                action='store_true', default=False)
-        set_parser.add_argument('--id-from-title', help='use title for id, works only for Directory',
-                                action='store_true', default=False)
-        set_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
-                                action='store_true', default=False)
-        set_parser.add_argument('--title', help='set the title', type=str, default=None)
-        set_parser.add_argument('--description', help='set the description', type=str, default=None)
-        set_parser.add_argument('--category', help='set the track type',
-                                type=str, default=None, choices=Track.legal_categories)
-        set_parser.add_argument('--public', help='set the status to public', action='store_true', default=False)
-        set_parser.add_argument('--private', help='set the status to private', action='store_true', default=False)
-        self.add_common_args(set_parser)
-        self.add_range_args(set_parser)
-        self.add_multi_source(set_parser)
+        self.define_attr_parser(
+            'title', helptext='set the title', func=self.title,
+            arg_name='title', arg_help='the new title')
+
+        self.define_attr_parser(
+            'description', helptext='set the description', func=self.description,
+            arg_name='description', arg_help='the new description')
+
+        self.define_attr_parser(
+            'category', helptext='set the category', func=self.category,
+            arg_name='category', arg_help='the new category',
+            choices=Track.legal_categories)
+
+        self.define_attr_parser(
+            'public', helptext='set the status to public', func=self.set_public)
+        self.define_attr_parser(
+            'private', helptext='set the status to private', func=self.set_private)
 
         merge_parser = self.subparsers.add_parser(
             'merge', help="""
@@ -835,11 +862,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         elif self.options.func == self.merge:
             if not self.options.source:
                 self.options.source = [self.options.destination]
-        elif self.options.func == self.set_attributes:
+        elif self.options.func == self.fix:
             if self.options.title_from_id and self.options.id_from_title:
                 print('gpxdo: error: title-from-id and id-from-title cannot be combined')
-            if self.options.title_from_id and self.options.title:
-                print('gpxdo: error: title-from-id and title cannot be combined')
             if self.options.id_from_title and self.options.id_from_time:
                 print('gpxdo: error: id_from_title and id_from_time cannot be combined')
         if self.options.only_kw:
