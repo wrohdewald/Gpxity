@@ -255,8 +255,11 @@ class Utility:
             return
         self.sources = []
         self.source_tracks = []
+        self.similar_to = None
         self.destination = None
         try:
+            if hasattr(self.options, 'similar') and self.options.similar:
+                self.similar_to = self.instantiate_object(self.options.similar)
             if self.options.source:
                 for _ in self.options.source:
                     self.sources.append(self.instantiate_object(_))
@@ -347,7 +350,7 @@ class Utility:
             (self.options.time, 'Time', lambda x: x.time),
             (self.options.category, 'Category', lambda x: x.category),
             (self.options.keywords, 'Keywords', lambda x: ','.join(y for y in x.keywords)),
-            (self.options.length or self.options.length, 'Length', lambda x: x.length(), '{:>8.3f}km', float),
+            (self.options.length > 0, 'Length', lambda x: x.length(), '{:>8.3f}km', float),
             (self.options.points, 'Points', lambda x: x.gpx.get_track_points_no(), '{:>6}', int),
             (self.options.status, 'Status', lambda x: 'public' if x.public else 'private'),
             (self.options.description, 'Description', lambda x: x.description),
@@ -357,6 +360,7 @@ class Utility:
             (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h', float),
             (False, 'Moving duration', lambda x: x.moving_duration, '{}', datetime.timedelta),
             (False, 'Moving length', lambda x: x.moving_length, '{}', float),
+            (self.options.similar, 'Similarity', lambda x: x.similarity(self.similar_to), '{:>1.2f}', float),
             (any(x.warnings() for x in self.source_tracks), 'Warnings', lambda x: x.warnings(), 'warnings')))
 
         if 'speed' in LsRow.visible_headers():
@@ -523,6 +527,7 @@ class Utility:
         """returns a backend for name.
         If name is a single track, the returned backend has a match filtering
         only this one wanted track."""
+        # pylint: disable=too-many-branches
         result = account = track_id = None
         if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES'):
             clsname = name.split(':')[0].upper()
@@ -582,6 +587,9 @@ class Utility:
             return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(track.keywords))
         if self.options.only_category and track.category not in self.options.only_category:
             return '{} is different from {}'.format(','.join(self.options.only_category), ','.join(track.category))
+        if self.similar_to and track.similarity(self.similar_to) < 0.5:
+            return 'Similarity {:1.2f} with {} is too small'.format(
+                track.similarity(self.similar_to), self.similar_to.id_in_backend)
         return None
 
     @staticmethod
@@ -601,6 +609,7 @@ class Utility:
         parser.add_argument('--max-speed', help='Limit tracks by speed', type=int, default=None)
         parser.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
         parser.add_argument('--only-category', help='Limit tracks by category', default=None)
+        parser.add_argument('--similar', help='Limit tracks by similarity to track SIMILAR', default=None)
 
     @staticmethod
     def add_common_args(parser):
@@ -696,7 +705,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
                                help="""one or more out of identifier,title,category,time,length,
-                               points,keywords,status,speed,moving_speed,duration
+                               points,keywords,status,speed,moving_speed,duration,similarity
                                separated by commas (no spaces allowed)""",
                                default='identifier')
         ls_parser.add_argument('--total',
