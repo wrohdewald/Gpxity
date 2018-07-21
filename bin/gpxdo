@@ -659,6 +659,15 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
 """
 
+    def define_attr_parser(self, cmd, helptext, func):
+        """Common code for defining a command for attributes"""
+        result = self.subparsers.add_parser(cmd, help=helptext)
+        result.set_defaults(func=func)
+        self.add_common_args(result)
+        self.add_range_args(result)
+        self.add_multi_source(result)
+        return result
+
     def parse_commandline(self):
         """into self.options"""
         # pylint: disable=too-many-statements, too-many-branches
@@ -742,16 +751,12 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_range_args(ls_parser)
         self.add_multi_source(ls_parser)
 
-        keyword_parser = self.subparsers.add_parser('kw', help='add or remove keywords')
-        keyword_parser.set_defaults(func=self.keyword)
-        self.add_common_args(keyword_parser)
-        self.add_range_args(keyword_parser)
+        keyword_parser = self.define_attr_parser('kw', helptext='add or remove keywords', func=self.keyword)
         keyword_parser.add_argument('--dry-run', help='only show what would be done',
                                     action='store_true', default=False)
         keyword_parser.add_argument('--remove', help='remove keywords. Default is to add them.',
                                     action='store_true', default=False)
         keyword_parser.add_argument('keywords', help='keywords separated by commas')
-        self.add_multi_source(keyword_parser)
 
         set_parser = self.subparsers.add_parser('set', help='set attributes')
         set_parser.set_defaults(func=self.set_attributes)
