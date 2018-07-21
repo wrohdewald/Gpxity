@@ -269,7 +269,7 @@ class Utility:
                     if isinstance(self.destination, Track):
                         raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
                 if not isinstance(self.destination, Track) and self.options.verbose and not self.options.copy:
-                    print('collecting tracks from', self.destination.identifier())
+                    print('collecting tracks from', self.destination.identifier() or '.')
 
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
