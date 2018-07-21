@@ -89,6 +89,8 @@ class Backend:
 
     _legal_categories = None # Override in the backends
 
+    default_url = None # Override in the backends
+
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None):
         self._decoupled = False
         super(Backend, self).__init__()
@@ -112,8 +114,9 @@ class Backend:
 
     def identifier(self):
         """Used for formatting strings"""
-        return '{}:{}/'.format(
+        return '{}:{}{}/'.format(
             self.__class__.__name__.lower(),
+            '' if self.url == self.default_url else self.url,
             self.auth[0] if self.auth and self.auth[0] else '')
 
     @property
@@ -572,7 +575,7 @@ class Backend:
 
         for _ in other_tracks:
             src_dict[_.points_hash()].append(_)
-        if other_backend.url == self.url and other_backend.auth == self.auth:
+        if other_backend.identifier() == self.identifier():
             dst_dict = src_dict
         else:
             dst_dict = defaultdict(list)

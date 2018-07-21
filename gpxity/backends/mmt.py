@@ -203,9 +203,11 @@ class MMT(Backend):
         'Train': 'Miscellaneous'
     }
 
+    default_url = 'http://www.mapmytracks.com'
+
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         if url is None:
-            url = 'http://www.mapmytracks.com'
+            url = self.default_url
         super(MMT, self).__init__(url, auth, cleanup, debug, timeout)
         self.__mid = -1 # member id at MMT for auth
         self.__session = None

@@ -228,9 +228,11 @@ class GPSIES(Backend):
         'Pack animal trekking': 'packAnimalTrekking'
     }
 
+    default_url = 'https://www.gpsies.com'
+
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         if url is None:
-            url = 'https://www.gpsies.com'
+            url = self.default_url
         super(GPSIES, self).__init__(url, auth, cleanup, debug, timeout)
         self.__session = None
         self.session_response = None
