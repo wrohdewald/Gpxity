@@ -12,6 +12,7 @@ from math import asin, sqrt, degrees
 import datetime
 from contextlib import contextmanager
 from functools import total_ordering
+import weakref
 
 # This code would speed up parsing GPX by about 30%. When doing
 # that, GPX will only return str instead of datetime for times.
@@ -22,6 +23,7 @@ from functools import total_ordering
 from gpxpy import gpx as mod_gpx
 from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length
+from gpxpy.geo import simplify_polyline
 
 from .util import repr_timespan, uniq
 
@@ -111,6 +113,8 @@ class Track:
         self.header_data = dict()
         self.__gpx = gpx or GPX()
         self.__backend = None
+        self._similarity_others = weakref.WeakValueDictionary()
+        self._similarities = dict()
         if gpx:
             self._parse_keywords()
             self._round_points(self.points())
@@ -192,6 +196,12 @@ class Track:
                 for key in 'time', 'distance':
                     if key in self.header_data:
                         del self.header_data[key]
+                for other in self._similarity_others.values():
+                    del other._similarity_others[id(self)] # pylint: disable=protected-access
+                    # TODO: unittest where other does not exist anymore
+                    del other._similarities[id(self)]  # pylint: disable=protected-access
+                self._similarity_others = weakref.WeakValueDictionary()
+                self._similarities = dict()
             if not self._batch_changes:
                 self._rewrite()
 
@@ -1005,3 +1015,27 @@ class Track:
         self.__gpx.tracks.append(GPXTrack())
         self.__gpx.tracks[0].segments.append(segment)
         self._dirty = 'gpx'
+
+    def similarity(self, other):
+        """Returns a float 0..1: 1 is identity."""
+
+        def simple(track):
+            """Simplified track"""
+            return list((round(x.latitude, 3), round(x.longitude, 3))
+                        for x in simplify_polyline(list(track.points()), max_distance=50))
+
+        if id(other) not in self._similarity_others:
+            simple1 = simple(self)
+            simple2 = simple(other)
+            max_len = max([len(simple1), len(simple2)])
+            similar_length = 1.0 - abs(len(simple1) - len(simple2)) / max_len
+            set1 = set(simple1)
+            set2 = set(simple2)
+            min_len = min([len(set1), len(set2)])
+            similar_points = len(set1 & set2) / min_len
+            result = similar_length * similar_points
+            self._similarity_others[id(other)] = other
+            self._similarities[id(other)] = result
+            other._similarity_others[id(self)] = self  # pylint: disable=protected-access
+            other._similarities[id(self)] = result  # pylint: disable=protected-access
+        return self._similarities[id(other)]
