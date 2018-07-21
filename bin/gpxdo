@@ -270,6 +270,7 @@ class Utility:
                         raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
                 if not isinstance(self.destination, Track) and self.options.verbose and not self.options.copy:
                     print('collecting tracks from', self.destination.identifier())
+
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
@@ -774,14 +775,13 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
         diff_parser = subparsers.add_parser(
             'diff', help="""
-            copmpare tracks between source and destination""",
+            compare tracks between source and destination""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         diff_parser.set_defaults(func=self.diff)
         self.add_common_args(diff_parser)
         self.add_range_args(diff_parser)
         self.add_multi_source(diff_parser, must_have=True)
         self.add_destination(diff_parser)
-
 
         try:
             argcomplete.autocomplete(parser)
