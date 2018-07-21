@@ -612,32 +612,36 @@ class Utility:
         return None
 
     @staticmethod
-    def add_range_args(parser):
-        """Add common range arguments"""
-        parser.add_argument('--first-date', help='Limit tracks by date',
+    def build_range_parser():
+        """Returns a subparser for common range arguments"""
+        result = argparse.ArgumentParser(description='Optional arguments limiting track selection', add_help=False)
+        result.add_argument('--first-date', help='Limit tracks by date',
                             type=lambda x: valid_date_argument(x, False), default=None)
-        parser.add_argument('--last-date', help='Limit tracks by date',
+        result.add_argument('--last-date', help='Limit tracks by date',
                             type=lambda x: valid_date_argument(x, True), default=None)
-        parser.add_argument('--date', help='Limit tracks by specific date',
+        result.add_argument('--date', help='Limit tracks by specific date',
                             type=lambda x: valid_date_argument(x, False), default=None)
-        parser.add_argument('--min-points', help='Limit tracks by minimum number of points', type=int, default=None)
-        parser.add_argument('--max-points', help='Limit tracks by maximum number of points', type=int, default=None)
-        parser.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
-        parser.add_argument('--max-length', help='Limit tracks by track length', type=int, default=None)
-        parser.add_argument('--min-speed', help='Limit tracks by speed', type=int, default=None)
-        parser.add_argument('--max-speed', help='Limit tracks by speed', type=int, default=None)
-        parser.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
-        parser.add_argument('--only-category', help='Limit tracks by category', default=None)
-        parser.add_argument('--similar', help='Limit tracks by similarity to track SIMILAR', default=None)
+        result.add_argument('--min-points', help='Limit tracks by minimum number of points', type=int, default=None)
+        result.add_argument('--max-points', help='Limit tracks by maximum number of points', type=int, default=None)
+        result.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
+        result.add_argument('--max-length', help='Limit tracks by track length', type=int, default=None)
+        result.add_argument('--min-speed', help='Limit tracks by speed', type=int, default=None)
+        result.add_argument('--max-speed', help='Limit tracks by speed', type=int, default=None)
+        result.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
+        result.add_argument('--only-category', help='Limit tracks by category', default=None)
+        result.add_argument('--similar', help='Limit tracks by similarity to track SIMILAR', default=None)
+        return result
 
     @staticmethod
-    def add_common_args(parser):
-        """Add the verbose argument"""
-        parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
-        parser.add_argument('--debug', action='store_true', help='debug backend traffic', default=False)
-        parser.add_argument('--timeout', help="""
+    def build_common_parser():
+        """Returns a subparser for common arguments"""
+        result = argparse.ArgumentParser(add_help=False)
+        result.add_argument('--verbose', action='store_true', help='verbose output', default=False)
+        result.add_argument('--debug', action='store_true', help='debug backend traffic', default=False)
+        result.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
             the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
+        return result
 
     @staticmethod
     def add_multi_source(parser, must_have=False):
@@ -679,10 +683,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
     def define_attr_parser(self, cmd, helptext, func, arg_name=None, arg_help=None, choices=None):
         """Common code for defining a command for attributes"""
-        result = self.subparsers.add_parser(cmd, help=helptext)
+        result = self.subparsers.add_parser(cmd, help=helptext, parents=[self.common_parser, self.range_parser])
         result.set_defaults(func=func)
-        self.add_common_args(result)
-        self.add_range_args(result)
         if arg_name:
             result.add_argument(arg_name, help=arg_help, choices=choices)
         self.add_multi_source(result)
@@ -691,6 +693,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
     def parse_commandline(self):
         """into self.options"""
         # pylint: disable=too-many-statements, too-many-branches
+        self.range_parser = self.build_range_parser()
+        self.common_parser = self.build_common_parser()
         parser = argparse.ArgumentParser(
             'gpxdo', formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=self.help_epilog)
@@ -698,19 +702,17 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
         mv_parser = self.subparsers.add_parser(
             'mv', help='move sources to a destination backend',
+            parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         mv_parser.set_defaults(func=self.move)
-        self.add_common_args(mv_parser)
-        self.add_range_args(mv_parser)
         self.add_multi_source(mv_parser)
         self.add_destination(mv_parser)
 
         rm_parser = self.subparsers.add_parser(
             'rm', help='remove tracks',
+            parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         rm_parser.set_defaults(func=self.remove)
-        self.add_common_args(rm_parser)
-        self.add_range_args(rm_parser)
         rm_parser.add_argument('--dry-run', help='only show what would be removed',
                                action='store_true', default=False)
         self.add_multi_source(rm_parser)
@@ -718,6 +720,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         fix_parser = self.subparsers.add_parser(
             'fix', help="""try to fix some GPX format bugs in tracks.
                 First BACKUP the tracks! This can destroy them!""",
+            parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         fix_parser.set_defaults(func=self.fix)
         fix_parser.add_argument(
@@ -731,12 +734,10 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                 action='store_true', default=False)
         fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
                                 action='store_true', default=False)
-        self.add_common_args(fix_parser)
-        self.add_range_args(fix_parser)
         self.add_multi_source(fix_parser)
 
         ls_parser = self.subparsers.add_parser(
-            'ls', help='list tracks',
+            'ls', help='list tracks', parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
@@ -773,8 +774,6 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         ls_parser.add_argument('--duration', help='show the entire duration',
                                action='store_true', default=False)
-        self.add_common_args(ls_parser)
-        self.add_range_args(ls_parser)
         self.add_multi_source(ls_parser)
 
         keyword_parser = self.define_attr_parser(
@@ -807,10 +806,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             'merge', help="""
             merge tracks: If their trackpoints are identical, add metadata like name,
             description or keywords from source to destination""",
+            parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         merge_parser.set_defaults(func=self.merge)
-        self.add_common_args(merge_parser)
-        self.add_range_args(merge_parser)
         merge_parser.add_argument('--dry-run', help='only show what would change',
                                   action='store_true', default=False)
         merge_parser.add_argument('--remove', help='remove merged tracks',
@@ -825,10 +823,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         diff_parser = self.subparsers.add_parser(
             'diff', help="""
             compare tracks between source and destination""",
+            parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         diff_parser.set_defaults(func=self.diff)
-        self.add_common_args(diff_parser)
-        self.add_range_args(diff_parser)
         self.add_multi_source(diff_parser, must_have=True)
         self.add_destination(diff_parser)
 
