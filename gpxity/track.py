@@ -461,6 +461,7 @@ class Track:
         Args:
             indata: may be a file descriptor or str
         """
+        assert self.__is_decoupled
         if hasattr(indata, 'read'):
             indata = indata.read()
         if not indata:
