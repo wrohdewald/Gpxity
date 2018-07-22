@@ -131,6 +131,11 @@ class LsRow(dict):
                 bounds = track.gpx.get_moving_data()
                 track.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
                 track.moving_distance = bounds.moving_distance / 1000.0
+
+            track.gpxdo_identifier = track.identifier()
+            if isinstance(track.backend, Directory):
+                if list(self.visible_headers()) == ['identifier']:
+                    track.gpxdo_identifier += '.gpx'
             for field in self.needed_fields():
                 self[field.head_ident] = field.value_function(track)
 
@@ -346,7 +351,7 @@ class Utility:
                         seen.add(groupkey)
 
         list(LsField(*x) for x in (
-            (True, 'Identifier', lambda x: x.identifier()),
+            (True, 'Identifier', lambda x: x.gpxdo_identifier),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
             (self.options.time, 'Time', lambda x: x.time),
             (self.options.category, 'Category', lambda x: x.category),
