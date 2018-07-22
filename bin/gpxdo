@@ -355,6 +355,8 @@ class Utility:
                     yield _
             elif mainsort == 'time' and track.time:
                 yield '{:4}-{:02}'.format(track.time.year, track.time.month)
+            elif mainsort == 'status':
+                yield 'public' if track.public else 'private'
             else:
                 yield None
 
