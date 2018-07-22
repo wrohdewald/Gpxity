@@ -361,7 +361,7 @@ class Utility:
             (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h', float),
             (False, 'Moving duration', lambda x: x.moving_duration, '{}', datetime.timedelta),
             (False, 'Moving distance', lambda x: x.moving_distance, '{}', float),
-            (self.options.similar, 'Similarity', lambda x: x.similarity(self.similar_to), '{:>1.2f}', float),
+            (self.options.similarity, 'Similarity', lambda x: x.similarity(self.similar_to), '{:>1.2f}', float),
             (self.options.warnings, 'Warnings', lambda x: x.warnings(), 'warnings')))
 
         if 'speed' in LsRow.visible_headers():
@@ -772,6 +772,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         ls_parser.add_argument('--moving-speed', help='show the average speed in motion',
                                action='store_true', default=False)
         ls_parser.add_argument('--duration', help='show the entire duration',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--similarity', help='show the similarity',
                                action='store_true', default=False)
         ls_parser.add_argument('--warnings', help='show warnings',
                                action='store_true', default=False)
