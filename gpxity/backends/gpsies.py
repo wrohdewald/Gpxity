@@ -32,7 +32,6 @@ class GPSIESRawTrack:
         self.time = None
         self.distance = None
         self.public = True
-        self.description = None
 
 class ParseGPSIESCategories(HTMLParser): # pylint: disable=abstract-method
 
