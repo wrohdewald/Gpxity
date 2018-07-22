@@ -113,6 +113,7 @@ class Track:
         self.header_data = dict()
         self.__gpx = gpx or GPX()
         self.__backend = None
+        self.__cached_distance = None
         self._similarity_others = weakref.WeakValueDictionary()
         self._similarities = dict()
         if gpx:
@@ -196,6 +197,7 @@ class Track:
                 for key in 'time', 'distance':
                     if key in self.header_data:
                         del self.header_data[key]
+                self.__cached_distance = None
                 for other in self._similarity_others.values():
                     del other._similarity_others[id(self)] # pylint: disable=protected-access
                     # TODO: unittest where other does not exist anymore
@@ -752,9 +754,11 @@ class Track:
         Returns:
             the distance in km
         """
-        if 'distance' not in self.header_data:
-            self.header_data['distance'] = round(gpx_length(list(self.points())) / 1000, 3)
-        return self.header_data['distance']
+        if 'distance' in self.header_data:
+            return self.header_data['distance']
+        if self.__cached_distance is None:
+            self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
+        return self.__cached_distance
 
     def angle(self) ->float:
         """For me, the earth is flat.
