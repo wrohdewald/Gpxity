@@ -767,7 +767,7 @@ class Track:
         """For me, the earth is flat.
 
         Returns:
-            the distance in km
+            the distance in km, rounded to m
         """
         if 'distance' in self.header_data:
             return self.header_data['distance']
