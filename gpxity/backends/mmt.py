@@ -436,9 +436,6 @@ class MMT(Backend):
         """Remove an MTT tag. This is flawed, see __remove_one_keyword, so
         we rewrite all keywords instead.
         """
-        # Our list of keywords may not be current, reload it
-   #     track.keywords = set(self._current_keywords(track)) - set([value])
-        # track.keywords is assumed to be current (see Track.remove_keyword())
         for remove_tag in track.keywords:
             self.__remove_one_keyword(track, remove_tag)
         self.__remove_one_keyword(track, value)
