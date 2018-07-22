@@ -652,7 +652,7 @@ class Track:
         duration = time_range[1] - time_range[0]
         seconds = duration.days * 24 * 3600 + duration.seconds
         if seconds:
-            return self.length() / seconds * 3600
+            return self.distance() / seconds * 3600
         return 0.0
 
     def moving_speed(self):
@@ -746,11 +746,11 @@ class Track:
     def __lt__(self, other):
         return self.key() < other.key()
 
-    def length(self) ->float:
+    def distance(self) ->float:
         """For me, the earth is flat.
 
         Returns:
-            the length in km
+            the distance in km
         """
         return round(gpx_length(list(self.points())) / 1000, 3)
 

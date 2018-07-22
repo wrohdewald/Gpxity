@@ -130,7 +130,7 @@ class LsRow(dict):
             if any(x.head_ident.startswith('moving') for x in LsRow.needed_fields()):
                 bounds = track.gpx.get_moving_data()
                 track.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
-                track.moving_length = bounds.moving_distance / 1000.0
+                track.moving_distance = bounds.moving_distance / 1000.0
             for field in self.needed_fields():
                 self[field.head_ident] = field.value_function(track)
 
@@ -184,13 +184,13 @@ class TotalRow(LsRow):
             if field.summable:
                 for _ in rows:
                     self[field.head_ident] += _[field.head_ident]
-        for speed_ident, duration_ident, length_ident in (
-                ('speed', 'duration', 'length'), ('moving_speed', 'moving_duration', 'moving_length')):
+        for speed_ident, duration_ident, distance_ident in (
+                ('speed', 'duration', 'distance'), ('moving_speed', 'moving_duration', 'moving_distance')):
             if speed_ident in self:
                 duration = self[duration_ident]
                 if duration:
                     seconds = duration.days * 24 * 3600 + duration.seconds
-                    speed = self[length_ident] / seconds * 3600 if seconds else 0
+                    speed = self[distance_ident] / seconds * 3600 if seconds else 0
                     self[speed_ident] = speed
         self['identifier'] = 'TOTAL'
 
@@ -351,7 +351,7 @@ class Utility:
             (self.options.time, 'Time', lambda x: x.time),
             (self.options.category, 'Category', lambda x: x.category),
             (self.options.keywords, 'Keywords', lambda x: ','.join(y for y in x.keywords)),
-            (self.options.length > 0, 'Length', lambda x: x.length(), '{:>8.3f}km', float),
+            (self.options.distance > 0, 'Distance', lambda x: x.distance(), '{:>8.3f}km', float),
             (self.options.points, 'Points', lambda x: x.gpx.get_track_points_no(), '{:>6}', int),
             (self.options.status, 'Status', lambda x: 'public' if x.public else 'private'),
             (self.options.description, 'Description', lambda x: x.description),
@@ -360,16 +360,16 @@ class Utility:
             (self.options.speed, 'Speed', lambda x: x.speed(), '{:>5.2f}km/h', float),
             (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h', float),
             (False, 'Moving duration', lambda x: x.moving_duration, '{}', datetime.timedelta),
-            (False, 'Moving length', lambda x: x.moving_length, '{}', float),
+            (False, 'Moving distance', lambda x: x.moving_distance, '{}', float),
             (self.options.similar, 'Similarity', lambda x: x.similarity(self.similar_to), '{:>1.2f}', float),
             (self.options.warnings, 'Warnings', lambda x: x.warnings(), 'warnings')))
 
         if 'speed' in LsRow.visible_headers():
             LsRow.find_by_head_ident('duration').is_needed = True
-            LsRow.find_by_head_ident('length').is_needed = True
+            LsRow.find_by_head_ident('distance').is_needed = True
         if 'moving_speed' in LsRow.visible_headers():
             LsRow.find_by_head_ident('moving_duration').is_needed = True
-            LsRow.find_by_head_ident('moving_length').is_needed = True
+            LsRow.find_by_head_ident('moving_distance').is_needed = True
         if self.options.segments:
             LsField(False, 'track', lambda x: x).is_needed = True
 
@@ -588,12 +588,12 @@ class Utility:
             if self.options.last_date:
                 if self.options.last_date.date() and track.time.date() > self.options.last_date.date():
                     return 'time {} is after {}'.format(track.time, self.options.last_date)
-        length = track.header_data.get('distance', None)
-        if length:
-            if self.options.min_length and length < self.options.min_length:
-                return 'length {} is below {}'.format(length, self.options.min_length)
-            if self.options.max_length and length > self.options.max_length:
-                return 'length {} is above {}'.format(length, self.options.max_length)
+        distance = track.distance()
+        if distance:
+            if self.options.min_distance and distance < self.options.min_distance:
+                return 'distance {} is below {}'.format(distance, self.options.min_distance)
+            if self.options.max_distance and distance > self.options.max_distance:
+                return 'distance {} is above {}'.format(distance, self.options.max_distance)
         if self.options.min_speed and track.speed() < self.options.min_speed:
             return 'Speed is below {}'.format(self.options.min_speed)
         if self.options.max_speed and track.speed() > self.options.max_speed:
@@ -623,8 +623,8 @@ class Utility:
                             type=lambda x: valid_date_argument(x, False), default=None)
         result.add_argument('--min-points', help='Limit tracks by minimum number of points', type=int, default=None)
         result.add_argument('--max-points', help='Limit tracks by maximum number of points', type=int, default=None)
-        result.add_argument('--min-length', help='Limit tracks by track length', type=int, default=None)
-        result.add_argument('--max-length', help='Limit tracks by track length', type=int, default=None)
+        result.add_argument('--min-distance', help='Limit tracks by minimum distance', type=int, default=None)
+        result.add_argument('--max-distance', help='Limit tracks by maximum distance', type=int, default=None)
         result.add_argument('--min-speed', help='Limit tracks by speed', type=int, default=None)
         result.add_argument('--max-speed', help='Limit tracks by speed', type=int, default=None)
         result.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
@@ -741,7 +741,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
-                               help="""one or more out of identifier,title,category,time,length,
+                               help="""one or more out of identifier,title,category,time,distance,
                                points,keywords,status,speed,moving_speed,duration,similarity
                                separated by commas (no spaces allowed)""",
                                default='identifier')
@@ -758,7 +758,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         ls_parser.add_argument('--time', help='show the time',
                                action='store_true', default=False)
-        ls_parser.add_argument('--length', help='show the length',
+        ls_parser.add_argument('--distance', help='show the distance',
                                action='store_true', default=False)
         ls_parser.add_argument('--points', help='show the number of points',
                                action='store_true', default=False)
@@ -854,7 +854,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                 self.options.time = True
                 self.options.category = True
                 self.options.keywords = True
-                self.options.length = True
+                self.options.distance = True
                 self.options.status = True
             if not self.options.source:
                 self.options.source = ['.']
