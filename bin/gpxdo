@@ -436,7 +436,7 @@ class Utility:
                     if len(seg_lines) > 1:
                         group_lines.extend(seg_lines)
 
-            if self.options.total and mainsort != 'keywords':
+            if self.options.total and mainsort in ('category', 'time', 'status'):
                 total_line = SubTotalRow(group_tracks, mainsort, group_key)
                 group_lines.append(total_line)
                 group_lines.append(SeparatorRow('-'))
