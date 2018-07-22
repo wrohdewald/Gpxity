@@ -52,27 +52,6 @@ class TrackTests(BasicTest):
         finally:
             os.rmdir(test_url)
 
-    def test_dirty(self):
-        """Track._dirty"""
-        # pylint: disable=protected-access
-        with Directory(cleanup=True) as directory:
-            track = Track()
-            directory.add(track)
-            with self.assertRaises(Exception):
-                track._dirty = False
-            self.assertFalse(track._dirty)
-            # version 1.1 should perhaps be a test on its own, see Track.to_xml()
-            track._dirty = 'gpx'
-            self.assertFalse(track._dirty)
-            track.title = 'new title'
-            self.assertFalse(track._dirty)
-            with track.batch_changes():
-                track.title = 'new 2'
-                self.assertEqual(track._dirty, set(['title']))
-            self.assertFalse(track._dirty)
-            with Directory(directory.url, cleanup=True) as dir2:
-                dir2[0]._dirty = 'gpx'
-
     def test_track_list(self):
         """test list of tracks"""
         with Directory(cleanup=True) as directory:
