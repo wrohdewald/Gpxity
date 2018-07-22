@@ -585,7 +585,7 @@ class TrackTests(BasicTest):
     def test_header_changes(self):
         """Only change things in _header_data. Assert that the full gpx is loaded before saving."""
         with self.temp_backend(Directory, count=1) as backend:
-            backend2 = Directory(url=backend.url)
+            backend2 = self.clone_backend(backend)
             backend2[0].description = 'test'
             self.assertTrackFileContains(backend2[0], '<trk>')
         with self.temp_backend(Directory, count=1) as backend:
