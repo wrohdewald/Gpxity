@@ -581,3 +581,18 @@ class TrackTests(BasicTest):
         self.assertEqual(list(Track.overlapping_times(group1 + group2)), list([group1, group2]))
         group2 = list([track4])
         self.assertEqual(list(Track.overlapping_times(group1 + group2)), list([group1]))
+
+    def test_header_changes(self):
+        """Only change things in header_data. Assert that the full gpx is loaded before saving."""
+        with self.temp_backend(Directory, count=1) as backend:
+            backend2 = Directory(url=backend.url)
+            backend2[0].description = 'test'
+            self.assertTrackFileContains(backend2[0], '<trk>')
+        with self.temp_backend(Directory, count=1) as backend:
+            backend2 = Directory(url=backend.url)
+            backend2[0].title = 'test title'
+            self.assertTrackFileContains(backend2[0], '<trk>')
+        with self.temp_backend(Directory, count=1) as backend:
+            backend2 = Directory(url=backend.url)
+            backend2[0].category = 'Mountain biking'
+            self.assertTrackFileContains(backend2[0], '<trk>')

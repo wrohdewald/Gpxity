@@ -80,11 +80,6 @@ class Track:
             some backends may define more values than we know, information may get lost when
             converting, even if you copy a track between two backends of the same type.
 
-        header_data (dict): The backend may only deliver some general information about
-            tracks, the full data will only be loaded when needed. This general information
-            can help avoiding having to load the full data. The backend will fill header_data
-            if it can. The backends are free to put additional info here. MMT does this for
-            time, title, category and distance. You are not supposed to change header_data.
     """
 
     # pylint: disable = too-many-instance-attributes
@@ -110,7 +105,7 @@ class Track:
         self.__id_in_backend = None
         self.__backend = None
         self._loaded = False
-        self.header_data = dict()
+        self.header_data = dict() # only for internal use because we clear data on _full_load()
         self.__gpx = gpx or GPX()
         self.__backend = None
         self.__cached_distance = None
@@ -194,9 +189,6 @@ class Track:
         if not self.__is_decoupled:
             self.__dirty.add(value)
             if value == 'gpx':
-                for key in 'time', 'distance':
-                    if key in self.header_data:
-                        del self.header_data[key]
                 self.__cached_distance = None
                 for other in self._similarity_others.values():
                     del other._similarity_others[id(self)] # pylint: disable=protected-access
@@ -264,7 +256,7 @@ class Track:
         point comes last in time. In other words, points should be ordered
         by their time.
         """
-        if not self._loaded and 'time' in self.header_data:
+        if 'time' in self.header_data:
             return self.header_data['time']
         self._load_full()
         try:
@@ -276,7 +268,7 @@ class Track:
     def title(self) -> str:
         """str: The title.
         """
-        if not self._loaded and 'title' in self.header_data:
+        if 'title' in self.header_data:
             return self.header_data['title']
         self._load_full()
         return self.__gpx.name
@@ -284,15 +276,15 @@ class Track:
     @title.setter
     def title(self, value: str):
         if value != self.title:
+            self._load_full()
             self.__gpx.name = value
-            self.__update_header_data('title', value)
             self._dirty = 'title'
 
     @property
     def description(self) ->str:
         """str: The description.
         """
-        if not self._loaded and 'description' in self.header_data:
+        if 'description' in self.header_data:
             return self.header_data['description']
         self._load_full()
         return self.__gpx.description or ''
@@ -300,17 +292,9 @@ class Track:
     @description.setter
     def description(self, value: str):
         if value != self.description:
+            self._load_full()
             self.__gpx.description = value
-            self.__update_header_data('description', value)
             self._dirty = 'description'
-
-    def __update_header_data(self, key, value):
-        """Setters should call this if they change a content value.
-        Needed in case the setter was called with self._loaded=False."""
-        # TODO: needs tests like gpxdo set --title='Poreč lokal' mmt:wolfgang61/2231133
-        # for all fields used by header_data
-        if key in self.header_data:
-            self.header_data[key] = value
 
     @contextmanager
     def _decouple(self):
@@ -378,8 +362,8 @@ class Track:
         if value != self.category:
             if value not in self.legal_categories:
                 raise Exception('Category {} is not known'.format(value))
+            self._load_full()
             self.__category = value
-            self.__update_header_data('category', value)
             self._dirty = 'category'
 
     def _load_full(self) ->None:
@@ -487,6 +471,7 @@ class Track:
             if old_gpx.description and not self.__gpx.description:
                 self.__gpx.description = old_gpx.description
             self._round_points(self.points())
+        self.header_data = dict()
         self._loaded = True
 
     @staticmethod
@@ -537,7 +522,7 @@ class Track:
         bool: Is this a private track (can only be seen by the account holder) or
             is it public? Default value is False
         """
-        if not self._loaded and 'public' in self.header_data:
+        if 'public' in self.header_data:
             return self.header_data['public']
         self._load_full()
         return self.__public
@@ -546,8 +531,8 @@ class Track:
     def public(self, value):
         """Stores this flag as keyword 'public'."""
         if value != self.public:
+            self._load_full()
             self.__public = value
-            self.__update_header_data('public', value)
             self._dirty = 'public'
 
     @property
@@ -596,7 +581,7 @@ class Track:
             DirectoryA and DirectoryB will not be identical, for example "berlin" in DirectoryA but
             "Berlin" in DirectoryB.
         """
-        if not self._loaded and 'keywords' in self.header_data:
+        if 'keywords' in self.header_data:
             return self.header_data['keywords']
         self._load_full()
         if self.__gpx.keywords:
@@ -617,8 +602,6 @@ class Track:
                 # add_keyword ensures we do not get unwanted things like Category:
                 self.add_keyword(keyword)
             self.__dirty = set()
-            if 'keywords' in self.header_data:
-                del self.header_data['keywords']
             self._dirty = 'keywords'
 
     @staticmethod
@@ -645,8 +628,6 @@ class Track:
                 self.__gpx.keywords += ', {}'.format(value)
             else:
                 self.__gpx.keywords = value
-            if 'keywords' in self.header_data:
-                del self.header_data['keywords']
             self._dirty = 'add_keyword:{}'.format(value)
 
     def remove_keyword(self, value: str) ->None:
@@ -658,8 +639,6 @@ class Track:
         self._check_keyword(value)
         self._load_full()
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
-        if 'keywords' in self.header_data:
-            del self.header_data['keywords']
         self._dirty = 'remove_keyword:{}'.format(value)
 
     def speed(self):
