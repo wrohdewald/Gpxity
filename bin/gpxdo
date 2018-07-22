@@ -77,7 +77,7 @@ class LsField:
     # pylint: disable=too-few-public-methods
 
 
-    def __init__(self, is_visible, header, value_function, field_fmt=None, summable=None):
+    def __init__(self, is_visible, header, value_function, field_fmt=None, type_=None):
         self.is_visible = is_visible
         self.is_needed = is_visible
         self.header = header
@@ -86,7 +86,7 @@ class LsField:
             raise Exception('LsField already exists:{}'.format(self.head_ident))
         self.value_function = value_function
         self.field_fmt = field_fmt or '{}'
-        self.summable = summable
+        self.type_ = type_
         self.max_length = 0
         LsRow.fields.append(self)
 
@@ -121,8 +121,8 @@ class LsRow(dict):
         super(LsRow, self).__init__()
         self.track = track
         for field in self.needed_fields():
-            if field.summable is not None:
-                _ = field.summable()
+            if field.type_ is not None:
+                _ = field.type_()
             else:
                 _ = ''
             self[field.head_ident] = _
@@ -175,7 +175,7 @@ class LsRow(dict):
         """print to stdout"""
         for field in LsRow.visible_fields():
             _ = field.format_raw(self[field.head_ident])
-            right = '>' if field.summable in (int, float) else ''
+            right = '>' if field.type_ in (int, float) else ''
             print('{value:{right}{width}}'.format(right=right, width=field.max_length, value=_), end='  ')
         print()
 
@@ -186,7 +186,7 @@ class TotalRow(LsRow):
     def __init__(self, rows):
         super(TotalRow, self).__init__()
         for field in LsRow.needed_fields():
-            if field.summable:
+            if field.type_:
                 for _ in rows:
                     self[field.head_ident] += _[field.head_ident]
         for speed_ident, duration_ident, distance_ident in (
