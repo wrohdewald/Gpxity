@@ -292,6 +292,8 @@ class Track:
     def description(self) ->str:
         """str: The description.
         """
+        if not self._loaded and 'description' in self.header_data:
+            return self.header_data['description']
         self._load_full()
         return self.__gpx.description or ''
 
@@ -299,6 +301,7 @@ class Track:
     def description(self, value: str):
         if value != self.description:
             self.__gpx.description = value
+            self.__update_header_data('description', value)
             self._dirty = 'description'
 
     def __update_header_data(self, key, value):
@@ -472,7 +475,11 @@ class Track:
                 print('{}: Track {} has illegal GPX XML: {}'.format(
                     self.backend, self.id_in_backend, exc))
                 raise
+            if 'keywords' in self.header_data:
+                del self.header_data['keywords']
             self._parse_keywords()
+            if 'public' in self.header_data:
+                del self.header_data['public']
             self.public = self.public or old_public
             if old_gpx.name and not self.__gpx.name:
                 self.__gpx.name = old_gpx.name
@@ -588,6 +595,8 @@ class Track:
             DirectoryA and DirectoryB will not be identical, for example "berlin" in DirectoryA but
             "Berlin" in DirectoryB.
         """
+        if not self._loaded and 'keywords' in self.header_data:
+            return self.header_data['keywords']
         self._load_full()
         if self.__gpx.keywords:
             return list(sorted(x.strip() for x in self.__gpx.keywords.split(',')))
@@ -607,6 +616,8 @@ class Track:
                 # add_keyword ensures we do not get unwanted things like Category:
                 self.add_keyword(keyword)
             self.__dirty = set()
+            if 'keywords' in self.header_data:
+                del self.header_data['keywords']
             self._dirty = 'keywords'
 
     @staticmethod
@@ -633,6 +644,8 @@ class Track:
                 self.__gpx.keywords += ', {}'.format(value)
             else:
                 self.__gpx.keywords = value
+            if 'keywords' in self.header_data:
+                del self.header_data['keywords']
             self._dirty = 'add_keyword:{}'.format(value)
 
     def remove_keyword(self, value: str) ->None:
@@ -644,6 +657,8 @@ class Track:
         self._check_keyword(value)
         self._load_full()
         self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
+        if 'keywords' in self.header_data:
+            del self.header_data['keywords']
         self._dirty = 'remove_keyword:{}'.format(value)
 
     def speed(self):

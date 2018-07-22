@@ -14,6 +14,8 @@ import datetime
 import tempfile
 from collections import defaultdict
 
+import gpxpy.gpxfield as mod_gpxfield
+
 from .. import Backend, Track
 from ..util import remove_directory
 
@@ -220,12 +222,55 @@ class Directory(Backend):
         gpx_names = (x for x in os.listdir(self.url) if x.endswith('.gpx'))
         return (x.replace('.gpx', '') for x in gpx_names)
 
+    @staticmethod
+    def _get_field(data, name):
+        """Gets xml field out of data"""
+        start_html = '<{}>'.format(name)
+        end_html = '</{}>'.format(name)
+        data = data.split(end_html)
+        if len(data) > 1:
+            data = data[0]
+            data = data.split(start_html)
+            if len(data) > 1:
+                data = data[-1]
+                if start_html not in data:
+                    return data
+        return None
+
+    def _enrich_with_headers(self, track):
+        """Quick scan of file for getting some header fields"""
+        with open(self.gpx_path(track.id_in_backend)) as raw_file:
+            data = raw_file.read(10000)
+            parts = data.split('<trk>')
+            if len(parts) > 1:
+                raw_data = parts[0].split('extensions')[0]
+                track.header_data['title'] = self._get_field(raw_data, 'name')
+                track.header_data['description'] = self._get_field(raw_data, 'desc')
+                rest_kw = list()
+                kw_raw = self._get_field(raw_data, 'keywords')
+                if kw_raw:
+                    for keyword in (x.strip() for x in kw_raw.split(',')):
+                        if keyword == 'Status:public':
+                            track.header_data['public'] = True
+                        elif keyword == 'Status:private':
+                            track.header_data['public'] = False
+                        elif keyword.startswith('Category:'):
+                            track.header_data['category'] = keyword.split(':')[1].strip()
+                        else:
+                            rest_kw.append(keyword)
+                    track.header_data['keywords'] = sorted(rest_kw)
+
+                time_raw = self._get_field(parts[1], 'time')
+                track.header_data['time'] = mod_gpxfield.parse_time(time_raw)
+
     def _yield_tracks(self):
         """get all tracks for this user."""
         self._symlinks = defaultdict(list)
         self._load_symlinks()
         for _ in self._list_gpx():
-            yield self._found_track(_)
+            track = self._found_track(_)
+            self._enrich_with_headers(track)
+            yield track
 
     def get_time(self) ->datetime.datetime:
         """get server time as a Linux timestamp"""
