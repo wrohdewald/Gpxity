@@ -588,12 +588,11 @@ class Utility:
             if self.options.last_date:
                 if self.options.last_date.date() and track.time.date() > self.options.last_date.date():
                     return 'time {} is after {}'.format(track.time, self.options.last_date)
-        distance = track.distance()
-        if distance:
-            if self.options.min_distance and distance < self.options.min_distance:
-                return 'distance {} is below {}'.format(distance, self.options.min_distance)
-            if self.options.max_distance and distance > self.options.max_distance:
-                return 'distance {} is above {}'.format(distance, self.options.max_distance)
+
+        if self.options.min_distance and track.distance() < self.options.min_distance:
+            return 'distance {} is below {}'.format(track.distance(), self.options.min_distance)
+        if self.options.max_distance and track.distance() > self.options.max_distance:
+            return 'distance {} is above {}'.format(track.distance(), self.options.max_distance)
         if self.options.min_speed and track.speed() < self.options.min_speed:
             return 'Speed is below {}'.format(self.options.min_speed)
         if self.options.max_speed and track.speed() > self.options.max_speed:

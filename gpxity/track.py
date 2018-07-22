@@ -752,7 +752,9 @@ class Track:
         Returns:
             the distance in km
         """
-        return round(gpx_length(list(self.points())) / 1000, 3)
+        if 'distance' not in self.header_data:
+            self.header_data['distance'] = round(gpx_length(list(self.points())) / 1000, 3)
+        return self.header_data['distance']
 
     def angle(self) ->float:
         """For me, the earth is flat.
