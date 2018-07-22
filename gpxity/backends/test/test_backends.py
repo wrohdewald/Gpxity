@@ -368,6 +368,30 @@ class TestBackends(BasicTest):
             track.lifetrack()
             self.assertIn(new_id, uplink)
 
+    def test_backend_dirty(self):
+        """Track._dirty"""
+        # pylint: disable=protected-access
+        for cls in self._find_backend_classes():
+            with self.temp_backend(cls, count=1) as backend:
+                track = backend[0]
+                with self.assertRaises(Exception):
+                    track._dirty = False
+                self.assertFalse(track._dirty)
+                # version 1.1 should perhaps be a test on its own, see Track.to_xml()
+                track._dirty = 'gpx'
+                self.assertFalse(track._dirty)
+                track.title = 'new title'
+                self.assertFalse(track._dirty)
+                with track.batch_changes():
+                    track.title = 'new 2'
+                    self.assertEqual(track._dirty, set(['title']))
+                self.assertFalse(track._dirty)
+                with track.batch_changes():
+                    track.title = 'new 3'
+                    track.keywords = ['Eystrup', 'Hello Dolly']
+                backend2 = self.clone_backend(backend)
+                self.assertEqual(backend2[0].title, 'new 3')
+
     def test_directory_dirty(self):
         """test gpx._dirty where id_in_backend is not the default. Currently
         track._dirty = 'gpx' changes the file name which is wrong."""

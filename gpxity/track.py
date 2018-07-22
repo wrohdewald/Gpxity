@@ -597,11 +597,16 @@ class Track:
         """
         self._load_full()
         with self.batch_changes():
-            self.__gpx.keywords = ''
-            for keyword in sorted(value):
-                # add_keyword ensures we do not get unwanted things like Category:
-                self.add_keyword(keyword)
-            self.__dirty = set()  # TODO: what is this? Document or remove
+            old_dirty = self.__dirty
+            try:
+                self.__gpx.keywords = ''
+                for keyword in sorted(value):
+                    # add_keyword ensures we do not get unwanted things like Category:
+                    self.add_keyword(keyword)
+            finally:
+                # override the dirty changes done by add_keyword because we prefer
+                # to update them all in one go - MMT supports that.
+                self.__dirty = old_dirty
             self._dirty = 'keywords'
 
     @staticmethod
