@@ -164,6 +164,7 @@ class TestBackends(BasicTest):
                         self.assertEqual(first_category, 'Horse riding')
                         self.assertFalse(track.public)
                         track.public = True
+                        self.assertTrue(track.public)
                         track.title = 'A new title'
                         self.assertEqual(track.title, 'A new title')
                         track.description = 'A new description'
