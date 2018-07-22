@@ -7,3 +7,4 @@ gpxity/version.py
 Gpxity.egg-info
 **auth.cfg
 TODO
+.pytest_cache
