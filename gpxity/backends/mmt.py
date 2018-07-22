@@ -428,7 +428,8 @@ class MMT(Backend):
         tags = (text.find('tags').text or '').split(',')
         if values != tags or len(ids) != len(values):
             raise self.BackendException(
-                'MMT gives us strange tag values: ids={} values={} tags={}'.format(ids, values, tags))
+                'MMT does not like some of your keywords: mmt ids={} your keywords={}  mmt tags={}'.format(
+                    ids, values, tags))
         for key, id_ in zip(values, ids):
             self._found_tag_id(key, id_)
 
