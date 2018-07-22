@@ -357,12 +357,13 @@ class GPSIES(Backend):
             response = self.__post('userList', data=data)
             page_parser.feed(response.text)
         for raw_data in page_parser.result['tracks']:
+            # pylint: disable=protected-access
             track = self._found_track(raw_data.track_id)
-            track.header_data['title'] = raw_data.title
-            track.header_data['time'] = raw_data.time
+            track._header_data['title'] = raw_data.title
+            track._header_data['time'] = raw_data.time
             if raw_data.distance:
-                track.header_data['distance'] = raw_data.distance
-            track.header_data['public'] = raw_data.public
+                track._header_data['distance'] = raw_data.distance
+            track._header_data['public'] = raw_data.public
             if self.__session is None: # anonymous, no login
                 track.public = True
             yield track
@@ -380,11 +381,12 @@ class GPSIES(Backend):
         data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data)
         track.parse(response.text)
-        # in Track, the results of a full load override header_data
-        if 'public' in track.header_data:
-            # header_data is empty if this is a new track we just wrote
-            _ = track.header_data['public']
-            del track.header_data['public']
+        # in Track, the results of a full load override _header_data
+        # pylint: disable=protected-access
+        if 'public' in track._header_data:
+            # _header_data is empty if this is a new track we just wrote
+            _ = track._header_data['public']
+            del track._header_data['public']
             track.public = _
         self._read_category(track)
 

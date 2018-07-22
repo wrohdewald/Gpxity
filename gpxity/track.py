@@ -105,7 +105,7 @@ class Track:
         self.__id_in_backend = None
         self.__backend = None
         self._loaded = False
-        self.header_data = dict() # only for internal use because we clear data on _full_load()
+        self._header_data = dict() # only for internal use because we clear data on _full_load()
         self.__gpx = gpx or GPX()
         self.__backend = None
         self.__cached_distance = None
@@ -256,8 +256,8 @@ class Track:
         point comes last in time. In other words, points should be ordered
         by their time.
         """
-        if 'time' in self.header_data:
-            return self.header_data['time']
+        if 'time' in self._header_data:
+            return self._header_data['time']
         self._load_full()
         try:
             return next(self.points()).time
@@ -268,8 +268,8 @@ class Track:
     def title(self) -> str:
         """str: The title.
         """
-        if 'title' in self.header_data:
-            return self.header_data['title']
+        if 'title' in self._header_data:
+            return self._header_data['title']
         self._load_full()
         return self.__gpx.name
 
@@ -284,8 +284,8 @@ class Track:
     def description(self) ->str:
         """str: The description.
         """
-        if 'description' in self.header_data:
-            return self.header_data['description']
+        if 'description' in self._header_data:
+            return self._header_data['description']
         self._load_full()
         return self.__gpx.description or ''
 
@@ -350,8 +350,8 @@ class Track:
         Returns:
             The current value or the default value (see :attr:`legal_categories`)
         """
-        if not self._loaded and 'category' in self.header_data:
-            return self.header_data['category']
+        if not self._loaded and 'category' in self._header_data:
+            return self._header_data['category']
         self._load_full()
         return self.__category
 
@@ -460,18 +460,18 @@ class Track:
                 print('{}: Track {} has illegal GPX XML: {}'.format(
                     self.backend, self.id_in_backend, exc))
                 raise
-            if 'keywords' in self.header_data:
-                del self.header_data['keywords']
+            if 'keywords' in self._header_data:
+                del self._header_data['keywords']
             self._parse_keywords()
-            if 'public' in self.header_data:
-                del self.header_data['public']
+            if 'public' in self._header_data:
+                del self._header_data['public']
             self.public = self.public or old_public
             if old_gpx.name and not self.__gpx.name:
                 self.__gpx.name = old_gpx.name
             if old_gpx.description and not self.__gpx.description:
                 self.__gpx.description = old_gpx.description
             self._round_points(self.points())
-        self.header_data = dict()
+        self._header_data = dict()
         self._loaded = True
 
     @staticmethod
@@ -522,8 +522,8 @@ class Track:
         bool: Is this a private track (can only be seen by the account holder) or
             is it public? Default value is False
         """
-        if 'public' in self.header_data:
-            return self.header_data['public']
+        if 'public' in self._header_data:
+            return self._header_data['public']
         self._load_full()
         return self.__public
 
@@ -581,8 +581,8 @@ class Track:
             DirectoryA and DirectoryB will not be identical, for example "berlin" in DirectoryA but
             "Berlin" in DirectoryB.
         """
-        if 'keywords' in self.header_data:
-            return self.header_data['keywords']
+        if 'keywords' in self._header_data:
+            return self._header_data['keywords']
         self._load_full()
         if self.__gpx.keywords:
             return list(sorted(x.strip() for x in self.__gpx.keywords.split(',')))
@@ -601,7 +601,7 @@ class Track:
             for keyword in sorted(value):
                 # add_keyword ensures we do not get unwanted things like Category:
                 self.add_keyword(keyword)
-            self.__dirty = set()
+            self.__dirty = set()  # TODO: what is this? Document or remove
             self._dirty = 'keywords'
 
     @staticmethod
@@ -694,8 +694,8 @@ class Track:
                     parts.append(repr_timespan(self.time, self.last_time))
                 elif self.time:
                     parts.append(str(self.time))
-                if 'distance' in self.header_data:
-                    parts.append('{:4.2f}km'.format(self.header_data['distance']))
+                if 'distance' in self._header_data:
+                    parts.append('{:4.2f}km'.format(self._header_data['distance']))
                 else:
                     parts.append('{} points'.format(self.gpx.get_track_points_no()))
             return 'Track({})'.format(' '.join(parts))
@@ -749,8 +749,8 @@ class Track:
         Returns:
             the distance in km, rounded to m
         """
-        if 'distance' in self.header_data:
-            return self.header_data['distance']
+        if 'distance' in self._header_data:
+            return self._header_data['distance']
         if self.__cached_distance is None:
             self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
         return self.__cached_distance

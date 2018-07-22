@@ -243,25 +243,26 @@ class Directory(Backend):
             data = raw_file.read(10000)
             parts = data.split('<trk>')
             if len(parts) > 1:
+                # pylint: disable=protected-access
                 raw_data = parts[0].split('extensions')[0]
-                track.header_data['title'] = self._get_field(raw_data, 'name')
-                track.header_data['description'] = self._get_field(raw_data, 'desc')
+                track._header_data['title'] = self._get_field(raw_data, 'name')
+                track._header_data['description'] = self._get_field(raw_data, 'desc')
                 rest_kw = list()
                 kw_raw = self._get_field(raw_data, 'keywords')
                 if kw_raw:
                     for keyword in (x.strip() for x in kw_raw.split(',')):
                         if keyword == 'Status:public':
-                            track.header_data['public'] = True
+                            track._header_data['public'] = True
                         elif keyword == 'Status:private':
-                            track.header_data['public'] = False
+                            track._header_data['public'] = False
                         elif keyword.startswith('Category:'):
-                            track.header_data['category'] = keyword.split(':')[1].strip()
+                            track._header_data['category'] = keyword.split(':')[1].strip()
                         else:
                             rest_kw.append(keyword)
-                    track.header_data['keywords'] = sorted(rest_kw)
+                    track._header_data['keywords'] = sorted(rest_kw)
 
                 time_raw = self._get_field(parts[1], 'time')
-                track.header_data['time'] = mod_gpxfield.parse_time(time_raw)
+                track._header_data['time'] = mod_gpxfield.parse_time(time_raw)
 
     def _yield_tracks(self):
         """get all tracks for this user."""

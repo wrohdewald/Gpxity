@@ -583,7 +583,7 @@ class TrackTests(BasicTest):
         self.assertEqual(list(Track.overlapping_times(group1 + group2)), list([group1]))
 
     def test_header_changes(self):
-        """Only change things in header_data. Assert that the full gpx is loaded before saving."""
+        """Only change things in _header_data. Assert that the full gpx is loaded before saving."""
         with self.temp_backend(Directory, count=1) as backend:
             backend2 = Directory(url=backend.url)
             backend2[0].description = 'test'

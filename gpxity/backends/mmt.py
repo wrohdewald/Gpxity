@@ -479,10 +479,11 @@ class MMT(Backend):
             for _ in chunk:
                 raw_data = MMTRawTrack(_)
                 track = self._found_track(raw_data.track_id)
-                track.header_data['title'] = raw_data.title
-                track.header_data['category'] = self.decode_category(raw_data.category)
-                track.header_data['time'] = raw_data.time
-                track.header_data['distance'] = raw_data.distance
+                # pylint: disable=protected-access
+                track._header_data['title'] = raw_data.title
+                track._header_data['category'] = self.decode_category(raw_data.category)
+                track._header_data['time'] = raw_data.time
+                track._header_data['distance'] = raw_data.distance
                 yield track
             assert self.real_len() > old_len
 
