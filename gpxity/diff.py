@@ -56,7 +56,7 @@ class BackendDiff:
                 defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
                     Values is a list(str) with additional info
             """
-            # pylint: disable=too-many-locals
+            # pylint: disable=too-many-locals, too-many-branches
 
             result = defaultdict(list)
 
@@ -98,6 +98,14 @@ class BackendDiff:
             right_times, right_positions = lists(self.right)
             for tag, left_start, left_end, right_start, right_end in SequenceMatcher(
                     None, left_positions, right_positions).get_opcodes():
+                left_found = left_positions[left_start:left_end]
+                right_found = right_positions[right_start:right_end]
+                for idx, _ in enumerate(left_found):
+                    left_found[idx] = list(_)
+                    left_found[idx].append(left_times[left_start + idx])
+                for idx, _ in enumerate(right_found):
+                    right_found[idx] = list(_)
+                    right_found[idx].append(right_times[right_start + idx])
                 if tag == 'delete':
                     result['P'].append(
                         'points between {} and {} are missing on the right'.format(
@@ -107,11 +115,27 @@ class BackendDiff:
                         'points between {} and {} are missing on the left'.format(
                             *pretty_times(right_times[right_start], right_times[right_end - 1])))
                 elif tag == 'replace':
-                    result['P'].append(
-                        'points between {} and {} are different'.format(
-                            *pretty_times(
-                                min([left_times[left_start], right_times[right_start]]),
-                                max([left_times[left_end - 1], right_times[right_end - 1]]))))
+                    if list((x[0], x[1]) for x in left_found) == list((x[0], x[1]) for x in right_found):
+                        if len(set((right_found[x][3] - left_found[x][3]) for x in range(len(left_found)))) == 1:
+                            time1, time2 = pretty_times(left_found[0][3], left_found[-1][3])
+                            result['Z'].append(
+                                '{} points between {} and {} on the left are {} later on the right'.format(
+                                    len(left_found), time1, time2, right_found[0][3] - left_found[0][3]
+                                ))
+                        else:
+                            result['Z'].append('Points have different times')
+                    else:
+                        result['P'].append(
+                            'points between {} and {} are different'.format(
+                                *pretty_times(
+                                    min([left_times[left_start], right_times[right_start]]),
+                                    max([left_times[left_end - 1], right_times[right_end - 1]]))))
+                        if verbose:
+                            for left, right in zip(left_found, right_found):
+                                result['P'].append('  < {:8.6f} {:8.6f} {:5.2f} {}'.format(
+                                    left[0] or 0, left[1] or 0, left[2] or 0, left[3] or ''))
+                                result['P'].append('  > {:8.6f} {:8.6f} {:5.2f} {}'.format(
+                                    right[0] or 0, right[1] or 0, right[2] or 0, right[3] or ''))
 
             # gpx files produced by old versions of Oruxmaps have a problem with the time zone
             def offset(point1, point2):
