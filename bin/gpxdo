@@ -118,6 +118,8 @@ class LsField:
 
     def format_raw(self, value):
         """Format value according to field rules"""
+        if value == self.zero():
+            return ''
         if isinstance(value, str):
             return value
         if self.field_fmt == 'duration':
