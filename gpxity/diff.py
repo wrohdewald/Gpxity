@@ -23,6 +23,7 @@ class BackendDiff:
     Args:
         left (Backend): A backend, a track or a list of either
         right (Backend): Same as for the left side
+        verbose: Show details about different points
 
     Attributes:
         left(:class:`BackendDiffSide`): Attributes for the left side
@@ -44,12 +45,12 @@ class BackendDiff:
             differences(dict()): Keys are Flags for differences, see BackendDiff.diff_flags.
                     Values is a list(str) with additional info
         """
-        def __init__(self, left, right):
+        def __init__(self, left, right, verbose):
             self.left = left
             self.right = right
-            self.differences = self.__compare()
+            self.differences = self.__compare(verbose)
 
-        def __compare(self):
+        def __compare(self, verbose):
             """Compare both tracks
             Returns:
                 defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
@@ -171,7 +172,7 @@ class BackendDiff:
                 if _ not in matched:
                     self.exclusive.append(_)
 
-    def __init__(self, left, right):
+    def __init__(self, left, right, verbose=False):
 
         self.similar = []
         self.identical = []
@@ -187,7 +188,7 @@ class BackendDiff:
                     matched.append(right_track)
                 else:
                     if len(left_track.positions & right_track.positions) >= 100:
-                        self.similar.append(BackendDiff.Pair(left_track, right_track))
+                        self.similar.append(BackendDiff.Pair(left_track, right_track, verbose))
                         matched.append(left_track)
                         matched.append(right_track)
         # pylint: disable=protected-access

@@ -542,7 +542,7 @@ class Utility:
                         print('    {}'.format(_))
                 print()
 
-        differ = BackendDiff(self.source_tracks, self.destination)
+        differ = BackendDiff(self.source_tracks, self.destination, self.options.verbose)
         show_exclusive(differ.left)
         show_exclusive(differ.right)
 
