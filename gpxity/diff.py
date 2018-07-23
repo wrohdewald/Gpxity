@@ -9,6 +9,7 @@ This module defines :class:`~gpxity.Backend`
 """
 
 from collections import defaultdict
+from difflib import SequenceMatcher
 
 from .backend import Backend
 from .track import Track
@@ -54,15 +55,7 @@ class BackendDiff:
                 defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
                     Values is a list(str) with additional info
             """
-
-            time_range = [None, None]
-            def print_diff_time(time_range):
-                """If time_range is relevant, print and reset it."""
-                if time_range[0] and time_range[1] != time_range[0]:
-                    result['P'].append('different points between {} and {}'.format(
-                        time_range[0], time_range[1] or 'end'))
-                time_range[0] = None
-                time_range[1] = None
+            # pylint: disable=too-many-locals
 
             result = defaultdict(list)
 
@@ -85,18 +78,39 @@ class BackendDiff:
                     '"{}" <> "{}"'.format(
                         public_names[self.left.public], public_names[self.right.public]))
 
-            for _, (point1, point2) in enumerate(zip(self.left.points(), self.right.points())):
-                # GPXTrackPoint has no __eq__ and no working hash()
-                # those are only the most important attributes:
-                if (point1.longitude != point2.longitude
-                        or point1.latitude != point2.latitude
-                        or point1.elevation != point2.elevation):
-                    if time_range[0] is None:
-                        time_range[0] = point1.time
-                    time_range[1] = point1.time
-                else:
-                    print_diff_time(time_range)
-            print_diff_time(time_range)
+            def lists(track):
+                """Returns two lists of tuples: once with time, once without time."""
+                times = list()
+                positions = list()
+                for _ in track.points():
+                    times.append(_.time)
+                    positions.append(tuple([_.latitude, _.longitude, _.elevation]))
+                return times, positions
+
+            def pretty_times(time1, time2):
+                """If time2 has the same date, print only the time."""
+                if time1.date() == time2.date():
+                    time2 = time2.time()
+                return time1, time2
+
+            left_times, left_positions = lists(self.left)
+            right_times, right_positions = lists(self.right)
+            for tag, left_start, left_end, right_start, right_end in SequenceMatcher(
+                    None, left_positions, right_positions).get_opcodes():
+                if tag == 'delete':
+                    result['P'].append(
+                        'points between {} and {} are missing on the right'.format(
+                            *pretty_times(left_times[left_start], left_times[left_end - 1])))
+                elif tag == 'insert':
+                    result['P'].append(
+                        'points between {} and {} are missing on the left'.format(
+                            *pretty_times(right_times[right_start], right_times[right_end - 1])))
+                elif tag == 'replace':
+                    result['P'].append(
+                        'points between {} and {} are different'.format(
+                            *pretty_times(
+                                min([left_times[left_start], right_times[right_start]]),
+                                max([left_times[left_end - 1], right_times[right_end - 1]]))))
 
             # gpx files produced by old versions of Oruxmaps have a problem with the time zone
             def offset(point1, point2):
