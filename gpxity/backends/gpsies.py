@@ -311,6 +311,7 @@ class GPSIES(Backend):
 
     def _edit(self, track):
         """edit directly on gpsies."""
+        self._current_track = track
         assert track.id_in_backend
         data = {
             'edit':'',
@@ -370,6 +371,7 @@ class GPSIES(Backend):
 
     def _read_category(self, track):
         """I found no way to download all attributes in one go"""
+        self._current_track = track
         data = {'fileId': track.id_in_backend}
         response = self.__post('editTrack', data)
         page_parser = ParseGPIESEditPage()
@@ -378,6 +380,7 @@ class GPSIES(Backend):
 
     def _read_all(self, track):
         """get the entire track. For gpies, we only need the gpx file"""
+        self._current_track = track
         data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data)
         track.parse(response.text)
@@ -398,7 +401,7 @@ class GPSIES(Backend):
             _ = response.text.split('alert-danger">')[1].split('</div>')[0].strip()
             if '<li>' in _:
                 _ = _.split('<li>')[1].split('</li>')[0]
-            raise self.BackendException(_)
+            raise self.BackendException('{}: {}'.format(self._current_track, _))
         if 'alert-warning' in response.text:
             _ = response.text.split('alert-warning">')[1].split('<')[0].strip()
             ignore_messages = (
@@ -407,7 +410,7 @@ class GPSIES(Backend):
                 'GPSies is my hobby website and is funded by advertising'
                 )
             if not any(x in _ for x in ignore_messages):
-                print('WARNING', ':', _)
+                print('WARNING', ':', self._current_track, _)
 
     def _remove_ident(self, ident: str):
         """remove on the server"""
@@ -427,6 +430,7 @@ class GPSIES(Backend):
         Returns:
             The new id_in_backend
         """
+        self._current_track = track
         files = {'formFile': (
             '{}.gpx'.format(self._html_encode(track.title)), track.to_xml(), 'application/gpx+xml')}
         data = {
@@ -440,7 +444,7 @@ class GPSIES(Backend):
         response = self.__post('upload', files=files, data=data)
         if 'Created' not in response.text:
             # not created
-            raise self.BackendException(response.text)
+            raise self.BackendException('{}: {}'.format(self._current_track, response.text))
         new_ident = None
         for line in response.text.split('\n'):
             if 'fileId=' in line:

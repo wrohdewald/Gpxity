@@ -1000,7 +1000,7 @@ class Track:
         for track in self.gpx.tracks:
             new_segments = list()
             for segment in track.segments:
-                if len(segment.points) == 0:
+                if not segment.points:
                     did_break = True  # sort of - but also needs a rewrite
                     continue
                 new_segment = GPXTrackSegment()

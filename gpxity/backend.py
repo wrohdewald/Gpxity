@@ -76,6 +76,8 @@ class Backend:
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     class NoMatch(Exception):
         """Is raised if a track is expected to pass the match filter but does not"""
 
@@ -111,6 +113,7 @@ class Backend:
         self.__debug = None
         self.debug = debug
         self.timeout = timeout
+        self._current_track = None
 
     def identifier(self):
         """Used for formatting strings"""
@@ -342,7 +345,7 @@ class Backend:
         """
         if self._decoupled:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
-
+        self._current_track = track
         self.matches(track, 'add')
         if track.backend is not self and track.backend is not None:
             new_track = track.clone()
@@ -384,6 +387,7 @@ class Backend:
 
         Used only by Track when things change.
         """
+        self._current_track = track
         assert track.backend is self
         assert self._has_item(track.id_in_backend), '{} not in {}'.format(track, ' / '.join(str(x) for x in self))
         assert track._dirty  # pylint: disable=protected-access
@@ -423,6 +427,7 @@ class Backend:
         """
 
         track = value if hasattr(value, 'id_in_backend') else self[value]
+        self._current_track = track
         if track.id_in_backend:
             self._remove_ident(track.id_in_backend)
         with self._decouple():
