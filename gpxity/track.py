@@ -971,20 +971,63 @@ class Track:
         """Returns True if distance < delta_meter"""
         return abs(last_point.distance_2d(point)) < delta_meter
 
-    def fix(self, orux24: bool = False):
+    def fix(self, orux24: bool = False, timejumps: bool = False):
         """Fix bugs. This may fix them or produce more bugs.
         Please backup your track before doing this.
 
         Args:
             orux24: Older Oruxmaps switched the day back by one
                 day after exactly 24 hours.
+            timejumps: Whenever the time jumps back or more than 30
+            minutes into the future, split the segment at that point.
 
         Returns:
             A list of message strings, usable for verbose output.
             """
+        self._load_full()
         if orux24:
             self.__fix_orux24()
+        if timejumps:
+            self.__fix_timejumps()
         return []
+
+    def __fix_timejumps(self):
+        """Whenever the time jumps back or more than 30
+            minutes into the future, split the segment at that point."""
+        did_break = False
+        print('ich bin __fix_timejumps  ', self)
+        new_tracks = list()
+        for track in self.gpx.tracks:
+            new_segments = list()
+            for segment in track.segments:
+                if len(segment.points) == 0:
+                    did_break = True  # sort of - but also needs a rewrite
+                    continue
+                new_segment = GPXTrackSegment()
+                new_segment.points.append(segment.points[0])
+                for point in segment.points[1:]:
+                    prev_point = new_segment.points[-1]
+                    needs_break = False
+                    if point.time is None and prev_point.time is not None:
+                        needs_break = True
+                    elif point.time is not None and prev_point.time is None:
+                        needs_break = True
+                    elif point.time - prev_point.time > datetime.timedelta(minutes=30):
+                        needs_break = True
+                    elif point.time < prev_point.time:
+                        needs_break = True
+                    if needs_break:
+                        did_break = True
+                        new_segments.append(new_segment)
+                        new_segment = GPXTrackSegment()
+                    new_segment.points.append(point)
+                new_segments.append(new_segment)
+            new_track = GPXTrack()
+            new_track.segments.extend(new_segments)
+            new_tracks.append(new_track)
+        if did_break:
+            self.gpx.tracks = new_tracks
+            self._dirty = 'gpx'
 
     def __fix_orux24(self):
         """Try to fix Oruxmaps 24hour bug."""

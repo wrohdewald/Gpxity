@@ -469,7 +469,7 @@ class Utility:
             if self.options.id_from_time:
                 if _.time:
                     _.id_in_backend = str(_.time).replace(' ', '_')
-            result_lines.extend(_.fix(orux24=self.options.orux24))
+            result_lines.extend(_.fix(orux24=self.options.orux24, timejumps=self.options.timejumps))
         if self.options.verbose:
             for _ in result_lines:
                 print(_)
@@ -747,6 +747,12 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             '--orux24',
             help="""BACKUP your tracks first! This can destroy them!
             Try to fix old oruxmaps bug where the date jumps back by one day""",
+            action='store_true', default=False)
+        fix_parser.add_argument(
+            '--timejumps',
+            help="""BACKUP your tracks first! This can destroy them!
+            Whenever the time jumps back or more than 30 minutes into the future,
+            split the segment at that point""",
             action='store_true', default=False)
         fix_parser.add_argument('--title-from-id', help='use id for title',
                                 action='store_true', default=False)
