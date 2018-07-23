@@ -448,7 +448,7 @@ class GPSIES(Backend):
                 break
         if not new_ident:
             raise self.BackendException('No fileId= found in response')
-        if track.id_in_backend:
+        if track.id_in_backend and track.id_in_backend != new_ident:
             self._remove_ident(track.id_in_backend)
         track.id_in_backend = new_ident
         return new_ident
