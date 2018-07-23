@@ -111,11 +111,6 @@ class LsField:
             result = self.zero()
         return result
 
-    def format_value(self, value):
-        """Format value according to field rules"""
-        value = self.value(value)
-        return self.format_raw(value)
-
     def format_raw(self, value):
         """Format value according to field rules"""
         if value == self.zero():
