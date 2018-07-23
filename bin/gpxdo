@@ -273,7 +273,7 @@ class Utility:
         self.parse_commandline()
         if self.exit_code:
             return
-        self.sources = []
+        sources = []
         self.source_tracks = []
         self.similar_to = None
         self.destination = None
@@ -282,11 +282,11 @@ class Utility:
                 self.similar_to = self.instantiate_object(self.options.similar)
             if self.options.source:
                 for _ in self.options.source:
-                    self.sources.append(self.instantiate_object(_))
+                    sources.append(self.instantiate_object(_))
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
-                        self.destination = self.sources[-1]
-                tracks = collect_tracks(self.sources, verbose=self.options.verbose)
+                        self.destination = sources[-1]
+                tracks = collect_tracks(sources, verbose=self.options.verbose)
                 for track in tracks:
                     msg = self.match(track)
                     if msg:
@@ -524,12 +524,11 @@ class Utility:
 
     def merge(self):
         """Merge"""
-        for source in self.sources:
-            msg = self.destination.merge(
-                source, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
-            if self.options.verbose or self.options.dry_run:
-                for _ in msg:
-                    print(_)
+        msg = self.destination.merge(
+            self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
+        if self.options.verbose or self.options.dry_run:
+            for _ in msg:
+                print(_)
 
     def diff(self):
         """Compare"""
