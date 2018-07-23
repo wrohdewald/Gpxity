@@ -506,16 +506,17 @@ class Backend:
         """len(backend) without calling scan() first"""
         return len(self.__tracks)
 
-    def __append(self, value):
+    def __append(self, track):
         """Appends a track to the cached list."""
-        if value.id_in_backend is not None and not isinstance(value.id_in_backend, str):
-            raise Exception('{}: id_in_backend must be str'.format(value))
-        if value.id_in_backend is not None and any(x.id_in_backend == value.id_in_backend for x in self.__tracks):
+        self._current_track = track
+        if track.id_in_backend is not None and not isinstance(track.id_in_backend, str):
+            raise Exception('{}: id_in_backend must be str'.format(track))
+        if track.id_in_backend is not None and any(x.id_in_backend == track.id_in_backend for x in self.__tracks):
             # cannot do "in self" because we are not decoupled, so that would call _scan()
             raise ValueError('Backend.append(track): its id_in_backend {} is already in list: Track={}, list={}'.format(
-                value.id_in_backend, self[value.id_in_backend], self.__tracks))
-        self.matches(value, 'append')
-        self.__tracks.append(value)
+                track.id_in_backend, self[track.id_in_backend], self.__tracks))
+        self.matches(track, 'append')
+        self.__tracks.append(track)
 
     def __repr__(self):
         """do not call len(self) because that does things"""
