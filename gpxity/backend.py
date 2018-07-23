@@ -225,6 +225,12 @@ class Backend:
         """Translate internal value into the backend specific value."""
         raise NotImplementedError
 
+    @staticmethod
+    def _encode_keyword(value: str) ->str:
+        """Replicates the translation the backend does. MMT for example
+        capitalizes all words."""
+        return value
+
     def get_time(self) ->datetime.datetime:
         """get time from the server where backend is located as a Linux timestamp.
         A backend implementation does not have to support this."""

@@ -475,7 +475,7 @@ class Utility:
                 print(_)
 
     def keyword(self):
-        """add/remove a single keyword"""
+        """add/remove a list of keywords"""
         for _ in self.source_tracks:
             if self.options.remove:
                 if not self.options.dry_run:

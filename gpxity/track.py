@@ -628,7 +628,9 @@ class Track:
         """
         self._check_keyword(value)
         self._load_full()
-        if value not in self.keywords:
+        if self.backend is not None:
+            value = self.backend._encode_keyword(value)  # pylint:disable=protected-access
+        if  value not in self.keywords:
             if self.__gpx.keywords:
                 self.__gpx.keywords += ', {}'.format(value)
             else:
@@ -643,8 +645,10 @@ class Track:
         """
         self._check_keyword(value)
         self._load_full()
-        self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
-        self._dirty = 'remove_keyword:{}'.format(value)
+        value = self.backend._encode_keyword(value)  # pylint:disable=protected-access
+        if value in self.keywords:
+            self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
+            self._dirty = 'remove_keyword:{}'.format(value)
 
     def speed(self):
         """Speed over the entire time in km/h or 0.0"""

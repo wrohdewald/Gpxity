@@ -275,9 +275,9 @@ class MMT(Backend):
         return self.__mid
 
     @staticmethod
-    def _kw_to_tag(value):
+    def _encode_keyword(value):
         """mimics the changes MMT applies to tags"""
-        return value[0].upper() + value[1:]
+        return ' '.join(x.capitalize() for x in value.split())
 
     def _check_tag_ids(self):
         """Assert that all tags conform to what MMT likes"""
@@ -286,7 +286,7 @@ class MMT(Backend):
 
     def _found_tag_id(self, tag, id_):
         """We just learned about a new tag id. They never change for a given string."""
-        self.__tag_ids[self._kw_to_tag(tag)] = id_
+        self.__tag_ids[self._encode_keyword(tag)] = id_
         self._check_tag_ids()
 
     def __post(self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs):
@@ -399,7 +399,7 @@ class MMT(Backend):
     def _write_keywords(self, track):
         """Sync track keywords to MMT tags."""
         current_tags = self._current_keywords(track)
-        new_tags = set(self._kw_to_tag(x) for x in track.keywords)
+        new_tags = set(self._encode_keyword(x) for x in track.keywords)
         # This should really only remove unwanted tags and only add missing tags,
         # like #for remove_tag in current_tags-new_tags, for new_tag in new_tags-current_tags
         # but that does not work, see __remove_one_keyword
@@ -440,9 +440,8 @@ class MMT(Backend):
         """
         for remove_tag in track.keywords:
             self.__remove_one_keyword(track, remove_tag)
-        self.__remove_one_keyword(track, value)
         # sort for reproducibility in tests
-        self._write_add_keyword(track, ','.join(sorted(track.keywords)))
+        self._write_add_keyword(track, ','.join(sorted(self._encode_keyword(x) for x in track.keywords)))
 
     def __remove_one_keyword(self, track, value):
         """Here I have a problem. This seems to do exactly what happens in a
@@ -450,7 +449,7 @@ class MMT(Backend):
         **does** remove a tag, so we can still use this: Repeat calling it until
         all tags are gone and then redefine all wanted tags.
         Sadly, MMT never returns anything for this POST."""
-        value = self._kw_to_tag(value)
+        value = self._encode_keyword(value)
         if value not in self.__tag_ids:
             self.__tag_ids.update(self._scan_track_page(track)['tags'])
             self._check_tag_ids()
@@ -562,7 +561,7 @@ class MMT(Backend):
             self._write_title(track)
         # MMT can add several keywords at once
         if track.keywords and '_write_add_keyword' in self.supported:
-            self._write_add_keyword(track, ','.join(track.keywords))
+            self._write_add_keyword(track, ','.join(self._encode_keyword(x) for x in track.keywords))
         if old_ident:
             self._remove_ident(old_ident)
         track.id_in_backend = new_ident
