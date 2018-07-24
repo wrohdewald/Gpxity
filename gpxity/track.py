@@ -635,7 +635,7 @@ class Track:
                 self.__gpx.keywords += ', {}'.format(value)
             else:
                 self.__gpx.keywords = value
-            self._dirty = 'add_keyword:{}'.format(value)
+            self._dirty = 'add_keywords:{}'.format(value)
 
     def remove_keyword(self, value: str) ->None:
         """Removes from the keywords.

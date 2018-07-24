@@ -36,7 +36,7 @@ class TestBackends(BasicTest):
         expect_unsupported[TrackMMT] = set([
             'remove', '_write_attribute',
             '_write_title', '_write_description', '_write_public',
-            '_write_category', '_write_keyword', '_write_add_keyword',
+            '_write_category', '_write_keyword', '_write_add_keywords',
             '_write_remove_keyword'])
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):

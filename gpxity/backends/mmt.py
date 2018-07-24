@@ -405,9 +405,9 @@ class MMT(Backend):
         # but that does not work, see __remove_one_keyword
         for remove_tag in current_tags:
             self.__remove_one_keyword(track, remove_tag)
-        self._write_add_keyword(track, ','.join(new_tags))
+        self._write_add_keywords(track, ','.join(new_tags))
 
-    def _write_add_keyword(self, track, value):
+    def _write_add_keywords(self, track, value):
         """Add keyword as MMT tag. MMT allows adding several at once, comma separated,
         and we allow this too. But do not expect this to work with all backends."""
         if not value:
@@ -441,7 +441,7 @@ class MMT(Backend):
         for remove_tag in track.keywords:
             self.__remove_one_keyword(track, remove_tag)
         # sort for reproducibility in tests
-        self._write_add_keyword(track, ','.join(sorted(self._encode_keyword(x) for x in track.keywords)))
+        self._write_add_keywords(track, ','.join(sorted(self._encode_keyword(x) for x in track.keywords)))
 
     def __remove_one_keyword(self, track, value):
         """Here I have a problem. This seems to do exactly what happens in a
@@ -560,8 +560,8 @@ class MMT(Backend):
         if '_write_title' in self.supported:
             self._write_title(track)
         # MMT can add several keywords at once
-        if track.keywords and '_write_add_keyword' in self.supported:
-            self._write_add_keyword(track, ','.join(self._encode_keyword(x) for x in track.keywords))
+        if track.keywords and '_write_add_keywords' in self.supported:
+            self._write_add_keywords(track, ','.join(self._encode_keyword(x) for x in track.keywords))
         if old_ident:
             self._remove_ident(old_ident)
         track.id_in_backend = new_ident
