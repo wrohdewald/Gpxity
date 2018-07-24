@@ -187,7 +187,7 @@ class Track:
         if not isinstance(value, str):
             raise Exception('_dirty only receives str')
         if not self.__is_decoupled:
-            self.__dirty.add(value)
+            new_add = value
             if value == 'gpx':
                 self.__cached_distance = None
                 for other in self._similarity_others.values():
@@ -196,6 +196,24 @@ class Track:
                     del other._similarities[id(self)]  # pylint: disable=protected-access
                 self._similarity_others = weakref.WeakValueDictionary()
                 self._similarities = dict()
+                self.__dirty.add(value)
+            elif value.startswith('add_keywords:'):
+                if 'keywords' not in self.__dirty:
+                    have_add = list(x for x in self.__dirty if x.startswith('add_keywords:'))
+                    if have_add:
+                        have_add = have_add[0]
+                        have_kw = have_add.split(':')[1].split(',')
+                        have_kw.append(value.split(':')[1])
+                        new_add = 'add_keywords:{}'.format(','.join(sorted(set(have_kw))))
+                        self.__dirty = set(x for x in self.__dirty if not x.startswith('add_keywords:'))
+                    else:
+                        new_add = value
+                    self.__dirty.add(new_add)
+            elif value == 'keywords':
+                self.__dirty = set(x for x in self.__dirty if not x.startswith('add_keywords:'))
+                self.__dirty = set(x for x in self.__dirty if not x.startswith('remove_keywords:'))
+
+            self.__dirty.add(new_add)
             if not self._batch_changes:
                 self._rewrite()
 
