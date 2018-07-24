@@ -229,11 +229,16 @@ class GPSIES(Backend):
 
     default_url = 'https://www.gpsies.com'
 
+    # It is important that we have only one global session per identifier()
+    # because gpsies.com seems to have several servers and their
+    # synchronization is sometimes slower than expected. See
+    # cookie "SERVERID".
+    __session = dict()
+
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         if url is None:
             url = self.default_url
         super(GPSIES, self).__init__(url, auth, cleanup, debug, timeout)
-        self.__session = None
         self.session_response = None
 
     @property
@@ -251,19 +256,20 @@ class GPSIES(Backend):
     @property
     def session(self):
         """The requests.Session for this backend. Only initialized once."""
-        if self.__session is None:
+        ident = self.identifier()
+        if ident not in GPSIES.__session:
             if not self.auth:
-                raise Exception('{}: Needs authentication data'.format(self.url))
-            self.__session = requests.Session()
+                raise Exception('{}: Needs authentication data'.format(ident))
+            GPSIES.__session[ident] = requests.Session()
             data = {'username': self.auth[0], 'password': self.auth[1]}
-            self.session_response = self.__session.post(
+            self.session_response = GPSIES.__session[ident].post(
                 '{}/loginLayer.do?language=en'.format(self.url),
                 data=data, timeout=self.timeout)
             self._check_response(self.session_response)
-        cookies = requests.utils.dict_from_cookiejar(self.__session.cookies)
-        cookies['cookieconsent_dismissed'] = 'yes'
-        self.__session.cookies = requests.utils.cookiejar_from_dict(cookies)
-        return self.__session
+            cookies = requests.utils.dict_from_cookiejar(GPSIES.__session[ident].cookies)
+            cookies['cookieconsent_dismissed'] = 'yes'
+            GPSIES.__session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
+        return GPSIES.__session[ident]
 
     def __post(self, action: str, data, files=None):
         """common code for a POST within the session"""
@@ -374,7 +380,7 @@ class GPSIES(Backend):
             if raw_data.distance:
                 track._header_data['distance'] = raw_data.distance
             track._header_data['public'] = raw_data.public
-            if self.__session is None: # anonymous, no login
+            if self.identifier() not in GPSIES.__session: # anonymous, no login
                 track.public = True
             yield track
 
