@@ -331,13 +331,22 @@ class GPSIES(Backend):
         while True:
             self.__post('editTrack', data)
             self._read_all(copy)
-            if track == copy:
+            if track.description != copy.description:
+                msg = 'description: {} -> {}'.format(copy.description, track.description)
+            elif track.title != copy.title:
+                msg = 'title: {} -> {}'.format(copy.title, track.title)
+            elif track.public != copy.public:
+                msg = 'public: {} -> {}'.format(copy.public, track.public)
+            elif track.category != copy.category:
+                msg = 'category: {} -> {}'.format(copy.category, track.category)
+            else:
                 return
             ctr += 1
             if not ctr % 10:
                 print('GPSIES._edit: {} tries'.format(ctr))
                 if ctr > 50:
-                    raise Backend.BackendException('GPSIES: _edit fails to change track {}'.format(track))
+                    raise Backend.BackendException(
+                        'GPSIES: _edit fails to change track {}: {}'.format(track.identifier(), msg))
 
     def _yield_tracks(self):
         """get all tracks for this user."""
