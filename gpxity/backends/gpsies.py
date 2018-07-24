@@ -152,6 +152,9 @@ class GPSIES(Backend):
     Searching arbitrary tracks is not supported. GPSIES only looks at the
     tracks of a specific user.
 
+    GPSIES does not support keywords. If you upload a track with keywords,
+    they will silently be ignored.
+
     Args:
         url (str): The Url of the server. Default is https://gpsies.com
         auth (tuple(str, str)): Username and password

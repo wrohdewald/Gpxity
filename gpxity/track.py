@@ -293,7 +293,7 @@ class Track:
 
     @title.setter
     def title(self, value: str):
-        if value != self.title:
+        if value != self.__gpx.name:
             self._load_full()
             self.__gpx.name = value
             self._dirty = 'title'
@@ -309,7 +309,7 @@ class Track:
 
     @description.setter
     def description(self, value: str):
-        if value != self.description:
+        if value != self.__gpx.description:
             self._load_full()
             self.__gpx.description = value
             self._dirty = 'description'
@@ -377,7 +377,7 @@ class Track:
     def category(self, value: str):
         if value is None:
             value = self.legal_categories[0]
-        if value != self.category:
+        if value != self.__category:
             if value not in self.legal_categories:
                 raise Exception('Category {} is not known'.format(value))
             self._load_full()
@@ -548,7 +548,7 @@ class Track:
     @public.setter
     def public(self, value):
         """Stores this flag as keyword 'public'."""
-        if value != self.public:
+        if value != self.__public:
             self._load_full()
             self.__public = value
             self._dirty = 'public'

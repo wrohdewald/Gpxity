@@ -449,3 +449,31 @@ class TestBackends(BasicTest):
         with MMT(auth='gpxitytest', cleanup=True) as mmt:
             with self.assertRaises(mmt.BackendException):
                 mmt.add(track)
+
+    def test_setters(self):
+        """For all Track attributes with setters, test if we can change them without
+        changing something else."""
+        for cls in self._find_backend_classes():
+            if cls is TrackMMT:
+                # TODO: automatically start expected local server
+                continue
+            with self.temp_backend(cls, count=1) as backend:
+                track = backend[0]
+                backend2 = self.clone_backend(backend)
+                self.assertEqual(track, backend2[0])
+                test_values = {
+                    'title': ('default title', 'Täst Titel'),
+                    'description': ('default description', 'Täst description'),
+                    'category': ('Driving', 'Rowing'), 'public': (True, False)}
+                if cls is not GPSIES:
+                    test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
+                for main in test_values:
+                    for key, (default_value, _) in test_values.items():
+                        if key != main:
+                            setattr(track, key, default_value)
+                    setattr(track, main, test_values[main][1])
+                    backend2.scan()
+                    for key, (default_value, _) in test_values.items():
+                        if key != main:
+                            self.assertEqual(getattr(backend2[0], key), default_value)
+                    self.assertEqual(getattr(backend2[0], main), test_values[main][1])
