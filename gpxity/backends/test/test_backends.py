@@ -381,9 +381,20 @@ class TestBackends(BasicTest):
                     track._dirty = False
                 self.assertFalse(track._dirty)
                 # version 1.1 should perhaps be a test on its own, see Track.to_xml()
+                track.category = 'Driving'
                 track._dirty = 'gpx'
                 self.assertFalse(track._dirty)
+                backend2 = self.clone_backend(backend)
+                self.assertEqual(backend2[0].category, 'Driving')
+                b2track = backend2[0]
+                self.assertEqual(b2track.category, 'Driving')
+                b2track.title = 'another new title'
+                self.assertEqual(b2track.category, 'Driving')
+                self.assertEqual(backend2[0].category, 'Driving')
                 track.title = 'new title'
+                self.assertEqual(track.category, 'Driving')
+                backend3 = self.clone_backend(backend)
+                self.assertEqual(backend3[0].category, 'Driving')
                 self.assertFalse(track._dirty)
                 with track.batch_changes():
                     track.title = 'new 2'
@@ -391,9 +402,9 @@ class TestBackends(BasicTest):
                 self.assertFalse(track._dirty)
                 with track.batch_changes():
                     track.title = 'new 3'
-                    track.keywords = ['Eystrup', 'Hello Dolly']
-                backend2 = self.clone_backend(backend)
-                self.assertEqual(backend2[0].title, 'new 3')
+                    track.keywords = ['Something', 'something xlse']
+                backend4 = self.clone_backend(backend)
+                self.assertEqual(backend4[0].title, 'new 3')
 
     def test_directory_dirty(self):
         """test gpx._dirty where id_in_backend is not the default. Currently
