@@ -571,7 +571,7 @@ class Backend:
         # they may be identical instantiations or not. For all backends.
         result = list()
         src_dict = defaultdict(list)
-        other_tracks = collect_tracks(other, multi_backends=False)
+        other_tracks = collect_tracks(other, multi_backends=copy)
         if copy:
             for old_track in other_tracks:
                 if not dry_run:
