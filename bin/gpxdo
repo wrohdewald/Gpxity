@@ -239,6 +239,17 @@ class SegmentRow(LsRow):
         self['status'] = ''
 
 
+class FreeTextRow(LsRow):
+    """A line with unformatted text"""
+
+    def __init__(self, text):
+        super(FreeTextRow, self).__init__()
+        self.text = text
+
+    def print_row(self):
+        """print to stdout"""
+        print(self.text)
+
 class SeparatorRow(LsRow):
     """A separator line for use before or after totals"""
 
@@ -395,6 +406,10 @@ class Utility:
         if self.options.segments:
             LsField(False, 'track', lambda x: x).is_needed = True
 
+        if self.options.warnings:
+            LsRow.find_by_head_ident('time').is_needed = True
+            LsRow.find_by_head_ident('duration').is_needed = True
+
         sort_fields = list(LsRow.find_by_head_ident(x) for x in self.options.sort.split(','))
         for _ in sort_fields:
             _.is_needed = True
@@ -448,10 +463,30 @@ class Utility:
                 for group_key in group_keys:
                     all_lines.append(SubTotalRow(track_groups[group_key], mainsort, group_key or 'No keyword'))
 
+        if self.options.warnings:
+            time_sorted = sorted(all_tracks, key=lambda x: x['time'])
+            for span1, span2 in self.pairs(time_sorted):
+                if span1['time'] and span1['duration'] and span2['time']:
+                    if span2['time'] < span1['time'] + span1['duration']:
+                        row = FreeTextRow('{} and {} have overlapping times'.format(
+                            span1['identifier'], span2['identifier']))
+                        all_lines.append(row)
+
+
         LsRow.set_max_lengths(all_lines)
 
         for line in all_lines:
             line.print_row()
+
+    @staticmethod
+    def pairs(seq):
+        """Returns a list of all adjacent elements"""
+        # pylint: disable=stop-iteration-return
+        iterable = iter(seq)
+        prev = next(iterable)
+        for _ in iterable:
+            yield prev, _
+            prev = _
 
     @staticmethod
     def fix_track(track):
