@@ -577,8 +577,8 @@ class Backend:
                 if not dry_run:
                     new_track = self.add(old_track)
                 result.append('{} {} -> {} {}'.format(
-                    'blind move' if remove else 'blind copy', old_track, self,
-                    '' if dry_run else ' / ' + new_track.id_in_backend))
+                    'blind move' if remove else 'blind copy', old_track.identifier(), self.identifier(),
+                    '' if dry_run else ' / ' + new_track.identifier()))
                 if remove and not dry_run:
                     old_track.remove()
             return result
@@ -602,8 +602,8 @@ class Backend:
             if not dry_run:
                 new_track = self.add(old_track)
             result.append('{} {} -> {} {}'.format(
-                'move' if remove else 'copy', old_track, self,
-                '' if dry_run else ' / ' + new_track.id_in_backend))
+                'move' if remove else 'copy', old_track.identifier(), self.identifier(),
+                '' if dry_run else ' / ' + new_track.identifier()))
             if remove and not dry_run:
                 old_track.remove()
             del src_tracks[0]
