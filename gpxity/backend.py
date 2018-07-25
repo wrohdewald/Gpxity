@@ -572,7 +572,6 @@ class Backend:
         result = list()
         src_dict = defaultdict(list)
         other_tracks = collect_tracks(other, multi_backends=False)
-        other_backend = other_tracks[0].backend
         if copy:
             for old_track in other_tracks:
                 if not dry_run:
@@ -580,13 +579,13 @@ class Backend:
                 result.append('{} {} -> {} {}'.format(
                     'blind move' if remove else 'blind copy', old_track, self,
                     '' if dry_run else ' / ' + new_track.id_in_backend))
-                if remove:
-                    if not dry_run:
-                        old_track.remove()
+                if remove and not dry_run:
+                    old_track.remove()
             return result
 
         for _ in other_tracks:
             src_dict[_.points_hash()].append(_)
+        other_backend = other_tracks[0].backend
         if other_backend.identifier() == self.identifier():
             dst_dict = src_dict
         else:
@@ -605,9 +604,8 @@ class Backend:
             result.append('{} {} -> {} {}'.format(
                 'move' if remove else 'copy', old_track, self,
                 '' if dry_run else ' / ' + new_track.id_in_backend))
-            if remove:
-                if not dry_run:
-                    other_backend.remove(old_track)
+            if remove and not dry_run:
+                old_track.remove()
             del src_tracks[0]
 
         # 2. merge the rest
