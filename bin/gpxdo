@@ -644,7 +644,9 @@ class Utility:
             if self.options.last_date:
                 if self.options.last_date.date() and track.time.date() > self.options.last_date.date():
                     return 'time {} is after {}'.format(track.time, self.options.last_date)
-
+        else:
+            if self.options.first_date or self.options.last_date:
+                return 'has no time'
         if self.options.min_distance and track.distance() < self.options.min_distance:
             return 'distance {} is below {}'.format(track.distance(), self.options.min_distance)
         if self.options.max_distance and track.distance() > self.options.max_distance:
