@@ -433,7 +433,6 @@ class Backend:
             value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`
         """
-
         track = value if hasattr(value, 'id_in_backend') else self[value]
         self._current_track = track
         if track.id_in_backend:
@@ -572,8 +571,7 @@ class Backend:
         # TODO: test for merging a backend or a track with itself. Where
         # they may be identical instantiations or not. For all backends.
         result = list()
-        src_dict = defaultdict(list)
-        other_tracks = collect_tracks(other, multi_backends=copy)
+        other_tracks = collect_tracks(other)
         if copy:
             for old_track in other_tracks:
                 if not dry_run:
@@ -585,41 +583,33 @@ class Backend:
                     old_track.remove()
             return result
 
+        src_dict = defaultdict(list)
+        dst_dict = dict()
+        for self_track in self:
+            _ = self_track.points_hash()
+            if _ not in dst_dict:
+                dst_dict[_] = self_track
+            else:
+                src_dict[_].append(self_track)
         for _ in other_tracks:
-            src_dict[_.points_hash()].append(_)
-        other_backend = other_tracks[0].backend
-        if other_backend.identifier() == self.identifier():
-            dst_dict = src_dict
-        else:
-            dst_dict = defaultdict(list)
-            for _ in self:
-                dst_dict[_.points_hash()].append(_)
+            if _.backend.identifier() != self.identifier():
+                src_dict[_.points_hash()].append(_)
 
         # 1. get all tracks existing only in other
         for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
-            # but only the first one of those with same points
-            src_tracks = src_dict[point_hash]
-            old_track = src_tracks[0]
-
-            if not dry_run:
-                new_track = self.add(old_track)
-            result.append('{} {} -> {} {}'.format(
-                'move' if remove else 'copy', old_track.identifier(), self.identifier(),
-                '' if dry_run else ' / ' + new_track.identifier()))
-            if remove and not dry_run:
-                old_track.remove()
-            del src_tracks[0]
+            for old_track in src_dict[point_hash]:
+                if not dry_run:
+                    new_track = self.add(old_track)
+                result.append('{} {} -> {}'.format(
+                    'move' if remove else 'copy', old_track.identifier(),
+                    new_track.identifier() if new_track else self.identifier()))
+                if remove and not dry_run:
+                    old_track.remove()
 
         # 2. merge the rest
-        for point_hash in sorted(set(src_dict.keys()) & set(dst_dict.keys())):
-            if dst_dict is src_dict:
-                sources = src_dict[point_hash][1:]
-            else:
-                sources = src_dict[point_hash]     # no need to copy the list
-                sources.extend(dst_dict[point_hash][1:])
-            sources = sorted(sources)
-            target = dst_dict[point_hash][0]
-            for source in sources:
+        for point_hash in set(src_dict.keys()) & set(dst_dict.keys()):
+            target = dst_dict[point_hash]
+            for source in src_dict[point_hash]:
                 result.extend(target.merge(source, remove=remove, dry_run=dry_run))
         return result
 
