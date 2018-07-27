@@ -575,3 +575,13 @@ class TrackTests(BasicTest):
             backend2 = Directory(url=backend.url)
             backend2[0].category = 'Mountain biking'
             self.assertTrackFileContains(backend2[0], '<trk>')
+
+    def test_remove_track(self):
+        """If a backend has several identical tracks, make sure we remove the right one"""
+        with self.temp_backend(Directory, count=1) as backend:
+            track = backend[0]
+            track_id = track.id_in_backend
+            track2 = track.clone()
+            backend.add(track2)
+            backend.remove(track2)
+            self.assertEqual(backend[0].id_in_backend, track_id)

@@ -441,7 +441,7 @@ class Backend:
         with self._decouple():
             track._set_backend(None)  # pylint: disable=protected-access
             try:
-                self.__tracks.remove(track)
+                self.__tracks = list(x for x in self.__tracks if x.id_in_backend != track.id_in_backend)
             except ValueError:
                 pass
 
