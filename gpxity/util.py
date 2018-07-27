@@ -69,7 +69,7 @@ def collect_tracks(sources, verbose=False, multi_backends=True):
     result = list()
     for source in sources:
         if verbose:
-            print('collecting tracks from', source.identifier())
+            print('collecting tracks from', source.identifier() or '.')
         if is_track(source):
             result.append(source)
         else:
