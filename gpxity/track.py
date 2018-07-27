@@ -852,6 +852,11 @@ class Track:
                 result *= point.latitude
             if point.elevation:
                 result *= point.elevation
+            _ = point.time
+            if _:
+                result *= (_.hour + 1)
+                result *= (_.minute + 1)
+                result *= (_.second + 1)
             result %= 1e20
         return result
 

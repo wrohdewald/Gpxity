@@ -328,11 +328,9 @@ class TestBackends(BasicTest):
         with self.temp_backend(Directory, count=5) as source:
 
             with self.temp_backend(Directory, username='gpxitytest2', count=4) as sink:
-                for _ in sink:
+                for _ in list(sink)[1:]:
                     self.move_times(_, datetime.timedelta(hours=100))
                 sink.merge(source)
-                # the first track created by temp_backend always has the same points,
-                # so one of the sink tracks will be merged
                 self.assertEqual(len(source), 5)
                 self.assertEqual(len(sink), 8)
                 sink.merge(source, remove=True)
