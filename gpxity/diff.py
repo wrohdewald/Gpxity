@@ -137,18 +137,10 @@ class BackendDiff:
                                 result['P'].append('  > {:8.6f} {:8.6f} {:5.2f} {}'.format(
                                     right[0] or 0, right[1] or 0, right[2] or 0, right[3] or ''))
 
-            # gpx files produced by old versions of Oruxmaps have a problem with the time zone
-            def offset(point1, point2):
-                """Returns the time delta if both points have a time."""
-                if point1.time and point2.time:
-                    return point2.time - point1.time
-                return None
-
-            start_time_delta = offset(next(self.left.points()), next(self.right.points()))
-            if start_time_delta:
-                end_time_delta = offset(self.left.last_point(), self.right.last_point())
-                if start_time_delta == end_time_delta:
-                    result['Z'].append('Time offset: {}'.format(start_time_delta))
+            # some files have a problem with the time zone
+            _ = self.left.time_offset(self.right)
+            if _:
+                result['Z'].append('Time offset: {}'.format(_))
 
             return result
 

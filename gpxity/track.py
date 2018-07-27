@@ -1114,3 +1114,19 @@ class Track:
             other._similarity_others[id(self)] = self  # pylint: disable=protected-access
             other._similarities[id(self)] = result  # pylint: disable=protected-access
         return self._similarities[id(other)]
+
+    def time_offset(self, other):
+        """If time and last_time have the same offset between both tracks, return that time difference.
+        Otherwise return None."""
+        def offset(point1, point2):
+            """Returns the time delta if both points have a time."""
+            if point1.time and point2.time:
+                return point2.time - point1.time
+            return None
+
+        start_time_delta = offset(next(self.points()), next(other.points()))
+        if start_time_delta:
+            end_time_delta = offset(self.last_point(), other.last_point())
+            if start_time_delta == end_time_delta:
+                return start_time_delta
+        return None
