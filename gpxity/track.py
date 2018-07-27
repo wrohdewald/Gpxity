@@ -984,7 +984,9 @@ class Track:
                 ' ' * len(' and removed') if remove else '', self.identifier(long=True)))
         if remove:
             if len(msg) <= 2:
-                msg.append('Removed duplicate {}'.format(other.identifier(long=True)))
+                msg.append(
+                    'Removed duplicate {}: It was identical with {}'.format(
+                        other.identifier(long=True), self.identifier(long=True)))
             if not dry_run:
                 other.remove()
         return msg
