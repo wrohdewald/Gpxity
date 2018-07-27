@@ -62,7 +62,7 @@ def is_track(value):
     import Track."""
     return hasattr(value, 'id_in_backend')
 
-def collect_tracks(sources, verbose=False, multi_backends=True):
+def collect_tracks(sources, verbose=False):
     """A copied list with tracks combined from all sources, to be used in 'for'-loops"""
     if is_track(sources):
         return [sources]
@@ -74,7 +74,4 @@ def collect_tracks(sources, verbose=False, multi_backends=True):
             result.append(source)
         else:
             result.extend(source)
-    if not multi_backends:
-        if len(set(x.backend.identifier() for x in result)) > 1:
-            raise Exception('collect_tracks accepts only one backend')
     return result
