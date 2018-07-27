@@ -815,6 +815,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         ls_parser.add_argument('--long', help='show most useful info',
                                action='store_true', default=False)
+        ls_parser.add_argument('--all', help='show all available info',
+                               action='store_true', default=False)
         ls_parser.add_argument('--title', help='show the title',
                                action='store_true', default=False)
         ls_parser.add_argument('--category', help='show the track type',
@@ -914,13 +916,23 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                 self.options.timeout = float(self.options.timeout)
 
         if self.options.func == self.list_them:
-            if self.options.long:
+            if self.options.long or self.options.all:
                 self.options.title = True
                 self.options.time = True
                 self.options.category = True
                 self.options.keywords = True
                 self.options.distance = True
                 self.options.status = True
+                if self.options.all:
+                    self.options.segments = True
+                    self.options.total = True
+                    self.options.warnings = True
+                    self.options.speed = True
+                    self.options.moving_speed = True
+                    self.options.duration = True
+                    self.options.description = True
+                    self.options.points = True
+                    self.options.moving_speed = True
             if not self.options.source:
                 self.options.source = ['.']
         elif self.options.func == self.merge:
