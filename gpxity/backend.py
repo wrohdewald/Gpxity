@@ -116,7 +116,9 @@ class Backend:
         self._current_track = None
 
     def identifier(self):
-        """Used for formatting strings"""
+        """Used for formatting strings. A unique identifier for every
+       physical backend. Two Backend() instances pointing to the
+       same physical backend have the same identifier."""
         return '{}:{}{}/'.format(
             self.__class__.__name__.lower(),
             '' if self.url == self.default_url else self.url,
