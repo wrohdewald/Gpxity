@@ -929,8 +929,12 @@ class Track:
             Messages about category has been done
         """
         # pylint: disable=too-many-branches
+        if self.identifier() == other.identifier():
+            raise Exception('Cannot merge identical tracks: {}'.format(self.identifier()))
         if self.points_hash() != other.points_hash():
-            raise Exception('Cannot merge, points are different: {} into {}'.format(other, self))
+            raise Exception(
+                'Cannot merge {} into {}, points are different'.format(
+                    other.identifier(), self.identifier()))
         msg = list()
         with self.batch_changes():
             if not other._has_default_title() and self._has_default_title():  # pylint: disable=protected-access
