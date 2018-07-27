@@ -971,17 +971,17 @@ class Track:
                     self._dirty = 'gpx'
                 msg.append('Copied times for {} out of {} points'.format(
                     changed_point_times, self.gpx.get_track_points_no()))
-            if msg:
-                msg = list('     ' + x for x in msg)
-                msg.insert(0, 'Merged{} {}'.format(
-                    ' and removed' if remove else '', other.identifier(long=True)))
-                msg.insert(1, '{}  into {}'.format(
-                    ' ' * len(' and removed') if remove else '', self.identifier(long=True)))
-            if remove:
-                if len(msg) <= 2:
-                    msg.append('Removed duplicate {}'.format(other.identifier(long=True)))
-                if not dry_run:
-                    other.remove()
+        if msg:
+            msg = list('     ' + x for x in msg)
+            msg.insert(0, 'Merged{} {}'.format(
+                ' and removed' if remove else '', other.identifier(long=True)))
+            msg.insert(1, '{}  into {}'.format(
+                ' ' * len(' and removed') if remove else '', self.identifier(long=True)))
+        if remove:
+            if len(msg) <= 2:
+                msg.append('Removed duplicate {}'.format(other.identifier(long=True)))
+            if not dry_run:
+                other.remove()
         return msg
 
     @staticmethod
