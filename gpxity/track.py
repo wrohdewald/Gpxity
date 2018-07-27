@@ -737,7 +737,7 @@ class Track:
         Args:
             long: If True, give more info
         """
-        long_info = ' "{}" from {}'.format(self.title, self.time) if long else ''
+        long_info = ' "{}" from {}'.format(self.title or 'untitled', self.time) if long else ''
         return '{}{}{}'.format(
             self.backend.identifier() if self.backend else '',
             self.id_in_backend if self.id_in_backend else ' unsaved ',
