@@ -796,8 +796,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         fix_parser.add_argument(
             '--jumps',
             help="""BACKUP your tracks first! This can destroy them!
-            Whenever the time jumps back or more than 30 minutes into the future,
-            split the segment at that point""",
+            Whenever the time jumps back or more than 30 minutes into the future
+            or when the distance speed between two points exceed 5km,
+            split into two segments at that point""",
             action='store_true', default=False)
         fix_parser.add_argument('--title-from-id', help='use id for title',
                                 action='store_true', default=False)

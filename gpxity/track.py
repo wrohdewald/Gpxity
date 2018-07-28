@@ -1026,7 +1026,8 @@ class Track:
 
     def __fix_jumps(self):
         """Whenever the time jumps back or more than 30
-            minutes into the future, split the segment at that point."""
+            minutes into the future or the distance exceed 5km,
+            split the segment at that point."""
         did_break = False
         new_tracks = list()
         for track in self.gpx.tracks:
@@ -1047,6 +1048,8 @@ class Track:
                     elif point.time - prev_point.time > datetime.timedelta(minutes=30):
                         needs_break = True
                     elif point.time < prev_point.time:
+                        needs_break = True
+                    elif point.distance_2d(prev_point) > 5000:
                         needs_break = True
                     if needs_break:
                         did_break = True
