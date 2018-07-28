@@ -13,6 +13,7 @@ so ginge das mit dem API-Key: https://github.com/telemaxx/gpsiesreader/blob/mast
 
 from html.parser import HTMLParser
 import datetime
+import time
 from collections import defaultdict
 
 import requests
@@ -353,11 +354,10 @@ class GPSIES(Backend):
             else:
                 return
             ctr += 1
-            if not ctr % 10:
-                print('GPSIES._edit: {} tries'.format(ctr))
-                if ctr > 50:
-                    raise Backend.BackendException(
-                        'GPSIES: _edit fails to change track {}: {}'.format(track.identifier(), msg))
+            if ctr > 10:
+                raise Backend.BackendException(
+                    'GPSIES: _edit fails to change track {}: {}'.format(track.identifier(), msg))
+            time.sleep(2)
 
     def _yield_tracks(self):
         """get all tracks for this user."""
