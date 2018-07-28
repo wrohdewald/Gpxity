@@ -834,6 +834,8 @@ class Track:
     def adjust_time(self, delta):
         """Adds a timedelta to all times.
         gpxpy.gpx.adjust_time does the same but it ignores waypoints.
+        A newer gpxpy.py has a new bool arg for adjust_time which
+        also adjusts waypoints on request but I do not want to check versions.
         """
         self.gpx.adjust_time(delta)
         for wpt in self.gpx.waypoints:
