@@ -346,8 +346,10 @@ class GPSIES(Backend):
                 msg = 'title: {} -> {}'.format(copy.title, track.title)
             elif track.public != copy.public:
                 msg = 'public: {} -> {}'.format(copy.public, track.public)
-            elif track.category != copy.category:
-                msg = 'category: {} -> {}'.format(copy.category, track.category)
+            elif self.encode_category(track.category) != self.encode_category(copy.category):
+                msg = 'category: {}/{} -> {}/{}'.format(
+                    copy.category, self.encode_category(copy.category),
+                    track.category, self.encode_category(track.category))
             else:
                 return
             ctr += 1
