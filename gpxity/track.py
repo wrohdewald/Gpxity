@@ -1004,14 +1004,14 @@ class Track:
         """Returns True if distance < delta_meter"""
         return abs(last_point.distance_2d(point)) < delta_meter
 
-    def fix(self, orux24: bool = False, timejumps: bool = False):
+    def fix(self, orux24: bool = False, jumps: bool = False):
         """Fix bugs. This may fix them or produce more bugs.
         Please backup your track before doing this.
 
         Args:
             orux24: Older Oruxmaps switched the day back by one
                 day after exactly 24 hours.
-            timejumps: Whenever the time jumps back or more than 30
+            jumps: Whenever the time jumps back or more than 30
             minutes into the future, split the segment at that point.
 
         Returns:
@@ -1020,15 +1020,14 @@ class Track:
         self._load_full()
         if orux24:
             self.__fix_orux24()
-        if timejumps:
-            self.__fix_timejumps()
+        if jumps:
+            self.__fix_jumps()
         return []
 
-    def __fix_timejumps(self):
+    def __fix_jumps(self):
         """Whenever the time jumps back or more than 30
             minutes into the future, split the segment at that point."""
         did_break = False
-        print('ich bin __fix_timejumps  ', self)
         new_tracks = list()
         for track in self.gpx.tracks:
             new_segments = list()
