@@ -172,7 +172,7 @@ class TestBackends(BasicTest):
                         # make sure there is no cache in the way
                         backend2 = self.clone_backend(backend)
                         track2 = backend2[0]
-                        self.assertEqualTracks(track, track2)
+                        self.assertEqualTracks(track, track2, with_category=False)
                         self.assertNotEqual(first_public, track2.public)
                         self.assertNotEqual(first_title, track2.title)
                         self.assertNotEqual(first_description, track2.description)
@@ -190,7 +190,7 @@ class TestBackends(BasicTest):
                 # make sure there is no cache in the way
                 backend2 = self.clone_backend(backend)
                 track2 = backend2[0]
-                self.assertEqualTracks(track, track2)
+                self.assertEqualTracks(track, track2, with_category=True)
 
     @skip
     def test_zz_all_category(self):
@@ -458,7 +458,7 @@ class TestBackends(BasicTest):
             with self.temp_backend(cls, count=1) as backend:
                 track = backend[0]
                 backend2 = self.clone_backend(backend)
-                self.assertEqual(track, backend2[0])
+                self.assertEqualTracks(track, backend2[0], with_category=False)
                 test_values = {
                     'title': ('default title', 'Täst Titel'),
                     'description': ('default description', 'Täst description'),

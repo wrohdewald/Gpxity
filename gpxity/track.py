@@ -743,7 +743,7 @@ class Track:
             self.id_in_backend if self.id_in_backend else ' unsaved ',
             long_info)
 
-    def key(self, with_category: bool = True) ->str:
+    def key(self, with_category: bool = True, with_last_time: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but
         sufficiently safe IMHO.
 
@@ -759,7 +759,8 @@ class Track:
         self._load_full()
         return 'title:{} description:{} keywords:{} category:{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.category if with_category else '', self.public, self.last_time,
+            ','.join(self.keywords), self.category if with_category else '',
+            self.public, self.last_time if with_last_time else '',
             self.angle(), self.gpx.get_track_points_no())
 
     def __eq__(self, other):
