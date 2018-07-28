@@ -114,6 +114,7 @@ class Track:
         if gpx:
             self._parse_keywords()
             self._round_points(self.points())
+            self._loaded = True
 
     @property
     def backend(self):
