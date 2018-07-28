@@ -388,8 +388,8 @@ class MMT(Backend):
             with_session=True, url='handler/change_activity', expect='ok',
             eid=track.id_in_backend, activity=self.encode_category(track.category))
 
-    def _current_keywords(self, track):
-        """Read all current keywords (MMT tags).
+    def _current_tags(self, track):
+        """Returns all current MMT tags.
 
         Returns:
             A sorted unique list"""
@@ -398,7 +398,7 @@ class MMT(Backend):
 
     def _write_keywords(self, track):
         """Sync track keywords to MMT tags."""
-        current_tags = self._current_keywords(track)
+        current_tags = self._current_tags(track)
         new_tags = set(self._encode_keyword(x) for x in track.keywords)
         # This should really only remove unwanted tags and only add missing tags,
         # like #for remove_tag in current_tags-new_tags, for new_tag in new_tags-current_tags
