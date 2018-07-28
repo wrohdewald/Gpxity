@@ -112,7 +112,7 @@ class BasicTest(unittest.TestCase):
             latitude=last_points[-1].latitude, longitude=last_points[-1].longitude + 0.001, time=end_time)
         _ = gpxpy.geo.LocationDelta(distance=1000, angle=360 * idx / count)
         new_point.move(_)
-        gpx.tracks[-1].segments[-1].points.append(new_point)
+        last_points.append(new_point)
 
         # now set all times such that they are in order with this track and do not overlap
         # with other test tracks
