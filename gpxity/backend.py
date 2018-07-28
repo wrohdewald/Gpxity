@@ -322,12 +322,12 @@ class Backend:
             raise Backend.NoMatch('{}: {} does not match: {}'.format(exc_prefix, track, match_error))
         return match_error is None
 
-    def _needs_full_save(self, attributes) ->bool:
+    def _needs_full_save(self, changes) ->bool:
         """Do we have to rewrite the entire track?"""
-        for attribute in attributes:
-            if attribute == 'all':
+        for change in changes:
+            if change == 'all':
                 return True
-            write_name = '_write_{}'.format(attribute.split(':')[0])
+            write_name = '_write_{}'.format(change.split(':')[0])
             if write_name not in self.supported:
                 return True
         return False
@@ -390,7 +390,7 @@ class Backend:
         backends will return a new ident after writing.
         """
 
-    def _rewrite(self, track, attributes):
+    def _rewrite(self, track, changes):
         """Rewrites the full track.
 
         Used only by Track when things change.
@@ -400,15 +400,15 @@ class Backend:
         assert self._has_item(track.id_in_backend), '{} not in {}'.format(track, ' / '.join(str(x) for x in self))
         assert track._dirty  # pylint: disable=protected-access
 
-        needs_full_save = self._needs_full_save(attributes)
+        needs_full_save = self._needs_full_save(changes)
 
         self.matches(track, '_rewrite')
         if needs_full_save:
             new_id = self._write_all(track)
             track.id_in_backend = new_id
         else:
-            for attribute in attributes:
-                _ = attribute.split(':')
+            for change in changes:
+                _ = change.split(':')
                 write_name = '_write_{}'.format(_[0])
                 if len(_) == 1:
                     getattr(self, write_name)(track)
