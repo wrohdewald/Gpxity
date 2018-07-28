@@ -329,7 +329,7 @@ class TestBackends(BasicTest):
 
             with self.temp_backend(Directory, username='gpxitytest2', count=4) as sink:
                 for _ in list(sink)[1:]:
-                    self.move_times(_, datetime.timedelta(hours=100))
+                    _.adjust_time(datetime.timedelta(hours=100))
                 sink.merge(source)
                 self.assertEqual(len(source), 5)
                 self.assertEqual(len(sink), 8)
@@ -351,7 +351,7 @@ class TestBackends(BasicTest):
             with TrackMMT(auth='test') as sink:
                 prev_len = len(sink)
                 for _ in sink:
-                    self.move_times(_, datetime.timedelta(hours=-random.randrange(10000)))
+                    _.adjust_time(datetime.timedelta(hours=-random.randrange(10000)))
                 sink.merge(source)
                 self.assertEqual(len(sink), prev_len + 5)
 
