@@ -522,14 +522,12 @@ class Utility:
         for _ in self.source_tracks:
             if self.options.remove:
                 if not self.options.dry_run:
-                    for kword in self.options.keywords.split(','):
-                        _.remove_keyword(kword)
+                    _.remove_keywords(self.options.keywords)
                 if self.options.verbose or self.options.dry_run:
                     print('removed {} from {}'.format(self.options.keywords, _))
             else:
                 if not self.options.dry_run:
-                    for kword in self.options.keywords.split(','):
-                        _.add_keyword(kword)
+                    _.add_keywords(self.options.keywords)
                 if self.options.verbose or self.options.dry_run:
                     print('added {} to {}'.format(self.options.keywords, _))
 

@@ -36,8 +36,8 @@ class TestBackends(BasicTest):
         expect_unsupported[TrackMMT] = set([
             'remove', '_write_attribute',
             '_write_title', '_write_description', '_write_public',
-            '_write_category', '_write_keyword', '_write_add_keywords',
-            '_write_remove_keyword'])
+            '_write_category', '_write_add_keywords',
+            '_write_remove_keywords'])
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
@@ -230,29 +230,29 @@ class TestBackends(BasicTest):
                     track.keywords = list()
                     self.assertEqual(track.keywords, list())
                     track.keywords = ([kw_a, kw_b, kw_c])
-                    track.remove_keyword(kw_b)
+                    track.remove_keywords(kw_b)
                     self.assertEqual(track.keywords, ([kw_a, kw_c]))
                     with self.assertRaises(Exception):
-                        track.add_keyword('Category:whatever')
-                    track.add_keyword(kw_d)
+                        track.add_keywords('Category:whatever')
+                    track.add_keywords(kw_d)
                     self.assertEqual(set(track.keywords), set([kw_a, kw_c, kw_d]))
                     backend2 = self.clone_backend(backend)
                     track2 = backend2[track.id_in_backend]
-                    track2.remove_keyword(kw_d)
+                    track2.remove_keywords(kw_d)
                     self.assertEqual(track2.keywords, ([kw_a, kw_c]))
                     self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
                     backend.scan()
                     self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
                     self.assertEqual(backend[track.id_in_backend].keywords, ([kw_a, kw_c]))
-                    track.remove_keyword(kw_a)
+                    track.remove_keywords(kw_a)
                     # this is tricky: The current implementation assumes that track.keywords is
                     # current - which it is not. track still thinks kw_d is there but it has been
                     # removed by somebody else. MMT has a work-around for removing tracks which
                     # removes them all and re-adds all wanted. So we get kw_d back.
                     self.assertEqual(track.keywords, ([kw_c, kw_d]))
-                    #track2.remove_keyword(kw_a)
-                    track.remove_keyword(kw_c)
-                    track.remove_keyword(kw_d)
+                    #track2.remove_keywords(kw_a)
+                    track.remove_keywords(kw_c)
+                    track.remove_keywords(kw_d)
                     backend.scan()
                     self.assertEqual(backend[0].keywords, list())
 
@@ -396,7 +396,7 @@ class TestBackends(BasicTest):
                 self.assertFalse(track._dirty)
                 with track.batch_changes():
                     track.title = 'new 2'
-                    self.assertEqual(track._dirty, set(['title']))
+                    self.assertEqual(track._dirty, ['title'])
                 self.assertFalse(track._dirty)
                 with track.batch_changes():
                     track.title = 'new 3'

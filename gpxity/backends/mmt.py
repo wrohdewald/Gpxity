@@ -401,36 +401,23 @@ class MMT(Backend):
         page_scan = self._scan_track_page(track)
         return list(sorted(set(page_scan['tags'])))
 
-    def _write_keywords(self, track):
-        """Sync track keywords to MMT tags."""
-        current_tags = self._current_tags(track)
-        new_tags = set(self._encode_keyword(x) for x in track.keywords)
-        # This should really only remove unwanted tags and only add missing tags,
-        # like #for remove_tag in current_tags-new_tags, for new_tag in new_tags-current_tags
-        # but that does not work, see __remove_one_keyword
-        for remove_tag in current_tags:
-            self.__remove_one_keyword(track, remove_tag)
-        self._write_add_keywords(track, ','.join(new_tags))
-
-    def _write_add_keywords(self, track, value):
+    def _write_add_keywords(self, track, values):
         """Add keyword as MMT tag. MMT allows adding several at once, comma separated,
         and we allow this too. But do not expect this to work with all backends."""
-        if not value:
-            return
         data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
             '<message><nature>add_tag</nature><eid>{eid}</eid>' \
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<tagnames>{value}</tagnames></message>'.format(
                 eid=track.id_in_backend,
                 usrid=self.auth[0],
-                value=value,
+                value=values,
                 uid=self.session.cookies['exp_uniqueid'])
         text = self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
         # unclear: when do we get id and/or tag? One answer was
         # <tags>B2</tags><ids>232325,16069</ids>
         # for the request <tagnames>B2,Berlin</tagnames>
         ids = (text.find('ids').text or '').split(',')
-        values = value.split(',')
+        values = list(x.strip() for x in values.split(','))
         tags = (text.find('tags').text or '').split(',')
         if values != tags or len(ids) != len(values):
             raise self.BackendException(
@@ -439,31 +426,20 @@ class MMT(Backend):
         for key, id_ in zip(values, ids):
             self._found_tag_id(key, id_)
 
-    def _write_remove_keyword(self, track, value):
-        """Remove an MTT tag. This is flawed, see __remove_one_keyword, so
-        we rewrite all keywords instead.
-        """
-        for remove_tag in track.keywords:
-            self.__remove_one_keyword(track, remove_tag)
-        # sort for reproducibility in tests
-        self._write_add_keywords(track, ','.join(sorted(self._encode_keyword(x) for x in track.keywords)))
-
-    def __remove_one_keyword(self, track, value):
-        """Here I have a problem. This seems to do exactly what happens in a
-        browser but MMT always removes the wrong tag. However it always
-        **does** remove a tag, so we can still use this: Repeat calling it until
-        all tags are gone and then redefine all wanted tags.
-        Sadly, MMT never returns anything for this POST."""
-        value = self._encode_keyword(value)
-        if value not in self.__tag_ids:
-            self.__tag_ids.update(self._scan_track_page(track)['tags'])
-            self._check_tag_ids()
-            if value not in self.__tag_ids:
-                raise self.BackendException(
-                    '{}: Cannot remove keyword {}, MMT does not have an id'.format(self._current_track, value))
-        self.__post(
-            with_session=True, url='handler/delete-tag.php',
-            tag_id=self.__tag_ids[value], entry_id=track.id_in_backend)
+    def _write_remove_keywords(self, track, values):
+        """Removes keywords from track."""
+        for value in values.split(','):
+            value = value.strip()
+            tag = self._encode_keyword(value)
+            if tag not in self.__tag_ids:
+                self.__tag_ids.update(self._scan_track_page(track)['tags'])
+                self._check_tag_ids()
+                if tag not in self.__tag_ids:
+                    raise self.BackendException(
+                        '{}: Cannot remove tag {}, MMT does not have an id'.format(self._current_track, tag))
+            self.__post(
+                with_session=True, url='handler/delete-tag.php',
+                tag_id=self.__tag_ids[tag], entry_id=track.id_in_backend)
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time"""
@@ -568,7 +544,7 @@ class MMT(Backend):
             self._write_title(track)
         # MMT can add several keywords at once
         if track.keywords and '_write_add_keywords' in self.supported:
-            self._write_add_keywords(track, ','.join(self._encode_keyword(x) for x in track.keywords))
+            self._write_add_keywords(track, ', '.join(track.keywords))
         if old_ident:
             self._remove_ident(old_ident)
         track.id_in_backend = new_ident

@@ -98,7 +98,7 @@ class Track:
         'Miscellaneous')
 
     def __init__(self, gpx=None):
-        self.__dirty = set()
+        self.__dirty = list()
         self._batch_changes = False
         self.__category = self.legal_categories[0]
         self.__public = False
@@ -168,7 +168,7 @@ class Track:
         self._dirty = 'gpx'
 
     @property
-    def _dirty(self) ->set:
+    def _dirty(self) ->list:
         """
         Is the track in sync with the backend?
 
@@ -179,7 +179,7 @@ class Track:
         entire track will be written by the backend.
 
         Returns:
-            set: The names of the attributes currently marked as dirty.
+            list: The names of the attributes currently marked as dirty.
         """
         return self.__dirty
 
@@ -188,7 +188,6 @@ class Track:
         if not isinstance(value, str):
             raise Exception('_dirty only receives str')
         if not self.__is_decoupled:
-            new_add = value
             if value == 'gpx':
                 self.__cached_distance = None
                 for other in self._similarity_others.values():
@@ -197,30 +196,13 @@ class Track:
                     del other._similarities[id(self)]  # pylint: disable=protected-access
                 self._similarity_others = weakref.WeakValueDictionary()
                 self._similarities = dict()
-                self.__dirty.add(value)
-            elif value.startswith('add_keywords:'):
-                if 'keywords' not in self.__dirty:
-                    have_add = list(x for x in self.__dirty if x.startswith('add_keywords:'))
-                    if have_add:
-                        have_add = have_add[0]
-                        have_kw = have_add.split(':')[1].split(',')
-                        have_kw.append(value.split(':')[1])
-                        new_add = 'add_keywords:{}'.format(','.join(sorted(set(have_kw))))
-                        self.__dirty = set(x for x in self.__dirty if not x.startswith('add_keywords:'))
-                    else:
-                        new_add = value
-                    self.__dirty.add(new_add)
-            elif value == 'keywords':
-                self.__dirty = set(x for x in self.__dirty if not x.startswith('add_keywords:'))
-                self.__dirty = set(x for x in self.__dirty if not x.startswith('remove_keywords:'))
-
-            self.__dirty.add(new_add)
+            self.__dirty.append(value)
             if not self._batch_changes:
                 self._rewrite()
 
     def _clear_dirty(self):
         """To be used by the backend when saving"""
-        self.__dirty = set()
+        self.__dirty = list()
 
     def clone(self):
         """Creates a new track with the same content but without backend.
@@ -453,7 +435,7 @@ class Track:
                 self.public = keyword.split(':')[1] == 'public'
             else:
                 new_keywords.append(keyword)
-        self.keywords = new_keywords
+        self.__gpx.keywords = ', '.join(new_keywords)
 
     def parse(self, indata):
         """Parses GPX.
@@ -616,17 +598,9 @@ class Track:
         """
         self._load_full()
         with self.batch_changes():
-            old_dirty = self.__dirty
-            try:
-                self.__gpx.keywords = ''
-                for keyword in sorted(value):
-                    # add_keyword ensures we do not get unwanted things like Category:
-                    self.add_keyword(keyword)
-            finally:
-                # override the dirty changes done by add_keyword because we prefer
-                # to update them all in one go - MMT supports that.
-                self.__dirty = old_dirty
-            self._dirty = 'keywords'
+            if self.__gpx.keywords:
+                self.remove_keywords(self.__gpx.keywords)
+            self.add_keywords(value)
 
     @staticmethod
     def _check_keyword(keyword):
@@ -638,36 +612,51 @@ class Track:
         if ',' in keyword:
             raise Exception('No comma allowed within a keyword')
 
-    def add_keyword(self, value: str) ->None:
+    def __prepare_keywords(self, values):
+        """Common introductory code for add_keywords and remove_keywords.
+        Args:
+            values: Either single str with one or more keywords, separated by commas
+                or an iterable of keywords.
+
+        Returns:
+            A unique list of legal keywords as expected by the backend.
+        """
+        if isinstance(values, str):
+            result = list(x.strip() for x in values.split(','))
+        else:
+            result = list(values)
+        for _ in result:
+            self._check_keyword(_)
+        self._load_full()
+        if self.backend is not None:
+            result = (self.backend._encode_keyword(x) for x in result)  # pylint:disable=protected-access
+        return list(sorted(result))
+
+    def add_keywords(self, values) ->None:
         """Adds to the comma separated keywords. Duplicate keywords are silently ignored.
         A keyword may not contain a comma.
 
         Args:
-            value: the keyword
+            values: Either a single str with one or more keywords, separated by commas
+                or an iterable of keywords
         """
-        self._check_keyword(value)
-        self._load_full()
-        if self.backend is not None:
-            value = self.backend._encode_keyword(value)  # pylint:disable=protected-access
-        if  value not in self.keywords:
-            if self.__gpx.keywords:
-                self.__gpx.keywords += ', {}'.format(value)
-            else:
-                self.__gpx.keywords = value
-            self._dirty = 'add_keywords:{}'.format(value)
+        new_keywords = set(x for x in self.__prepare_keywords(values) if x not in self.keywords)
+        if new_keywords:
+            all_new_keywords = set(self.keywords) | new_keywords
+            self.__gpx.keywords = ', '.join(sorted(all_new_keywords))
+            self._dirty = 'add_keywords:{}'.format(', '.join(sorted(new_keywords)))
 
-    def remove_keyword(self, value: str) ->None:
-        """Removes from the keywords.
+    def remove_keywords(self, values) ->None:
+        """Removes keywords. Keywords not in track are silently ignored.
 
         Args:
-            value: the keyword to be removed
+            values: Either a single str with one or more keywords, separated by commas
+                or an iterable of keywords
         """
-        self._check_keyword(value)
-        self._load_full()
-        value = self.backend._encode_keyword(value)  # pylint:disable=protected-access
-        if value in self.keywords:
-            self.__gpx.keywords = ', '.join(x for x in self.keywords if x != value)
-            self._dirty = 'remove_keyword:{}'.format(value)
+        rm_keywords = list(x for x in self.__prepare_keywords(values) if x in self.keywords)
+        if rm_keywords:
+            self.__gpx.keywords = ', '.join(x for x in self.keywords if x not in rm_keywords)
+            self._dirty = 'remove_keywords:{}'.format(', '.join(rm_keywords))
 
     def speed(self):
         """Speed over the entire time in km/h or 0.0"""

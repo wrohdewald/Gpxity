@@ -66,7 +66,7 @@ class Backend:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
             Those are: remove, lifetrack, get_time, _write_title, _write_public, _write_category,
-            _write_gpx, _write_description, _write_keywords, _write_add_keyword, _write_remove_keyword.
+            _write_gpx, _write_description, _write_add_keywords, _write_remove_keywords.
             If a particular _write_* like _write_public does not exist, the entire track is written instead
             which normally results in a new ident for the track.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
@@ -363,7 +363,9 @@ class Backend:
             new_track = track
         with self._decouple():
             new_track._set_backend(self)  # pylint: disable=protected-access
-
+            if track.keywords:
+                _ = (x.strip() for x in track.keywords)
+                track.gpx.keywords = ', '.join(self._encode_keyword(x) for x in _)
         try:
             with self._decouple():
                 self._write_all(new_track)
@@ -375,6 +377,7 @@ class Backend:
             # gpsies will assign the same trackid, and we come here. __tracks will
             # only hold the first uploaded track, and remove would remove that
             # instance instead of this one.
+            # TODO: do we have a unittest for that case?
             self.__tracks = list(x for x in self.__tracks if x is not new_track)
             with self._decouple():
                 new_track.id_in_backend = None

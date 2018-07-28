@@ -100,7 +100,7 @@ class TrackTests(BasicTest):
             track.category = 'illegal value'
         self.assertEqual(track.category, category_default)
         with self.assertRaises(Exception):
-            track.add_keyword('Category:illegal value')
+            track.add_keywords('Category:illegal value')
         self.assertEqual(track.category, category_default)
 
     def test_duplicate_category(self):
@@ -109,7 +109,7 @@ class TrackTests(BasicTest):
         track = Track()
         track.category = category_other
         with self.assertRaises(Exception):
-            track.add_keyword('Category:{}'.format(category_other))
+            track.add_keywords('Category:{}'.format(category_other))
 
     def test_remove_category(self):
         """remove category from Track"""
@@ -127,22 +127,22 @@ class TrackTests(BasicTest):
         self.assertFalse(track.public)
 
     def test_duplicate_public(self):
-        """try to set public via its property and additionally with add_keyword"""
+        """try to set public via its property and additionally with add_keywords"""
         track = Track()
         track.public = True
         self.assertTrue(track.public)
         with self.assertRaises(Exception):
-            track.add_keyword('Status:public')
+            track.add_keywords('Status:public')
 
     def test_remove_public(self):
-        """remove and add public from Track using remove_keyword and add_keyword"""
+        """remove and add public from Track using remove_keywords and add_keywords"""
         track = Track()
         track.public = True
         with self.assertRaises(Exception):
-            track.remove_keyword('Status:public')
+            track.remove_keywords('Status:public')
         self.assertTrue(track.public)
         with self.assertRaises(Exception):
-            track.add_keyword('Status:public')
+            track.add_keywords('Status:public')
         self.assertTrue(track.public)
 
     def test_last_time(self):
@@ -483,7 +483,11 @@ class TrackTests(BasicTest):
 
         # no comma within a keyword
         with self.assertRaises(Exception):
-            track.add_keyword('Bye,Sam')
+            track.add_keywords(['Bye,Sam'])
+
+        # keywords as string
+        track.add_keywords('Bye,Sam')
+        self.assertEqual(track.keywords, ['Bye', 'Dolly', 'Hello', 'Sam'])
 
 
     def test_keyword_args(self):
@@ -494,7 +498,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track.keywords, test_tracks)
         track.keywords = reversed(test_tracks)
         self.assertEqual(track.keywords, test_tracks)
-        track.add_keyword(test_tracks[0])
+        track.add_keywords(test_tracks[0])
         self.assertEqual(track.keywords, test_tracks)
         track.keywords = test_tracks * 2
         self.assertEqual(track.keywords, test_tracks)

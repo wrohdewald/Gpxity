@@ -44,13 +44,10 @@ class TrackMMT(MMT):
     def _write_category(self, track):
         raise NotImplementedError()
 
-    def _write_keywords(self, track):
+    def _write_add_keywords(self, track, values):
         raise NotImplementedError()
 
-    def _write_add_keywords(self, track, value):
-        raise NotImplementedError()
-
-    def _write_remove_keyword(self, track, value):
+    def _write_remove_keywords(self, track, values):
         raise NotImplementedError()
 
     def _remove_ident(self, ident: str) ->None:
