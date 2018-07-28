@@ -277,7 +277,7 @@ class Utility:
     """this is where the work is done"""
 
     def __init__(self):
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-nested-blocks
         self.exit_code = 0
         self.options = None
         self.subparsers = None
@@ -297,6 +297,14 @@ class Utility:
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
                         self.destination = sources[-1]
+                        if self.options.func == self.merge and not self.options.remove:
+                            msg = 'CAUTION: merging something with itself does nothing. Did you forget --remove?'
+                            if len(self.options.source) == 1:
+                                self.exit_code = 2
+                                raise Exception(msg)
+                            else:
+                                print(msg)
+
                 tracks = collect_tracks(sources, verbose=self.options.verbose)
                 for track in tracks:
                     msg = self.match(track)
