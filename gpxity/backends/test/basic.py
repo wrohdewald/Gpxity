@@ -143,7 +143,7 @@ class BasicTest(unittest.TestCase):
         return start + datetime.timedelta(seconds=random_second)
 
     @classmethod
-    def some_random_points(cls, count=100):
+    def _random_points(cls, count=100):
         """
 
         Returns:

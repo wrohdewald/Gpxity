@@ -359,10 +359,10 @@ class TestBackends(BasicTest):
         """test life tracking. TODO: automatically start the expected local server"""
         track = self.create_test_track()
         with TrackMMT(auth='test') as uplink:
-            track.lifetrack(uplink, self.some_random_points())
+            track.lifetrack(uplink, self._random_points())
             new_id = track.id_in_backend
             time.sleep(2)
-            track.lifetrack(points=self.some_random_points())
+            track.lifetrack(points=self._random_points())
             track.lifetrack()
             self.assertIn(new_id, uplink)
 

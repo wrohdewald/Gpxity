@@ -295,7 +295,7 @@ class TrackTests(BasicTest):
         """test Track.add_points"""
         point_count = 11
         track = Track()
-        points = self.some_random_points(count=point_count)
+        points = self._random_points(count=point_count)
         track.add_points(points)
         self.assertEqual(track.gpx.get_track_points_no(), point_count)
         with self.assertRaises(Exception):
@@ -306,7 +306,7 @@ class TrackTests(BasicTest):
     def test_points_equal(self):
         """test Track.points_equal"""
         for _ in range(100):
-            points = self.some_random_points(count=7)
+            points = self._random_points(count=7)
             track1 = Track()
             track1.add_points(points)
             track2 = track1.clone()
@@ -358,14 +358,14 @@ class TrackTests(BasicTest):
             track = Track()
             track.title = 'Title'
             track.category = 'Running'
-            track.add_points(self.some_random_points(10))
+            track.add_points(self._random_points(10))
             self.assertIn('Title', str(track))
             self.assertIn('public' if track.public else 'private', str(track))
             self.assertIn('Running', str(track))
             self.assertIn(repr_timespan(track.time, track.last_time), str(track))
             self.assertTrue(str(track).startswith('Track('))
             self.assertTrue(str(track).endswith(')'))
-            track.add_points(self.some_random_points(count=5))
+            track.add_points(self._random_points(count=5))
             self.assertIn(' 15 points', str(track))
             directory.add(track)
             self.assertIn('id:', str(track))
@@ -382,18 +382,18 @@ class TrackTests(BasicTest):
         track1.add_points(list())
         self.assertEqual(len(track1.gpx.tracks), 0)
         self.assertEqual(track1.angle(), 0)
-        track1.add_points(self.some_random_points(1))
+        track1.add_points(self._random_points(1))
         del track1.gpx.tracks[0].segments[0]
         self.assertEqual(track1.angle(), 0)
         for _ in range(1000):
             track1 = Track()
-            track1.add_points(self.some_random_points(2))
+            track1.add_points(self._random_points(2))
             angle = track1.angle()
             self.assertLess(angle, 360.001)
             self.assertGreater(angle, -0.001)
 
         track1 = Track()
-        track1.add_points(self.some_random_points(2))
+        track1.add_points(self._random_points(2))
         first_point = None
         for point in track1.points():
             if first_point is None:
@@ -409,7 +409,7 @@ class TrackTests(BasicTest):
         description = title + ' NOT - it is the description'
         category = Track.legal_categories[3]
         public = True
-        points = self.some_random_points(10)
+        points = self._random_points(10)
         track = Track()
         track.title = title
         track.description = description
