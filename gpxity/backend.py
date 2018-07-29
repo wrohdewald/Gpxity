@@ -415,8 +415,10 @@ class Backend:
                 write_name = '_write_{}'.format(_[0])
                 if len(_) == 1:
                     getattr(self, write_name)(track)
+                elif len(_) == 2:
+                    getattr(self, write_name)(track, _[1])
                 else:
-                    getattr(self, write_name)(track, ''.join(_[1:]))
+                    raise Exception('dirty {} got too many arguments:{}'.format(write_name, _[1:]))
         return track
 
     def _write_all(self, track) ->str:

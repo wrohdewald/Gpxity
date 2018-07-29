@@ -142,6 +142,24 @@ class BasicTest(unittest.TestCase):
         random_second = random.randrange(int_delta)
         return start + datetime.timedelta(seconds=random_second)
 
+    @staticmethod
+    def _random_keywords(count=100):
+        """A set of random keywords, but always the same.
+        We do not want to generate too many tag ids for MMT."""
+        state = random.getstate()
+        try:
+            random.seed(1)
+            basis = 'abcdefghijklmnopqrstuvwxyz'
+            basis += basis.upper()
+            basis += '/-_+.% $"|\\'
+            result = set()
+            while len(result) < count:
+                _ = ''.join(random.choice(basis) for x in range(4))
+                result.add(_.strip())
+            return result
+        finally:
+            random.setstate(state)
+
     @classmethod
     def _random_points(cls, count=100):
         """

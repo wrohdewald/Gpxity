@@ -475,3 +475,47 @@ class TestBackends(BasicTest):
                         if key != main:
                             self.assertEqual(getattr(backend2[0], key), default_value)
                     self.assertEqual(getattr(backend2[0], main), test_values[main][1])
+
+    def test_keywords(self):
+        """Test arbitrary keyword changes"""
+
+        def current():
+            """Returns the current keywords"""
+            if hasattr(backend, '_get_current_keywords'):
+                return backend._get_current_keywords(track)  # pylint: disable=protected-access
+            return track.keywords
+
+        for cls in self._find_backend_classes():
+            if '_write_add_keywords' not in cls.supported:
+                continue
+            with self.temp_backend(cls, count=1) as backend:
+                backend2 = self.clone_backend(backend)
+                track = backend[0]
+                keywords = set(backend._encode_keyword(x) for x in self._random_keywords(count=50))  # pylint: disable=protected-access
+                for _ in range(20):
+                    self.assertEqual(current(), track.keywords)
+                    add_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                    remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                    if not add_keywords & remove_keywords:
+                        continue
+                    expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
+                    track.add_keywords(add_keywords)
+                    self.assertEqual(current(), sorted(list(set(track.keywords) | add_keywords)))
+                    track.remove_keywords(remove_keywords)
+                    self.assertEqual(current(), sorted(expected_keywords))
+                    self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
+                    backend2.scan()
+                    self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
+                with track.batch_changes():
+                    for _ in range(50):
+                        add_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                        remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                        if not add_keywords & remove_keywords:
+                            continue
+                        expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
+                        track.add_keywords(add_keywords)
+                        track.remove_keywords(remove_keywords)
+                        self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
+                backend2.scan()
+                self.assertEqual(backend2._get_current_keywords(backend2[0]), backend2[0].keywords)  # pylint: disable=protected-access
+                self.assertEqual(sorted(expected_keywords), backend2[0].keywords)

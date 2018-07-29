@@ -597,7 +597,7 @@ class Track:
             value (iterable(str)): the new keywords. Must not have duplicates.
         """
         self._load_full()
-        new_keywords = sorted(list(self.backend._encode_keyword(x) for x in value))
+        new_keywords = sorted(list(self.backend._encode_keyword(x) for x in value))  # pylint: disable=protected-access
         if new_keywords != self.keywords:
             with self.batch_changes():
                 if self.__gpx.keywords:
