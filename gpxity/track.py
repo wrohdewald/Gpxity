@@ -418,7 +418,7 @@ class Track:
         if self.backend is None:
             raise Exception('lifetrack(): backend unknown')
         # pylint: disable=no-member
-        if 'track' in self.backend.supported:
+        if 'lifetrack' in self.backend.supported:
             self._round_points(points)
             self.backend._lifetrack(self, points) # pylint: disable=protected-access
         else:
