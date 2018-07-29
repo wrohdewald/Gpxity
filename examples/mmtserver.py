@@ -30,11 +30,12 @@ from subprocess import Popen, PIPE
 # This uses not the installed copy but the development files
 sys.path.insert(0, '..')
 
-from gpxity.gpxpy.gpxpy import gpx as mod_gpx
+from gpxpy import gpx as mod_gpx
 
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
+GPXTrackPoint = mod_gpx.GPXTrackPoint
 GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 
 
@@ -176,9 +177,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def __starting_Gpx(self, parsed):
         """builds an initial Gpx object"""
-        segment = gpxpy.gpx.GPXTrackSegment()
+        segment = GPXTrackSegment()
         segment.points = self.__points(parsed['points'])
-        track = gpxpy.gpx.GPXTrack()
+        track = GPXTrack()
         track.segments.append(segment)
         result =GPX()
         result.tracks.append(track)
@@ -186,7 +187,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def xml_upload_track(self, parsed):
         """as defined by the mapmytracks API"""
-        track = Track(gpx=gpxpy.parse(parsed['gpx_file']))
+        track = Track()
+        track.parse(parsed['gpx_file'])
         Handler.directory.add(track)
         self.send_mail('upload_track', track)
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
