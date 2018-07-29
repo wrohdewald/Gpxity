@@ -163,8 +163,9 @@ class BasicTest(unittest.TestCase):
         """both backends must hold identical tracks"""
         self.maxDiff = None # pylint: disable=invalid-name
         if backend1 != backend2:
-            keys1 = sorted(x.key(with_category) for x in backend1)
-            keys2 = sorted(x.key(with_category) for x in backend2)
+            with_last_time = not (isinstance(backend1, GPSIES) or isinstance(backend2, GPSIES))
+            keys1 = sorted(x.key(with_category, with_last_time) for x in backend1)
+            keys2 = sorted(x.key(with_category, with_last_time) for x in backend2)
             self.assertEqual(keys1, keys2)
 
     def assertEqualTracks(self, track1, track2, xml: bool = False, with_category: bool = True): # pylint: disable=invalid-name
