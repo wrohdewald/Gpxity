@@ -291,7 +291,7 @@ class MMT(Backend):
 
     def _found_tag_id(self, tag, id_):
         """We just learned about a new tag id. They never change for a given string."""
-        self.__tag_ids[self._encode_keyword(tag)] = id_
+        self.__tag_ids[tag] = id_
         self._check_tag_ids()
 
     def __post(self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs):
