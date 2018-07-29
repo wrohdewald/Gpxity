@@ -597,9 +597,11 @@ class Track:
             value (iterable(str)): the new keywords. Must not have duplicates.
         """
         self._load_full()
-        with self.batch_changes():
-            if self.__gpx.keywords:
-                self.remove_keywords(self.__gpx.keywords)
+        new_keywords = sorted(list(self.backend._encode_keyword(x) for x in value))
+        if new_keywords != self.keywords:
+            with self.batch_changes():
+                if self.__gpx.keywords:
+                    self.remove_keywords(self.__gpx.keywords)
             self.add_keywords(value)
 
     @staticmethod
