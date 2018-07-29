@@ -206,6 +206,8 @@ class MMT(Backend):
 
     default_url = 'http://www.mapmytracks.com'
 
+    __session = dict()
+
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         if url is None:
             url = self.default_url
@@ -234,18 +236,21 @@ class MMT(Backend):
     @property
     def session(self):
         """The requests.Session for this backend. Only initialized once."""
-        if self.__session is None:
+        ident = self.identifier()
+        if ident not in MMT.__session:
             if not self.auth:
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
-            self.__session = requests.Session()
+            MMT.__session[ident] = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
             payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
             base_url = self.url.replace('http:', 'https:')
             login_url = '{}/login'.format(base_url)
-            response = self.__session.post(login_url, data=payload, timeout=self.timeout)
+            response = MMT.__session[ident].post(login_url, data=payload, timeout=self.timeout)
             if not 'You are now logged in.' in response.text:
                 raise self.BackendException('Login as {} failed'.format(self.auth[0]))
-        return self.__session
+            cookies = requests.utils.dict_from_cookiejar(MMT.__session[ident].cookies)
+            MMT.__session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
+        return MMT.__session[ident]
 
     def decode_category(self, value: str) ->str:
         """Translate the value from MMT into internal one.
