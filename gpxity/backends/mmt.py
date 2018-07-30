@@ -225,8 +225,7 @@ class MMT(Backend):
         Returns: list(str)
             all legal values for category."""
         if not self._legal_categories:
-            base_url = self.url.replace('http:', 'https:')
-            response = self.session.get(base_url + '/profile/upload/manual', timeout=self.timeout)
+            response = requests.get(self.url + '/profile/upload/manual', timeout=self.timeout)
             category_parser = ParseMMTCategories()
             category_parser.feed(response.text)
             self._legal_categories.extend(category_parser.result)
