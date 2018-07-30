@@ -338,7 +338,7 @@ class Directory(Backend):
         if link_name not in self._symlinks[ident]:
             self._symlinks[ident].append(link_name)
 
-    def __set_filetime(self, track):
+    def _set_filetime(self, track):
         """Sets the file modification time to track start time.
         If the track has no start time, do nothing."""
         time = track.time
@@ -366,7 +366,7 @@ class Directory(Backend):
             track.id_in_backend = new_ident
             with open(self.gpx_path(new_ident), 'w', encoding='utf-8') as out_file:
                 out_file.write(track.to_xml())
-            self.__set_filetime(track)
+            self._set_filetime(track)
 
         if old_ident and new_ident != old_ident:
             self._remove_symlinks(old_ident)
