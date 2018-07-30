@@ -6,12 +6,17 @@
 implement a server using the mapmytracks protocol
 
 """
+# PYTHON_ARGCOMPLETE_OK
+# for command line argument completion, put this into your .bashrc:
+# eval "$(register-python-argcomplete gpxdo)"
+# or see https://argcomplete.readthedocs.io/en/latest/
+
 
 import os
 import sys
 import base64
 import datetime
-from optparse import OptionParser
+import argparse
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
@@ -36,10 +41,17 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
 from gpxity import Track
 from gpxity import ServerDirectory # pylint: disable=no-name-in-module
 
+try:
+    import argcomplete
+    from argcomplete import ChoicesCompleter  # pylint: disable=unused-import
+except ImportError:
+    pass
+
 class Handler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
-    directory = ServerDirectory(auth='mmtserver') # define the directory in auth.cfg, using the Url=value
+    directory = None
+    ServerDirectory = None
     tracking_track = None
 
     def send_mail(self, reason,  track):
@@ -283,27 +295,34 @@ class Handler(BaseHTTPRequestHandler):
             return '<type>activity_stopped</type>'
 
 
-def options():
-    parser = OptionParser()
-    parser.add_option(
-        '', '--port', dest='port', metavar='PORT',
-        type=int, default=8080, help='Listen on PORT')
-    parser.add_option(
-        '', '--mailto', dest='mailto', metavar='MAIL',
-        default=None, help='mail new tracks to MAIL')
-    parser.add_option(
-        '', '--debug', action='store_true',
-        help='show debug output', dest='debug',
-        default=False)
-    return  parser.parse_args()[0]
-
 def main():
     """main"""
+    parser = argparse.ArgumentParser('mmtserver')
+    parser.add_argument('--directory', help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
+    parser.add_argument('--servername', help='the name of this server')
+    parser.add_argument('--port', help='listen on PORT', type=int, default=443)
+    parser.add_argument('--mailto', help='mail new tracks to MAILTO')
+    parser.add_argument('--localcert', help='A local file with self signed certificate')
+    parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
+    parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
+    parser.add_argument('--timeout', help="""
+        Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
+        the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
+
+    try:
+        argcomplete.autocomplete(parser)
+    except NameError:
+        pass
+
+    if len(sys.argv) < 2:
+        parser.print_usage()
+        sys.exit(2)
+
     global OPT
-    OPT = options()
-#    httpd = HTTPServer(("", OPT.port), Handler)
-    httpd = HTTPServer(('skull', OPT.port), Handler)
-    httpd.socket = ssl.wrap_socket (httpd.socket, certfile='/usr/share/ca-certificates/myself/skull.pem', server_side=True)
-    # TODO: --certfile
+    OPT = parser.parse_args()
+    Handler.directory = ServerDirectory(auth=OPT.directory) # define the directory in auth.cfg, using the Url=value
+
+    httpd = HTTPServer((OPT.servername, OPT.port), Handler)
+    httpd.socket = ssl.wrap_socket (httpd.socket, certfile=OPT.localcert, server_side=True)
     httpd.serve_forever()
 main()
