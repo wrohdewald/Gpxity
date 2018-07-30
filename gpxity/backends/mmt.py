@@ -206,14 +206,11 @@ class MMT(Backend):
 
     default_url = 'http://www.mapmytracks.com'
 
-    __session = dict()
-
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         if url is None:
             url = self.default_url
         super(MMT, self).__init__(url, auth, cleanup, debug, timeout)
         self.__mid = -1 # member id at MMT for auth
-        self.__session = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
             # has a lookup table and never deletes there. So a given tag will always get
             # the same ID. We use this fact.
@@ -237,20 +234,20 @@ class MMT(Backend):
     def session(self):
         """The requests.Session for this backend. Only initialized once."""
         ident = self.identifier()
-        if ident not in MMT.__session:
+        if ident not in self._session:
             if not self.auth:
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
-            MMT.__session[ident] = requests.Session()
+            self._session[ident] = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
             payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
             base_url = self.url.replace('http:', 'https:')
             login_url = '{}/login'.format(base_url)
-            response = MMT.__session[ident].post(login_url, data=payload, timeout=self.timeout)
+            response = self._session[ident].post(login_url, data=payload, timeout=self.timeout)
             if not 'You are now logged in.' in response.text:
                 raise self.BackendException('Login as {} failed'.format(self.auth[0]))
-            cookies = requests.utils.dict_from_cookiejar(MMT.__session[ident].cookies)
-            MMT.__session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
-        return MMT.__session[ident]
+            cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
+            self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
+        return self._session[ident]
 
     def decode_category(self, value: str) ->str:
         """Translate the value from MMT into internal one.

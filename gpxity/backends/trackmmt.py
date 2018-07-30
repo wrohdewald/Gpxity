@@ -55,8 +55,5 @@ class TrackMMT(MMT):
         raise NotImplementedError()
 
 
-    @property
-    def session(self):
-        return None
 
 TrackMMT._define_support() # pylint: disable=protected-access

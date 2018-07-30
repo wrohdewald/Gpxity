@@ -93,6 +93,13 @@ class Backend:
 
     default_url = None # Override in the backends
 
+    # It is important that we have only one global session per identifier()
+    # because gpsies.com seems to have several servers and their
+    # synchronization is sometimes slower than expected. See
+    # cookie "SERVERID".
+    _session = dict()
+
+
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None):
         self._decoupled = False
         super(Backend, self).__init__()
