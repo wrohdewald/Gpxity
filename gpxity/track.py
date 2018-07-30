@@ -421,7 +421,8 @@ class Track:
         if  points:
             rounded = points[:]
             self._round_points(rounded)
-            self.__add_points(rounded)
+            with self._decouple():
+                self.__add_points(rounded)
         else:
             rounded = None
         if backend is not None:
