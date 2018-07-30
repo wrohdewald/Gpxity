@@ -182,6 +182,7 @@ class MMT(Backend):
             user account.
          timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
+        verify: True, False or the name of a local cert file
     """
 
     # pylint: disable=abstract-method
@@ -206,10 +207,10 @@ class MMT(Backend):
 
     default_url = 'http://www.mapmytracks.com'
 
-    def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
+    def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None, verify=True):
         if url is None:
             url = self.default_url
-        super(MMT, self).__init__(url, auth, cleanup, debug, timeout)
+        super(MMT, self).__init__(url, auth, cleanup, debug, timeout, verify)
         self.__mid = -1 # member id at MMT for auth
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
             # has a lookup table and never deletes there. So a given tag will always get
@@ -243,7 +244,8 @@ class MMT(Backend):
             payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
             base_url = self.url.replace('http:', 'https:')
             login_url = '{}/login'.format(base_url)
-            response = self._session[ident].post(login_url, data=payload, timeout=self.timeout)
+            response = self._session[ident].post(
+                login_url, data=payload, timeout=self.timeout, verify=self.verify)
             if not 'You are now logged in.' in response.text:
                 raise self.BackendException('Login as {} failed'.format(self.auth[0]))
             cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
@@ -312,9 +314,11 @@ class MMT(Backend):
             data = kwargs
         try:
             if with_session:
-                response = self.session.post(full_url, data=data, headers=headers, timeout=self.timeout)
+                response = self.session.post(
+                    full_url, data=data, headers=headers, timeout=self.timeout, verify=self.verify)
             else:
-                response = requests.post(full_url, data=data, headers=headers, auth=self.auth, timeout=self.timeout)
+                response = requests.post(
+                    full_url, data=data, headers=headers, auth=self.auth, timeout=self.timeout, verify=self.verify)
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise

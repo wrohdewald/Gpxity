@@ -74,6 +74,8 @@ class Backend:
         debug: If True, print debugging information
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
+        verify: True, False or the name of a local cert file
+
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -100,7 +102,7 @@ class Backend:
     _session = dict()
 
 
-    def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None):
+    def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None, verify=True):
         self._decoupled = False
         super(Backend, self).__init__()
         self.__tracks = list()
@@ -120,6 +122,7 @@ class Backend:
         self.__debug = None
         self.debug = debug
         self.timeout = timeout
+        self.verify = verify
         self._current_track = None
 
     def identifier(self):
