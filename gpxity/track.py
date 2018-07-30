@@ -382,6 +382,12 @@ class Track:
             points (list(GPXTrackPoint): The points to be added
         """
         if points:
+            self.__add_points(points)
+            self._dirty = 'gpx'
+
+    def __add_points(self, points):
+        """Just add without setting dirty"""
+        if points:
             if self.__gpx.tracks:
                 # make sure the same points are not added twice
                 assert points != self.__gpx.tracks[-1].segments[-1].points[-len(points):]
@@ -391,7 +397,6 @@ class Track:
                 self.__gpx.tracks[0].segments.append(GPXTrackSegment())
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
-            self._dirty = 'gpx'
 
     def lifetrack(self, backend=None, points=None) ->None:
         """Life tracking.
@@ -413,16 +418,22 @@ class Track:
             raise Exception('lifetrack(): Track must not have a backend yet')
         if self.backend is None and self.__gpx.tracks:
             raise Exception('lifetrack(): Track must be empty')
+        if  points:
+            rounded = points[:]
+            self._round_points(rounded)
+            self.__add_points(rounded)
+        else:
+            rounded = None
         if backend is not None:
-            self.backend.add(self)
+            self.__backend = backend
         if self.backend is None:
             raise Exception('lifetrack(): backend unknown')
         # pylint: disable=no-member
         if 'lifetrack' in self.backend.supported:
-            self._round_points(points)
-            self.backend._lifetrack(self, points) # pylint: disable=protected-access
+            self.backend._lifetrack(self, rounded) # pylint: disable=protected-access
         else:
-            self.add_points(points)
+            # just add the points
+            self._dirty = 'gpx'
 
     def _parse_keywords(self):
         """self.keywords is 1:1 as parsed from xml. Here we extract

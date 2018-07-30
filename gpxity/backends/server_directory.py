@@ -9,7 +9,7 @@ This implements :class:`gpxity.ServerDirectory`
 """
 
 
-from .directory import Directory
+from .directory import Directory, Backup
 
 __all__ = ['ServerDirectory']
 
@@ -25,11 +25,26 @@ class ServerDirectory(Directory):
 
     skip_test = True
 
-    def _new_id(self, _):
+    def _new_ident(self, _):
         """Buids a unique id for track"""
         try:
-            return str(max(int(x) for x in self._list_gpx()) + 1)
+            result = str(max(int(x) for x in self._list_gpx()) + 1)
+            print('new serverdirectory id:', result)
+            return result
         except ValueError:
             return '1'
+
+    def _write_all(self, track) ->str:
+        """save full gpx track. If id_in_backend is defined, keep it."""
+
+        new_ident = track.id_in_backend or self._new_ident(track)
+
+        with Backup(track):
+            track.id_in_backend = new_ident
+            with open(self.gpx_path(new_ident), 'w', encoding='utf-8') as out_file:
+                out_file.write(track.to_xml())
+            self._set_filetime(track)
+
+        return new_ident
 
 ServerDirectory._define_support() # pylint: disable=protected-access

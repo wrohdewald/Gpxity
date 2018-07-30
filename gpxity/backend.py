@@ -102,7 +102,8 @@ class Backend:
     _session = dict()
 
 
-    def __init__(self, url: str = None, auth=None, cleanup: bool = False, debug: bool = False, timeout=None, verify=True):
+    def __init__(self, url: str = None, auth=None, cleanup: bool = False,
+                 debug: bool = False, timeout=None, verify=True):
         self._decoupled = False
         super(Backend, self).__init__()
         self.__tracks = list()

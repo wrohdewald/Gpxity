@@ -19,7 +19,7 @@ import gpxpy.gpxfield as mod_gpxfield
 from .. import Backend, Track
 from ..util import remove_directory
 
-__all__ = ['Directory']
+__all__ = ['Directory', 'Backup']
 
 class Backup:
     """A context manager making a backup of the gpx file
