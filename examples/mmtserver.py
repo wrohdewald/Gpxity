@@ -56,11 +56,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_mail(self, reason,  track):
         """if a mail address is known, send new GPX there"""
-        if OPT.mailto:
+        if Main.options.mailto:
             msg = b'GPX is attached'
             subject = 'New GPX: {} {}'.format(reason, track)
             process  = Popen(
-                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend),  '--', OPT.mailto],
+                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend),  '--', Main.options.mailto],
                 stdin=PIPE)
             process.communicate(msg)
 
@@ -102,7 +102,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def parseRequest(self): # pylint: disable=invalid-name
         """as the name says. Why do I have to implement this?"""
-        if OPT.debug:
+        if Main.options.debug:
             print('got headers:')
             for k,v in self.headers.items():
                 print('  ',k,v)
@@ -110,7 +110,7 @@ class Handler(BaseHTTPRequestHandler):
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
             parsed = parse_qs(data)
-            if OPT.debug:
+            if Main.options.debug:
                 print('got',parsed)
             for key, value in parsed.items():
                 if len(value) != 1:
@@ -162,7 +162,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if OPT.debug:
+        if Main.options.debug:
             print('returning',xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
@@ -198,7 +198,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if OPT.debug:
+        if Main.options.debug:
             print('returning',xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
@@ -281,7 +281,7 @@ class Handler(BaseHTTPRequestHandler):
                 parsed['activity_id'], Handler.tracking_track.id_in_backend))
         else:
             Handler.tracking_track.add_points(self.__points(parsed['points']))
-            if OPT.debug:
+            if Main.options.debug:
                 print('update_track:',Handler.tracking_track)
                 print('  last time:',Handler.tracking_track.last_time)
             return '<type>activity_updated</type>'
@@ -295,34 +295,44 @@ class Handler(BaseHTTPRequestHandler):
             return '<type>activity_stopped</type>'
 
 
-def main():
+class Main:
     """main"""
-    parser = argparse.ArgumentParser('mmtserver')
-    parser.add_argument('--directory', help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
-    parser.add_argument('--servername', help='the name of this server')
-    parser.add_argument('--port', help='listen on PORT', type=int, default=443)
-    parser.add_argument('--mailto', help='mail new tracks to MAILTO')
-    parser.add_argument('--localcert', help='A local file with self signed certificate')
-    parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
-    parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
-    parser.add_argument('--timeout', help="""
-        Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
-        the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
-
-    try:
-        argcomplete.autocomplete(parser)
-    except NameError:
-        pass
-
-    if len(sys.argv) < 2:
-        parser.print_usage()
-        sys.exit(2)
-
-    global OPT
-    OPT = parser.parse_args()
-    Handler.directory = ServerDirectory(auth=OPT.directory) # define the directory in auth.cfg, using the Url=value
-
-    httpd = HTTPServer((OPT.servername, OPT.port), Handler)
-    httpd.socket = ssl.wrap_socket (httpd.socket, certfile=OPT.localcert, server_side=True)
+    httpd = HTTPServer((Main.options.servername, Main.options.port), Handler)
+    httpd.socket = ssl.wrap_socket (httpd.socket, certfile=Main.options.localcert, server_side=True)
     httpd.serve_forever()
-main()
+
+    options = None
+
+    def __init__(self):
+        parser = argparse.ArgumentParser('mmtserver')
+        parser.add_argument('--directory', help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
+        parser.add_argument('--servername', help='the name of this server')
+        parser.add_argument('--port', help='listen on PORT', type=int)
+        parser.add_argument('--mailto', help='mail new tracks to MAILTO')
+        parser.add_argument('--localcert', help='A local file with self signed certificate')
+        parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
+        parser.add_argument('--https', action='store_true', help='start a https server, otherwise http', default=False)
+        parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
+        parser.add_argument('--timeout', help="""
+            Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
+            the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
+
+        try:
+            argcomplete.autocomplete(parser)
+        except NameError:
+            pass
+
+        if len(sys.argv) < 2:
+            parser.print_usage()
+            sys.exit(2)
+
+        Main.options = parser.parse_args()
+        Handler.directory = ServerDirectory(auth=Main.options.directory) # define the directory in auth.cfg, using the Url=value
+
+        HTTPServer.serve_forever = serve_forever
+        Main.http_server = ThreadingHTTPServer((Main.options.servername, Main.options.port), Handler)
+        Main.https_server = ThreadingHTTPServer((Main.options.servername, Main.options.port+1), Handler)
+        Main.https_server.socket = ssl.wrap_socket (Main.https_server.socket, certfile=Main.options.localcert, server_side=True)
+        serve_forever(Main.http_server, Main.https_server)
+
+Main()
