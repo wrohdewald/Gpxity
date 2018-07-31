@@ -266,8 +266,8 @@ class Handler(BaseHTTPRequestHandler):
         """Lifetracker starts"""
         try:
             Handler.tracking_track = Track(gpx=self.__starting_Gpx(parsed))
-        except TypeError:
-            return
+        except TypeError as exc:
+            return 'Cannot create a track out of {}: {}'.format(parsed, exc)
         track = Handler.tracking_track
         track.title = parsed['title']
         if 'privicity' in parsed:
