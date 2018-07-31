@@ -273,6 +273,9 @@ class Handler(BaseHTTPRequestHandler):
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
         track.public = parsed['privacy'] == 'public'
+        # the MMT API example uses cycling instead of Cycling,
+        # and Oruxmaps does so too.
+        track.category = parsed['activity'].capitalize()
         Handler.directory.add(track)
         self.send_mail('Start', track)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
