@@ -605,11 +605,12 @@ class MMT(Backend):
         """
         if points is None:
             if self._current_lifetrack:
-                self.__post(request='stop_activity')
+                self.__post(url='/', request='stop_activity')
                 self._current_lifetrack = None
             return
         if not self._current_lifetrack:
             result = self.__post(
+                url='/',
                 request='start_activity',
                 title=track.title,
                 privacy='public' if track.public else 'private',
@@ -626,6 +627,7 @@ class MMT(Backend):
         if track != self._current_lifetrack:
             raise self.BackendException('MMT._lifetrack() got wrong track')
         self.__post(
+            url='/',
             request='update_activity', activity_id=track.id_in_backend,
             points=self.__formatted_lifetrack_points(points))
 
