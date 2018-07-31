@@ -617,10 +617,9 @@ class MMT(Backend):
                 points=self.__formatted_lifetrack_points(track.points()),
                 source='Gpxity',
                 version=VERSION,
+                expect='activity_started',
                 # tags='TODO',
                 unique_token='{}'.format(id(track)))
-            if result.find('type').text != 'activity_started':
-                raise self.BackendException('activity_started failed')
             with self._decouple():
                 track.id_in_backend = result.find('activity_id').text
             self._current_lifetrack = track
