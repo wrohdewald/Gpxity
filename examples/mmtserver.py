@@ -56,6 +56,7 @@ class Handler(BaseHTTPRequestHandler):
     ServerDirectory = None
     tracking_track = None
     login_user = None
+    last_sent_time = None
 
     def send_mail(self, reason,  track):
         """if a mail address is known, send new GPX there"""
@@ -66,6 +67,7 @@ class Handler(BaseHTTPRequestHandler):
                 ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend),  '--', Main.options.mailto],
                 stdin=PIPE)
             process.communicate(msg)
+            Handler.last_sent_time = datetime.datetime.now()
 
     def check_basic_auth_pw(self):
         """basic http authentication"""
@@ -277,7 +279,7 @@ class Handler(BaseHTTPRequestHandler):
         Handler.tracking_track.public = parsed['privacy'] == 'public'
         Handler.tracking_track.category = parsed['activity']
         Handler.directory.add(Handler.tracking_track)
-        self.send_mail('start_activity', Handler.tracking_track)
+        self.send_mail('Start', Handler.tracking_track.track)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
             Handler.tracking_track.id_in_backend)
 
@@ -287,6 +289,9 @@ class Handler(BaseHTTPRequestHandler):
                 parsed['activity_id'], Handler.tracking_track.id_in_backend))
         else:
             Handler.tracking_track.add_points(self.__points(parsed['points']))
+            if datetime.datetime.now() - Handler.last_sent_time > datetime.timedelta(minutes=30):
+                self.send_mail('{:>8.3f}km gefahren'.fomat(
+                    Handler.tracking_track.distance()), Handler.tracking_track)
             if Main.options.debug:
                 print('update_track:',Handler.tracking_track)
                 print('  last time:',Handler.tracking_track.last_time)
@@ -296,7 +301,7 @@ class Handler(BaseHTTPRequestHandler):
         if Handler.tracking_track is None:
             self.return_error(401,  'No track in tracking mode')
         else:
-            self.send_mail('stop_activity', Handler.tracking_track)
+            self.send_mail('Endstand', Handler.tracking_track)
             Handler.tracking_track = None
             return '<type>activity_stopped</type>'
 
