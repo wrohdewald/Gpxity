@@ -219,17 +219,6 @@ class MMT(Backend):
         self._last_response = None # only used for debugging
         self._current_lifetrack = None
         self.https_url = self.url.replace('http:', 'https:')
-        has_port = False
-        try:
-            port = int(self.url.split(':')[-1])
-            if port:
-                has_port = True
-        except BaseException:
-            pass
-        if has_port:
-            self.https_url.replace(':{}'.format(port), ':{}'.format(port+1))
-        else:
-            self.https_url += ':443'
 
     @property
     def legal_categories(self):

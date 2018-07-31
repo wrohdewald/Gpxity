@@ -54,7 +54,6 @@ class Main:
             assert isinstance(source, Track)
             backend = self.instantiate_object(self.options.backend)
             assert isinstance(backend, Backend)
-            backend.verify = self.options.localcert if self.options.localcert else True
             track = Track()
             track.title = 'Mein Lifetrack von heute'
             all_points = list(source.points())
@@ -119,7 +118,6 @@ class Main:
         parser = argparse.ArgumentParser('lifetrack_client')
         parser.add_argument('--source', help='the track with test data')
         parser.add_argument('--backend', help='the server')
-        parser.add_argument('--localcert', help='A local file with self signed certificate')
         parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
         parser.add_argument('--debug', action='store_true', help='debug backend traffic', default=False)
         parser.add_argument('--timeout', help="""

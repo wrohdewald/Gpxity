@@ -19,12 +19,9 @@ import sys
 import base64
 import datetime
 import argparse
-import select
-from socketserver import ThreadingMixIn
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
-import ssl
 
 from subprocess import Popen, PIPE
 
@@ -80,16 +77,6 @@ class Handler(BaseHTTPRequestHandler):
             expect = expect.decode('utf-8')
             if expect == self.headers['Authorization']:
                 return True
-        return False
-
-    def check_https_login(self, auth):
-        """https login"""
-        if self.users is None:
-            self.load_users()
-        self.uniqueid = 123
-        if auth in self.users.items():
-            Handler.login_user = auth[0]
-            return True
         return False
 
     def load_users(self):
@@ -179,10 +166,6 @@ class Handler(BaseHTTPRequestHandler):
         """override standard"""
         if Main.options.debug:
             print('POST', self.client_address[0], self.server.server_port, self.path)
-        if self.path == '//login':
-            assert self.server is Main.https_server
-        else:
-            assert self.server is Main.http_server
         parsed = self.parseRequest()
         if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
             try:
@@ -198,12 +181,6 @@ class Handler(BaseHTTPRequestHandler):
             if xml is None:
                 xml = ''
             xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
-        elif self.path.endswith('//login'):
-            parsed = self.parseRequest()
-            if self.check_https_login((parsed['username'], parsed['password'])):
-                xml = 'You are now logged in.'
-            else:
-                xml = 'Wrong username or password'
         else:
             xml = ''
         self.send_response(200, 'OK')
@@ -314,18 +291,6 @@ class Handler(BaseHTTPRequestHandler):
             return '<type>activity_stopped</type>'
 
 
-class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
-    pass
-
-
-def serve_forever(server1,server2):
-    while True:
-        r,w,e = select.select([server1,server2],[],[],0)
-        if server1 in r:
-            server1.handle_request()
-        if server2 in r:
-            server2.handle_request()
-
 class Main:
     """main"""
 
@@ -337,9 +302,7 @@ class Main:
         parser.add_argument('--servername', help='the name of this server')
         parser.add_argument('--port', help='listen on PORT', type=int)
         parser.add_argument('--mailto', help='mail new tracks to MAILTO')
-        parser.add_argument('--localcert', help='A local file with self signed certificate')
         parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
-        parser.add_argument('--https', action='store_true', help='start a https server, otherwise http', default=False)
         parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
         parser.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
@@ -357,13 +320,7 @@ class Main:
         Main.options = parser.parse_args()
         Handler.directory = ServerDirectory(auth=Main.options.directory) # define the directory in auth.cfg, using the Url=value
 
-        HTTPServer.serve_forever = serve_forever
-        Main.http_server = ThreadingHTTPServer((Main.options.servername, Main.options.port), Handler)
-        Main.https_server = ThreadingHTTPServer((Main.options.servername, Main.options.port+1), Handler)
-        Main.https_server.socket = ssl.wrap_socket (Main.https_server.socket, certfile=Main.options.localcert, server_side=True)
-        serve_forever(Main.http_server, Main.https_server)
-
-        Main.http_server = HTTPServer((Main.options.servername, Main.options.port), Handler)
-        Main.http_server.serve_forever()
+        httpd = HTTPServer((Main.options.servername, Main.options.port), Handler)
+        httpd.serve_forever()
 
 Main()
