@@ -5,6 +5,8 @@
 
 implement a server using the mapmytracks protocol
 
+currently supports only one logged in connection.
+
 """
 # PYTHON_ARGCOMPLETE_OK
 # for command line argument completion, put this into your .bashrc:
@@ -53,6 +55,7 @@ class Handler(BaseHTTPRequestHandler):
     directory = None
     ServerDirectory = None
     tracking_track = None
+    login_user = None
 
     def send_mail(self, reason,  track):
         """if a mail address is known, send new GPX there"""
@@ -80,7 +83,10 @@ class Handler(BaseHTTPRequestHandler):
         if self.users is None:
             self.load_users()
         self.uniqueid = 123
-        return auth in self.users.items()
+        if auth in self.users.items():
+            Handler.login_user = auth[0]
+            return True
+        return False
 
     def load_users(self):
         """load legal user auth from serverdirectory/.users"""
@@ -130,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
         names = list(sorted(self.users.keys()))
         return """
             <input type="hidden" value="{}" name="mid" id="mid" />
-            """.format(names.index('wolfgang61'))
+            """.format(names.index(self.login_user))
 
     def answer_with_categories(self):
         """Returns all categories"""
