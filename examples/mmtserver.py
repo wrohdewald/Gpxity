@@ -263,6 +263,7 @@ class Handler(BaseHTTPRequestHandler):
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
     def xml_start_activity(self, parsed):
+        """Lifetracker starts"""
         try:
             Handler.tracking_track = Track(gpx=self.__starting_Gpx(parsed))
         except TypeError:
@@ -278,6 +279,7 @@ class Handler(BaseHTTPRequestHandler):
             track.id_in_backend)
 
     def xml_update_activity(self, parsed):
+        """Getting new points"""
         track = Handler.tracking_track
         if parsed['activity_id'] != track.id_in_backend:
             self.return_error(401,  'wrong track id {}, expected {}'.format(
