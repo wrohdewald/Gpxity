@@ -218,6 +218,7 @@ class MMT(Backend):
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
         self._current_lifetrack = None
+        self.https_url = self.url.replace('http:', 'https:')
 
     @property
     def legal_categories(self):
@@ -241,8 +242,7 @@ class MMT(Backend):
             self._session[ident] = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
             payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
-            base_url = self.url.replace('http:', 'https:')
-            login_url = '{}/login'.format(base_url)
+            login_url = '{}/login'.format(self.https_url)
             response = self._session[ident].post(
                 login_url, data=payload, timeout=self.timeout, verify=self.verify)
             if not 'You are now logged in.' in response.text:
