@@ -126,12 +126,6 @@ class Handler(BaseHTTPRequestHandler):
                 parsed[key] = parsed[key][0]
             return parsed
 
-    def xxdo_HEAD(self):
-        """ brauche ich das?"""
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-
     def homepage(self):
         """Returns what the client needs"""
         self.load_users()
