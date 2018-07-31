@@ -178,6 +178,7 @@ class Handler(BaseHTTPRequestHandler):
         if Main.options.debug:
             print('POST', self.client_address[0], self.server.server_port, self.path)
         parsed = self.parseRequest()
+        if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
             try:
                 request = parsed['request']
             except KeyError:
