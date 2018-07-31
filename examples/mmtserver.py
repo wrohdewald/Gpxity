@@ -148,9 +148,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):  # pylint: disable=invalid-name
         """Override standard"""
         # TODO: empfangene cookies verwenden
+        if Main.options.debug:
+            print('GET', self.client_address[0], self.server.server_port, self.path)
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
-        print('GET path:', self.path)
         if self.path == '/':
             xml = self.homepage()
         elif self.path.endswith('//profile/upload/manual'):
@@ -173,7 +174,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self): # pylint: disable=invalid-name
         """override standard"""
-        print('POST path:', self.path)
+        if Main.options.debug:
+            print('POST', self.client_address[0], self.server.server_port, self.path)
         if self.path.endswith('/api/'):
             parsed = self.parseRequest()
             try:
