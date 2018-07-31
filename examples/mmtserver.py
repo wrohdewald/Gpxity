@@ -19,6 +19,8 @@ import sys
 import base64
 import datetime
 import argparse
+import select
+from socketserver import ThreadingMixIn
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
@@ -177,6 +179,10 @@ class Handler(BaseHTTPRequestHandler):
         """override standard"""
         if Main.options.debug:
             print('POST', self.client_address[0], self.server.server_port, self.path)
+        if self.path == '//login':
+            assert self.server is Main.https_server
+        else:
+            assert self.server is Main.http_server
         parsed = self.parseRequest()
         if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
             try:
@@ -308,11 +314,20 @@ class Handler(BaseHTTPRequestHandler):
             return '<type>activity_stopped</type>'
 
 
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    pass
+
+
+def serve_forever(server1,server2):
+    while True:
+        r,w,e = select.select([server1,server2],[],[],0)
+        if server1 in r:
+            server1.handle_request()
+        if server2 in r:
+            server2.handle_request()
+
 class Main:
     """main"""
-    httpd = HTTPServer((Main.options.servername, Main.options.port), Handler)
-    httpd.socket = ssl.wrap_socket (httpd.socket, certfile=Main.options.localcert, server_side=True)
-    httpd.serve_forever()
 
     options = None
 
@@ -347,5 +362,8 @@ class Main:
         Main.https_server = ThreadingHTTPServer((Main.options.servername, Main.options.port+1), Handler)
         Main.https_server.socket = ssl.wrap_socket (Main.https_server.socket, certfile=Main.options.localcert, server_side=True)
         serve_forever(Main.http_server, Main.https_server)
+
+        Main.http_server = HTTPServer((Main.options.servername, Main.options.port), Handler)
+        Main.http_server.serve_forever()
 
 Main()
