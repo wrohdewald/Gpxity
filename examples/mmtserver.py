@@ -267,28 +267,28 @@ class Handler(BaseHTTPRequestHandler):
             Handler.tracking_track = Track(gpx=self.__starting_Gpx(parsed))
         except TypeError:
             return
-        Handler.tracking_track.title = parsed['title']
+        track = Handler.tracking_track
+        track.title = parsed['title']
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
-        Handler.tracking_track.public = parsed['privacy'] == 'public'
-        Handler.tracking_track.category = parsed['activity']
-        Handler.directory.add(Handler.tracking_track)
-        self.send_mail('Start', Handler.tracking_track.track)
+        track.public = parsed['privacy'] == 'public'
+        Handler.directory.add(track)
+        self.send_mail('Start', track)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
-            Handler.tracking_track.id_in_backend)
+            track.id_in_backend)
 
     def xml_update_activity(self, parsed):
-        if parsed['activity_id'] != Handler.tracking_track.id_in_backend:
+        track = Handler.tracking_track
+        if parsed['activity_id'] != track.id_in_backend:
             self.return_error(401,  'wrong track id {}, expected {}'.format(
-                parsed['activity_id'], Handler.tracking_track.id_in_backend))
+                parsed['activity_id'], track.id_in_backend))
         else:
-            Handler.tracking_track.add_points(self.__points(parsed['points']))
+            track.add_points(self.__points(parsed['points']))
             if datetime.datetime.now() - Handler.last_sent_time > datetime.timedelta(minutes=30):
-                self.send_mail('{:>8.3f}km gefahren'.fomat(
-                    Handler.tracking_track.distance()), Handler.tracking_track)
+                self.send_mail('{:>8.3f}km gefahren'.format(track.distance()), track)
             if Main.options.debug:
-                print('update_track:',Handler.tracking_track)
-                print('  last time:',Handler.tracking_track.last_time)
+                print('update_track:',track)
+                print('  last time:',track.last_time)
             return '<type>activity_updated</type>'
 
     def xml_stop_activity(self, parsed):
