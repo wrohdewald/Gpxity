@@ -150,6 +150,7 @@ class Handler(BaseHTTPRequestHandler):
         # TODO: empfangene cookies verwenden
         if Main.options.debug:
             print('GET', self.client_address[0], self.server.server_port, self.path)
+        self.parseRequest()  # side effect: may print debug info
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         if self.path == '/':
@@ -176,8 +177,7 @@ class Handler(BaseHTTPRequestHandler):
         """override standard"""
         if Main.options.debug:
             print('POST', self.client_address[0], self.server.server_port, self.path)
-        if self.path.endswith('/api/'):
-            parsed = self.parseRequest()
+        parsed = self.parseRequest()
             try:
                 request = parsed['request']
             except KeyError:
