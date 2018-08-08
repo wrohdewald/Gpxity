@@ -207,6 +207,12 @@ class MMT(Backend):
 
     default_url = 'http://www.mapmytracks.com'
 
+    # MMT only accepts one simultaneous lifetracker per login. We make sure
+    # that at least this process does not try to run several at once.
+    # This check is now too strict: We forbid multiple lifetrackers even if
+    # every MMT account only gets one.
+    _current_lifetrack = None
+
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None, verify=True):
         if url is None:
             url = self.default_url
@@ -217,7 +223,6 @@ class MMT(Backend):
             # the same ID. We use this fact.
             # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None # only used for debugging
-        self._current_lifetrack = None
         self.https_url = self.url.replace('http:', 'https:')
 
     @property
@@ -603,12 +608,14 @@ class MMT(Backend):
 
         points are not yet added to track."
         """
+        if MMT._current_lifetrack is not None and track != MMT._current_lifetrack:
+            raise self.BackendException('MMT._lifetrack() got wrong track')
         if points is None:
-            if self._current_lifetrack:
+            if MMT._current_lifetrack:
                 self.__post(url='/', request='stop_activity')
-                self._current_lifetrack = None
+                MMT._current_lifetrack = None
             return
-        if not self._current_lifetrack:
+        if not MMT._current_lifetrack:
             result = self.__post(
                 url='/',
                 request='start_activity',
@@ -623,9 +630,7 @@ class MMT(Backend):
                 unique_token='{}'.format(id(track)))
             with self._decouple():
                 track.id_in_backend = result.find('activity_id').text
-            self._current_lifetrack = track
-        if track != self._current_lifetrack:
-            raise self.BackendException('MMT._lifetrack() got wrong track')
+            MMT._current_lifetrack = track
         self.__post(
             url='/',
             request='update_activity', activity_id=track.id_in_backend,
