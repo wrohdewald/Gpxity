@@ -56,14 +56,16 @@ class Handler(BaseHTTPRequestHandler):
     tracking_track = None
     login_user = None
     last_sent_time = None
+    uniqueid = 123
 
-    def send_mail(self, reason,  track):
+    @staticmethod
+    def send_mail(reason, track):
         """if a mail address is known, send new GPX there"""
         if Main.options.mailto:
             msg = b'GPX is attached'
             subject = 'New GPX: {} {}'.format(reason, track)
-            process  = Popen(
-                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend),  '--', Main.options.mailto],
+            process = Popen(
+                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend), '--', Main.options.mailto],
                 stdin=PIPE)
             process.communicate(msg)
             Handler.last_sent_time = datetime.datetime.now()
@@ -104,19 +106,20 @@ class Handler(BaseHTTPRequestHandler):
         """as the name says. Why do I have to implement this?"""
         if Main.options.debug:
             print('got headers:')
-            for k,v in self.headers.items():
-                print('  ',k,v)
+            for key, value in self.headers.items():
+                print('  ', key, value)
         if 'Content-Length' in self.headers:
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
             parsed = parse_qs(data)
             if Main.options.debug:
-                print('got',parsed)
+                print('got', parsed)
             for key, value in parsed.items():
                 if len(value) != 1:
                     self.return_error(400, '{} must appear only once'.format(key))
                 parsed[key] = parsed[key][0]
             return parsed
+        return None
 
     def homepage(self):
         """Returns what the client needs"""
@@ -126,11 +129,12 @@ class Handler(BaseHTTPRequestHandler):
             <input type="hidden" value="{}" name="mid" id="mid" />
             """.format(names.index(self.login_user))
 
-    def answer_with_categories(self):
+    @staticmethod
+    def answer_with_categories():
         """Returns all categories"""
         all_cat = Track.legal_categories
         return """<select name="activity" id="activity">{}</select>""".format(
-        ''.join('<option value="{cat}">{cat}</option>'.format(cat=x) for x in all_cat ))
+            ''.join('<option value="{cat}">{cat}</option>'.format(cat=x) for x in all_cat))
 
     def cookies(self):
         """send cookies"""
@@ -159,7 +163,7 @@ class Handler(BaseHTTPRequestHandler):
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
         if Main.options.debug:
-            print('returning',xml)
+            print('returning', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
         self.end_headers()
@@ -189,7 +193,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
         if Main.options.debug:
-            print('returning',xml)
+            print('returning', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
         self.end_headers()
@@ -205,7 +209,7 @@ class Handler(BaseHTTPRequestHandler):
         """as defined by the mapmytracks API"""
         a_list = list()
         if parsed['offset'] == '0':
-            for idx, _ in enumerate(Handler.directory):
+            for idx, _ in enumerate(self.directory):
                 a_list.append(
                     '<track{}><id>{}</id>'
                     '<title><![CDATA[ {} ]]></title>'
@@ -231,13 +235,13 @@ class Handler(BaseHTTPRequestHandler):
             result.append(point)
         return result
 
-    def __starting_Gpx(self, parsed):
+    def __starting_gpx(self, parsed):
         """builds an initial Gpx object"""
         segment = GPXTrackSegment()
         segment.points = self.__points(parsed['points'])
         track = GPXTrack()
         track.segments.append(segment)
-        result =GPX()
+        result = GPX()
         result.tracks.append(track)
         return result
 
@@ -252,7 +256,7 @@ class Handler(BaseHTTPRequestHandler):
     def xml_start_activity(self, parsed):
         """Lifetracker starts"""
         try:
-            Handler.tracking_track = Track(gpx=self.__starting_Gpx(parsed))
+            Handler.tracking_track = Track(gpx=self.__starting_gpx(parsed))
         except TypeError as exc:
             return 'Cannot create a track out of {}: {}'.format(parsed, exc)
         track = Handler.tracking_track
@@ -272,34 +276,38 @@ class Handler(BaseHTTPRequestHandler):
         """Getting new points"""
         track = Handler.tracking_track
         if parsed['activity_id'] != track.id_in_backend:
-            self.return_error(401,  'wrong track id {}, expected {}'.format(
+            self.return_error(401, 'wrong track id {}, expected {}'.format(
                 parsed['activity_id'], track.id_in_backend))
+            return ''
         else:
             track.add_points(self.__points(parsed['points']))
             if datetime.datetime.now() - Handler.last_sent_time > datetime.timedelta(minutes=30):
                 self.send_mail('{:>8.3f}km gefahren'.format(track.distance()), track)
             if Main.options.debug:
-                print('update_track:',track)
-                print('  last time:',track.last_time)
+                print('update_track:', track)
+                print('  last time:', track.last_time)
             return '<type>activity_updated</type>'
 
-    def xml_stop_activity(self, parsed):
+    def xml_stop_activity(self, parsed):  # pylint: disable=unused-argument
+        """Client says stop."""
         if Handler.tracking_track is None:
-            self.return_error(401,  'No track in tracking mode')
-        else:
-            self.send_mail('Endstand', Handler.tracking_track)
-            Handler.tracking_track = None
-            return '<type>activity_stopped</type>'
+            self.return_error(401, 'No track in tracking mode')
+            return''
+        self.send_mail('Endstand', Handler.tracking_track)
+        Handler.tracking_track = None
+        return '<type>activity_stopped</type>'
 
 
-class Main:
+class Main: # pylint: disable=too-few-public-methods
     """main"""
 
     options = None
 
     def __init__(self):
         parser = argparse.ArgumentParser('mmtserver')
-        parser.add_argument('--directory', help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
+        parser.add_argument(
+            '--directory',
+            help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
         parser.add_argument('--servername', help='the name of this server')
         parser.add_argument('--port', help='listen on PORT', type=int)
         parser.add_argument('--mailto', help='mail new tracks to MAILTO')
@@ -314,12 +322,9 @@ class Main:
         except NameError:
             pass
 
-        if len(sys.argv) < 2:
-            parser.print_usage()
-            sys.exit(2)
-
         Main.options = parser.parse_args()
-        Handler.directory = ServerDirectory(auth=Main.options.directory) # define the directory in auth.cfg, using the Url=value
+        # define the directory in auth.cfg, using the Url=value
+        Handler.directory = ServerDirectory(auth=Main.options.directory)
 
         httpd = HTTPServer((Main.options.servername, Main.options.port), Handler)
         httpd.serve_forever()
