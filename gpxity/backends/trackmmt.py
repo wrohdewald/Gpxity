@@ -29,6 +29,9 @@ class TrackMMT(MMT):
 
    #  skip_test = True
 
+    def _yield_tracks(self):
+        raise NotImplementedError()
+
     def _write_attribute(self, track, attribute):
         raise NotImplementedError()
 
