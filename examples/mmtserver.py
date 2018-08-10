@@ -255,7 +255,7 @@ class Handler(BaseHTTPRequestHandler):
         except TypeError as exc:
             return 'Cannot create a track out of {}: {}'.format(parsed, exc)
         track = Handler.tracking_track
-        track.title = parsed['title']
+        track.title = parsed['title'] if 'title' in parsed else 'untitled'
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
         track.public = parsed['privacy'] == 'public'
