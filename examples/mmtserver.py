@@ -87,8 +87,8 @@ class Handler(BaseHTTPRequestHandler):
                 user, password = line.strip().split(':')
                 self.users[user] = password
 
-    def return_error(self, code, reason):
-        """returns an xml formatted error message"""
+    def return_error(self, code, reason, exc=None):
+        """Answers the clint with an xml formatted error message."""
         self.send_response(code)
         xml = '<type>error</type><reason>{}</reason>'.format(reason)
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
@@ -96,6 +96,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', len(xml))
         self.end_headers()
         self.wfile.write(bytes(xml.encode('utf-8')))
+        if exc is None:
+            exc = ValueError
+        raise exc(reason)
 
     def parseRequest(self): # pylint: disable=invalid-name
         """as the name says. Why do I have to implement this?"""
@@ -176,7 +179,6 @@ class Handler(BaseHTTPRequestHandler):
                 method = getattr(self, 'xml_{}'.format(request))
             except AttributeError:
                 self.return_error(401, 'Unknown request {}'.format(parsed['request']))
-                return
             xml = method(parsed)
             if xml is None:
                 xml = ''
@@ -218,8 +220,7 @@ class Handler(BaseHTTPRequestHandler):
         """convert raw data back into list(GPXTrackPoint)"""
         values = raw.split()
         if len(values) % 4:
-            self.return_error(401, 'Point elements not a multiple of 4')
-            raise TypeError
+            self.return_error(401, 'Point elements not a multiple of 4', TypeError)
         result = list()
         for idx in range(0, len(values), 4):
             point = GPXTrackPoint(
