@@ -48,7 +48,7 @@ try:
 except ImportError:
     pass
 
-class Handler(BaseHTTPRequestHandler):
+class MMTHandler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
     directory = None
@@ -61,14 +61,15 @@ class Handler(BaseHTTPRequestHandler):
     @staticmethod
     def send_mail(reason, track):
         """if a mail address is known, send new GPX there"""
-        if Main.options.mailto:
+        if LifeServerMMT.options.mailto:
             msg = b'GPX is attached'
             subject = 'New GPX: {} {}'.format(reason, track)
             process = Popen(
-                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend), '--', Main.options.mailto],
+                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend),
+                 '--', LifeServerMMT.options.mailto],
                 stdin=PIPE)
             process.communicate(msg)
-            Handler.last_sent_time = datetime.datetime.now()
+            MMTHandler.last_sent_time = datetime.datetime.now()
 
     def check_basic_auth_pw(self):
         """basic http authentication"""
@@ -84,7 +85,7 @@ class Handler(BaseHTTPRequestHandler):
     def load_users(self):
         """load legal user auth from serverdirectory/.users"""
         self.users = dict()
-        with open(os.path.join(Handler.directory.url, '.users')) as user_file:
+        with open(os.path.join(MMTHandler.directory.url, '.users')) as user_file:
             for line in user_file:
                 user, password = line.strip().split(':')
                 self.users[user] = password
@@ -104,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def parseRequest(self): # pylint: disable=invalid-name
         """as the name says. Why do I have to implement this?"""
-        if Main.options.debug:
+        if LifeServerMMT.options.debug:
             print('got headers:')
             for key, value in self.headers.items():
                 print('  ', key, value)
@@ -112,7 +113,7 @@ class Handler(BaseHTTPRequestHandler):
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
             parsed = parse_qs(data)
-            if Main.options.debug:
+            if LifeServerMMT.options.debug:
                 print('got', parsed)
             for key, value in parsed.items():
                 if len(value) != 1:
@@ -143,7 +144,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):  # pylint: disable=invalid-name
         """Override standard"""
         # TODO: empfangene cookies verwenden
-        if Main.options.debug:
+        if LifeServerMMT.options.debug:
             print('GET', self.client_address[0], self.server.server_port, self.path)
         self.parseRequest()  # side effect: may print debug info
         self.send_response(200, 'OK')
@@ -157,11 +158,11 @@ class Handler(BaseHTTPRequestHandler):
             parameters = self.path.split('?')[1]
             request = parse_qs(parameters)
             wanted_id = request['tid'][0]
-            xml = Handler.directory[wanted_id].to_xml()
+            xml = MMTHandler.directory[wanted_id].to_xml()
         else:
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if Main.options.debug:
+        if LifeServerMMT.options.debug:
             print('returning', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
@@ -170,7 +171,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self): # pylint: disable=invalid-name
         """override standard"""
-        if Main.options.debug:
+        if LifeServerMMT.options.debug:
             print('POST', self.client_address[0], self.server.server_port, self.path)
         parsed = self.parseRequest()
         if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
@@ -191,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if Main.options.debug:
+        if LifeServerMMT.options.debug:
             print('returning', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
@@ -248,17 +249,17 @@ class Handler(BaseHTTPRequestHandler):
         """as defined by the mapmytracks API"""
         track = Track()
         track.parse(parsed['gpx_file'])
-        Handler.directory.add(track)
+        MMTHandler.directory.add(track)
         self.send_mail('upload_activity', track)
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
     def xml_start_activity(self, parsed):
         """Lifetracker starts"""
         try:
-            Handler.tracking_track = Track(gpx=self.__starting_gpx(parsed))
+            MMTHandler.tracking_track = Track(gpx=self.__starting_gpx(parsed))
         except TypeError as exc:
             return 'Cannot create a track out of {}: {}'.format(parsed, exc)
-        track = Handler.tracking_track
+        track = MMTHandler.tracking_track
         track.title = parsed['title'] if 'title' in parsed else 'untitled'
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
@@ -266,38 +267,38 @@ class Handler(BaseHTTPRequestHandler):
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
         track.category = parsed['activity'].capitalize()
-        Handler.directory.add(track)
+        MMTHandler.directory.add(track)
         self.send_mail('Start', track)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
             track.id_in_backend)
 
     def xml_update_activity(self, parsed):
         """Getting new points"""
-        track = Handler.tracking_track
+        track = MMTHandler.tracking_track
         if parsed['activity_id'] != track.id_in_backend:
             self.return_error(401, 'wrong track id {}, expected {}'.format(
                 parsed['activity_id'], track.id_in_backend))
             return ''
         else:
             track.add_points(self.__points(parsed['points']))
-            if datetime.datetime.now() - Handler.last_sent_time > datetime.timedelta(minutes=30):
+            if datetime.datetime.now() - MMTHandler.last_sent_time > datetime.timedelta(minutes=30):
                 self.send_mail('{:>8.3f}km gefahren'.format(track.distance()), track)
-            if Main.options.debug:
+            if LifeServerMMT.options.debug:
                 print('update_track:', track)
                 print('  last time:', track.last_time)
             return '<type>activity_updated</type>'
 
     def xml_stop_activity(self, parsed):  # pylint: disable=unused-argument
         """Client says stop."""
-        if Handler.tracking_track is None:
+        if MMTHandler.tracking_track is None:
             self.return_error(401, 'No track in tracking mode')
             return''
-        self.send_mail('Endstand', Handler.tracking_track)
-        Handler.tracking_track = None
+        self.send_mail('Endstand', MMTHandler.tracking_track)
+        MMTHandler.tracking_track = None
         return '<type>activity_stopped</type>'
 
 
-class Main: # pylint: disable=too-few-public-methods
+class LifeServerMMT: # pylint: disable=too-few-public-methods
     """main"""
 
     options = None
@@ -321,11 +322,11 @@ class Main: # pylint: disable=too-few-public-methods
         except NameError:
             pass
 
-        Main.options = parser.parse_args()
+        LifeServerMMT.options = parser.parse_args()
         # define the directory in auth.cfg, using the Url=value
-        Handler.directory = ServerDirectory(auth=Main.options.directory)
+        MMTHandler.directory = ServerDirectory(auth=LifeServerMMT.options.directory)
 
-        httpd = HTTPServer((Main.options.servername, Main.options.port), Handler)
+        httpd = HTTPServer((LifeServerMMT.options.servername, LifeServerMMT.options.port), MMTHandler)
         httpd.serve_forever()
 
-Main()
+LifeServerMMT()
