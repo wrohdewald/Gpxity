@@ -18,6 +18,9 @@ import sys
 import base64
 import datetime
 import argparse
+import logging
+import logging.handlers
+import traceback
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
@@ -47,6 +50,7 @@ try:
 except ImportError:
     pass
 
+
 class MMTHandler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
@@ -54,6 +58,14 @@ class MMTHandler(BaseHTTPRequestHandler):
     login_user = None
     last_sent_time = None
     uniqueid = 123
+
+    def log_message(self, format, *args):  # pylint: disable=redefined-builtin
+        """Override: Redirect into logger."""
+        self.server.logger.info(format % args)
+
+    def log_error(self, format, *args):  # pylint: disable=redefined-builtin
+        """Override: redirect into logger."""
+        self.server.logger.error(format % args)
 
     def send_mail(self, reason, track):
         """if a mail address is known, send new GPX there"""
@@ -88,6 +100,8 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def return_error(self, code, reason, exc=None):
         """Answers the clint with an xml formatted error message."""
+        self.server.logger.error('return_error: {} {} {}'.format(
+            code, reason, exc))
         self.send_response(code)
         xml = '<type>error</type><reason>{}</reason>'.format(reason)
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
@@ -102,15 +116,15 @@ class MMTHandler(BaseHTTPRequestHandler):
     def parseRequest(self): # pylint: disable=invalid-name
         """as the name says. Why do I have to implement this?"""
         if self.server.gpxdo_options.debug:
-            print('got headers:')
+            self.server.logger.debug('got headers:')
             for key, value in self.headers.items():
-                print('  ', key, value)
+                self.server.logger.debug('  {}:{}'.format(key, value))
         if 'Content-Length' in self.headers:
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
             parsed = parse_qs(data)
             if self.server.gpxdo_options.debug:
-                print('got', parsed)
+                self.server.logger.debug('got {}'.format(parsed))
             for key, value in parsed.items():
                 if len(value) != 1:
                     self.return_error(400, '{} must appear only once'.format(key))
@@ -141,7 +155,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """Override standard"""
         # TODO: empfangene cookies verwenden
         if self.server.gpxdo_options.debug:
-            print('GET', self.client_address[0], self.server.server_port, self.path)
+            self.server.logger.debug('GET {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
         self.parseRequest()  # side effect: may print debug info
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
@@ -159,7 +173,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
         if self.server.gpxdo_options.debug:
-            print('returning', xml)
+            self.server.logger.debug('returning {}'.format(xml))
         self.send_header('Content-Length', len(xml))
         self.cookies()
         self.end_headers()
@@ -168,7 +182,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     def do_POST(self): # pylint: disable=invalid-name
         """override standard"""
         if self.server.gpxdo_options.debug:
-            print('POST', self.client_address[0], self.server.server_port, self.path)
+            self.server.logger.debug('POST {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
         parsed = self.parseRequest()
         if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
             try:
@@ -179,7 +193,11 @@ class MMTHandler(BaseHTTPRequestHandler):
                 method = getattr(self, 'xml_{}'.format(request))
             except AttributeError:
                 self.return_error(401, 'Unknown request {}'.format(parsed['request']))
-            xml = method(parsed)
+            try:
+                xml = method(parsed)
+            except Exception:
+                self.server.logger.error(traceback.format_exc())
+                raise
             if xml is None:
                 xml = ''
             xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
@@ -189,7 +207,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
         if self.server.gpxdo_options.debug:
-            print('returning', xml)
+            self.server.logger.debug('returning {}'.format(xml))
         self.send_header('Content-Length', len(xml))
         self.cookies()
         self.end_headers()
@@ -281,8 +299,8 @@ class MMTHandler(BaseHTTPRequestHandler):
                     (datetime.datetime.now() - MMTHandler.last_sent_time > datetime.timedelta(minutes=30))):
                 self.send_mail('{:>8.3f}km gefahren'.format(track.distance()), track)
             if self.server.gpxdo_options.debug:
-                print('update_track:', track)
-                print('  last time:', track.last_time)
+                self.server.logger.debug('update_track: {}'.format(track))
+                self.server.logger.debug('  last time: {}'.format(track.last_time))
             return '<type>activity_updated</type>'
 
     def xml_stop_activity(self, parsed):  # pylint: disable=unused-argument
@@ -303,11 +321,12 @@ class LifeServerMMT: # pylint: disable=too-few-public-methods
         parts are still unimplemented.
         """
 
-    def __init__(self, options):
+    def __init__(self, options, logger):
         httpd = HTTPServer((options.servername, options.port), MMTHandler)
         httpd.gpxdo_options = options
         # define the directory in auth.cfg, using the Url=value
         httpd.server_directory = ServerDirectory(url=options.directory)
+        httpd.logger = logger
         httpd.serve_forever()
 
 
@@ -315,6 +334,11 @@ class Main: # pylint: disable=too-few-public-methods
     """main"""
 
     def __init__(self):
+        logger = logging.getLogger('mmtserver')
+        logger.setLevel(logging.DEBUG)
+        logfile = logging.FileHandler('mmtserver.log')
+        logfile.setLevel(logging.DEBUG)
+        logger.addHandler(logfile)
         parser = argparse.ArgumentParser('mmtserver')
         parser.add_argument(
             '--directory', required=True,
@@ -334,6 +358,6 @@ class Main: # pylint: disable=too-few-public-methods
             pass
 
         options = parser.parse_args()
-        LifeServerMMT(options)
+        LifeServerMMT(options, logger)
 
 Main()
