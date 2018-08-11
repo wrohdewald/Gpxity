@@ -281,7 +281,8 @@ class MMTHandler(BaseHTTPRequestHandler):
             return ''
         else:
             track.add_points(self.__points(parsed['points']))
-            if datetime.datetime.now() - MMTHandler.last_sent_time > datetime.timedelta(minutes=30):
+            if (MMTHandler.last_sent_time is None or
+                    (datetime.datetime.now() - MMTHandler.last_sent_time > datetime.timedelta(minutes=30))):
                 self.send_mail('{:>8.3f}km gefahren'.format(track.distance()), track)
             if LifeServerMMT.options.debug:
                 print('update_track:', track)
