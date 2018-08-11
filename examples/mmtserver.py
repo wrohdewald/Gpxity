@@ -305,10 +305,10 @@ class Main: # pylint: disable=too-few-public-methods
     def __init__(self):
         parser = argparse.ArgumentParser('mmtserver')
         parser.add_argument(
-            '--directory',
+            '--directory', required=True,
             help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
-        parser.add_argument('--servername', help='the name of this server')
-        parser.add_argument('--port', help='listen on PORT', type=int)
+        parser.add_argument('--servername', help='the name of this server', required=True)
+        parser.add_argument('--port', help='listen on PORT', type=int, required=True)
         parser.add_argument('--mailto', help='mail new tracks to MAILTO')
         parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
         parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
