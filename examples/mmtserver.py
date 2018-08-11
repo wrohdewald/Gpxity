@@ -5,7 +5,6 @@
 
 implement a server using the mapmytracks protocol
 
-currently supports only one logged in connection.
 
 """
 # PYTHON_ARGCOMPLETE_OK
@@ -51,22 +50,19 @@ except ImportError:
 class MMTHandler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
-    directory = None
-    ServerDirectory = None
     tracking_track = None
     login_user = None
     last_sent_time = None
     uniqueid = 123
 
-    @staticmethod
-    def send_mail(reason, track):
+    def send_mail(self, reason, track):
         """if a mail address is known, send new GPX there"""
-        if LifeServerMMT.options.mailto:
+        if self.server.gpxdo_options.mailto:
             msg = b'GPX is attached'
             subject = 'New GPX: {} {}'.format(reason, track)
             process = Popen(
                 ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend),
-                 '--', LifeServerMMT.options.mailto],
+                 '--', self.server.gpxdo_options.mailto],
                 stdin=PIPE)
             process.communicate(msg)
             MMTHandler.last_sent_time = datetime.datetime.now()
@@ -85,7 +81,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     def load_users(self):
         """load legal user auth from serverdirectory/.users"""
         self.users = dict()
-        with open(os.path.join(MMTHandler.directory.url, '.users')) as user_file:
+        with open(os.path.join(self.server.server_directory.url, '.users')) as user_file:
             for line in user_file:
                 user, password = line.strip().split(':')
                 self.users[user] = password
@@ -105,7 +101,7 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def parseRequest(self): # pylint: disable=invalid-name
         """as the name says. Why do I have to implement this?"""
-        if LifeServerMMT.options.debug:
+        if self.server.gpxdo_options.debug:
             print('got headers:')
             for key, value in self.headers.items():
                 print('  ', key, value)
@@ -113,7 +109,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
             parsed = parse_qs(data)
-            if LifeServerMMT.options.debug:
+            if self.server.gpxdo_options.debug:
                 print('got', parsed)
             for key, value in parsed.items():
                 if len(value) != 1:
@@ -144,7 +140,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     def do_GET(self):  # pylint: disable=invalid-name
         """Override standard"""
         # TODO: empfangene cookies verwenden
-        if LifeServerMMT.options.debug:
+        if self.server.gpxdo_options.debug:
             print('GET', self.client_address[0], self.server.server_port, self.path)
         self.parseRequest()  # side effect: may print debug info
         self.send_response(200, 'OK')
@@ -158,11 +154,11 @@ class MMTHandler(BaseHTTPRequestHandler):
             parameters = self.path.split('?')[1]
             request = parse_qs(parameters)
             wanted_id = request['tid'][0]
-            xml = MMTHandler.directory[wanted_id].to_xml()
+            xml = self.server.server_directory[wanted_id].to_xml()
         else:
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if LifeServerMMT.options.debug:
+        if self.server.gpxdo_options.debug:
             print('returning', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
@@ -171,7 +167,7 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def do_POST(self): # pylint: disable=invalid-name
         """override standard"""
-        if LifeServerMMT.options.debug:
+        if self.server.gpxdo_options.debug:
             print('POST', self.client_address[0], self.server.server_port, self.path)
         parsed = self.parseRequest()
         if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
@@ -192,7 +188,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if LifeServerMMT.options.debug:
+        if self.server.gpxdo_options.debug:
             print('returning', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
@@ -209,7 +205,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """as defined by the mapmytracks API"""
         a_list = list()
         if parsed['offset'] == '0':
-            for idx, _ in enumerate(self.directory):
+            for idx, _ in enumerate(self.server.server_directory):
                 a_list.append(
                     '<track{}><id>{}</id>'
                     '<title><![CDATA[ {} ]]></title>'
@@ -249,7 +245,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """as defined by the mapmytracks API"""
         track = Track()
         track.parse(parsed['gpx_file'])
-        MMTHandler.directory.add(track)
+        self.server.server_directory.add(track)
         self.send_mail('upload_activity', track)
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
@@ -267,7 +263,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
         track.category = parsed['activity'].capitalize()
-        MMTHandler.directory.add(track)
+        self.server.server_directory.add(track)
         self.send_mail('Start', track)
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
             track.id_in_backend)
@@ -284,7 +280,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             if (MMTHandler.last_sent_time is None or
                     (datetime.datetime.now() - MMTHandler.last_sent_time > datetime.timedelta(minutes=30))):
                 self.send_mail('{:>8.3f}km gefahren'.format(track.distance()), track)
-            if LifeServerMMT.options.debug:
+            if self.server.gpxdo_options.debug:
                 print('update_track:', track)
                 print('  last time:', track.last_time)
             return '<type>activity_updated</type>'
@@ -300,9 +296,23 @@ class MMTHandler(BaseHTTPRequestHandler):
 
 
 class LifeServerMMT: # pylint: disable=too-few-public-methods
-    """main"""
+    """A simple MMT server for life tracking.
+        Currently supports only one logged in connection.
 
-    options = None
+        This is not ready for production usage, several important
+        parts are still unimplemented.
+        """
+
+    def __init__(self, options):
+        httpd = HTTPServer((options.servername, options.port), MMTHandler)
+        httpd.gpxdo_options = options
+        # define the directory in auth.cfg, using the Url=value
+        httpd.server_directory = ServerDirectory(url=options.directory)
+        httpd.serve_forever()
+
+
+class Main: # pylint: disable=too-few-public-methods
+    """main"""
 
     def __init__(self):
         parser = argparse.ArgumentParser('mmtserver')
@@ -323,11 +333,7 @@ class LifeServerMMT: # pylint: disable=too-few-public-methods
         except NameError:
             pass
 
-        LifeServerMMT.options = parser.parse_args()
-        # define the directory in auth.cfg, using the Url=value
-        MMTHandler.directory = ServerDirectory(auth=LifeServerMMT.options.directory)
+        options = parser.parse_args()
+        LifeServerMMT(options)
 
-        httpd = HTTPServer((LifeServerMMT.options.servername, LifeServerMMT.options.port), MMTHandler)
-        httpd.serve_forever()
-
-LifeServerMMT()
+Main()
