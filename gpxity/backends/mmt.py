@@ -449,16 +449,16 @@ class MMT(Backend):
             # Because even if MMT does not remove the correct keyword, it always does
             # remove one of them.
             for value in current:
-                self._write_remove_single_keyword(track, value)
+                self._remove_single_keyword(track, value)
             self._write_add_keywords(track, ','.join(wanted))
         else:
             # Specifically remove unwanted keywords. This does not work, MMT does not
             # always remove the correct keyword. No idea why.
             for value in values.split(','):
                 if value in current:
-                    self._write_remove_single_keyword(track, value)
+                    self._remove_single_keyword(track, value)
 
-    def _write_remove_single_keyword(self, track, value):
+    def _remove_single_keyword(self, track, value):
         """Removes a specific keyword from track. Does not work correctly, see above."""
         tag = value.strip()
         if tag not in self.__tag_ids:
