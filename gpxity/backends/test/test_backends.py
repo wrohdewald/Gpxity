@@ -486,7 +486,7 @@ class TestBackends(BasicTest):
             return track.keywords
 
         for cls in self._find_backend_classes():
-            if '_write_add_keywords' not in cls.supported:
+            if 'write_add_keywords' not in cls.supported:
                 continue
             with self.temp_backend(cls, count=1) as backend:
                 backend2 = self.clone_backend(backend)

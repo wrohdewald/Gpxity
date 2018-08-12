@@ -65,9 +65,9 @@ class Backend:
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
-            Those are: scan, remove, lifetrack, get_time, _write_title, _write_public, _write_category,
-            _write_gpx, _write_description, _write_add_keywords, _write_remove_keywords.
-            If a particular _write_* like _write_public does not exist, the entire track is written instead
+            Those are: scan, remove, lifetrack, get_time, write, write_title, write_public, write_category,
+            write_gpx, write_description, write_add_keywords, write_remove_keywords.
+            If a particular write_* like write_public does not exist, the entire track is written instead
             which normally results in a new ident for the track.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
@@ -186,7 +186,7 @@ class Backend:
                     cls.supported.add(support_mappings[name])
             elif name.startswith('_write_') and name != '_write_attribute':
                 if cls._is_implemented(method):
-                    cls.supported.add(name)
+                    cls.supported.add(name[1:])
 
     @property
     def debug(self):
@@ -339,7 +339,7 @@ class Backend:
         for change in changes:
             if change == 'all':
                 return True
-            write_name = '_write_{}'.format(change.split(':')[0])
+            write_name = 'write_{}'.format(change.split(':')[0])
             if write_name not in self.supported:
                 return True
         return False

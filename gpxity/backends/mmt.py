@@ -595,10 +595,10 @@ class MMT(Backend):
         old_ident = track.id_in_backend
         track.id_in_backend = new_ident
         # the caller will do the above too, never mind
-        if '_write_title' in self.supported:
+        if 'write_title' in self.supported:
             self._write_title(track)
         # MMT can add several keywords at once
-        if track.keywords and '_write_add_keywords' in self.supported:
+        if track.keywords and 'write_add_keywords' in self.supported:
             self._write_add_keywords(track, ', '.join(track.keywords))
         if old_ident:
             self._remove_ident(old_ident)
