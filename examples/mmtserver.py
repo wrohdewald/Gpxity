@@ -133,8 +133,7 @@ class Handler(BaseHTTPRequestHandler):
     def answer_with_categories():
         """Returns all categories"""
         all_cat = Track.legal_categories
-        return """<select name="activity" id="activity">{}</select>""".format(
-            ''.join('<option value="{cat}">{cat}</option>'.format(cat=x) for x in all_cat))
+        return ''.join('<li><input name="add-activity-x">&nbsp;{}</li>'.format(x) for x in all_cat)
 
     def cookies(self):
         """send cookies"""
@@ -151,7 +150,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         if self.path == '/':
             xml = self.homepage()
-        elif self.path.endswith('//profile/upload/manual'):
+        elif self.path.endswith('//explore/wall'):
             # the client wants to find out legal categories
             xml = self.answer_with_categories()
         elif self.path.startswith('//assets/php/gpx.php'):

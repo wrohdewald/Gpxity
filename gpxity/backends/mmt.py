@@ -58,23 +58,22 @@ class ParseMMTCategories(HTMLParser): # pylint: disable=abstract-method
 
     def __init__(self):
         super(ParseMMTCategories, self).__init__()
-        self.seeing_tracks = False
+        self.seeing_category = False
         self.result = ['Cycling'] # The default value
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser"""
         # pylint: disable=too-many-branches
         attributes = dict(attrs)
-        if tag == 'select' and attributes['name'] == 'activity':
-            self.seeing_tracks = True
-        if self.seeing_tracks and tag == 'option':
-            _ = attributes['value']
+        self.seeing_category = (
+            tag == 'input' and 'name' in attributes and attributes['name'].startswith('add-activity'))
+
+    def handle_data(self, data):
+        if self.seeing_category:
+            _ = data.strip()
             if _ not in self.result:
                 self.result.append(_)
-
-    def handle_endtag(self, tag):
-        if self.seeing_tracks and tag == 'select':
-            self.seeing_tracks = False
+            self.seeing_category = False
 
 
 class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
@@ -231,7 +230,7 @@ class MMT(Backend):
         Returns: list(str)
             all legal values for category."""
         if not self._legal_categories:
-            response = requests.get(self.url + '/profile/upload/manual', timeout=self.timeout)
+            response = requests.get(self.url + '/explore/wall', timeout=self.timeout)
             category_parser = ParseMMTCategories()
             category_parser.feed(response.text)
             self._legal_categories.extend(category_parser.result)
