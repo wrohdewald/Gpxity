@@ -65,7 +65,7 @@ class Backend:
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
-            Those are: scan, remove, lifetrack, get_time, write, write_title, write_public, write_category,
+            Those are: scan, write, remove, lifetrack, get_time, write, write_title, write_public, write_category,
             write_gpx, write_description, write_add_keywords, write_remove_keywords.
             If a particular write_* like write_public does not exist, the entire track is written instead
             which normally results in a new ident for the track.
@@ -176,6 +176,7 @@ class Backend:
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
             '_yield_tracks':'scan',
+            '_write_all': 'write',
             '_remove_ident':'remove',
             '_lifetrack':'lifetrack',
             'get_time':'get_time'}
