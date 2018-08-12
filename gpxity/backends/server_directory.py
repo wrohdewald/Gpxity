@@ -46,5 +46,3 @@ class ServerDirectory(Directory):
             self._set_filetime(track)
 
         return new_ident
-
-ServerDirectory._define_support() # pylint: disable=protected-access

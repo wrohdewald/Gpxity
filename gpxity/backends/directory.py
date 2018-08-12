@@ -377,5 +377,3 @@ class Directory(Backend):
             self._remove_symlinks(old_ident)
             self._make_symlinks(track)
         return new_ident
-
-Directory._define_support() # pylint: disable=protected-access

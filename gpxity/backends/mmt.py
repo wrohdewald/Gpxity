@@ -658,5 +658,3 @@ class MMT(Backend):
         super(MMT, self).destroy()
         if self.session:
             self.session.close()
-
-MMT._define_support() # pylint: disable=protected-access

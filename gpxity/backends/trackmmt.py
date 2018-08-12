@@ -64,5 +64,3 @@ class TrackMMT(MMT):
             False
         """
         return False
-
-TrackMMT._define_support() # pylint: disable=protected-access

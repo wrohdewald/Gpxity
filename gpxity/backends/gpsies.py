@@ -478,5 +478,3 @@ class GPSIES(Backend):
         super(GPSIES, self).destroy()
         if self.session:
             self.session.close()
-
-GPSIES._define_support() # pylint: disable=protected-access

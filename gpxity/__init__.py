@@ -10,3 +10,13 @@ from .backends import *
 from .version import *
 
 __all__ = ['Track', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'ServerDirectory', 'BackendDiff', 'VERSION']
+
+def prepare_backends():
+    """Initialize the attribute "supported" for all backends"""
+    for key in globals().keys():
+        cls = globals()[key]
+        if hasattr(cls, "__mro__") and cls is not Backend:
+            if cls.__mro__[-2] == Backend:
+                cls._define_support()  # pylint: disable=protected-access
+
+prepare_backends()
