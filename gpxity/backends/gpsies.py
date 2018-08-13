@@ -349,7 +349,8 @@ class GPSIES(Backend):
             else:
                 return
             ctr += 1
-            if ctr > 10:
+            time.sleep(1)
+            if ctr > 50:
                 raise Backend.BackendException(
                     'GPSIES: _edit fails to change track {}: {}'.format(track.identifier(), msg))
             time.sleep(2)
