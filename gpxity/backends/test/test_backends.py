@@ -29,18 +29,24 @@ class TestBackends(BasicTest):
     def test_supported(self):
         """Check values in supported for all backends"""
         expect_unsupported = dict()
-        expect_unsupported[Directory] = set(['track'])
-        expect_unsupported[ServerDirectory] = set(['track'])
-        expect_unsupported[MMT] = set()
-        expect_unsupported[GPSIES] = set()
+        expect_unsupported[Directory] = set([
+            'lifetrack', 'write_add_keywords', 'write_remove_keywords', 'write_gpx',
+            'write_category', 'write_description', 'write_public', 'write_title'])
+        expect_unsupported[ServerDirectory] = set(['lifetrack'])
+        expect_unsupported[MMT] = set(['write_gpx'])
+        expect_unsupported[GPSIES] = set([
+            'get_time', 'lifetrack', 'write_add_keywords', 'write_remove_keywords', 'write_gpx'])
         expect_unsupported[TrackMMT] = set([
-            'remove', '_write_attribute',
-            '_write_title', '_write_description', '_write_public',
-            '_write_category', '_write_add_keywords',
-            '_write_remove_keywords'])
+            'scan', 'remove', 'write_gpx',
+            'write_title', 'write_description', 'write_public',
+            'write_category', 'write_add_keywords',
+            'write_remove_keywords'])
         for cls in self._find_backend_classes():
+            print(cls, cls.supported)
+            print(cls, expect_unsupported[cls])
             with self.subTest(' {}'.format(cls.__name__)):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
+                self.assertEqual(sorted(cls.supported | expect_unsupported[cls]), sorted(cls.full_support))
 
     def test_save_empty(self):
         """Save empty track"""

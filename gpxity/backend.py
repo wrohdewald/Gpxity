@@ -65,10 +65,9 @@ class Backend:
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
-            Those are: scan, write, remove, lifetrack, get_time, write, write_title, write_public, write_category,
-            write_gpx, write_description, write_add_keywords, write_remove_keywords.
-            If a particular write_* like write_public does not exist, the entire track is written instead
+            If a particular value write_* like write_public does not exist, the entire track is written instead
             which normally results in a new ident for the track.
+        full_support (set(str)): All possible values for the supported attribute.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
         debug: If True, print debugging information
@@ -94,6 +93,10 @@ class Backend:
     _legal_categories = None # Override in the backends
 
     default_url = None # Override in the backends
+
+    full_support = (
+        'scan', 'remove', 'lifetrack', 'get_time', 'write', 'write_title', 'write_public', 'write_category',
+        'write_gpx', 'write_description', 'write_add_keywords', 'write_remove_keywords')
 
     # It is important that we have only one global session per identifier()
     # because gpsies.com seems to have several servers and their
