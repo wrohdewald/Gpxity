@@ -33,9 +33,11 @@ class Backup:
     def __init__(self, track):
         self.track = track
         self.old_id = track.id_in_backend
-        self.old_pathname = track.backend.gpx_path(track.id_in_backend)
-        if os.path.exists(self.old_pathname):
-            os.rename(self.old_pathname, self.old_pathname + '.old')
+        self.old_pathname = None
+        if self.old_id is not None:
+            self.old_pathname = track.backend.gpx_path(self.old_id)
+            if os.path.exists(self.old_pathname):
+                os.rename(self.old_pathname, self.old_pathname + '.old')
 
     def __enter__(self):
         return self
@@ -46,15 +48,17 @@ class Backup:
             with self.track._decouple():  # pylint: disable=protected-access
                 self.track.id_in_backend = self.old_id
         else:
-            if os.path.exists(self.old_pathname + '.old'):
-                os.remove(self.old_pathname + '.old')
+            if self.old_pathname is not None:
+                if os.path.exists(self.old_pathname + '.old'):
+                    os.remove(self.old_pathname + '.old')
 
     def undo_rename(self):
         """if something failed, undo change of file name and restore old file."""
-        if os.path.exists(self.old_pathname):
-            os.remove(self.old_pathname)
-        if os.path.exists(self.old_pathname + '.old'):
-            os.rename(self.old_pathname + '.old', self.old_pathname)
+        if self.old_pathname is not None:
+            if os.path.exists(self.old_pathname):
+                os.remove(self.old_pathname)
+            if os.path.exists(self.old_pathname + '.old'):
+                os.rename(self.old_pathname + '.old', self.old_pathname)
 
 
 class Directory(Backend):
@@ -215,6 +219,7 @@ class Directory(Backend):
 
     def gpx_path(self, ident):
         """The full path name for the local copy of a track"""
+        assert isinstance(ident, str), '{} must be str'.format(ident)
         return os.path.join(self.url, '{}.gpx'.format(ident))
 
     def _list_gpx(self):
