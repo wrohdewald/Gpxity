@@ -126,14 +126,21 @@ class Backend:
         self.verify = verify
         self._current_track = None
 
-    def identifier(self):
+    def identifier(self, track=None):
         """Used for formatting strings. A unique identifier for every
        physical backend. Two Backend() instances pointing to the
-       same physical backend have the same identifier."""
-        return '{}:{}{}/'.format(
+       same physical backend have the same identifier.
+
+       Args:
+            track: If given, add it to the identifier.
+        """
+        result = '{}:{}{}/'.format(
             self.__class__.__name__.lower(),
             '' if self.url == self.default_url else self.url,
             self.auth[0] if self.auth and self.auth[0] else '')
+        if track:
+            result += track.id_in_backend
+        return result
 
     @property
     def legal_categories(self):
@@ -595,9 +602,9 @@ class Backend:
             for old_track in other_tracks:
                 if not dry_run:
                     new_track = self.add(old_track)
-                result.append('{} {} -> {} {}'.format(
-                    'blind move' if remove else 'blind copy', old_track.identifier(), self.identifier(),
-                    '' if dry_run else ' / ' + new_track.identifier()))
+                result.append('{} {} -> {}'.format(
+                    'blind move' if remove else 'blind copy', old_track.identifier(),
+                    '' if dry_run else new_track.identifier()))
                 if remove and not dry_run:
                     old_track.remove()
             return result

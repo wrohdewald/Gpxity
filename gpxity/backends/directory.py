@@ -120,12 +120,17 @@ class Directory(Backend):
         self._symlinks = defaultdict(list)
         self._load_symlinks()
 
-    def identifier(self):
-        """Used for formatting strings"""
+    def identifier(self, track=None):
+        """Used for formatting strings. Must be unique."""
         result = self.url
         if result:
             if  result.startswith('./') or result == '.':
                 result = result[2:]
+        if track:
+            if result:
+                result += '/' + track.id_in_backend
+            else:
+                result = track.id_in_backend
         return result
 
     @property

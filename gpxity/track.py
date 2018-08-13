@@ -751,11 +751,10 @@ class Track:
         Args:
             long: If True, give more info
         """
-        long_info = ' "{}" from {}'.format(self.title or 'untitled', self.time) if long else ''
-        return '{}{}{}'.format(
-            self.backend.identifier() if self.backend else '',
-            self.id_in_backend if self.id_in_backend else ' unsaved ',
-            long_info)
+        if self.backend is None:
+            long_info = ' "{}" from {}'.format(self.title or 'untitled', self.time) if long else ''
+            return 'unsaved: {}'.format(long_info)
+        return self.backend.identifier(self)
 
     def key(self, with_category: bool = True, with_last_time: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but
