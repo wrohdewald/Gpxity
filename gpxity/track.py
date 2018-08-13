@@ -272,7 +272,7 @@ class Track:
         if 'title' in self._header_data:
             return self._header_data['title']
         self._load_full()
-        return self.__gpx.name
+        return self.__gpx.name or ''
 
     @title.setter
     def title(self, value: str):
