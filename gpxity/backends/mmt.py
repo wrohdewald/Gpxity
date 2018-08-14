@@ -362,6 +362,9 @@ class MMT(Backend):
         attr_value = getattr(track, attribute)
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
+        # MMT returns 500 Server Error if we set the title to an empty string
+        if attribute == 'title' and not attr_value:
+            attr_value = 'no title'
         data = '<?xml version="1.0" encoding="ISO-8859-1"?>' \
             '<message><nature>update_{attr}</nature><eid>{eid}</eid>' \
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
