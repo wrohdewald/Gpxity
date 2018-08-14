@@ -412,7 +412,8 @@ class Backend:
         """
         self._current_track = track
         assert track.backend is self
-        assert self._has_item(track.id_in_backend), '{} not in {}'.format(track, ' / '.join(str(x) for x in self))
+        assert self._has_item(track.id_in_backend), '{}: its id_in_backend {} is not in {}'.format(
+            track, track.id_in_backend, ' / '.join(str(x) for x in self))
         assert track._dirty  # pylint: disable=protected-access
 
         needs_full_save = self._needs_full_save(changes)
