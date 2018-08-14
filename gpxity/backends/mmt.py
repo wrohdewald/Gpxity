@@ -349,7 +349,7 @@ class MMT(Backend):
         try:
             result.raise_for_status()
         except BaseException as exc:
-            if 'request' in data:
+            if isinstance(data, str) and 'request' in data:
                 _ = data['request']
             else:
                 _ = data
