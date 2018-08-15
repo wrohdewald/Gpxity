@@ -239,12 +239,14 @@ class BasicTest(unittest.TestCase):
         result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup, debug=debug)
         if clear_first:
             result.remove_all()
-        while count > len(result):
-            track = self.create_test_track(count, len(result), category=category, public=public)
-            result.add(track)
-        self.assertGreaterEqual(len(result), count)
-        if clear_first:
-            self.assertEqual(len(result), count)
+        if count:
+            # if count == 0, skip this. Needed for write-only backends like Mailer.
+            while count > len(result):
+                track = self.create_test_track(count, len(result), category=category, public=public)
+                result.add(track)
+            self.assertGreaterEqual(len(result), count)
+            if clear_first:
+                self.assertEqual(len(result), count)
         return result
 
     @contextmanager
