@@ -21,3 +21,7 @@ Password = B96nxDC3D99EhihfeC
 
 [ServerDirectory:mmtserver]
 Url = /tmp/serverdirectory_test
+
+[TrackMMT:gpxitytest]
+Url = http://localhost:12398
+Password = gpxitytestpw
