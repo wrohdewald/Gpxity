@@ -39,6 +39,7 @@ where the keywords now contain "What:", change that to "Category:".
   * gpxdo --similar
   * new: Track.similarity(other)
   * new backend Mailer
+  * new: class Lifetrack
 
 1.2.6 release 2018-06-05
 ------------------------

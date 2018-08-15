@@ -408,44 +408,6 @@ class Track:
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
-    def lifetrack(self, backend=None, points=None) ->None:
-        """Life tracking.
-
-        When starting lifetracking, the track must have no points yet
-        and must not yet be assigned to a backend.
-
-        Some backends may have a separate interface for life tracking like MMT.
-        Others may simply watch an activity and notice if it gets more points.
-        This is fully transparent, usage of lifetrack is always identical.
-
-        Args:
-            backend: The backend which should lifetrack this Track. Only pass this
-              when you start tracking. The backend may change :attr:`id_in_backend`.
-            points (list(GPXTrackPoint): The points to be added.
-                If None: Stop life tracking.
-        """
-        if self.backend is not None and backend is not None:
-            raise Exception('lifetrack(): Track must not have a backend yet')
-        if self.backend is None and self.__gpx.tracks:
-            raise Exception('lifetrack(): Track must be empty')
-        if  points:
-            rounded = points[:]
-            self._round_points(rounded)
-            with self._decouple():
-                self.__add_points(rounded)
-        else:
-            rounded = None
-        if backend is not None:
-            self.__backend = backend
-        if self.backend is None:
-            raise Exception('lifetrack(): backend unknown')
-        # pylint: disable=no-member
-        if 'lifetrack' in self.backend.supported:
-            self.backend._lifetrack(self, rounded) # pylint: disable=protected-access
-        else:
-            # just add the points
-            self._dirty = 'gpx'
-
     def _parse_keywords(self):
         """self.keywords is 1:1 as parsed from xml. Here we extract
         our special keywords Category: and Status:"""

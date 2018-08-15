@@ -36,7 +36,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Track, Backend, Directory, MMT, GPSIES, TrackMMT
+from gpxity import Track, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT
 
 class Main:
     """this is where the work is done"""
@@ -54,13 +54,13 @@ class Main:
             assert isinstance(source, Track)
             backend = self.instantiate_object(self.options.backend)
             assert isinstance(backend, Backend)
-            track = Track()
-            track.title = 'Mein Lifetrack von heute'
+            track = Lifetrack(backend)
+            track.title = 'Todays Lifetrack'
             all_points = list(source.points())
-            track.lifetrack(backend=backend, points=all_points[:5])
+            track.update(all_points[:5])
             for point in all_points[5:]:
-                track.lifetrack(points=[point])
-            track.lifetrack()
+                track.update([point])
+            track.end()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
 

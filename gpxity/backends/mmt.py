@@ -623,41 +623,56 @@ class MMT(Backend):
                 point.time.timestamp()))
         return ' '.join(_)
 
-    def _lifetrack(self, track, points):
-        """Supports only one track per account. We ensure that only
-        one track is tracked by this backend instance, you have to
-        make sure there are no other processes interfering. The MMT
-        API does not help you with that.
+    def _lifetrack_start(self, track, points) ->str:
+        """Starts a new lifetrack with initial points.
 
-        points are not yet added to track."
+        Returns:
+            new_ident: New track id
         """
-        if MMT._current_lifetrack is not None and track != MMT._current_lifetrack:
-            raise self.BackendException('MMT._lifetrack() got wrong track')
-        if points is None:
-            if MMT._current_lifetrack:
-                self.__post(url='/', request='stop_activity')
-                MMT._current_lifetrack = None
-            return
-        if not MMT._current_lifetrack:
-            result = self.__post(
-                url='/',
-                request='start_activity',
-                title=track.title,
-                privacy='public' if track.public else 'private',
-                activity=self.encode_category(track.category),
-                points=self.__formatted_lifetrack_points(track.points()),
-                source='Gpxity',
-                version=VERSION,
-                expect='activity_started',
-                # tags='TODO',
-                unique_token='{}'.format(id(track)))
-            with self._decouple():
-                track.id_in_backend = result.find('activity_id').text
-            MMT._current_lifetrack = track
+        if self.is_free_account:
+            raise Exception('Your free MMT account does not allow lifetracking')
+        if MMT._current_lifetrack is not None:
+            raise Exception('MMT only accepts one simultaneous lifetracker per username')
+        MMT._current_lifetrack = track
+        result = self.__post(
+            url='/',
+            request='start_activity',
+            title=track.title,
+            privacy='public' if track.public else 'private',
+            activity=self.encode_category(track.category),
+            points=self.__formatted_lifetrack_points(points),
+            source='Gpxity',
+            version=VERSION,
+            expect='activity_started',
+            # tags='TODO',
+            unique_token='{}'.format(id(track)))
+        return result.find('activity_id').text
+
+    def _lifetrack_update(self, track, points):
+        """Updates a lifetrack with poings.
+
+        Args:
+            track: The lifetrack
+            points: The new point
+        """
+        if MMT._current_lifetrack != track:
+            raise Exception('MMT only accepts one simultaneous lifetracker per username')
         self.__post(
             url='/',
             request='update_activity', activity_id=track.id_in_backend,
-            points=self.__formatted_lifetrack_points(points))
+            points=self.__formatted_lifetrack_points(points),
+            expect='activity_updated')
+
+    def _lifetrack_end(self, track):
+        """Ends a lifetrack.
+
+        Args:
+            track: The lifetrack
+        """
+        if MMT._current_lifetrack != track:
+            raise Exception('MMT only accepts one simultaneous lifetracker per username')
+        self.__post(url='/', request='stop_activity')
+        MMT._current_lifetrack = None
 
     def destroy(self):
         """also close session"""

@@ -13,11 +13,13 @@ import importlib
 import os
 import io
 import datetime
+import time
 import random
 from inspect import getmembers, isclass, getmro
 from pkgutil import get_data
 import tempfile
 from contextlib import contextmanager
+from subprocess import Popen
 
 import  gpxpy
 from gpxpy.gpx import GPXTrackPoint
@@ -248,6 +250,19 @@ class BasicTest(unittest.TestCase):
             if clear_first:
                 self.assertEqual(len(result), count)
         return result
+
+    @staticmethod
+    @contextmanager
+    def lifetrackserver(directory, servername, port):
+        """Starts and ends a server for lifetrack testing."""
+        cmdline = 'mmtserver --debug --servername {} --port {} --directory {}'.format(
+            servername, port, directory)
+        process = Popen(cmdline.split())
+        try:
+            time.sleep(1)  # give the server time to start
+            yield
+        finally:
+            process.kill()
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments

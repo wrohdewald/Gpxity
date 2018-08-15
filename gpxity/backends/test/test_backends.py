@@ -18,7 +18,7 @@ from unittest import skip
 from .basic import BasicTest
 from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer
 from ...auth import Authenticate
-from ... import Track
+from ... import Track, Lifetrack
 
 # pylint: disable=attribute-defined-outside-init
 

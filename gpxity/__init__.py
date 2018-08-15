@@ -4,12 +4,13 @@
 
 # pylint: disable=wildcard-import, missing-docstring
 from .track import *
+from .lifetrack import *
 from .backend import *
 from .diff import *
 from .backends import *
 from .version import *
 
-__all__ = ['Track', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'ServerDirectory', 'BackendDiff', 'VERSION']
+__all__ = ['Track', 'Lifetrack', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'ServerDirectory', 'BackendDiff', 'VERSION']
 
 def prepare_backends():
     """Initialize the attribute "supported" for all backends"""

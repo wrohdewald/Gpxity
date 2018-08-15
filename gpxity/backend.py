@@ -188,7 +188,7 @@ class Backend:
             '_yield_tracks':'scan',
             '_write_all': 'write',
             '_remove_ident':'remove',
-            '_lifetrack':'lifetrack',
+            '_lifetrack_start':'lifetrack',
             'get_time':'get_time'}
         cls.supported = set()
         for name, method in getmembers(cls, isfunction):
@@ -477,11 +477,14 @@ class Backend:
         """backend dependent implementation"""
         raise NotImplementedError()
 
-    def _lifetrack(self, track, points):
+    def _lifetrack_start(self, track, points):
         """Modelled after MapMyTracks. I hope this matches other
         services too.
 
         This will always produce a new track in the backend.supported
+
+        If the backend does not support lifetrack, just add the points
+        to the track.
 
         Args:
             track(Track): Holds initial data
@@ -491,6 +494,24 @@ class Backend:
         For details see :meth:`Track.track() <gpxity.Track.track>`.
 
         """
+        raise NotImplementedError()
+
+    def _lifetrack_update(self, track, points):
+        """If the backend does not support lifetrack, just add the points
+        to the track.
+
+        Args:
+            track(Track): Holds initial data
+            points: If None, stop tracking. Otherwise, start tracking
+                and add points.
+
+        For details see :meth:`Track.track() <gpxity.Track.track>`.
+
+        """
+        raise NotImplementedError()
+
+    def _lifetrack_end(self, track):
+        """If the backend does not support lifetrack, do nothing"""
         raise NotImplementedError()
 
     def remove_all(self):
