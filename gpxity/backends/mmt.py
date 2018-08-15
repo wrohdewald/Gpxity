@@ -656,5 +656,6 @@ class MMT(Backend):
     def destroy(self):
         """also close session"""
         super(MMT, self).destroy()
-        if self.session:
-            self.session.close()
+        ident = self.identifier()
+        if ident in self._session:
+            self._session[ident].close()
