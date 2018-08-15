@@ -236,6 +236,9 @@ class Track:
             self._clear_dirty()
         if not self.__dirty:
             return
+        if 'write' not in self.backend.supported:
+            # TODO: unittest
+            raise Exception('Rewriting {}: "write" is not supported'.format(self.identifier()))
         if not self.__is_decoupled and not self._batch_changes:
             with self._decouple():
                 self.backend._rewrite(self, self.__dirty)  # pylint: disable=protected-access
