@@ -29,6 +29,8 @@ There are some problems with the server running at mapmytracks.com:
 
 """
 
+# TODO: logout
+
 from xml.etree import ElementTree
 import html
 from html.parser import HTMLParser
@@ -217,6 +219,7 @@ class MMT(Backend):
             url = self.default_url
         super(MMT, self).__init__(url, auth, cleanup, debug, timeout, verify)
         self.__mid = -1 # member id at MMT for auth
+        self.__is_free_account = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
             # has a lookup table and never deletes there. So a given tag will always get
             # the same ID. We use this fact.
@@ -274,13 +277,25 @@ class MMT(Backend):
     def mid(self):
         """the member id on MMT belonging to auth"""
         if self.__mid == -1:
-            response = self.session.get(self.url)
-            page_parser = ParseMMTTrack()
-            page_parser.feed(response.text)
-            self.__mid = page_parser.result['mid']
-            self.__tag_ids.update(page_parser.result['tags'])
-            self._check_tag_ids()
+            self._parse_homepage()
         return self.__mid
+
+    @property
+    def is_free_account(self):
+        """Returns True if the current account is not PLUS enabled."""
+        if self.__is_free_account is None:
+            self._parse_homepage()
+        return self.__is_free_account
+
+    def _parse_homepage(self):
+        """Get some interesting values from the home page"""
+        response = self.session.get(self.url)
+        self.__is_free_account = 'href="/plus">Upgrade to PLUS' in response.text
+        page_parser = ParseMMTTrack()
+        page_parser.feed(response.text)
+        self.__mid = page_parser.result['mid']
+        self.__tag_ids.update(page_parser.result['tags'])
+        self._check_tag_ids()
 
     @staticmethod
     def _encode_keyword(value):

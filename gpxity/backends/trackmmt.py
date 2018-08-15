@@ -57,6 +57,12 @@ class TrackMMT(MMT):
         """backend dependent implementation"""
         raise NotImplementedError()
 
-
+    @property
+    def is_free_account(self):
+        """Our own local server can do lifeftracking.
+        Returns:
+            False
+        """
+        return False
 
 TrackMMT._define_support() # pylint: disable=protected-access
