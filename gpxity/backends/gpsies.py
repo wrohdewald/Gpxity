@@ -171,7 +171,12 @@ class GPSIES(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    _legal_categories = list()
+    legal_categories = (
+        'biking', 'trekking', 'walking', 'jogging', 'climbing', 'racingbike', 'mountainbiking',
+        'pedelec', 'skating', 'crossskating', 'handcycle', 'motorbiking', 'motocross', 'motorhome',
+        'cabriolet', 'car', 'riding', 'coach', 'packAnimalTrekking', 'swimming', 'canoeing', 'sailing',
+        'boating', 'motorboat', 'skiingNordic', 'skiingAlpine', 'skiingRandonnee', 'snowshoe',
+        'wintersports', 'flying', 'train', 'sightseeing', 'geocaching', 'miscellaneous')
 
     _category_decoding = {
         'trekking': 'Hiking',
@@ -240,17 +245,15 @@ class GPSIES(Backend):
         super(GPSIES, self).__init__(url, auth, cleanup, debug, timeout)
         self.session_response = None
 
-    @property
-    def legal_categories(self):
-        """
+    def _download_legal_categories(self):
+        """Needed only for unittest
+
         Returns: list(str)
             all legal values for category."""
-        if not self._legal_categories:
-            response = requests.post('{}?trackList.do'.format(self.url), timeout=self.timeout)
-            category_parser = ParseGPSIESCategories()
-            category_parser.feed(response.text)
-            self._legal_categories.extend(category_parser.result)
-        return self._legal_categories
+        response = requests.post('{}?trackList.do'.format(self.url), timeout=self.timeout)
+        category_parser = ParseGPSIESCategories()
+        category_parser.feed(response.text)
+        return sorted(category_parser.result)
 
     @property
     def session(self):

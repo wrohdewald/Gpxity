@@ -13,6 +13,7 @@ TrackMMT is used to test mmt_server.
 """
 
 from .mmt import MMT
+from ..track import Track
 
 __all__ = ['TrackMMT']
 
@@ -26,6 +27,8 @@ class TrackMMT(MMT):
     """
 
     # pylint: disable=abstract-method
+
+    legal_categories = Track.legal_categories
 
     def _yield_tracks(self):
         raise NotImplementedError()

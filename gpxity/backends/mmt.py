@@ -192,7 +192,15 @@ class MMT(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    _legal_categories = list()
+    legal_categories = (
+        'Cycling', 'Running', 'Mountain biking', 'Sailing', 'Walking', 'Hiking',
+        'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
+        'Skiing', 'Cross country skiing', 'Canoeing', 'Kayaking', 'Sea kayaking',
+        'SUP boarding', 'Rowing', 'Swimming', 'Windsurfing', 'Orienteering',
+        'Mountaineering', 'Skating', 'Horse riding', 'Hang gliding', 'Hand cycling',
+        'Gliding', 'Flying', 'Kiteboarding', 'Snowboarding', 'Paragliding',
+        'Hot air ballooning', 'Nordic walking', 'Miscellaneous', 'Skateboarding',
+        'Snowshoeing', 'Jet skiing', 'Powerboating', 'Wheelchair', 'Indoor cycling')
 
     _category_encoding = {
         'Pedelec': 'Cycling',
@@ -227,17 +235,15 @@ class MMT(Backend):
         self._last_response = None # only used for debugging
         self.https_url = self.url.replace('http:', 'https:')
 
-    @property
-    def legal_categories(self):
-        """
+    def _download_legal_categories(self):
+        """Needed only for unittest
+
         Returns: list(str)
             all legal values for category."""
-        if not self._legal_categories:
-            response = requests.get(self.url + '/explore/wall', timeout=self.timeout)
-            category_parser = ParseMMTCategories()
-            category_parser.feed(response.text)
-            self._legal_categories.extend(category_parser.result)
-        return self._legal_categories
+        response = requests.get(self.url + '/explore/wall', timeout=self.timeout)
+        category_parser = ParseMMTCategories()
+        category_parser.feed(response.text)
+        return sorted(category_parser.result)
 
     @property
     def session(self):

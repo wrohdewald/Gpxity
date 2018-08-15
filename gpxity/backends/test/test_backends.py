@@ -524,3 +524,12 @@ class TestBackends(BasicTest):
                 backend2.scan()
                 self.assertEqual(backend2._get_current_keywords(backend2[0]), backend2[0].keywords)  # pylint: disable=protected-access
                 self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
+
+    def test_legal_categories(self):
+        """Check if our fixed list of categories still matches the online service."""
+        with self.temp_backend(Directory) as serverdirectory:
+            with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
+                for cls in (MMT, GPSIES, TrackMMT):
+                    with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
+                        downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
+                        self.assertEqual(sorted(backend.legal_categories), downloaded)
