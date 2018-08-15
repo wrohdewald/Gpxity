@@ -38,6 +38,7 @@ where the keywords now contain "What:", change that to "Category:".
   * gpxdo --set --id-from-time is new
   * gpxdo --similar
   * new: Track.similarity(other)
+  * new backend Mailer
 
 1.2.6 release 2018-06-05
 ------------------------

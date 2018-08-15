@@ -37,7 +37,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Track, Directory, BackendDiff, MMT, GPSIES
+from gpxity import Track, Directory, BackendDiff, MMT, GPSIES, Mailer
 from gpxity.util import uniq, collect_tracks
 
 def __last_month_day(date):
@@ -610,7 +610,7 @@ class Utility:
         only this one wanted track."""
         # pylint: disable=too-many-branches
         result = account = track_id = None
-        if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES'):
+        if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES', 'MAILER'):
             clsname = name.split(':')[0].upper()
             rest = name[len(clsname) + 1:]
             if '/' in rest:
@@ -623,6 +623,8 @@ class Utility:
                 result = MMT(auth=account, timeout=self.options.timeout)
             elif clsname == 'GPSIES':
                 result = GPSIES(auth=account, timeout=self.options.timeout)
+            elif clsname == 'MAILER':
+                result = Mailer(auth=account)
         else:
             if os.path.isdir(name):
                 account = name
@@ -721,6 +723,8 @@ class Utility:
 source and destination arguments may be single
 tracks or entire backend instances.
 Local files and directories are given as usual.
+Mail targets are given as mailer:my_mail@address.test
+
 For all other backends, the syntax is:
 
 backend:username  for all tracks in a backend
@@ -733,6 +737,7 @@ Available backends are:
 
   - mmt       MapMytracks
   - gpsies    gpsies.com
+  - mailer    mails tracks
 
 The file $HOME/.config/Gpxity/auth.cfg
 defines the type of the backend, username and password. Example:

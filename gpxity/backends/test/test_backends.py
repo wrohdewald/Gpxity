@@ -16,7 +16,7 @@ import tempfile
 from unittest import skip
 
 from .basic import BasicTest
-from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT
+from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer
 from ...auth import Authenticate
 from ... import Track
 
@@ -41,6 +41,11 @@ class TestBackends(BasicTest):
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords'])
+        expect_unsupported[Mailer] = set([
+            'scan', 'remove', 'get_time',
+            'write_title', 'write_description', 'write_public',
+            'write_category', 'write_add_keywords', 'write_gpx',
+            'write_remove_keywords', 'lifetrack'])
         for cls in self._find_backend_classes():
             print(cls, cls.supported)
             print(cls, expect_unsupported[cls])
@@ -350,28 +355,39 @@ class TestBackends(BasicTest):
             track = self.create_test_track()
             backend2.add(track)
             self.assertEqual(len(backend2), 6)
-            source.scan() # because it cannot know backend2 added something
+            source.scan()  # because it cannot know backend2 added something
 
-    def xtest_sync_trackmmt(self):
-        """sync from local to MMT. TODO: automatically start the expected local server"""
-        with self.temp_backend(Directory, count=5) as source:
-            with TrackMMT(auth='test') as sink:
-                prev_len = len(sink)
-                for _ in sink:
-                    _.adjust_time(datetime.timedelta(hours=-random.randrange(10000)))
-                sink.merge(source)
-                self.assertEqual(len(sink), prev_len + 5)
+    def test_lifetrack_mmt(self):
+        """test life tracking against a free account on mapmytracks.com."""
+        with MMT(auth='gpxitytest') as uplink:
+            self.assertTrue(uplink.is_free_account)
+            life = Lifetrack(uplink)
+            with self.assertRaises(Exception) as context:
+                life.update(self._random_points())
+            self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
-    def xtest_track(self):
-        """test life tracking. TODO: automatically start the expected local server"""
-        track = self.create_test_track()
-        with TrackMMT(auth='test') as uplink:
-            track.lifetrack(uplink, self._random_points())
-            new_id = track.id_in_backend
-            time.sleep(2)
-            track.lifetrack(points=self._random_points())
-            track.lifetrack()
-            self.assertIn(new_id, uplink)
+    def test_lifetrack_local(self):
+        """test life tracking against a local server."""
+        with self.temp_backend(Directory) as serverdirectory:
+            with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
+                with TrackMMT(auth='gpxitytest') as uplink:
+                    with Mailer(url='wolfgang.kde@rohdewald.de') as mailer:
+                        mailer.min_interval = 5
+                        life = Lifetrack([uplink, mailer])
+                        points = self._random_points(100)
+                        life.update(points[:50])
+                        time.sleep(7)
+                        life.update(points[50:])
+                        life.end()
+                        for target in life.targets:
+                            track = target.track
+                            new_id = track.id_in_backend
+                            if 'scan' in target.backend.supported:
+                                self.assertIn(new_id, uplink)
+                                self.assertSameTracks(uplink, serverdirectory)
+                        with self.assertRaises(NotImplementedError):
+                            new_id in uplink  # pylint: disable=pointless-statement
+                        self.assertEqual(len(mailer.history), 2)
 
     def test_backend_dirty(self):
         """Track._dirty"""
