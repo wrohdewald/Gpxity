@@ -27,8 +27,6 @@ class TrackMMT(MMT):
 
     # pylint: disable=abstract-method
 
-   #  skip_test = True
-
     def _yield_tracks(self):
         raise NotImplementedError()
 
