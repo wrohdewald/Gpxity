@@ -45,8 +45,7 @@ class TestBackends(BasicTest):
     def test_save_empty(self):
         """Save empty track"""
         for cls in self._find_backend_classes():
-            if cls is TrackMMT:
-                # TODO: automatically start expected local server
+            if 'write' not in cls.supported:
                 continue
             with self.subTest(' {}'.format(cls.__name__)):
                 can_remove = 'remove' in cls.supported
@@ -76,7 +75,7 @@ class TestBackends(BasicTest):
     def test_slow_duplicate_tracks(self):
         """What happens if we save the same track twice?"""
         for cls in self._find_backend_classes():
-            if 'remove' in cls.supported:
+            if 'remove' in cls.supported and 'write' in cls.supported:
                 with self.subTest(' {}'.format(cls.__name__)):
                     with self.temp_backend(cls) as backend:
                         track = self.create_test_track()
@@ -104,6 +103,8 @@ class TestBackends(BasicTest):
     def test_open_wrong_password(self):
         """Open backends with wrong password"""
         for cls in self._find_backend_classes():
+            if 'scan' not in cls.supported:
+                continue
             with self.subTest(' {}'.format(cls.__name__)):
                 if not issubclass(cls, Directory):
                     with self.assertRaises(cls.BackendException):
@@ -219,7 +220,7 @@ class TestBackends(BasicTest):
         kw_d = 'D' # self.unicode_string2
 
         for cls in self._find_backend_classes():
-            if cls.__name__ == 'TrackMMT':
+            if 'write' not in cls.supported or 'scan' not in cls.supported:
                 continue
             with self.subTest(' {}'.format(cls.__name__)):
                 is_mmt = cls.__name__ == 'MMT'
@@ -370,8 +371,7 @@ class TestBackends(BasicTest):
         """Track._dirty"""
         # pylint: disable=protected-access
         for cls in self._find_backend_classes():
-            if cls is TrackMMT:
-                # TODO: automatically start expected local server
+            if 'scan' not in cls.supported or 'write' not in cls.supported:
                 continue
             with self.temp_backend(cls, count=1) as backend:
                 track = backend[0]
@@ -452,8 +452,7 @@ class TestBackends(BasicTest):
         """For all Track attributes with setters, test if we can change them without
         changing something else."""
         for cls in self._find_backend_classes():
-            if cls is TrackMMT:
-                # TODO: automatically start expected local server
+            if 'write' not in cls.supported or 'scan' not in cls.supported:
                 continue
             with self.temp_backend(cls, count=1) as backend:
                 track = backend[0]
