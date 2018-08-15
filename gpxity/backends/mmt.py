@@ -200,7 +200,8 @@ class MMT(Backend):
         'Cabriolet': 'Driving',
         'Coach': 'Miscellaneous',
         'Pack animal trekking': 'Hiking',
-        'Train': 'Miscellaneous'
+        'Train': 'Miscellaneous',
+        'Stand up paddle boarding': 'SUP boarding',
     }
 
     default_url = 'http://www.mapmytracks.com'
