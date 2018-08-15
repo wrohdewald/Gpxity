@@ -36,7 +36,9 @@ class Authenticate:
 
         url: If given, overrides the url given to the backend
 
-    For every specific account in a backend, auth.cfg has a section:
+    For every specific account in a backend, auth.cfg has a section. Its name is
+    case sensitive: The ClassName must match exactly.
+
       * [ClassName.username]
 
     A section can define
@@ -49,6 +51,13 @@ class Authenticate:
 
         [GPSIES:gpxitytest]
         Password = the_unencrypted_password
+
+    A mail account:
+
+    .. code-block:: guess
+
+        [Mailer:gpxitytest]
+        Url = tester@test.test
 
 
     """
