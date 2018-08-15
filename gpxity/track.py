@@ -160,7 +160,13 @@ class Track:
     def _set_backend(self, value):
         """To be used only by backend implementations"""
         assert self.__is_decoupled
+        old_backend = self.__backend
         self.__backend = value
+        if self.__gpx.keywords:
+            if old_backend is None or old_backend.__class__ != value.__class__:
+                # encode keywords for the new backend
+                # TODO: unittest
+                self.__gpx.keywords = ', '.join(self.__prepare_keywords(self.__gpx.keywords))
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`"""
