@@ -602,19 +602,19 @@ class Track:
         return list()
 
     @keywords.setter
-    def keywords(self, value):
+    def keywords(self, values):
         """Replaces all keywords.
 
         Args:
-            value (iterable(str)): the new keywords. Must not have duplicates.
+            Either single str with one or more keywords, separated by commas
+                or an iterable of keywords. The new keywords. Must not have duplicates.
         """
-        self._load_full()
-        new_keywords = sorted(list(self.backend._encode_keyword(x) for x in value))  # pylint: disable=protected-access
+        new_keywords = self.__prepare_keywords(values)
         if new_keywords != self.keywords:
             with self.batch_changes():
                 if self.__gpx.keywords:
                     self.remove_keywords(self.__gpx.keywords)
-            self.add_keywords(value)
+            self.add_keywords(new_keywords)
 
     @staticmethod
     def _check_keyword(keyword):
