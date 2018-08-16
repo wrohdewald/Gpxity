@@ -34,7 +34,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Track, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT
+from gpxity import Track, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT  # noqa
 
 
 class Main:

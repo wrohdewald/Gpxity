@@ -39,7 +39,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track, ServerDirectory, Lifetrack, Mailer  # pylint: disable=no-name-in-module
+from gpxity import Track, ServerDirectory, Lifetrack, Mailer  # noqa pylint: disable=no-name-in-module
 
 try:
     import argcomplete
