@@ -120,7 +120,7 @@ class BackendDiff:
                             *pretty_times(right_times[right_start], right_times[right_end - 1])))
                 elif tag == 'replace':
                     if [(x[0], x[1]) for x in left_found] == [(x[0], x[1]) for x in right_found]:
-                        if len(set((right_found[x][3] - left_found[x][3]) for x in range(len(left_found)))) == 1:
+                        if len({(right_found[x][3] - left_found[x][3]) for x in range(len(left_found))}) == 1:
                             time1, time2 = pretty_times(left_found[0][3], left_found[-1][3])
                             result['Z'].append(
                                 '{} points between {} and {} on the left are {} later on the right'.format(

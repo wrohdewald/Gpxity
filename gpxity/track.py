@@ -683,7 +683,7 @@ class Track:
                 or an iterable of keywords
 
         """
-        new_keywords = set(x for x in self.__prepare_keywords(values) if x not in self.keywords)
+        new_keywords = {x for x in self.__prepare_keywords(values) if x not in self.keywords}
         if new_keywords:
             all_new_keywords = set(self.keywords) | new_keywords
             self.__gpx.keywords = ', '.join(sorted(all_new_keywords))

@@ -159,8 +159,8 @@ class TrackTests(BasicTest):
         xml = track.to_xml()
         self.assertNotIn('<link ></link>', xml)
         lines = xml.split('\n')
-        start_lines = set(x for x in lines if x.startswith('<trkpt'))
-        end_lines = set(x for x in lines if x.endswith('</trkpt>'))
+        start_lines = {x for x in lines if x.startswith('<trkpt')}
+        end_lines = {x for x in lines if x.endswith('</trkpt>')}
         have_points = track.gpx.get_track_points_no()
         self.assertEqual(len(start_lines), have_points)
         self.assertEqual(len(end_lines), have_points)

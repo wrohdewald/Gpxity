@@ -531,7 +531,7 @@ class TestBackends(BasicTest):
             with self.temp_backend(cls, count=1) as backend:
                 backend2 = self.clone_backend(backend)
                 track = backend[0]
-                keywords = set(backend._encode_keyword(x) for x in self._random_keywords(count=50))  # pylint: disable=protected-access
+                keywords = {backend._encode_keyword(x) for x in self._random_keywords(count=50)}  # pylint: disable=protected-access
                 for _ in range(20):
                     self.assertEqual(current(), track.keywords)
                     add_keywords = set(random.sample(keywords, random.randint(0, 30)))
