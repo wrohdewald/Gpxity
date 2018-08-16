@@ -271,7 +271,7 @@ class TestBackends(BasicTest):
                     # removed by somebody else. MMT has a work-around for removing tracks which
                     # removes them all and re-adds all wanted. So we get kw_d back.
                     self.assertEqual(track.keywords, ([kw_c, kw_d]))
-                    #track2.remove_keywords(kw_a)
+                    # track2.remove_keywords(kw_a)
                     track.remove_keywords(kw_c)
                     track.remove_keywords(kw_d)
                     backend.scan()
