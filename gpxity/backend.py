@@ -193,10 +193,10 @@ class Backend:
         support_mappings = {
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
-            '_yield_tracks': 'scan',
-            '_write_all': 'write',
-            '_remove_ident': 'remove',
             '_lifetrack_start': 'lifetrack',
+            '_remove_ident': 'remove',
+            '_write_all': 'write',
+            '_yield_tracks': 'scan',
             'get_time': 'get_time'}
         cls.supported = set()
         for name, method in getmembers(cls, isfunction):

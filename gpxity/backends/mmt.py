@@ -216,15 +216,15 @@ class MMT(Backend):
         'Snowshoeing', 'Jet skiing', 'Powerboating', 'Wheelchair', 'Indoor cycling')
 
     _category_encoding = {
-        'Pedelec': 'Cycling',
+        'Cabriolet': 'Driving',
+        'Coach': 'Miscellaneous',
         'Crossskating': 'Skating',
         'Handcycle': 'Cycling',
         'Motorhome': 'Driving',
-        'Cabriolet': 'Driving',
-        'Coach': 'Miscellaneous',
         'Pack animal trekking': 'Hiking',
-        'Train': 'Miscellaneous',
+        'Pedelec': 'Cycling',
         'Stand up paddle boarding': 'SUP boarding',
+        'Train': 'Miscellaneous',
     }
 
     default_url = 'http://www.mapmytracks.com'
