@@ -405,7 +405,7 @@ class GPSIES(Backend):
             href = href[1:-1]  # remove apostrophes
             parts = ''.join(href.split('?')[1:])
             parts = parts.split('&amp;')
-            data = dict(x.split('=') for x in parts)
+            data = dict(x.split('=') for x in parts)  # noqa
             response = self.__post('userList', data=data)
             page_parser.feed(response.text)
         for raw_data in page_parser.result['tracks']:
