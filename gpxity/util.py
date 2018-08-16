@@ -35,7 +35,7 @@ class Duration:
     def __exit__(self, exc_type, exc_value, trback):
         """See class docstring."""
         print('{} in {} ({}-{})'.format(
-            datetime.datetime.now()-self.start_time,
+            datetime.datetime.now() - self.start_time,
             self.name, self.start_time, datetime.datetime.now()))
 
 

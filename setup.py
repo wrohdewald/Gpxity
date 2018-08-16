@@ -30,7 +30,7 @@ setup(
     use_scm_version={
         'write_to': 'gpxity/version.py',
         'write_to_template': TEMPLATE
-        },
+    },
     setup_requires=['setuptools_scm'],
     description='A uniform interface to GPX services like mapmytracks or gpsies',
     long_description=readall('README.rst') + '\n\n' + readall('CHANGELOG.rst'),
@@ -49,14 +49,15 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Communications',
         'Topic :: Internet :: WWW/HTTP',
-        ],
+    ],
     packages=find_packages(),
     install_requires=['requests', 'gpxpy>=1.2.0', 'lxml'],
     scripts=['bin/gpxdo'],
     test_suite='gpxity.backends.test',
     package_data={
         'gpxity.backends.test': ['*.gpx', 'test_auth_cfg'],
-        },
+    },
     extras_require={
         'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest']
-        })
+    }
+)

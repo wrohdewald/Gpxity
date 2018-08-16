@@ -251,9 +251,9 @@ class MMTHandler(BaseHTTPRequestHandler):
         for idx in range(0, len(values), 4):
             point = GPXTrackPoint(
                 latitude=float(values[idx]),
-                longitude=float(values[idx+1]),
-                elevation=float(values[idx+2]),
-                time=datetime.datetime.utcfromtimestamp(float(values[idx+3])))
+                longitude=float(values[idx + 1]),
+                elevation=float(values[idx + 2]),
+                time=datetime.datetime.utcfromtimestamp(float(values[idx + 3])))
             result.append(point)
         return result
 

@@ -459,7 +459,7 @@ class GPSIES(Backend):
                 'This track is deleted and only shown by a direct URL call.',
                 'Track is not public, can be seen only by me',
                 'GPSies is my hobby website and is funded by advertising'
-                )
+            )
             if not any(x in _ for x in ignore_messages):
                 print('WARNING', ':', self._current_track, _)
 
