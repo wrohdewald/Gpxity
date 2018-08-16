@@ -283,12 +283,12 @@ class LifeServerMMT:  # pylint: disable=too-few-public-methods
 
     """A simple MMT server for life tracking.
 
-        Currently supports only one logged in connection.
+    Currently supports only one logged in connection.
 
-        This is not ready for production usage, several important
-        parts are still unimplemented.
+    This is not ready for production usage, several important
+    parts are still unimplemented.
 
-        """
+    """
 
     def __init__(self, options, logger):
         httpd = HTTPServer((options.servername, options.port), MMTHandler)

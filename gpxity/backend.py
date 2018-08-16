@@ -130,7 +130,7 @@ class Backend:
 
         Two Backend() instances pointing to the same physical backend have the same identifier.
 
-       Args:
+        Args:
             track: If given, add it to the identifier.
 
         """
@@ -469,7 +469,8 @@ class Backend:
         raise NotImplementedError()
 
     def remove(self, value) ->None:
-        """Remove track. This can also be done for tracks not passing the current match function.
+        """
+        Remove track. This can also be done for tracks not passing the current match function.
 
         Args:
             value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
@@ -544,7 +545,7 @@ class Backend:
 
         Some backends (example: :class:`Directory <gpxity.Directory.destroy>`)
 
-       may also remove the account (or directory). See also :meth:`remove_all`."""
+        may also remove the account (or directory). See also :meth:`remove_all`."""
         if self._cleanup:
             self.remove_all()
 
