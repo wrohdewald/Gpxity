@@ -199,6 +199,7 @@ class Track:
 
     @_dirty.setter
     def _dirty(self, value):
+        """See dirty.getter."""
         if not isinstance(value, str):
             raise Exception('_dirty only receives str')
         if not self.__is_decoupled:

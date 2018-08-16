@@ -35,27 +35,35 @@ class TrackMMT(MMT):
     legal_categories = Track.legal_categories
 
     def _yield_tracks(self):
+        """not implemented."""
         raise NotImplementedError()
 
     def _write_attribute(self, track, attribute):
+        """not implemented."""
         raise NotImplementedError()
 
     def _write_title(self, track):
+        """not implemented."""
         raise NotImplementedError()
 
     def _write_description(self, track):
+        """not implemented."""
         raise NotImplementedError()
 
     def _write_public(self, track):
+        """not implemented."""
         raise NotImplementedError()
 
     def _write_category(self, track):
+        """not implemented."""
         raise NotImplementedError()
 
     def _write_add_keywords(self, track, values):
+        """not implemented."""
         raise NotImplementedError()
 
     def _write_remove_keywords(self, track, values):
+        """not implemented."""
         raise NotImplementedError()
 
     def _remove_ident(self, ident: str) ->None:
