@@ -4,9 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-This module defines :class:`~gpxity.Backend`
-"""
+"""This module defines :class:`~gpxity.Backend`"""
 
 from collections import defaultdict
 from difflib import SequenceMatcher

@@ -4,9 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-This module defines :class:`~gpxity.Lifetrack`
-"""
+"""This module defines :class:`~gpxity.Lifetrack`"""
 
 from .track import Track
 

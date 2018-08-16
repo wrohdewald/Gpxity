@@ -4,9 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-This module defines :class:`~gpxity.Track`
-"""
+"""This module defines :class:`~gpxity.Track`"""
 
 from math import asin, sqrt, degrees
 import datetime
@@ -276,8 +274,7 @@ class Track:
 
     @property
     def title(self) -> str:
-        """str: The title.
-        """
+        """str: The title."""
         if 'title' in self._header_data:
             return self._header_data['title']
         self._load_full()
@@ -292,8 +289,7 @@ class Track:
 
     @property
     def description(self) ->str:
-        """str: The description.
-        """
+        """str: The description."""
         if 'description' in self._header_data:
             return self._header_data['description']
         self._load_full()

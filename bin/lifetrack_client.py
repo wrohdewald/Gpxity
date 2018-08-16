@@ -10,10 +10,7 @@
 # or see https://argcomplete.readthedocs.io/en/latest/
 
 
-"""
-lifetrack_client is a command line tool for lifetrack testing, client side
-"""
-
+"""lifetrack_client is a command line tool for lifetrack testing, client side."""
 
 import argparse
 import os

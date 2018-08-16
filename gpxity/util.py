@@ -4,9 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-This module defines some helpers.
-"""
+"""This module defines some helpers."""
 
 import os
 import datetime
@@ -31,8 +29,12 @@ class Duration:
             self.name, self.start_time, datetime.datetime.now()))
 
 
-def repr_timespan(start, end):
-    """returns a string in the form #h#m"""
+def repr_timespan(start, end) ->str:
+    """return a string representing the timespan.
+
+    Returns:
+        a string like #h#m
+        """
     duration = end - start
     hours = duration.seconds // 3600
     minutes = (duration.seconds - hours * 3600) // 60
@@ -40,7 +42,7 @@ def repr_timespan(start, end):
     return '{}:{:02}'.format(hours, minutes)
 
 def uniq(lst):
-    """returns lst with unique elements"""
+    """return lst with unique elements."""
     seen = []
     for _ in lst:
         if _ not in seen:
@@ -58,12 +60,12 @@ def remove_directory(path):
                 print('  ', _)
 
 def is_track(value):
-    """Returns True or False without looking at the type, so we do not need to
+    """Return True or False without looking at the type, so we do not need to
     import Track."""
     return hasattr(value, 'id_in_backend')
 
 def collect_tracks(sources, verbose=False):
-    """A copied list with tracks combined from all sources, to be used in 'for'-loops"""
+    """A copied list with tracks combined from all sources, to be used in 'for'-loops."""
     if is_track(sources):
         return [sources]
     result = list()

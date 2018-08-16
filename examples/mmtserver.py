@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
+"""implement a server using the mapmytracks protocol."""
 
-implement a server using the mapmytracks protocol
-
-
-"""
 # PYTHON_ARGCOMPLETE_OK
 # for command line argument completion, put this into your .bashrc:
 # eval "$(register-python-argcomplete gpxdo)"

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-see https://setuptools.readthedocs.io/en/latest/setuptools.html
-"""
+"""see https://setuptools.readthedocs.io/en/latest/setuptools.html"""
 
 from setuptools import setup, find_packages
 

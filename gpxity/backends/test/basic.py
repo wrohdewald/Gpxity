@@ -4,9 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-Tests for gpxity.backends
-"""
+"""Tests for gpxity.backends"""
 
 import unittest
 import importlib
@@ -279,8 +277,7 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def clone_backend(backend):
-        """returns a clone of backend
-        """
+        """returns a clone of backend"""
         return backend.__class__(backend.url, backend.auth)
 
     @staticmethod

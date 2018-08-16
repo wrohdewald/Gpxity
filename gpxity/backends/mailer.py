@@ -4,11 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-
-This implements a mailing backend. It can only write.
-
-"""
+"""This implements a mailing backend. It can only write."""
 
 import datetime
 from subprocess import Popen, PIPE

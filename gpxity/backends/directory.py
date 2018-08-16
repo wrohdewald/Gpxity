@@ -4,9 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-Defines :class:`gpxity.Directory`
-"""
+"""Defines :class:`gpxity.Directory`"""
 
 
 import os

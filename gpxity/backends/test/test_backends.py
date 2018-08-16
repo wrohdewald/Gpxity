@@ -3,9 +3,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-implements :class:`gpxity.backends.test.test_backends.TestBackends` for all backends
-"""
+"""implements :class:`gpxity.backends.test.test_backends.TestBackends` for all backends"""
 
 import os
 import time

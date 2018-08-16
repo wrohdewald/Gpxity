@@ -3,9 +3,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-This module defines :class:`~gpxity.Authenticate`
-"""
+"""This module defines :class:`~gpxity.Authenticate`"""
 
 import os
 import tempfile
