@@ -19,13 +19,16 @@ class Duration:
     # pylint: disable=too-few-public-methods
 
     def __init__(self, name):
+        """See class docstring."""
         self.name = name
         self.start_time = datetime.datetime.now()
 
     def __enter__(self):
+        """See class docstring."""
         return self
 
     def __exit__(self, exc_type, exc_value, trback):
+        """See class docstring."""
         print('{} in {} ({}-{})'.format(
             datetime.datetime.now()-self.start_time,
             self.name, self.start_time, datetime.datetime.now()))

@@ -103,6 +103,7 @@ class Backend:
 
     def __init__(self, url: str = None, auth=None, cleanup: bool = False,
                  debug: bool = False, timeout=None, verify=True):
+        """See class docstring."""
         self._decoupled = False
         super(Backend, self).__init__()
         self.__tracks = list()
@@ -215,6 +216,7 @@ class Backend:
 
     @debug.setter
     def debug(self, value):
+        """see debug.getter."""
         if self.__debug != value:
             self.__debug = value
             if value:
@@ -246,6 +248,7 @@ class Backend:
 
     @match.setter
     def match(self, value):
+        """see match.getter."""
         old_match = self.__match
         self.__match = value
         try:
@@ -669,12 +672,15 @@ class Backend:
         return result
 
     def __enter__(self):
+        """See class docstring."""
         return self
 
     def __exit__(self, exc_type, exc_value, trback):
+        """See class docstring."""
         self.destroy()
 
     def __iter__(self):
+        """See class docstring."""
         self._scan()
         return iter(self.__tracks)
 

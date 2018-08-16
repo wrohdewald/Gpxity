@@ -16,6 +16,7 @@ class LifetrackTarget:
     """A single target of a lifetracking instance."""
 
     def __init__(self, backend):
+        """See class docstring."""
         self.backend = backend
         self.track = Track()
         self.id_in_backend = None
@@ -94,6 +95,7 @@ class Lifetrack:
     # pylint: disable=protected-access
 
     def __init__(self, target_backends):
+        """See class docstring."""
         if isinstance(target_backends, list):
             _ = target_backends
         else:

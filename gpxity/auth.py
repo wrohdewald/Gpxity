@@ -67,6 +67,7 @@ class Authenticate:
     path = '~/.config/Gpxity/auth.cfg'
 
     def __init__(self, cls, username: str = None):
+        """See class docstring."""
 
         self.cls = cls
         self.__username = username

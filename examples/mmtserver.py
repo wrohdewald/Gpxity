@@ -336,6 +336,7 @@ class LifeServerMMT:  # pylint: disable=too-few-public-methods
     """
 
     def __init__(self, options, logger):
+        """See class docstring."""
         httpd = HTTPServer((options.servername, options.port), MMTHandler)
         httpd.gpxdo_options = options
         # define the directory in auth.cfg, using the Url=value
@@ -351,6 +352,7 @@ class Main:  # pylint: disable=too-few-public-methods
     """main."""
 
     def __init__(self):
+        """See class docstring."""
         logger = logging.getLogger('mmtserver')
         logger.setLevel(logging.DEBUG)
         logfile = logging.FileHandler('mmtserver.log')

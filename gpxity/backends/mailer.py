@@ -76,6 +76,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     id_count = 0
 
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None, verify=True):
+        """See class docstring."""
         super(Mailer, self).__init__(url, auth, cleanup, debug, timeout, verify)
         if self.url.endswith('/'):
             self.url = self.url[:-1]
@@ -121,5 +122,11 @@ class Mailer(Backend):  # pylint: disable=abstract-method
             self.history.append(MailerAtom(self, track, self.subject_template))
             self.timer = None
 
-    def identifier(self, track=None):
+    def identifier(self, track=None) ->str:
+        """A unique identifier.
+
+        Returns:
+            the unique identifier
+
+        """
         return 'mailto:{}'.format(self.url)

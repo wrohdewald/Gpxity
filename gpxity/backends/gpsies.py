@@ -29,6 +29,7 @@ class GPSIESRawTrack:
 
     # pylint: disable=too-few-public-methods
     def __init__(self):
+        """See class docstring."""
         self.track_id = None
         self.title = None
         self.time = None
@@ -41,6 +42,7 @@ class ParseGPSIESCategories(HTMLParser):  # pylint: disable=abstract-method
     """Parse the legal values for category from html."""
 
     def __init__(self):
+        """See class docstring."""
         super(ParseGPSIESCategories, self).__init__()
         self.result = list(['biking'])
 
@@ -58,6 +60,7 @@ class ParseGPIESEditPage(HTMLParser):  # pylint: disable=abstract-method
     """Parse the category value for a track from html."""
 
     def __init__(self):
+        """See class docstring."""
         super(ParseGPIESEditPage, self).__init__()
         self.category = None
 
@@ -75,6 +78,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
     Of course, this is highly unreliable. Just use what we can get."""
 
     def __init__(self):
+        """See class docstring."""
         super(ParseGPSIESList, self).__init__()
         self.result = dict()
         self.result['tracks'] = list()
@@ -87,6 +91,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
         self.seeing_warning = False
 
     def feed(self, data):
+        """get data."""
         self.track = None
         self.column = 0
         self.current_tag = None
@@ -244,6 +249,7 @@ class GPSIES(Backend):
     default_url = 'https://www.gpsies.com'
 
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
+        """See class docstring."""
         if url is None:
             url = self.default_url
         super(GPSIES, self).__init__(url, auth, cleanup, debug, timeout)

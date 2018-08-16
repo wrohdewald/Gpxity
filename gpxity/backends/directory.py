@@ -32,6 +32,7 @@ class Backup:
     # pylint: disable=too-few-public-methods
 
     def __init__(self, track):
+        """See class docstring."""
         self.track = track
         self.old_id = track.id_in_backend
         self.old_pathname = None
@@ -41,9 +42,11 @@ class Backup:
                 os.rename(self.old_pathname, self.old_pathname + '.old')
 
     def __enter__(self):
+        """See class docstring."""
         return self
 
     def __exit__(self, exc_type, exc_value, trback):
+        """See class docstring."""
         if exc_value:
             self.undo_rename()
             with self.track._decouple():  # pylint: disable=protected-access
@@ -110,6 +113,7 @@ class Directory(Backend):
     prefix = 'gpxity.'
 
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, prefix: str = None):
+        """See class docstring."""
         self.fs_encoding = None
         if prefix is None:
             prefix = self.__class__.prefix

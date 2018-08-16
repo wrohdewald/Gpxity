@@ -64,6 +64,7 @@ class ParseMMTCategories(HTMLParser):  # pylint: disable=abstract-method
     """Parse the legal values for category from html."""
 
     def __init__(self):
+        """See class docstring."""
         super(ParseMMTCategories, self).__init__()
         self.seeing_category = False
         self.result = ['Cycling']  # The default value
@@ -76,6 +77,7 @@ class ParseMMTCategories(HTMLParser):  # pylint: disable=abstract-method
             tag == 'input' and 'name' in attributes and attributes['name'].startswith('add-activity'))
 
     def handle_data(self, data):
+        """handle the data."""
         if self.seeing_category:
             _ = data.strip()
             if _ not in self.result:
@@ -92,6 +94,7 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
     result = dict()
 
     def __init__(self):
+        """See class docstring."""
         super(ParseMMTTrack, self).__init__()
         self.seeing_category = False
         self.seeing_title = False
@@ -167,6 +170,7 @@ class MMTRawTrack:
 
     # pylint: disable=too-few-public-methods
     def __init__(self, xml):
+        """See class docstring."""
         self.track_id = xml.find('id').text
         self.title = html.unescape(xml.find('title').text)
         self.time = _convert_time(xml.find('date').text)
@@ -232,6 +236,7 @@ class MMT(Backend):
     _current_lifetrack = None
 
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None, verify=True):
+        """See class docstring."""
         if url is None:
             url = self.default_url
         super(MMT, self).__init__(url, auth, cleanup, debug, timeout, verify)

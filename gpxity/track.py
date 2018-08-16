@@ -96,6 +96,7 @@ class Track:
         'Miscellaneous')
 
     def __init__(self, gpx=None):
+        """See class docstring."""
         self.__dirty = list()
         self._batch_changes = False
         self.__category = self.legal_categories[0]
@@ -304,6 +305,7 @@ class Track:
 
     @title.setter
     def title(self, value: str):
+        """see getter."""
         if value != self.__gpx.name:
             self._load_full()
             self.__gpx.name = value
@@ -324,6 +326,7 @@ class Track:
 
     @description.setter
     def description(self, value: str):
+        """see getter."""
         if value != self.__gpx.description:
             self._load_full()
             self.__gpx.description = value
@@ -398,6 +401,7 @@ class Track:
 
     @category.setter
     def category(self, value: str):
+        """see getter."""
         if value is None:
             value = self.legal_categories[0]
         if value != self.__category:
@@ -744,7 +748,13 @@ class Track:
                 result.append('Moving speed {:.3f} is out of expected range 10..40'.format(self.moving_speed()))
         return result
 
-    def __repr__(self):
+    def __repr__(self) ->str:
+        """The repr.
+
+        Returns:
+            the repr str
+
+        """
         with self._decouple():
             # this should not automatically load the entire track
             parts = []
@@ -767,7 +777,13 @@ class Track:
                     parts.append('{} points'.format(self.gpx.get_track_points_no()))
             return 'Track({})'.format(' '.join(parts))
 
-    def __str__(self):
+    def __str__(self) ->str:
+        """The str.
+
+        Returns:
+            the str
+
+        """
         return self.__repr__()
 
     def identifier(self, long: bool = False) ->str:
@@ -808,11 +824,13 @@ class Track:
             self.angle(), self.gpx.get_track_points_no())
 
     def __eq__(self, other):
+        """equal."""
         if self is other:
             return True
         return self.key() == other.key()
 
     def __lt__(self, other):
+        """less than."""
         return self.key() < other.key()
 
     def distance(self) ->float:

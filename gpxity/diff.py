@@ -47,6 +47,7 @@ class BackendDiff:
                     Values is a list(str) with additional info
         """
         def __init__(self, left, right, verbose):
+            """See class docstring."""
             self.left = left
             self.right = right
             self.differences = self.__compare(verbose)
@@ -158,6 +159,7 @@ class BackendDiff:
         # pylint: disable=too-few-public-methods
 
         def __init__(self, tracks):
+            """See class docstring."""
             self.tracks = list(self.flatten(tracks))
             self.build_positions()
             self.exclusive = []
@@ -191,7 +193,7 @@ class BackendDiff:
                     self.exclusive.append(_)
 
     def __init__(self, left, right, verbose=False):
-
+        """See class docstring."""
         self.similar = []
         self.identical = []
         matched = []
