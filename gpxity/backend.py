@@ -750,7 +750,7 @@ class Backend:
                 src_dict[_.points_hash()].append(_)
 
         # 1. get all tracks existing only in other
-        for point_hash in sorted({src_dict.keys()} - {dst_dict.keys()}):
+        for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
             for old_track in src_dict[point_hash]:
                 if not dry_run:
                     new_track = self.add(old_track)

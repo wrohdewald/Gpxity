@@ -184,7 +184,7 @@ class BackendDiff:
         def build_positions(self):
             """Return a set of long/lat tuples."""
             for _ in self.tracks:
-                _.positions = set([(x.longitude, x.latitude) for x in _.points()])
+                _.positions = {(x.longitude, x.latitude) for x in _.points()}
 
         def _find_exclusives(self, matched):
             """use data from the other side."""

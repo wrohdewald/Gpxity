@@ -521,7 +521,7 @@ class MMT(Backend):
         # state after all batched changes have been applied, but we need the current
         # state. Ask MMT.
         current = self._get_current_keywords(track)
-        wanted = {current} - {x.strip() for x in values.split(',')}
+        wanted = set(current) - {x.strip() for x in values.split(',')}
         if True:  # pylint: disable=using-constant-test
             # First remove all keywords and then re-add the still wanted ones. This works!
             # Because even if MMT does not remove the correct keyword, it always does
