@@ -346,6 +346,7 @@ class LifeServerMMT:  # pylint: disable=too-few-public-methods
         # define the directory in auth.cfg, using the Url=value
         httpd.server_directory = ServerDirectory(url=options.directory)
         httpd.mailer = Mailer(url=options.mailto)
+        httpd.mailer.min_interval = options.mail_interval
         httpd.life = None
         httpd.logger = logger
         httpd.serve_forever()
@@ -371,6 +372,7 @@ class Main:  # pylint: disable=too-few-public-methods
         parser.add_argument('--mailto', help='mail new tracks to MAILTO')
         parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
         parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
+        parser.add_argument('--mail-interval', help='only mail every X seconds, default is 1800', type=int, default=1800)
         parser.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection
             timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
