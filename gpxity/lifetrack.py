@@ -4,7 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Lifetrack`"""
+"""This module defines :class:`~gpxity.Lifetrack`."""
 
 from .track import Track
 
@@ -70,7 +70,7 @@ class LifetrackTarget:
             self.backend._lifetrack_end(self.track)  # pylint: disable=protected-access
 
     def _prepare_points(self, points):
-        """Round points"""
+        """Round points."""
         result = list(points)[:]
         self.track._round_points(result)  # pylint: disable=protected-access
         return result
@@ -99,8 +99,9 @@ class Lifetrack:
         self.targets = [LifetrackTarget(x) for x in _]
 
     def update(self, points):
-        """Starts or updates lifetrack. If the backend does not support
-        lifetrack, this just saves the track in the backend.
+        """Starts or updates lifetrack.
+
+        If the backend does not support lifetrack, this just saves the track in the backend.
 
         Args:
             points(list): New points
@@ -116,8 +117,9 @@ class Lifetrack:
         return result
 
     def end(self):
-        """Ends lifetrack. If the backend does not support
-        lifetrack, this does nothing."""
+        """Ends lifetrack.
+
+        If the backend does not support lifetrack, this does nothing."""
         for _ in self.targets:
             _.end()
 

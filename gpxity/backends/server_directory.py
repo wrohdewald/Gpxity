@@ -4,7 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This implements :class:`gpxity.ServerDirectory`"""
+"""This implements :class:`gpxity.ServerDirectory`."""
 
 
 from .directory import Directory, Backup
@@ -24,7 +24,7 @@ class ServerDirectory(Directory):
     skip_test = True
 
     def _new_ident(self, _):
-        """Buids a unique id for track"""
+        """Buids a unique id for track."""
         try:
             result = str(max(int(x) for x in self._list_gpx()) + 1)
             print('new serverdirectory id:', result)

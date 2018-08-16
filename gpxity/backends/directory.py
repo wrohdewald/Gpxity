@@ -4,7 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""Defines :class:`gpxity.Directory`"""
+"""Defines :class:`gpxity.Directory`."""
 
 
 import os
@@ -20,7 +20,7 @@ from ..util import remove_directory
 __all__ = ['Directory', 'Backup']
 
 class Backup:
-    """A context manager making a backup of the gpx file
+    """A context manager making a backup of the gpx file.
 
     If an exception happened, restore the backup.
     Otherwise, remove it again.
@@ -134,6 +134,8 @@ class Directory(Backend):
     @property
     def legal_categories(self):
         """
+        A list with all legal categories.
+
         Returns: list(str)
             all legal values for category for this backend."""
         return Track.legal_categories
@@ -147,10 +149,11 @@ class Directory(Backend):
         return value
 
     def _load_symlinks(self, directory=None):
-        """scan the subdirectories with the symlinks. If the content of an
-        track changes, the symlinks might have to be adapted. But
-        we do not know the name of the existing symlink anymore. So
-        just scan them all and assign them to id_in_backend."""
+        """scan the subdirectories with the symlinks.
+
+        If the content of a track changes, the symlinks might have to
+        be adapted. But we do not know the name of the existing symlink anymore.
+        So just scan them all and assign them to id_in_backend."""
         if directory is None:
             directory = self.url
         for dirpath, _, filenames in os.walk(directory):
@@ -184,8 +187,9 @@ class Directory(Backend):
 
     @staticmethod
     def _make_path_unique(value):
-        """If the file name already exists, apply a serial number. If value
-        ends with .gpx, put the serial number in front of that.
+        """If the file name already exists, apply a serial number.
+
+        If value ends with .gpx, put the serial number in front of that.
         """
         ctr = 0
         unique_value = value
@@ -198,12 +202,12 @@ class Directory(Backend):
         return unique_value
 
     def _make_ident_unique(self, value):
-        """Returns a unique ident"""
+        """Returns a unique ident."""
         path = Directory._make_path_unique(os.path.join(self.url, value + '.gpx'))
         return os.path.basename(path)[:-4]
 
     def _sanitize_name(self, value):
-        """Change it to legal file name characters"""
+        """Change it to legal file name characters."""
         if value is None:
             return None
         if self.fs_encoding is not None:
@@ -221,18 +225,18 @@ class Directory(Backend):
                 remove_directory(self.url)
 
     def gpx_path(self, ident):
-        """The full path name for the local copy of a track"""
+        """The full path name for the local copy of a track."""
         assert isinstance(ident, str), '{} must be str'.format(ident)
         return os.path.join(self.url, '{}.gpx'.format(ident))
 
     def _list_gpx(self):
-        """returns a generator of all gpx files, with .gpx removed"""
+        """returns a generator of all gpx files, with .gpx removed."""
         gpx_names = (x for x in os.listdir(self.url) if x.endswith('.gpx'))
         return (x.replace('.gpx', '') for x in gpx_names)
 
     @staticmethod
     def _get_field(data, name):
-        """Gets xml field out of data"""
+        """Gets xml field out of data."""
         start_html = '<{}>'.format(name)
         end_html = '</{}>'.format(name)
         data = data.split(end_html)
@@ -246,7 +250,7 @@ class Directory(Backend):
         return None
 
     def _enrich_with_headers(self, track):
-        """Quick scan of file for getting some header fields"""
+        """Quick scan of file for getting some header fields."""
         with open(self.gpx_path(track.id_in_backend)) as raw_file:
             data = raw_file.read(10000)
             parts = data.split('<trk>')
@@ -282,7 +286,7 @@ class Directory(Backend):
             yield track
 
     def get_time(self) ->datetime.datetime:
-        """get server time as a Linux timestamp"""
+        """get server time as a Linux timestamp."""
         return datetime.datetime.now()
 
     def _read_all(self, track):
@@ -292,7 +296,7 @@ class Directory(Backend):
             track.parse(in_file)
 
     def _remove_symlinks(self, ident: str):
-        """Removes its symlinks, empty symlink parent directories"""
+        """Removes its symlinks, empty symlink parent directories."""
         for symlink in self._symlinks[ident]:
             if os.path.exists(symlink):
                 os.remove(symlink)
@@ -336,7 +340,7 @@ class Directory(Backend):
         return ident
 
     def _make_symlinks(self, track):
-        """Makes all symlinks for track"""
+        """Makes all symlinks for track."""
         ident = track.id_in_backend
         gpx_pathname = self.gpx_path(ident)
         link_name = self._symlink_path(track)
@@ -365,7 +369,9 @@ class Directory(Backend):
         self._make_symlinks(track)
 
     def _write_all(self, track) ->str:
-        """save full gpx track. Since the file name uses title and title may have changed,
+        """save full gpx track.
+
+        Since the file name uses title and title may have changed,
         compute new file name and remove the old files. We also adapt track.id_in_backend."""
         old_ident = track.id_in_backend
         new_ident = self._new_ident(track)

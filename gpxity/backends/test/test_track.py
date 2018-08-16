@@ -4,9 +4,10 @@
 # See LICENSE for details.
 
 """
-implements test classes for Track. They only use backend Directory,
-so there is no network traffic involved (unless Directory is a network
-file system, of course).
+implements test classes for Track.
+
+They only use backend Directory, so there is no network traffic involved
+(unless Directory is a network file system, of course).
 """
 
 import os
@@ -25,10 +26,10 @@ from ...util import repr_timespan
 
 class TrackTests(BasicTest):
 
-    """track tests"""
+    """track tests."""
 
     def test_init(self):
-        """test initialisation"""
+        """test initialisation."""
         track = Track()
         self.assertFalse(track.public)
         with Directory(cleanup=True) as backend:
@@ -53,7 +54,7 @@ class TrackTests(BasicTest):
             os.rmdir(test_url)
 
     def test_track_list(self):
-        """test list of tracks"""
+        """test list of tracks."""
         with Directory(cleanup=True) as directory:
             self.assertEqual(len(directory), 0)
             track1 = Track()
@@ -64,7 +65,7 @@ class TrackTests(BasicTest):
             self.assertIsNotNone(track1.id_in_backend)
 
     def test_clone(self):
-        """is the clone identical?"""
+        """is the clone identical?."""
         track1 = self.create_test_track()
         track2 = track1.clone()
         self.assertEqualTracks(track1, track2)
@@ -90,7 +91,7 @@ class TrackTests(BasicTest):
         self.assertEqualTracks(track1, track2)
 
     def test_no_category(self):
-        """category must return default value if not present in gpx.keywords"""
+        """category must return default value if not present in gpx.keywords."""
         category_default = Track.legal_categories[0]
         track = Track()
         self.assertEqual(track.category, category_default)
@@ -104,7 +105,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track.category, category_default)
 
     def test_duplicate_category(self):
-        """try to add two categories to Track"""
+        """try to add two categories to Track."""
         category_other = Track.legal_categories[5]
         track = Track()
         track.category = category_other
@@ -112,7 +113,7 @@ class TrackTests(BasicTest):
             track.add_keywords('Category:{}'.format(category_other))
 
     def test_remove_category(self):
-        """remove category from Track"""
+        """remove category from Track."""
         category_default = Track.legal_categories[0]
         category_other = Track.legal_categories[5]
         track = Track()
@@ -122,12 +123,12 @@ class TrackTests(BasicTest):
         self.assertEqual(track.category, category_default)
 
     def test_no_public(self):
-        """public must return False if not present in gpx.keywords"""
+        """public must return False if not present in gpx.keywords."""
         track = Track()
         self.assertFalse(track.public)
 
     def test_duplicate_public(self):
-        """try to set public via its property and additionally with add_keywords"""
+        """try to set public via its property and additionally with add_keywords."""
         track = Track()
         track.public = True
         self.assertTrue(track.public)
@@ -135,7 +136,7 @@ class TrackTests(BasicTest):
             track.add_keywords('Status:public')
 
     def test_remove_public(self):
-        """remove and add public from Track using remove_keywords and add_keywords"""
+        """remove and add public from Track using remove_keywords and add_keywords."""
         track = Track()
         track.public = True
         with self.assertRaises(Exception):
@@ -146,13 +147,13 @@ class TrackTests(BasicTest):
         self.assertTrue(track.public)
 
     def test_last_time(self):
-        """Track.last_time"""
+        """Track.last_time."""
         track = self.create_test_track()
         gpx_last_time = track.gpx.tracks[-1].segments[-1].points[-1].time
         self.assertEqual(track.last_time, gpx_last_time)
 
     def test_one_line_per_trkpt(self):
-        """One line per trackpoint"""
+        """One line per trackpoint."""
         track = self.create_test_track()
         xml = track.to_xml()
         self.assertNotIn('<link ></link>', xml)
@@ -165,7 +166,7 @@ class TrackTests(BasicTest):
         self.assertEqual(start_lines, end_lines)
 
     def test_parse(self):
-        """does Track parse xml correctly"""
+        """does Track parse xml correctly."""
         track = self.create_test_track()
         track.keywords = ['Here are some keywords']
         xml = track.to_xml()
@@ -180,7 +181,7 @@ class TrackTests(BasicTest):
         self.assertEqualTracks(track, track2)
 
     def test_combine(self):
-        """combine values in track with newly parsed"""
+        """combine values in track with newly parsed."""
         # first, does it overwrite?
         track = self.create_test_track()
         xml = track.to_xml()
@@ -228,7 +229,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track2.description, 'Description2')
 
     def test_save_dir(self):
-        """Correct files?"""
+        """Correct files?."""
         with Directory(cleanup=True) as directory:
             os.chmod(directory.url, 0o555)
             track = self.create_test_track()
@@ -245,7 +246,7 @@ class TrackTests(BasicTest):
             self.assertIsNotNone(track.backend)
 
     def test_save(self):
-        """save locally"""
+        """save locally."""
         with Directory(cleanup=True) as directory:
             dir2 = self.clone_backend(directory)
             try:
@@ -292,7 +293,7 @@ class TrackTests(BasicTest):
                 dir2.destroy()
 
     def test_add_points(self):
-        """test Track.add_points"""
+        """test Track.add_points."""
         point_count = 11
         track = Track()
         points = self._random_points(count=point_count)
@@ -304,7 +305,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track.gpx.get_track_points_no(), point_count * 2 - 1)
 
     def test_points_equal(self):
-        """test Track.points_equal"""
+        """test Track.points_equal."""
         for _ in range(100):
             points = self._random_points(count=7)
             track1 = Track()
@@ -351,7 +352,7 @@ class TrackTests(BasicTest):
             self.assertTrue(track1.points_equal(track2))
 
     def test_str(self):
-        """test __str__"""
+        """test __str__."""
         track = Track()
         self.assertNotIn('id:', str(track))
         with Directory(cleanup=True) as directory:
@@ -377,7 +378,7 @@ class TrackTests(BasicTest):
             self.assertIn(' 15 points', str(clone[0]))
 
     def test_angle(self):
-        """test Track.angle"""
+        """test Track.angle."""
         track1 = Track()
         track1.add_points(list())
         self.assertEqual(len(track1.gpx.tracks), 0)
@@ -404,7 +405,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track1.angle(), 0)
 
     def test_key(self):
-        """Track.key()"""
+        """Track.key()."""
         title = 'This is a niße title'
         description = title + ' NOT - it is the description'
         category = Track.legal_categories[3]
@@ -426,7 +427,7 @@ class TrackTests(BasicTest):
         self.assertIn('points:{}'.format(track.gpx.get_track_points_no()), key)
 
     def test_symlinks(self):
-        """Directory symlinks"""
+        """Directory symlinks."""
         with Directory(cleanup=True) as directory:
             source = os.path.join(directory.url, 'deadlink')
             target = 'deadtarget'
@@ -439,7 +440,7 @@ class TrackTests(BasicTest):
             self.assertFalse(os.path.exists(source))
 
     def test_fs_encoding(self):
-        """fs_encoding"""
+        """fs_encoding."""
         with Directory(cleanup=True) as directory:
             track = Track()
             directory.add(track)
@@ -464,7 +465,7 @@ class TrackTests(BasicTest):
                 directory.fs_encoding = prev_encoding
 
     def test_local_keywords(self):
-        """Some keyword tests. More see in test_backends"""
+        """Some keyword tests. More see in test_backends."""
         # Category: and Status: are special
         gpx = self._get_gpx_from_test_file('test')
         gpx.keywords = 'Category:Cycling, Status:public'
@@ -491,7 +492,7 @@ class TrackTests(BasicTest):
 
 
     def test_keyword_args(self):
-        """Track.keywords must accept all types of iterable"""
+        """Track.keywords must accept all types of iterable."""
         track = Track()
         test_tracks = list(sorted(['a', self.unicode_string2]))
         track.keywords = set(test_tracks)
@@ -504,7 +505,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track.keywords, test_tracks)
 
     def test_id(self):
-        """id_in_backend must be str"""
+        """id_in_backend must be str."""
         with Directory(cleanup=True) as directory:
             track = Track()
             with self.assertRaises(Exception):
@@ -516,7 +517,7 @@ class TrackTests(BasicTest):
             self.assertEqual(len(directory), 2)
 
     def test_in(self):
-        """x in backend"""
+        """x in backend."""
         with Directory(cleanup=True) as directory:
             track = Track()
             directory.add(track).id_in_backend = '56'
@@ -528,7 +529,7 @@ class TrackTests(BasicTest):
             self.assertNotIn(track.id_in_backend, directory)
 
     def test_getitem(self):
-        """backend[idx]"""
+        """backend[idx]."""
         with Directory(cleanup=True) as directory:
             directory.scan(now=True)
             track = Track()
@@ -541,7 +542,7 @@ class TrackTests(BasicTest):
                 directory[0] # pylint: disable=pointless-statement
 
     def test_adjust_time(self):
-        """adjust_time()"""
+        """adjust_time()."""
         track = self.create_test_track()
         first_wp_time = track.gpx.waypoints[0].time
         first_trkpt_time = next(track.points()).time
@@ -551,7 +552,7 @@ class TrackTests(BasicTest):
         self.assertEqual(next(track.points()).time, first_trkpt_time + seconds10)
 
     def test_overlapping_times(self):
-        """Track.overlapping_times(tracks)"""
+        """Track.overlapping_times(tracks)."""
         now = datetime.datetime.now()
         track1 = self.create_test_track(start_time=now)
         seconds10 = datetime.timedelta(seconds=10)
@@ -581,7 +582,7 @@ class TrackTests(BasicTest):
             self.assertTrackFileContains(backend2[0], '<trk>')
 
     def test_remove_track(self):
-        """If a backend has several identical tracks, make sure we remove the right one"""
+        """If a backend has several identical tracks, make sure we remove the right one."""
         with self.temp_backend(Directory, count=1) as backend:
             track = backend[0]
             track_id = track.id_in_backend

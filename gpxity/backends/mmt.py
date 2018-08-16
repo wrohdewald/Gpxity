@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.MMT` for http://www.mapmytracks.com
+This implements :class:`gpxity.MMT` for http://www.mapmytracks.com.
 
 There are some problems with the server running at mapmytracks.com:
     * it is not possible to change an existing track - if the track changes, the
@@ -46,7 +46,7 @@ from ..version import VERSION
 __all__ = ['MMT']
 
 def _convert_time(raw_time) ->datetime.datetime:
-    """MMT uses Linux timestamps. Converts that into datetime
+    """MMT uses Linux timestamps. Converts that into datetime.
 
     Args:
         raw_time (int): The linux timestamp from the MMT server
@@ -56,7 +56,7 @@ def _convert_time(raw_time) ->datetime.datetime:
 
 class ParseMMTCategories(HTMLParser): # pylint: disable=abstract-method
 
-    """Parse the legal values for category from html"""
+    """Parse the legal values for category from html."""
 
     def __init__(self):
         super(ParseMMTCategories, self).__init__()
@@ -64,7 +64,7 @@ class ParseMMTCategories(HTMLParser): # pylint: disable=abstract-method
         self.result = ['Cycling'] # The default value
 
     def handle_starttag(self, tag, attrs):
-        """starttag from the parser"""
+        """starttag from the parser."""
         # pylint: disable=too-many-branches
         attributes = dict(attrs)
         self.seeing_category = (
@@ -80,8 +80,9 @@ class ParseMMTCategories(HTMLParser): # pylint: disable=abstract-method
 
 class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
 
-    """get some attributes available only on the web page. Of course,
-    this is highly unreliable. Just use what we can get."""
+    """get some attributes available only on the web page.
+
+    Of course, this is highly unreliable. Just use what we can get."""
 
     result = dict()
 
@@ -102,7 +103,7 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
         self.result['tags'] = dict() # key: name, value: id
 
     def handle_starttag(self, tag, attrs):
-        """starttag from the parser"""
+        """starttag from the parser."""
         # pylint: disable=too-many-branches
         self.seeing_title = False
         self.seeing_description = False
@@ -135,7 +136,7 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
             self.seeing_tag = attributes['id'].split('-')[2]
 
     def handle_data(self, data):
-        """data from the parser"""
+        """data from the parser."""
         if not data.strip():
             return
         if self.seeing_title:
@@ -157,7 +158,7 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
 
 class MMTRawTrack:
 
-    """raw data from mapmytracks.get_tracks"""
+    """raw data from mapmytracks.get_tracks."""
 
     # pylint: disable=too-few-public-methods
     def __init__(self, xml):
@@ -236,7 +237,7 @@ class MMT(Backend):
         self.https_url = self.url.replace('http:', 'https:')
 
     def _download_legal_categories(self):
-        """Needed only for unittest
+        """Needed only for unittest.
 
         Returns: list(str)
             all legal values for category."""
@@ -272,7 +273,7 @@ class MMT(Backend):
         return value
 
     def encode_category(self, value: str) ->str:
-        """Translate internal value into MMT value"""
+        """Translate internal value into MMT value."""
         if value in self.legal_categories:
             return value
         if value not in self._category_encoding:
@@ -281,7 +282,7 @@ class MMT(Backend):
 
     @property
     def mid(self):
-        """the member id on MMT belonging to auth"""
+        """the member id on MMT belonging to auth."""
         if self.__mid == -1:
             self._parse_homepage()
         return self.__mid
@@ -294,7 +295,7 @@ class MMT(Backend):
         return self.__is_free_account
 
     def _parse_homepage(self):
-        """Get some interesting values from the home page"""
+        """Get some interesting values from the home page."""
         response = self.session.get(self.url)
         self.__is_free_account = 'href="/plus">Upgrade to PLUS' in response.text
         page_parser = ParseMMTTrack()
@@ -305,11 +306,11 @@ class MMT(Backend):
 
     @staticmethod
     def _encode_keyword(value):
-        """mimics the changes MMT applies to tags"""
+        """mimics the changes MMT applies to tags."""
         return ' '.join(x.capitalize() for x in value.split())
 
     def _check_tag_ids(self):
-        """Assert that all tags conform to what MMT likes"""
+        """Assert that all tags conform to what MMT likes."""
         for _ in self.__tag_ids:
             assert _[0].upper() == _[0], self.__tag_ids
 
@@ -366,7 +367,7 @@ class MMT(Backend):
 
     @classmethod
     def __handle_post_error(cls, url, data, result):
-        """we got status_code != ok"""
+        """we got status_code != ok."""
         try:
             result.raise_for_status()
         except BaseException as exc:
@@ -377,9 +378,10 @@ class MMT(Backend):
             raise cls.BackendException('{}: {} {} {}'.format(exc, url, _, result.text))
 
     def _write_attribute(self, track, attribute):
-        """change an attribute directly on mapmytracks. Note that we specify iso-8859-1 but
-        use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
-        aborts our connection."""
+        """change an attribute directly on mapmytracks.
+
+        Note that we specify iso-8859-1 but use utf-8. If we correctly specify utf-8 in
+        the xml encoding, mapmytracks.com aborts our connection."""
         attr_value = getattr(track, attribute)
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
@@ -398,15 +400,15 @@ class MMT(Backend):
         self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
 
     def _write_title(self, track):
-        """changes title on remote server"""
+        """changes title on remote server."""
         self._write_attribute(track, 'title')
 
     def _write_description(self, track):
-        """changes description on remote server"""
+        """changes description on remote server."""
         self._write_attribute(track, 'description')
 
     def _write_public(self, track):
-        """changes public/private on remote server"""
+        """changes public/private on remote server."""
         self.__post(
             with_session=True, url='user-embeds/statuschange-track', expect='access granted',
             mid=self.mid, tid=track.id_in_backend,
@@ -415,9 +417,10 @@ class MMT(Backend):
             # what a strange answer
 
     def _write_category(self, track):
-        """change category directly on mapmytracks. Note that we specify iso-8859-1 but
-        use utf-8. If we correctly specify utf-8 in the xml encoding, mapmytracks.com
-        aborts our connection."""
+        """change category directly on mapmytracks.
+
+        Note that we specify iso-8859-1 but use utf-8. If we correctly specify utf-8 in
+        the xml encoding, mapmytracks.com aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
             eid=track.id_in_backend, activity=self.encode_category(track.category))
@@ -431,7 +434,9 @@ class MMT(Backend):
         return list(sorted(set(page_scan['tags'])))
 
     def _write_add_keywords(self, track, values):
-        """Add keyword as MMT tag. MMT allows adding several at once, comma separated,
+        """Add keyword as MMT tag.
+
+        MMT allows adding several at once, comma separated,
         and we allow this too. But do not expect this to work with all backends."""
         if not values:
             return
@@ -496,7 +501,7 @@ class MMT(Backend):
                 tag_id=self.__tag_ids[tag], entry_id=track.id_in_backend)
 
     def get_time(self) ->datetime.datetime:
-        """get MMT server time"""
+        """get MMT server time."""
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
     def _yield_tracks(self):
@@ -532,14 +537,16 @@ class MMT(Backend):
         return page_parser.result
 
     def _get_current_keywords(self, track):
-        """Ask MMT for current keywords, return them as a list"""
+        """Ask MMT for current keywords, return them as a list."""
         page_scan = self._scan_track_page(track)
         if page_scan['tags']:
             return sorted(page_scan['tags'].keys())
         return list()
 
     def _use_webpage_results(self, track):
-        """if the title has not been set, get_activities says something like "Track 2016-09-04 ..."
+        """Get things directly.
+
+        if the title has not been set, get_activities says something like "Track 2016-09-04 ..."
             while the home page says "Cycling activity". We prefer the value from the home page
             and silently ignore this inconsistency.
          """
@@ -561,7 +568,7 @@ class MMT(Backend):
             track.public = page_scan['public']
 
     def _read_all(self, track):
-        """get the entire track"""
+        """get the entire track."""
         session = self.session
         if session is None:
             # https access not implemented for TrackMMT
@@ -576,7 +583,7 @@ class MMT(Backend):
         self._use_webpage_results(track)
 
     def _remove_ident(self, ident: str):
-        """remove on the server"""
+        """remove on the server."""
         self.__post(
             with_session=True, url='handler/delete_track', expect='access granted',
             tid=ident, hash=self.session.cookies['exp_uniqueid'])
@@ -613,7 +620,7 @@ class MMT(Backend):
 
     @staticmethod
     def __formatted_lifetrack_points(points):
-        """formats points for life tracking"""
+        """formats points for life tracking."""
         _ = list()
         for point in points:
             _.append('{} {} {} {}'.format(
@@ -675,7 +682,7 @@ class MMT(Backend):
         MMT._current_lifetrack = None
 
     def destroy(self):
-        """also close session"""
+        """also close session."""
         super(MMT, self).destroy()
         ident = self.identifier()
         if ident in self._session:

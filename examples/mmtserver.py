@@ -45,7 +45,8 @@ except ImportError:
 
 
 class MMTHandler(BaseHTTPRequestHandler):
-    """handles all HTTP requests"""
+    """handles all HTTP requests."""
+
     users = None
     login_user = None
     uniqueid = 123
@@ -59,7 +60,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.server.logger.error(format % args)
 
     def check_basic_auth_pw(self):
-        """basic http authentication"""
+        """basic http authentication."""
         if self.users is None:
             self.load_users()
         for pair in self.users.items():
@@ -70,7 +71,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return False
 
     def load_users(self):
-        """load legal user auth from serverdirectory/.users"""
+        """load legal user auth from serverdirectory/.users."""
         self.users = dict()
         with open(os.path.join(self.server.server_directory.url, '.users')) as user_file:
             for line in user_file:
@@ -93,7 +94,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         raise exc(reason)
 
     def parseRequest(self): # pylint: disable=invalid-name
-        """as the name says. Why do I have to implement this?"""
+        """as the name says. Why do I have to implement this?."""
         if self.server.gpxdo_options.debug:
             self.server.logger.debug('got headers:')
             for key, value in self.headers.items():
@@ -112,7 +113,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return None
 
     def homepage(self):
-        """Returns what the client needs"""
+        """Returns what the client needs."""
         self.load_users()
         names = list(sorted(self.users.keys()))
         return """
@@ -121,17 +122,17 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     @staticmethod
     def answer_with_categories():
-        """Returns all categories"""
+        """Returns all categories."""
         all_cat = Track.legal_categories
         return ''.join('<li><input name="add-activity-x">&nbsp;{}</li>'.format(x) for x in all_cat)
 
     def cookies(self):
-        """send cookies"""
+        """send cookies."""
         if hasattr(self, 'uniqueid'):
             self.send_header('Set-Cookie', 'exp_uniqueid={}'.format(self.uniqueid))
 
     def do_GET(self):  # pylint: disable=invalid-name
-        """Override standard"""
+        """Override standard."""
         # TODO: empfangene cookies verwenden
         if self.server.gpxdo_options.debug:
             self.server.logger.debug('GET {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
@@ -159,7 +160,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes(xml.encode('utf-8')))
 
     def do_POST(self): # pylint: disable=invalid-name
-        """override standard"""
+        """override standard."""
         if self.server.gpxdo_options.debug:
             self.server.logger.debug('POST {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
         parsed = self.parseRequest()
@@ -194,12 +195,12 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     @staticmethod
     def xml_get_time(_):
-        """as defined by the mapmytracks API"""
+        """as defined by the mapmytracks API."""
         return '<type>time</type><server_time>{}</server_time>'.format(
             int(datetime.datetime.now().timestamp()))
 
     def xml_get_tracks(self, parsed):
-        """as defined by the mapmytracks API"""
+        """as defined by the mapmytracks API."""
         a_list = list()
         if parsed['offset'] == '0':
             for idx, _ in enumerate(self.server.server_directory):
@@ -214,7 +215,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return '<tracks>{}</tracks>'.format(''.join(a_list))
 
     def __points(self, raw):
-        """convert raw data back into list(GPXTrackPoint)"""
+        """convert raw data back into list(GPXTrackPoint)."""
         values = raw.split()
         if len(values) % 4:
             self.return_error(401, 'Point elements not a multiple of 4', TypeError)
@@ -229,7 +230,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return result
 
     def xml_upload_activity(self, parsed):
-        """as defined by the mapmytracks API"""
+        """as defined by the mapmytracks API."""
         track = Track()
         track.parse(parsed['gpx_file'])
         self.server.server_directory.add(track)
@@ -237,7 +238,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
     def xml_start_activity(self, parsed):
-        """Lifetracker starts"""
+        """start Lifetrack server."""
         if self.server.life:
             raise Exception('Currently I can handle only one lifetracker')
         self.server.life = Lifetrack([self.server.server_directory, self.server.mailer])
@@ -254,7 +255,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             self.server.id_in_server)
 
     def xml_update_activity(self, parsed):
-        """Getting new points"""
+        """Get new points."""
         if self.server.life is None:
             self.return_error(401, 'No lifetracker active')
             return ''
@@ -295,7 +296,7 @@ class LifeServerMMT: # pylint: disable=too-few-public-methods
 
 
 class Main: # pylint: disable=too-few-public-methods
-    """main"""
+    """main."""
 
     def __init__(self):
         logger = logging.getLogger('mmtserver')

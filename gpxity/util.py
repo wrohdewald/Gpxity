@@ -60,8 +60,7 @@ def remove_directory(path):
                 print('  ', _)
 
 def is_track(value):
-    """Return True or False without looking at the type, so we do not need to
-    import Track."""
+    """Return True or False without looking at the type, so we do not need to import Track."""
     return hasattr(value, 'id_in_backend')
 
 def collect_tracks(sources, verbose=False):

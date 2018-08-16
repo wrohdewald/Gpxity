@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-"""see https://setuptools.readthedocs.io/en/latest/setuptools.html"""
+"""see https://setuptools.readthedocs.io/en/latest/setuptools.html."""
 
 from setuptools import setup, find_packages
 
 def readall(path):
-    """explicitly close the file again"""
+    """explicitly close the file again."""
     with open(path) as in_file:
         return in_file.read()
 

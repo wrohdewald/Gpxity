@@ -4,7 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Backend`"""
+"""This module defines :class:`~gpxity.Backend`."""
 
 from collections import defaultdict
 from difflib import SequenceMatcher
@@ -16,7 +16,7 @@ __all__ = ['BackendDiff']
 
 
 class BackendDiff:
-    """Compares two backends.directory
+    """Compares two backends.directory.
 
     Args:
         left (Backend): A backend, a track or a list of either
@@ -49,7 +49,8 @@ class BackendDiff:
             self.differences = self.__compare(verbose)
 
         def __compare(self, verbose):
-            """Compare both tracks
+            """Compare both tracks.
+
             Returns:
                 defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
                     Values is a list(str) with additional info
@@ -160,7 +161,7 @@ class BackendDiff:
 
         @staticmethod
         def flatten(whatever):
-            """Flattens Backends or Tracks into a list of tracks"""
+            """Flattens Backends or Tracks into a list of tracks."""
             if isinstance(whatever, list):
                 for list_item in whatever:
                     if isinstance(list_item, Track):
@@ -176,12 +177,12 @@ class BackendDiff:
                         yield _
 
         def build_positions(self):
-            """Returns a set of long/lat tuples"""
+            """Returns a set of long/lat tuples."""
             for _ in self.tracks:
                 _.positions = set([(x.longitude, x.latitude) for x in _.points()])
 
         def _find_exclusives(self, matched):
-            """use data from the other side"""
+            """use data from the other side."""
             for _ in self.tracks:
                 if _ not in matched:
                     self.exclusive.append(_)

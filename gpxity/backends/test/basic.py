@@ -4,7 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""Tests for gpxity.backends"""
+"""Tests for gpxity.backends."""
 
 import unittest
 import importlib
@@ -34,7 +34,7 @@ __all__ = ['BasicTest']
 from .. import Directory
 
 class BasicTest(unittest.TestCase):
-    """define some helpers
+    """define some helpers.
 
     Attributes:
         all_backend_classes: a list of all backend implementations
@@ -46,7 +46,7 @@ class BasicTest(unittest.TestCase):
     #    super(BasicTest, self).__init__()
 
     def setUp(self):
-        """defines test specific Directory.prefix"""
+        """defines test specific Directory.prefix."""
         Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
         print('auth file now is', Authenticate.path)
         self.start_time = datetime.datetime.now()
@@ -59,7 +59,7 @@ class BasicTest(unittest.TestCase):
             os.mkdir(path)
 
     def tearDown(self):
-        """Check if there are still /tmp/gpxitytest.* directories"""
+        """Check if there are still /tmp/gpxitytest.* directories."""
         must_be_empty = tempfile.mkdtemp(prefix=Directory.prefix)
         os.rmdir(must_be_empty)
         timedelta = datetime.datetime.now() - self.start_time
@@ -79,7 +79,9 @@ class BasicTest(unittest.TestCase):
     def create_test_track(
             cls, count: int = 1, idx: int = 0, category: str = None, public: bool = False,
             start_time=None, end_time=None):
-        """creates an :class:`~gpxity.Track`. It starts off with **test.gpx** and appends a
+        """creates an :class:`~gpxity.Track`.
+
+        It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
         looking at the tracks, they all go in a different direction clockwise, with an angle
@@ -134,7 +136,7 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def _random_datetime():
-        """random datetime between now() - 10 days and now()"""
+        """random datetime between now() - 10 days and now()."""
         end = datetime.datetime.now()
         start = end - datetime.timedelta(days=10)
         delta = end - start
@@ -162,7 +164,7 @@ class BasicTest(unittest.TestCase):
 
     @classmethod
     def _random_points(cls, count=100):
-        """
+        """Get some random points.
 
         Returns:
             A list with count points
@@ -178,7 +180,7 @@ class BasicTest(unittest.TestCase):
         return result
 
     def assertSameTracks(self, backend1, backend2, with_category=True): # pylint: disable=invalid-name
-        """both backends must hold identical tracks"""
+        """both backends must hold identical tracks."""
         self.maxDiff = None # pylint: disable=invalid-name
         if backend1 != backend2:
             with_last_time = not (isinstance(backend1, GPSIES) or isinstance(backend2, GPSIES))
@@ -266,8 +268,7 @@ class BasicTest(unittest.TestCase):
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
                      cleanup=True, clear_first=True, category=None,
                      public: bool = False, debug: bool = False, username=None):
-        """Just like setup_backend but usable as a context manager. which will
-        call destroy() when done.
+        """Just like setup_backend but usable as a context manager. which will call destroy() when done.
         """
         tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public, debug)
         try:
@@ -277,7 +278,7 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def clone_backend(backend):
-        """returns a clone of backend"""
+        """returns a clone of backend."""
         return backend.__class__(backend.url, backend.auth)
 
     @staticmethod

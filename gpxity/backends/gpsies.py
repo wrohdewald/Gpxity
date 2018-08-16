@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpsies.GPSIES` for https://www.gpsies.com
+This implements :class:`gpsies.GPSIES` for https://www.gpsies.com.
 
 so ginge das mit dem API-Key: https://github.com/telemaxx/gpsiesreader/blob/master/gpsies3.py
 
@@ -24,7 +24,7 @@ __all__ = ['GPSIES']
 
 class GPSIESRawTrack:
 
-    """raw data from the gpies html page"""
+    """raw data from the gpies html page."""
 
     # pylint: disable=too-few-public-methods
     def __init__(self):
@@ -36,14 +36,14 @@ class GPSIESRawTrack:
 
 class ParseGPSIESCategories(HTMLParser): # pylint: disable=abstract-method
 
-    """Parse the legal values for category from html"""
+    """Parse the legal values for category from html."""
 
     def __init__(self):
         super(ParseGPSIESCategories, self).__init__()
         self.result = list(['biking'])
 
     def handle_starttag(self, tag, attrs):
-        """starttag from the parser"""
+        """starttag from the parser."""
         attributes = dict(attrs)
         if tag == 'input' and attributes['name'] == 'trackTypes':
             _ = attributes['id']
@@ -53,14 +53,14 @@ class ParseGPSIESCategories(HTMLParser): # pylint: disable=abstract-method
 
 class ParseGPIESEditPage(HTMLParser): # pylint: disable=abstract-method
 
-    """Parse the category value for a track from html"""
+    """Parse the category value for a track from html."""
 
     def __init__(self):
         super(ParseGPIESEditPage, self).__init__()
         self.category = None
 
     def handle_starttag(self, tag, attrs):
-        """starttag from the parser"""
+        """starttag from the parser."""
         attributes = dict(attrs)
         if tag == 'input' and attributes['name'] == 'trackTypes' and 'checked' in attributes:
             self.category = attributes['id']
@@ -68,8 +68,9 @@ class ParseGPIESEditPage(HTMLParser): # pylint: disable=abstract-method
 
 class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
 
-    """get some attributes available only on the web page. Of course,
-    this is highly unreliable. Just use what we can get."""
+    """get some attributes available only on the web page.
+
+    Of course, this is highly unreliable. Just use what we can get."""
 
     def __init__(self):
         super(ParseGPSIESList, self).__init__()
@@ -94,7 +95,7 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
         super(ParseGPSIESList, self).feed(data)
 
     def handle_starttag(self, tag, attrs):
-        """starttag from the parser"""
+        """starttag from the parser."""
         self.current_tag = tag
         attributes = defaultdict(str)
         for key, value in attrs:
@@ -120,14 +121,14 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
             self.track.public = False
 
     def handle_endtag(self, tag):
-        """handle end of track list"""
+        """handle end of track list."""
         if tag == 'tbody':
             self.seeing_list = False
             self.after_list = True
 
 
     def handle_data(self, data):
-        """data from the parser"""
+        """data from the parser."""
         data = data.strip()
         if not data:
             return
@@ -246,7 +247,7 @@ class GPSIES(Backend):
         self.session_response = None
 
     def _download_legal_categories(self):
-        """Needed only for unittest
+        """Needed only for unittest.
 
         Returns: list(str)
             all legal values for category."""
@@ -274,7 +275,7 @@ class GPSIES(Backend):
         return self._session[ident]
 
     def __post(self, action: str, data, files=None):
-        """common code for a POST within the session"""
+        """common code for a POST within the session."""
         for key in data:
             data[key] = self._html_encode(data[key])
         if data.get('fileDescription'):
@@ -292,7 +293,7 @@ class GPSIES(Backend):
         return self._category_decoding[value]
 
     def encode_category(self, value: str) ->str:
-        """Translate internal value into Gpsies value"""
+        """Translate internal value into Gpsies value."""
         if value in self.legal_categories:
             return value
         if value.lower() in self.legal_categories:
@@ -302,19 +303,19 @@ class GPSIES(Backend):
         return self._category_encoding[value]
 
     def _write_category(self, track):
-        """change category on gpsies"""
+        """change category on gpsies."""
         self._edit(track)
 
     def _write_description(self, track):
-        """change description on gpsies"""
+        """change description on gpsies."""
         self._edit(track)
 
     def _write_title(self, track):
-        """change title on gpsies"""
+        """change title on gpsies."""
         self._edit(track)
 
     def _write_public(self, track):
-        """change public on gpsies"""
+        """change public on gpsies."""
         self._edit(track)
 
     def _edit(self, track):
@@ -389,7 +390,7 @@ class GPSIES(Backend):
             yield track
 
     def _read_category(self, track):
-        """I found no way to download all attributes in one go"""
+        """I found no way to download all attributes in one go."""
         self._current_track = track
         data = {'fileId': track.id_in_backend}
         response = self.__post('editTrack', data)
@@ -398,7 +399,7 @@ class GPSIES(Backend):
         track.category = self.decode_category(page_parser.category)
 
     def _read_all(self, track):
-        """get the entire track. For gpies, we only need the gpx file"""
+        """get the entire track. For gpies, we only need the gpx file."""
         self._current_track = track
         data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data)
@@ -413,7 +414,7 @@ class GPSIES(Backend):
         self._read_category(track)
 
     def _check_response(self, response):
-        """are there error messages?"""
+        """are there error messages?."""
         if response.status_code != 200:
             raise self.BackendException(response.text)
         if 'alert-danger' in response.text:
@@ -432,7 +433,7 @@ class GPSIES(Backend):
                 print('WARNING', ':', self._current_track, _)
 
     def _remove_ident(self, ident: str):
-        """remove on the server"""
+        """remove on the server."""
         data = {
             'fileId': ident,
             'delete':'',
@@ -477,7 +478,7 @@ class GPSIES(Backend):
         return new_ident
 
     def destroy(self):
-        """also close session"""
+        """also close session."""
         super(GPSIES, self).destroy()
         if self.session:
             self.session.close()

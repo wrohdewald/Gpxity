@@ -35,10 +35,12 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
 # pylint: disable=wrong-import-position
 from gpxity import Track, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT
 
+
 class Main:
-    """this is where the work is done"""
+    """this is where the work is done."""
 
     def __init__(self):
+        """No args."""
         # pylint: disable=too-many-branches,too-many-nested-blocks
         self.exit_code = 0
         self.options = None
@@ -62,7 +64,7 @@ class Main:
             self.error(_)
 
     def error(self, msg, exit_code=None):
-        """Prints the error message.
+        """Print the error message.
         Sets the process exit code.
         With --debug, re-raises the exception."""
         print(msg)
@@ -71,7 +73,7 @@ class Main:
             raise msg
 
     def instantiate_object(self, name):
-        """returns a backend for name.
+        """return a backend for name.
         If name is a single track, the returned backend has a match filtering
         only this one wanted track."""
         # pylint: disable=too-many-branches
@@ -110,7 +112,7 @@ class Main:
         return result
 
     def parse_commandline(self):
-        """into self.options"""
+        """into self.options."""
         # pylint: disable=too-many-statements, too-many-branches
         parser = argparse.ArgumentParser('lifetrack_client')
         parser.add_argument('--source', help='the track with test data')

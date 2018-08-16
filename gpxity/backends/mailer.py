@@ -54,15 +54,14 @@ class MailerAtom:
         return datetime.datetime.now()
 
     def __repr__(self):
-        """Returns repr"""
+        """Returns repr."""
         return 'MailerAtom({} to {}'.format(self.track, self.url)
 
 class Mailer(Backend):  # pylint: disable=abstract-method
-    """This is a minimal implementation, it only supports listing
-    and retrieving tracks and life tracking. This is used for
-    testing examples/mmtserver.py which in turn is used to
-    receive life tracking data from smartphone apps like
-    oruxmaps.
+    """This is a minimal implementation, it only supports listing and retrieving tracks and life tracking.
+
+    This is used for testing examples/mmtserver.py which in turn is used to
+    receive life tracking data from smartphone apps like oruxmaps.
 
     Attributes:
         subject_template: This builds the mail subject. {title} and {distance} will
@@ -84,7 +83,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         self.timer = None
 
     def _new_ident(self, _):
-        """Buids a unique id for track"""
+        """Buids a unique id for track."""
         self.id_count += 1
         return str(self.id_count)
 

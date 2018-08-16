@@ -3,7 +3,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Authenticate`"""
+"""This module defines :class:`~gpxity.Authenticate`."""
 
 import os
 import tempfile
@@ -78,7 +78,7 @@ class Authenticate:
         return
 
     def _parse_config(self, data):
-        """try to use data"""
+        """try to use data."""
 
         password = url = None
 

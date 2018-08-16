@@ -4,7 +4,7 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Backend`"""
+"""This module defines :class:`~gpxity.Backend`."""
 
 import datetime
 from inspect import getmembers, isfunction
@@ -22,8 +22,7 @@ __all__ = ['Backend']
 
 
 class Backend:
-    """A place where tracks live. Something like the filesystem or
-    http://mapmytracks.com.
+    """A place where tracks live. Something like the filesystem or http://mapmytracks.com.
 
     A Backend should hold only tracks for one person, and they
     should not overlap in time. This is not enforced but sometimes
@@ -128,9 +127,9 @@ class Backend:
         self._current_track = None
 
     def identifier(self, track=None):
-        """Used for formatting strings. A unique identifier for every
-       physical backend. Two Backend() instances pointing to the
-       same physical backend have the same identifier.
+        """Used for formatting strings. A unique identifier for every physical backend.
+
+        Two Backend() instances pointing to the same physical backend have the same identifier.
 
        Args:
             track: If given, add it to the identifier.
@@ -146,6 +145,8 @@ class Backend:
     @property
     def legal_categories(self):
         """
+        A list with all legal categories.
+
         Returns: list(str)
             all legal values for this backend
         """
@@ -153,8 +154,9 @@ class Backend:
 
     @contextmanager
     def _decouple(self):
-        """This context manager disables automic synchronization with
-        the backend. In that state, automatic writes of changes into
+        """This context manager disables automic synchronization with the backend.
+
+        In that state, automatic writes of changes into
         the backend are disabled, and if you access attributes which
         would normally trigger a full load from the backend, they will not.
         Use this to avoid recursions.
@@ -170,16 +172,13 @@ class Backend:
 
     @classmethod
     def _is_implemented(cls, method):
-        """False if the first instruction in method raises NotImplementedError
-        or if the method does nothing"""
+        """False if the first instruction in method raises NotImplementedError or if the method does nothing."""
         first_instruction = next(dis.get_instructions(method.__code__))
         return first_instruction is not None and first_instruction.argval != 'NotImplementedError'
 
     @classmethod
     def _define_support(cls):
-        """If the first thing a method does is raising NotImplementedError, it is
-        marked as unsupported.
-        """
+        """If the first thing a method does is raising NotImplementedError, it is marked as unsupported."""
         support_mappings = {
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
@@ -199,7 +198,7 @@ class Backend:
 
     @property
     def debug(self):
-        """True: output HTTP debugging data to stdout"""
+        """True: output HTTP debugging data to stdout."""
         return self.__debug
 
     @debug.setter
@@ -221,7 +220,9 @@ class Backend:
 
     @property
     def match(self):
-        """A function with one argument returning None or str. The backend will call
+        """Filter tracks.
+
+        A function with one argument returning None or str. The backend will call
             this with every track and ignore tracks where match does not return None.
             The returned str should explain why the track does not match.
 
@@ -250,8 +251,7 @@ class Backend:
 
     @staticmethod
     def _encode_keyword(value: str) ->str:
-        """Replicates the translation the backend does. MMT for example
-        capitalizes all words."""
+        """Replicates the translation the backend does. MMT for example capitalizes all words."""
         return value
 
     def get_time(self) ->datetime.datetime:
@@ -321,16 +321,16 @@ class Backend:
         raise NotImplementedError()
 
     def _read_all_decoupled(self, track) ->None:
-        """Decouples and calls the backend specific _read_all"""
+        """Decouples and calls the backend specific _read_all."""
         with self._decouple():
             self._read_all(track)
 
     def _read_all(self, track) ->None:
-        """fills the track with all its data from source"""
+        """fills the track with all its data from source."""
         raise NotImplementedError()
 
     def matches(self, track, exc_prefix: str = None):
-        """Does track match the current match function?
+        """Does track match the current match function?.
 
         Args:
             exc_prefix: If not None, use it for the beginning of an exception message.
@@ -344,7 +344,7 @@ class Backend:
         return match_error is None
 
     def _needs_full_save(self, changes) ->bool:
-        """Do we have to rewrite the entire track?"""
+        """Do we have to rewrite the entire track?."""
         for change in changes:
             if change == 'all':
                 return True
@@ -354,7 +354,10 @@ class Backend:
         return False
 
     def add(self, track):
-        """        We do not check if it already exists in this backend. No track
+        """
+        Add a track to this backend.
+
+        We do not check if it already exists in this backend. No track
         already existing in this backend will be overwritten, the id_in_backend
         of track will be deduplicated if needed. This is currently only needed
         for Directory. Note that some backends reject a track if it is very
@@ -453,8 +456,7 @@ class Backend:
         raise NotImplementedError()
 
     def remove(self, value) ->None:
-        """Removes track. This can also be done for tracks
-        not passing the current match function.
+        """Removes track. This can also be done for tracks not passing the current match function.
 
         Args:
             value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
@@ -472,12 +474,11 @@ class Backend:
                 pass
 
     def _remove_ident(self, ident: str) ->None:
-        """backend dependent implementation"""
+        """backend dependent implementation."""
         raise NotImplementedError()
 
     def _lifetrack_start(self, track, points):
-        """Modelled after MapMyTracks. I hope this matches other
-        services too.
+        """Modelled after MapMyTracks. I hope this matches other services too.
 
         This will always produce a new track in the backend.supported
 
@@ -495,8 +496,7 @@ class Backend:
         raise NotImplementedError()
 
     def _lifetrack_update(self, track, points):
-        """If the backend does not support lifetrack, just add the points
-        to the track.
+        """If the backend does not support lifetrack, just add the points to the track.
 
         Args:
             track(Track): Holds initial data
@@ -509,15 +509,16 @@ class Backend:
         raise NotImplementedError()
 
     def _lifetrack_end(self, track):
-        """If the backend does not support lifetrack, do nothing"""
+        """If the backend does not support lifetrack, do nothing."""
         raise NotImplementedError()
 
     def remove_all(self):
-        """Removes all tracks we know about. If their :attr:`id_in_backend`
-        has meanwhile been changed through another backend instance
-        or another process, we cannot find it anymore. We do **not**
-        rescan all tracks in the backend. If you want to make sure it
-        will be empty, call :meth:`scan` first.
+        """Removes all tracks we know about.
+
+        If their :attr:`id_in_backend` has meanwhile been changed
+        through another backend instance or another process, we
+        cannot find it anymore. We do **not** rescan all tracks in the backend.
+        If you want to make sure it will be empty, call :meth:`scan` first.
 
         If you use a match function, only matching tracks will be removed."""
         for track in list(self):
@@ -525,8 +526,9 @@ class Backend:
                 self.remove(track)
 
     def destroy(self):
-        """If `cleanup` was set at init time, removes all tracks. Some backends
-       (example: :class:`Directory <gpxity.Directory.destroy>`)
+        """If `cleanup` was set at init time, removes all tracks.
+
+        Some backends (example: :class:`Directory <gpxity.Directory.destroy>`)
        may also remove the account (or directory). See also :meth:`remove_all`."""
         if self._cleanup:
             self.remove_all()
@@ -547,8 +549,10 @@ class Backend:
         return False
 
     def __getitem__(self, index):
-        """Allows accesses like alist[a_id]. Do not call this when implementing
-        a backend because this always calls scan() first. Instead use :meth:`_has_item`."""
+        """Allows accesses like alist[a_id].
+
+        Do not call this when implementing a backend because this always calls scan() first.
+        Instead use :meth:`_has_item`."""
         self._scan()
         if isinstance(index, int):
             return self.__tracks[index]
@@ -558,12 +562,12 @@ class Backend:
         raise IndexError
 
     def __len__(self):
-        """do not call this when implementing a backend because this calls scan()"""
+        """do not call this when implementing a backend because this calls scan()."""
         self._scan()
         return len(self.__tracks)
 
     def real_len(self):
-        """len(backend) without calling scan() first"""
+        """len(backend) without calling scan() first."""
         return len(self.__tracks)
 
     def __append(self, track):
@@ -579,7 +583,7 @@ class Backend:
         self.__tracks.append(track)
 
     def __repr__(self):
-        """do not call len(self) because that does things"""
+        """do not call len(self) because that does things."""
         dirname = ''
         if self.auth:
             dirname = self.auth[0] or ''
@@ -663,7 +667,7 @@ class Backend:
 
     @staticmethod
     def _html_encode(value):
-        """encodes str to something gpies.com accepts"""
+        """encodes str to something gpies.com accepts."""
         if value is None:
             return ''
         return value.encode('ascii', 'xmlcharrefreplace').decode()

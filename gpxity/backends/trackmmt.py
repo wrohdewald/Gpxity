@@ -5,8 +5,9 @@
 # See LICENSE for details.
 
 """
-This implements only a minimum of what MMT can do:
-upload entire tracks and extend a track. That is
+This implements only a minimum of what MMT can do.
+
+Upload entire tracks and extend a track. That is
 what oruxmaps does - see examples/mmt_server.
 
 TrackMMT is used to test mmt_server.
@@ -19,9 +20,9 @@ __all__ = ['TrackMMT']
 
 
 class TrackMMT(MMT):
-    """This is a minimal implementation, it only supports listing
-    and retrieving tracks and life tracking. This is used for
-    testing examples/mmtserver.py which in turn is used to
+    """This is a minimal implementation, it only supports listing and retrieving tracks and life tracking.
+
+    This is used for testing examples/mmtserver.py which in turn is used to
     receive life tracking data from smartphone apps like
     oruxmaps.
     """
@@ -55,7 +56,7 @@ class TrackMMT(MMT):
         raise NotImplementedError()
 
     def _remove_ident(self, ident: str) ->None:
-        """backend dependent implementation"""
+        """backend dependent implementation."""
         raise NotImplementedError()
 
     @property

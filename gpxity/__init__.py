@@ -13,7 +13,7 @@ from .version import *
 __all__ = ['Track', 'Lifetrack', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'ServerDirectory', 'BackendDiff', 'VERSION']
 
 def prepare_backends():
-    """Initialize the attribute "supported" for all backends"""
+    """Initialize the attribute "supported" for all backends."""
     for key in globals().keys():
         cls = globals()[key]
         if hasattr(cls, "__mro__") and cls is not Backend:
