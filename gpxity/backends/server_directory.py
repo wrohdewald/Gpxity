@@ -34,9 +34,7 @@ class ServerDirectory(Directory):
 
         """
         try:
-            result = str(max(int(x) for x in self._list_gpx()) + 1)
-            print('new serverdirectory id:', result)
-            return result
+            return str(max(int(x) for x in self._list_gpx()) + 1)
         except ValueError:
             return '1'
 
