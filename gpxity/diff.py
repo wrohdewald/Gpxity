@@ -52,6 +52,32 @@ class BackendDiff:
             self.right = right
             self.differences = self.__compare(verbose)
 
+        def __compare_metadata(self):
+            """Compare some metadata between left and right.
+
+            Returns:
+                a dict with the differences
+
+            """
+            result = defaultdict(list)
+
+            def compare_attribute(code, attribute, func=None):
+                """Compare a specific attribute."""
+                left_value = getattr(self.left, attribute) or ''
+                right_value = getattr(self.right, attribute) or ''
+                if func:
+                    left_value = func(left_value)
+                    right_value = func(right_value)
+                if left_value != right_value:
+                    result[code].append('"{}" <> "{}"'.format(left_value, right_value))
+
+            compare_attribute('T', 'title')
+            compare_attribute('D', 'description')
+            compare_attribute('C', 'category')
+            compare_attribute('K', 'keywords', lambda x: ', '.join(x))  # pylint: disable=unnecessary-lambda
+            compare_attribute('S', 'public', lambda x: 'public' if x else 'private')
+            return result
+
         def __compare(self, verbose):
             """Compare both tracks.
 
@@ -60,31 +86,9 @@ class BackendDiff:
                     Values is a list(str) with additional info
 
             """
-            # pylint: disable=too-many-locals, too-many-branches
+            # pylint: disable=too-many-locals, too-many-branches, too-many-nested-blocks
 
-            result = defaultdict(list)
-
-            if self.left.title != self.right.title:
-                result['T'].append('"{}" <> "{}"'.format(
-                    self.left.title or '', self.right.title or ''))
-
-            if self.left.description != self.right.description:
-                result['D'].append('"{}" <> "{}"'.format(
-                    self.left.description or '', self.right.description or ''))
-
-            if self.left.category != self.right.category:
-                result['C'].append('"{}" <> "{}"'.format(
-                    self.left.category or '', self.right.category or ''))
-
-            if self.left.keywords != self.right.keywords:
-                result['K'].append('"{}" <> "{}"'.format(
-                    ', '.join(self.left.keywords), ', '.join(self.right.keywords)))
-
-            if self.left.public != self.right.public:
-                public_names = {False: 'private', True: 'public'}
-                result['S'].append(
-                    '"{}" <> "{}"'.format(
-                        public_names[self.left.public], public_names[self.right.public]))
+            result = self.__compare_metadata()
 
             def lists(track):
                 """Returns two lists of tuples: once with time, once without time."""
@@ -92,7 +96,7 @@ class BackendDiff:
                 positions = list()
                 for _ in track.points():
                     times.append(_.time)
-                    positions.append(tuple([_.latitude, _.longitude, _.elevation]))
+                    positions.append(tuple([_.latitude or 0, _.longitude or 0, _.elevation or 0]))  # noqa
                 return times, positions
 
             def pretty_times(time1, time2):
@@ -141,12 +145,10 @@ class BackendDiff:
                                     max([left_times[left_end - 1], right_times[right_end - 1]]))))
                         if verbose:
                             for left, right in zip(left_found, right_found):
-                                result['P'].append('  < {:8.6f} {:8.6f} {:5.2f} {}'.format(
-                                    left[0] or 0, left[1] or 0,
-                                    left[2] or 0, left[3] or ''))
-                                result['P'].append('  > {:8.6f} {:8.6f} {:5.2f} {}'.format(
-                                    right[0] or 0, right[1] or 0,
-                                    right[2] or 0, right[3] or ''))
+                                for data, sign in ((left, '<'), (right, '>')):
+                                    result['P'].append(
+                                        '  {sign} {data[0]:8.6f} {data[1]:8.6f} {data[2]:5.2f} {data[3]}'.format(
+                                            sign=sign, data=data))
 
             # some files have a problem with the time zone
             _ = self.left.time_offset(self.right)
