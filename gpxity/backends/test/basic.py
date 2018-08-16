@@ -278,7 +278,7 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def lifetrackserver(directory, servername, port):
         """Start and ends a server for lifetrack testing."""
-        cmdline = 'mmtserver --debug --servername {} --port {} --directory {}'.format(
+        cmdline = 'gpxity_server --debug --servername {} --port {} --directory {}'.format(
             servername, port, directory)
         process = Popen(cmdline.split())
         try:

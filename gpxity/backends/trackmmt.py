@@ -24,7 +24,7 @@ class TrackMMT(MMT):
 
     """This is a minimal implementation, it only supports listing and retrieving tracks and life tracking.
 
-    This is used for testing examples/mmtserver.py which in turn is used to
+    This is used for testing bin/gpxity_server which in turn is used to
     receive life tracking data from smartphone apps like
     oruxmaps.
 

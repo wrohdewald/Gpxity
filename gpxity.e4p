@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxity -->
-<!-- Saved: 2018-08-08, 22:41:11 -->
+<!-- Saved: 2018-08-16, 12:52:39 -->
 <!-- Copyright (C) 2018 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
@@ -14,7 +14,7 @@
   <Sources>
     <Source>bin/gpxdo</Source>
     <Source>bin/lifetrack_client.py</Source>
-    <Source>examples/mmtserver.py</Source>
+    <Source>bin/gpxity_server</Source>
     <Source>gpxity/__init__.py</Source>
     <Source>gpxity/auth.py</Source>
     <Source>gpxity/backend.py</Source>
@@ -35,11 +35,6 @@
     <Source>gpxity/util.py</Source>
     <Source>setup.py</Source>
   </Sources>
-  <Forms/>
-  <Translations/>
-  <Resources/>
-  <Interfaces/>
-  <Others/>
   <MainScript>bin/test</MainScript>
   <Vcs>
     <VcsType>Git</VcsType>
@@ -151,4 +146,157 @@
     <FiletypeAssociation pattern="*.pyw" type="SOURCES"/>
     <FiletypeAssociation pattern="*.pyw3" type="SOURCES"/>
   </FiletypeAssociations>
+  <Checkers>
+    <CheckersParams>
+      <dict>
+        <key>
+          <string>Pep8Checker</string>
+        </key>
+        <value>
+          <dict>
+            <key>
+              <string>BlankLines</string>
+            </key>
+            <value>
+              <tuple>
+                <int>2</int>
+                <int>1</int>
+              </tuple>
+            </value>
+            <key>
+              <string>BuiltinsChecker</string>
+            </key>
+            <value>
+              <dict>
+                <key>
+                  <string>chr</string>
+                </key>
+                <value>
+                  <list>
+                    <string>unichr</string>
+                  </list>
+                </value>
+                <key>
+                  <string>str</string>
+                </key>
+                <value>
+                  <list>
+                    <string>unicode</string>
+                  </list>
+                </value>
+              </dict>
+            </value>
+            <key>
+              <string>CopyrightAuthor</string>
+            </key>
+            <value>
+              <string>Wolfgang Rohdewald</string>
+            </value>
+            <key>
+              <string>CopyrightMinFileSize</string>
+            </key>
+            <value>
+              <int>0</int>
+            </value>
+            <key>
+              <string>DocstringType</string>
+            </key>
+            <value>
+              <string>pep257</string>
+            </value>
+            <key>
+              <string>ExcludeFiles</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
+              <string>ExcludeMessages</string>
+            </key>
+            <value>
+              <string>M611,M132,M801</string>
+            </value>
+            <key>
+              <string>FixCodes</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
+              <string>FixIssues</string>
+            </key>
+            <value>
+              <bool>False</bool>
+            </value>
+            <key>
+              <string>FutureChecker</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
+              <string>HangClosing</string>
+            </key>
+            <value>
+              <bool>False</bool>
+            </value>
+            <key>
+              <string>IncludeMessages</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
+              <string>LineComplexity</string>
+            </key>
+            <value>
+              <int>18</int>
+            </value>
+            <key>
+              <string>LineComplexityScore</string>
+            </key>
+            <value>
+              <int>10</int>
+            </value>
+            <key>
+              <string>MaxCodeComplexity</string>
+            </key>
+            <value>
+              <int>12</int>
+            </value>
+            <key>
+              <string>MaxLineLength</string>
+            </key>
+            <value>
+              <int>119</int>
+            </value>
+            <key>
+              <string>NoFixCodes</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
+              <string>RepeatMessages</string>
+            </key>
+            <value>
+              <bool>True</bool>
+            </value>
+            <key>
+              <string>ShowIgnored</string>
+            </key>
+            <value>
+              <bool>False</bool>
+            </value>
+            <key>
+              <string>ValidEncodings</string>
+            </key>
+            <value>
+              <string>utf-8</string>
+            </value>
+          </dict>
+        </value>
+      </dict>
+    </CheckersParams>
+  </Checkers>
 </Project>
