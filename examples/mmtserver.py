@@ -104,7 +104,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             exc = ValueError
         raise exc(reason)
 
-    def parseRequest(self):  # pylint: disable=invalid-name
+    def parseRequest(self):  # noqa pylint: disable=invalid-name
         """Get interesting things.
 
         Returns:
@@ -147,7 +147,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         if hasattr(self, 'uniqueid'):
             self.send_header('Set-Cookie', 'exp_uniqueid={}'.format(self.uniqueid))
 
-    def do_GET(self):  # pylint: disable=invalid-name
+    def do_GET(self):  # noqa pylint: disable=invalid-name
         """Override standard."""
         # TODO: empfangene cookies verwenden
         if self.server.gpxdo_options.debug:
@@ -175,7 +175,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(bytes(xml.encode('utf-8')))
 
-    def do_POST(self):  # pylint: disable=invalid-name
+    def do_POST(self):  # noqa pylint: disable=invalid-name
         """override standard."""
         if self.server.gpxdo_options.debug:
             self.server.logger.debug(

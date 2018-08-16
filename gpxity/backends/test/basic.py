@@ -45,7 +45,7 @@ class BasicTest(unittest.TestCase):
 
     all_backend_classes = None
 
-    def setUp(self):
+    def setUp(self):  # noqa
         """define test specific Directory.prefix."""
         Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
         print('auth file now is', Authenticate.path)
@@ -58,7 +58,7 @@ class BasicTest(unittest.TestCase):
         if not os.path.exists(path):
             os.mkdir(path)
 
-    def tearDown(self):
+    def tearDown(self):  # noqa
         """Check if there are still /tmp/gpxitytest.* directories."""
         must_be_empty = tempfile.mkdtemp(prefix=Directory.prefix)
         os.rmdir(must_be_empty)
@@ -198,7 +198,7 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
-    def assertSameTracks(self, backend1, backend2, with_category=True):  # pylint: disable=invalid-name
+    def assertSameTracks(self, backend1, backend2, with_category=True):  # noqa pylint: disable=invalid-name
         """both backends must hold identical tracks."""
         self.maxDiff = None  # pylint: disable=invalid-name
         if backend1 != backend2:
@@ -207,7 +207,7 @@ class BasicTest(unittest.TestCase):
             keys2 = sorted(x.key(with_category, with_last_time) for x in backend2)
             self.assertEqual(keys1, keys2)
 
-    def assertEqualTracks(self, track1, track2, xml: bool = False, with_category: bool = True):  # pylint: disable=invalid-name
+    def assertEqualTracks(self, track1, track2, xml: bool = False, with_category: bool = True):  # noqa pylint: disable=invalid-name
         """both tracks must be identical. We test more than necessary for better test coverage.
 
         Args:
@@ -224,13 +224,13 @@ class BasicTest(unittest.TestCase):
         if xml:
             self.assertEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
-    def assertNotEqualTracks(self, track1, track2, with_category: bool = True):  # pylint: disable=invalid-name
+    def assertNotEqualTracks(self, track1, track2, with_category: bool = True):  # noqa pylint: disable=invalid-name
         """both tracks must be different. We test more than necessary for better test coverage."""
         self.assertNotEqual(track1.key(with_category), track2.key(with_category))
         self.assertFalse(track1.points_equal(track2))
         self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
-    def assertTrackFileContains(self, track, string):  # pylint: disable=invalid-name
+    def assertTrackFileContains(self, track, string):  # noqa pylint: disable=invalid-name
         """Assert that string is in the physical file. Works only for Directory backend."""
         with open(track.backend.gpx_path(track.id_in_backend)) as trackfile:
             data = trackfile.read()
