@@ -136,25 +136,25 @@ class TestBackends(BasicTest):
             if track.time < datetime.datetime(year=2016, month=9, day=5):
                 return 'time {} is before {}'.format(track.time, '2016-09-05')
             return None
-        for cls in (Directory, ):
-            with self.subTest(' {}'.format(cls.__name__)):
-                with self.temp_backend(cls, count=3) as backend:
-                    for idx, _ in enumerate(backend):
-                        _.adjust_time(datetime.timedelta(hours=idx))
-                    new_track = backend[0].clone()
-                    self.assertIsNotNone(match_date(new_track))
-                    self.assertEqual(len(backend), 3)
-                    backend.match = match_date
-                    self.assertEqual(len(backend), 1)
-                    with self.assertRaises(cls.NoMatch):
-                        backend.add(new_track)
-                    self.assertEqual(len(backend), 1)
-                    orig_time = backend[0].time
-                    delta = datetime.timedelta(days=-5)
-                    with self.assertRaises(cls.NoMatch):
-                        backend[0].adjust_time(delta)
-                    self.assertEqual(len(backend), 1)
-                    self.assertEqual(orig_time + delta, backend[0].time)
+        cls = Directory
+        with self.subTest(' {}'.format(cls.__name__)):
+            with self.temp_backend(cls, count=3) as backend:
+                for idx, _ in enumerate(backend):
+                    _.adjust_time(datetime.timedelta(hours=idx))
+                new_track = backend[0].clone()
+                self.assertIsNotNone(match_date(new_track))
+                self.assertEqual(len(backend), 3)
+                backend.match = match_date
+                self.assertEqual(len(backend), 1)
+                with self.assertRaises(cls.NoMatch):
+                    backend.add(new_track)
+                self.assertEqual(len(backend), 1)
+                orig_time = backend[0].time
+                delta = datetime.timedelta(days=-5)
+                with self.assertRaises(cls.NoMatch):
+                    backend[0].adjust_time(delta)
+                self.assertEqual(len(backend), 1)
+                self.assertEqual(orig_time + delta, backend[0].time)
 
     def test_z9_create_backend(self):
         """Test creation of a backend."""
