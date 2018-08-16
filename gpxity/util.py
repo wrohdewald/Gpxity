@@ -8,6 +8,7 @@
 
 import os
 import datetime
+import logging
 
 __all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_track', 'collect_tracks']
 
@@ -34,9 +35,10 @@ class Duration:
 
     def __exit__(self, exc_type, exc_value, trback):
         """See class docstring."""
-        print('{} in {} ({}-{})'.format(
+        logging.debug(
+            '%s in %s %s-%s',
             datetime.datetime.now() - self.start_time,
-            self.name, self.start_time, datetime.datetime.now()))
+            self.name, self.start_time, datetime.datetime.now())
 
 
 def repr_timespan(start, end) ->str:
@@ -67,10 +69,10 @@ def remove_directory(path):
     try:
         os.rmdir(path)
     except OSError as exc:
-        print('rmdir: errno: {} cannot remove directory: {}'.format(exc.errno, path))
+        logging.error('rmdir: errno: %s cannot remove directory: %s', exc.errno, path)
         if os.path.exists(path):
             for _ in os.listdir(path):
-                print('  ', _)
+                logging.error('  dir still has %s', _)
 
 
 def is_track(value):

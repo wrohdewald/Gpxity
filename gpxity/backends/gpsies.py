@@ -461,7 +461,7 @@ class GPSIES(Backend):
                 'GPSies is my hobby website and is funded by advertising'
             )
             if not any(x in _ for x in ignore_messages):
-                print('WARNING', ':', self._current_track, _)
+                self.logger.warning('%s: %s', self._current_track.identifier(), _)
 
     def _remove_ident(self, ident: str):
         """remove on the server."""

@@ -18,6 +18,7 @@ from pkgutil import get_data
 import tempfile
 from contextlib import contextmanager
 from subprocess import Popen
+import logging
 
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
@@ -48,7 +49,8 @@ class BasicTest(unittest.TestCase):
     def setUp(self):  # noqa
         """define test specific Directory.prefix."""
         Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
-        print('auth file now is', Authenticate.path)
+        logging.getLogger().level = logging.DEBUG
+        logging.debug('auth file now is %s', Authenticate.path)
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
@@ -63,7 +65,8 @@ class BasicTest(unittest.TestCase):
         must_be_empty = tempfile.mkdtemp(prefix=Directory.prefix)
         os.rmdir(must_be_empty)
         timedelta = datetime.datetime.now() - self.start_time
-        print('{} seconds '.format(timedelta.seconds), end='', flush=True)
+        logging.debug('%s seconds ', timedelta.seconds)
+        logging.shutdown()
 
     @staticmethod
     def _get_gpx_from_test_file(name: str):

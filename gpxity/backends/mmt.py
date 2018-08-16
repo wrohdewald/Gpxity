@@ -92,9 +92,10 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
 
     result = dict()
 
-    def __init__(self):
+    def __init__(self, backend):
         """See class docstring."""
         super(ParseMMTTrack, self).__init__()
+        self.backend = backend
         self.seeing_category = False
         self.seeing_title = False
         self.seeing_description = False
@@ -155,7 +156,7 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
                 _ = data.split('|')[1].split('@')[0].strip()
                 self.result['category_from_title'] = ' '.join(_.split(' ')[:-2])
             except BaseException:
-                print('cannot parse', data)
+                self.backend.logger.warning('%s: Cannot parse %s', self.backend.identifier(), data)
                 self.result['category_from_title'] = ''
         if self.seeing_status:
             self.result['public'] = data.strip() != 'Only you can see this activity'
@@ -333,7 +334,7 @@ class MMT(Backend):
         """Get some interesting values from the home page."""
         response = self.session.get(self.url)
         self.__is_free_account = 'href="/plus">Upgrade to PLUS' in response.text
-        page_parser = ParseMMTTrack()
+        page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
         self.__mid = page_parser.result['mid']
         self.__tag_ids.update(page_parser.result['tags'])
@@ -390,7 +391,7 @@ class MMT(Backend):
                 response = requests.post(
                     full_url, data=data, headers=headers, auth=self.auth, timeout=self.timeout, verify=self.verify)
         except requests.exceptions.ReadTimeout:
-            print('timeout for', data)
+            self.logger.error('%s: timeout for %s', self.identifier(), data)
             raise
         self._last_response = response  # for debugging
         if response.status_code != requests.codes.ok:  # pylint: disable=no-member
@@ -586,7 +587,7 @@ class MMT(Backend):
         returns it in page_parser.result"""
         response = self.session.get('{}/explore/activity/{}'.format(
             self.url, track.id_in_backend))
-        page_parser = ParseMMTTrack()
+        page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
         return page_parser.result
 
@@ -673,6 +674,7 @@ class MMT(Backend):
         if old_ident:
             self._remove_ident(old_ident)
         track.id_in_backend = new_ident
+        self.logger.debug('%s fully written', track.identifier())
         return new_ident
 
     @staticmethod
@@ -716,7 +718,9 @@ class MMT(Backend):
             expect='activity_started',
             # tags='TODO',
             unique_token='{}'.format(id(track)))
-        return result.find('activity_id').text
+        result = result.find('activity_id').text
+        self.logger.error('%s: lifetracking started', self.identifier())
+        return result
 
     def _lifetrack_update(self, track, points):
         """Update a lifetrack with poings.

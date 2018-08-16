@@ -120,6 +120,7 @@ class Backend:
             self.url += '/'
         self._cleanup = cleanup
         self.__match = None
+        self.logger = logging.getLogger(self.identifier())
         self.__debug = None
         self.debug = debug
         self.timeout = timeout
@@ -221,16 +222,10 @@ class Backend:
             self.__debug = value
             if value:
                 HTTPConnection.debuglevel = 1
-                logging.basicConfig()
-                logging.getLogger().setLevel(logging.DEBUG)
-                requests_log = logging.getLogger("urllib3")
-                requests_log.setLevel(logging.DEBUG)
-                requests_log.propagate = True
+                self.logger.level = logging.DEBUG
             else:
                 HTTPConnection.debuglevel = 0
-                logging.basicConfig()
-                logging.getLogger().setLevel(logging.CRITICAL + 1)
-                requests_log = None
+                self.logger.level = logging.CRITICAL + 1
 
     @property
     def match(self):
@@ -655,6 +650,7 @@ class Backend:
                     track.id_in_backend, self[track.id_in_backend], self.__tracks))
         self.matches(track, 'append')
         self.__tracks.append(track)
+        self.logger.debug('Added %s to %s', track, self)
 
     def __repr__(self):
         """do not call len(self) because that does things.

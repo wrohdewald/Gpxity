@@ -481,8 +481,8 @@ class Track:
             try:
                 self.__gpx = gpxpy_parse(indata)
             except GPXXMLSyntaxException as exc:
-                print('{}: Track {} has illegal GPX XML: {}'.format(
-                    self.backend, self.id_in_backend, exc))
+                self.backend.logger.error(
+                    '%s: Track %s has illegal GPX XML: %s', self.backend, self.id_in_backend, exc)
                 raise
             if 'keywords' in self._header_data:
                 del self._header_data['keywords']
