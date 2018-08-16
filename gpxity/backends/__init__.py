@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.

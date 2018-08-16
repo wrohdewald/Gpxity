@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """see https://setuptools.readthedocs.io/en/latest/setuptools.html."""
 
