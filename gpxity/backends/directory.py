@@ -443,7 +443,7 @@ class Directory(Backend):
         compute new file name and remove the old files. We also adapt track.id_in_backend.
 
         Returns:
-            the new id_in_backend
+            the new track.id_in_backend
 
         """
         old_ident = track.id_in_backend
