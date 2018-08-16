@@ -1016,7 +1016,8 @@ class Track:
             return True
         return False
 
-    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:  # pylint: disable=unused-argument
+    def merge(  # pylint: disable=unused-argument
+            self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
         """Merge other track into this one. The track points must be identical.
 
         If either is public, the result is public.

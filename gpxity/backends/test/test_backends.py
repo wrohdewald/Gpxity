@@ -531,7 +531,9 @@ class TestBackends(BasicTest):
             with self.temp_backend(cls, count=1) as backend:
                 backend2 = self.clone_backend(backend)
                 track = backend[0]
-                keywords = {backend._encode_keyword(x) for x in self._random_keywords(count=50)}  # pylint: disable=protected-access
+                keywords = {
+                    backend._encode_keyword(x)  # pylint: disable=protected-access
+                    for x in self._random_keywords(count=50)}
                 for _ in range(20):
                     self.assertEqual(current(), track.keywords)
                     add_keywords = set(random.sample(keywords, random.randint(0, 30)))
@@ -557,7 +559,9 @@ class TestBackends(BasicTest):
                         track.remove_keywords(remove_keywords)
                         self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
                 backend2.scan()
-                self.assertEqual(backend2._get_current_keywords(backend2[0]), backend2[0].keywords)  # pylint: disable=protected-access
+                self.assertEqual(
+                    backend2._get_current_keywords(backend2[0]),  # pylint: disable=protected-access
+                    backend2[0].keywords)
                 self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
     def test_legal_categories(self):

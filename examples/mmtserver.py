@@ -372,8 +372,8 @@ class Main:  # pylint: disable=too-few-public-methods
         parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
         parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
         parser.add_argument('--timeout', help="""
-            Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
-            the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
+            Timeout: Either one value in seconds or two comma separated values: The first one is the connection
+            timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
 
         try:
             argcomplete.autocomplete(parser)

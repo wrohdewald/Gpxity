@@ -236,9 +236,10 @@ class BasicTest(unittest.TestCase):
             data = trackfile.read()
         self.assertIn(string, data)
 
-    def setup_backend(self, cls_, username: str = None, url: str = None, count: int = 0,  # pylint: disable=too-many-arguments
-                      cleanup: bool = True, clear_first: bool = True, category: str = None,
-                      public: bool = False, debug: bool = False):
+    def setup_backend(  # pylint: disable=too-many-arguments
+            self, cls_, username: str = None, url: str = None, count: int = 0,
+            cleanup: bool = True, clear_first: bool = True, category: str = None,
+            public: bool = False, debug: bool = False):
         """set up an instance of a backend with count tracks.
 
         If count == len(:attr:`Track.legal_categories <gpxity.Track.legal_categories>`),
