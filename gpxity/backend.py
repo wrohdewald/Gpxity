@@ -307,7 +307,7 @@ class Backend:
         """
         if not self._tracks_fully_listed and not self._decoupled:
             self._tracks_fully_listed = True
-            unsaved = list(x for x in self.__tracks if x.id_in_backend is None)
+            unsaved = [x for x in self.__tracks if x.id_in_backend is None]
             if self.__match is not None:
                 for track in unsaved:
                     self.matches(track, 'scan')
@@ -323,7 +323,7 @@ class Backend:
             finally:
                 self.__match = match_function
             if self.__match is not None:
-                self.__tracks = list(x for x in self.__tracks if self.matches(x))
+                self.__tracks = [x for x in self.__tracks if self.matches(x)]
 
     def _found_track(self, ident: str):
         """Create an empty track for ident and inserts it into this backend.
@@ -442,7 +442,7 @@ class Backend:
             # only hold the first uploaded track, and remove would remove that
             # instance instead of this one.
             # TODO: do we have a unittest for that case?
-            self.__tracks = list(x for x in self.__tracks if x is not new_track)
+            self.__tracks = [x for x in self.__tracks if x is not new_track]
             with self._decouple():
                 new_track.id_in_backend = None
                 new_track._set_backend(None)  # pylint: disable=protected-access
@@ -515,7 +515,7 @@ class Backend:
         with self._decouple():
             track._set_backend(None)  # pylint: disable=protected-access
             try:
-                self.__tracks = list(x for x in self.__tracks if x.id_in_backend != track.id_in_backend)
+                self.__tracks = [x for x in self.__tracks if x.id_in_backend != track.id_in_backend]
             except ValueError:
                 pass
 
@@ -603,7 +603,7 @@ class Backend:
         """
         if hasattr(index, 'id_in_backend') and index in self.__tracks:
             return True
-        if isinstance(index, str) and index in list(x.id_in_backend for x in self.__tracks):
+        if isinstance(index, str) and index in [x.id_in_backend for x in self.__tracks]:
             return True
         return False
 

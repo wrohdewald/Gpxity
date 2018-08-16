@@ -500,7 +500,7 @@ class MMT(Backend):
                 value=values,
                 uid=self.session.cookies['exp_uniqueid'])
         text = self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
-        values = list(x.strip() for x in values.split(','))
+        values = [x.strip() for x in values.split(',')]
         ids = (text.find('ids').text or '').split(',')
         tags = (text.find('tags').text or '').split(',')
         if values != tags or len(ids) != len(values):

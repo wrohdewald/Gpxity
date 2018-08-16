@@ -282,7 +282,7 @@ class TrackTests(BasicTest):
                 for _ in dir2:
                     _.id_in_backend = title
                 trunk = os.path.join(directory.url, title)
-                expected_names = list(trunk + x + '.gpx' for x in ('.1', '.2', '.3', ''))
+                expected_names = [trunk + x + '.gpx' for x in ('.1', '.2', '.3', '')]
                 files = sorted(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
                 self.assertEqual(files, expected_names)
                 self.assertEqual(len(dir2), 4)

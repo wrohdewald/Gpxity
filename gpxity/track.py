@@ -663,7 +663,7 @@ class Track:
 
         """
         if isinstance(values, str):
-            result = list(x.strip() for x in values.split(','))
+            result = [x.strip() for x in values.split(',')]
         else:
             result = list(values)
         for _ in result:
@@ -697,7 +697,7 @@ class Track:
                 or an iterable of keywords
 
         """
-        rm_keywords = list(x for x in self.__prepare_keywords(values) if x in self.keywords)
+        rm_keywords = [x for x in self.__prepare_keywords(values) if x in self.keywords]
         if rm_keywords:
             self.__gpx.keywords = ', '.join(x for x in self.keywords if x not in rm_keywords)
             self._dirty = 'remove_keywords:{}'.format(', '.join(rm_keywords))
@@ -1077,7 +1077,7 @@ class Track:
                 msg.append('Copied times for {} out of {} points'.format(
                     changed_point_times, self.gpx.get_track_points_no()))
         if msg:
-            msg = list('     ' + x for x in msg)
+            msg = ['     ' + x for x in msg]
             msg.insert(0, 'Merged{} {}'.format(
                 ' and removed' if remove else '', other.identifier(long=True)))
             msg.insert(1, '{}  into {}'.format(
@@ -1177,7 +1177,7 @@ class Track:
         new_points = list([all_points.pop(0)])
         while all_points:
             last_point = new_points[-1]
-            near_points = list(x for x in all_points if self.__point_is_near(last_point, x, 10000))
+            near_points = [x for x in all_points if self.__point_is_near(last_point, x, 10000)]
             if not near_points:
                 near_points = all_points[:]
             nearest = min(near_points, key=lambda x: Track.__time_diff(last_point, x))
@@ -1210,8 +1210,8 @@ class Track:
 
         def simple(track):
             """Simplified track"""
-            return list((round(x.latitude, 3), round(x.longitude, 3))
-                        for x in simplify_polyline(list(track.points()), max_distance=50))
+            return [(round(x.latitude, 3), round(x.longitude, 3))
+                    for x in simplify_polyline(list(track.points()), max_distance=50)]
 
         if id(other) not in self._similarity_others:
             simple1 = simple(self)

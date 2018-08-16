@@ -216,10 +216,10 @@ class TestBackends(BasicTest):
     def test_zz_all_category(self):
         """can we up- and download all values for :attr:`Track.category`?."""
         category_count = len(Track.legal_categories)
-        backends = list(
+        backends = [
             self.setup_backend(x, count=category_count, clear_first=True)
-            for x in self._find_backend_classes() if 'remove' in x.supported)
-        copies = list(self.clone_backend(x) for x in backends)
+            for x in self._find_backend_classes() if 'remove' in x.supported]
+        copies = [self.clone_backend(x) for x in backends]
         try:
             first_backend = copies[0]
             for other in copies[1:]:
