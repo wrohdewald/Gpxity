@@ -108,6 +108,7 @@ class Lifetrack:
 
         Returns:
             The id in the first ServerDirectory
+
         """
         result = None
         for _ in self.targets:

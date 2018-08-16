@@ -19,7 +19,7 @@ import tempfile
 from contextlib import contextmanager
 from subprocess import Popen
 
-import  gpxpy
+import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
 from ...track import Track
@@ -33,11 +33,14 @@ __all__ = ['BasicTest']
 
 from .. import Directory
 
+
 class BasicTest(unittest.TestCase):
+
     """define some helpers.
 
     Attributes:
         all_backend_classes: a list of all backend implementations
+
     """
 
     all_backend_classes = None
@@ -100,6 +103,7 @@ class BasicTest(unittest.TestCase):
 
         Returns:
             (~gpxity.Track): A new track not bound to a backend
+
         """
         if BasicTest.all_backend_classes is None:
             BasicTest.all_backend_classes = BasicTest._find_backend_classes()
@@ -168,6 +172,7 @@ class BasicTest(unittest.TestCase):
 
         Returns:
             A list with count points
+
         """
         result = list()
         start_time = cls._random_datetime()
@@ -179,19 +184,20 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
-    def assertSameTracks(self, backend1, backend2, with_category=True): # pylint: disable=invalid-name
+    def assertSameTracks(self, backend1, backend2, with_category=True):  # pylint: disable=invalid-name
         """both backends must hold identical tracks."""
-        self.maxDiff = None # pylint: disable=invalid-name
+        self.maxDiff = None  # pylint: disable=invalid-name
         if backend1 != backend2:
             with_last_time = not (isinstance(backend1, GPSIES) or isinstance(backend2, GPSIES))
             keys1 = sorted(x.key(with_category, with_last_time) for x in backend1)
             keys2 = sorted(x.key(with_category, with_last_time) for x in backend2)
             self.assertEqual(keys1, keys2)
 
-    def assertEqualTracks(self, track1, track2, xml: bool = False, with_category: bool = True): # pylint: disable=invalid-name
+    def assertEqualTracks(self, track1, track2, xml: bool = False, with_category: bool = True):  # pylint: disable=invalid-name
         """both tracks must be identical. We test more than necessary for better test coverage.
 
         Args:
+
             xml: if True, also compare to_xml()"""
         self.maxDiff = None
 
@@ -204,13 +210,13 @@ class BasicTest(unittest.TestCase):
         if xml:
             self.assertEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
-    def assertNotEqualTracks(self, track1, track2, with_category: bool = True): # pylint: disable=invalid-name
+    def assertNotEqualTracks(self, track1, track2, with_category: bool = True):  # pylint: disable=invalid-name
         """both tracks must be different. We test more than necessary for better test coverage."""
         self.assertNotEqual(track1.key(with_category), track2.key(with_category))
         self.assertFalse(track1.points_equal(track2))
         self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
 
-    def assertTrackFileContains(self, track, string): # pylint: disable=invalid-name
+    def assertTrackFileContains(self, track, string):  # pylint: disable=invalid-name
         """Assert that string is in the physical file. Works only for Directory backend."""
         with open(track.backend.gpx_path(track.id_in_backend)) as trackfile:
             data = trackfile.read()
@@ -236,6 +242,7 @@ class BasicTest(unittest.TestCase):
 
         Returns:
             the prepared Backend
+
         """
 
         result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup, debug=debug)
@@ -268,8 +275,7 @@ class BasicTest(unittest.TestCase):
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
                      cleanup=True, clear_first=True, category=None,
                      public: bool = False, debug: bool = False, username=None):
-        """Just like setup_backend but usable as a context manager. which will call destroy() when done.
-        """
+        """Just like setup_backend but usable as a context manager. which will call destroy() when done."""
         tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public, debug)
         try:
             yield tmp_backend
@@ -287,6 +293,7 @@ class BasicTest(unittest.TestCase):
 
         Args:
             with_skip: if True, also finds those with skip_test=False
+
         """
         backends_directory = __file__
         while not backends_directory.endswith('backends'):

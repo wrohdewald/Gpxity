@@ -11,6 +11,7 @@ Upload entire tracks and extend a track. That is
 what oruxmaps does - see examples/mmt_server.
 
 TrackMMT is used to test mmt_server.
+
 """
 
 from .mmt import MMT
@@ -20,11 +21,13 @@ __all__ = ['TrackMMT']
 
 
 class TrackMMT(MMT):
+
     """This is a minimal implementation, it only supports listing and retrieving tracks and life tracking.
 
     This is used for testing examples/mmtserver.py which in turn is used to
     receive life tracking data from smartphone apps like
     oruxmaps.
+
     """
 
     # pylint: disable=abstract-method
@@ -62,7 +65,9 @@ class TrackMMT(MMT):
     @property
     def is_free_account(self):
         """Our own local server can do lifeftracking.
+
         Returns:
             False
+
         """
         return False

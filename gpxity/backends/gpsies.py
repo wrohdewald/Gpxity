@@ -22,6 +22,7 @@ from .. import Backend, Track
 
 __all__ = ['GPSIES']
 
+
 class GPSIESRawTrack:
 
     """raw data from the gpies html page."""
@@ -34,7 +35,8 @@ class GPSIESRawTrack:
         self.distance = None
         self.public = True
 
-class ParseGPSIESCategories(HTMLParser): # pylint: disable=abstract-method
+
+class ParseGPSIESCategories(HTMLParser):  # pylint: disable=abstract-method
 
     """Parse the legal values for category from html."""
 
@@ -51,7 +53,7 @@ class ParseGPSIESCategories(HTMLParser): # pylint: disable=abstract-method
                 self.result.append(_)
 
 
-class ParseGPIESEditPage(HTMLParser): # pylint: disable=abstract-method
+class ParseGPIESEditPage(HTMLParser):  # pylint: disable=abstract-method
 
     """Parse the category value for a track from html."""
 
@@ -66,7 +68,7 @@ class ParseGPIESEditPage(HTMLParser): # pylint: disable=abstract-method
             self.category = attributes['id']
 
 
-class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
+class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
 
     """get some attributes available only on the web page.
 
@@ -126,7 +128,6 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
             self.seeing_list = False
             self.after_list = True
 
-
     def handle_data(self, data):
         """data from the parser."""
         data = data.strip()
@@ -148,7 +149,9 @@ class ParseGPSIESList(HTMLParser): # pylint: disable=abstract-method
 
 
 class GPSIES(Backend):
+
     """The implementation for gpsies.com.
+
     The track ident is the fileId given by gpsies.
 
     Searching arbitrary tracks is not supported. GPSIES only looks at the
@@ -164,6 +167,7 @@ class GPSIES(Backend):
             user account.
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
+
     """
 
     # pylint: disable=abstract-method
@@ -239,7 +243,6 @@ class GPSIES(Backend):
 
     default_url = 'https://www.gpsies.com'
 
-
     def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
         if url is None:
             url = self.default_url
@@ -250,6 +253,7 @@ class GPSIES(Backend):
         """Needed only for unittest.
 
         Returns: list(str)
+
             all legal values for category."""
         response = requests.post('{}?trackList.do'.format(self.url), timeout=self.timeout)
         category_parser = ParseGPSIESCategories()
@@ -323,13 +327,13 @@ class GPSIES(Backend):
         self._current_track = track
         assert track.id_in_backend
         data = {
-            'edit':'',
+            'edit': '',
             'fileId': track.id_in_backend,
             'fileDescription': track.description,
             'filename': track.title,
             'status': '1' if track.public else '3',
             'trackTypes': self.encode_category(track.category),
-            'websiteUrl':''}
+            'websiteUrl': ''}
 
         # in about 1 out of 10 cases this update does not work.
         # Doing that on the website with firefox shows the same problem.
@@ -371,7 +375,7 @@ class GPSIES(Backend):
             if 'pagination' in line:
                 hrefs = [x for x in line.split(' ') if x.startswith('href')]
         for href in hrefs[2:-2]:
-            href = href[1:-1] # remove apostrophes
+            href = href[1:-1]  # remove apostrophes
             parts = ''.join(href.split('?')[1:])
             parts = parts.split('&amp;')
             data = dict(x.split('=') for x in parts)
@@ -385,7 +389,7 @@ class GPSIES(Backend):
             if raw_data.distance:
                 track._header_data['distance'] = raw_data.distance
             track._header_data['public'] = raw_data.public
-            if self.identifier() not in self._session: # anonymous, no login
+            if self.identifier() not in self._session:  # anonymous, no login
                 track.public = True
             yield track
 
@@ -436,12 +440,12 @@ class GPSIES(Backend):
         """remove on the server."""
         data = {
             'fileId': ident,
-            'delete':'',
-            'fileDescription':'n/a',
-            'filename':'n/a',
-            'status':'1',
-            'trackTypes':'racingbike',
-            'websiteUrl':''}
+            'delete': '',
+            'fileDescription': 'n/a',
+            'filename': 'n/a',
+            'status': '1',
+            'trackTypes': 'racingbike',
+            'websiteUrl': ''}
         self.__post('editTrack', data=data)
 
     def _write_all(self, track) ->str:
@@ -449,6 +453,7 @@ class GPSIES(Backend):
 
         Returns:
             The new id_in_backend
+
         """
         self._current_track = track
         files = {'formFile': (
@@ -458,9 +463,9 @@ class GPSIES(Backend):
             'status': '1' if track.public else '3',
             'fileDescription': track.description,
             'trackTypes': self.encode_category(track.category),
-            'trackClassification':'withoutClassification',
+            'trackClassification': 'withoutClassification',
             'trackSimplification': '0',
-            'uploadButton':''}
+            'uploadButton': ''}
         response = self.__post('upload', files=files, data=data)
         if 'Created' not in response.text:
             # not created

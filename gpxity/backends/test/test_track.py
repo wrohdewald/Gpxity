@@ -8,6 +8,7 @@ implements test classes for Track.
 
 They only use backend Directory, so there is no network traffic involved
 (unless Directory is a network file system, of course).
+
 """
 
 import os
@@ -273,7 +274,7 @@ class TrackTests(BasicTest):
                 self.assertIs(track2_copy.backend, dir2)
                 self.assertEqual(len(directory), 2)
                 self.assertEqual(len(dir2), 3)
-                directory.scan() # we changed it through dir2
+                directory.scan()  # we changed it through dir2
                 self.assertEqual(len(directory), 4)
                 dir2.scan()
                 self.assertEqual(len(directory), 4)
@@ -311,7 +312,7 @@ class TrackTests(BasicTest):
             track1 = Track()
             track1.add_points(points)
             track2 = track1.clone()
-            points2 = list(track2.points()) # those are cloned points
+            points2 = list(track2.points())  # those are cloned points
             self.assertTrue(track1.points_equal(track2))
             track2.gpx.tracks.clear()
             track2.add_points(points2[:5])
@@ -436,7 +437,7 @@ class TrackTests(BasicTest):
                 target_file.write(' ')
             os.symlink('deadtarget', source)
             os.remove(target_path)
-            directory.scan() # this loads symlinks. It removes the dead link.
+            directory.scan()  # this loads symlinks. It removes the dead link.
             self.assertFalse(os.path.exists(source))
 
     def test_fs_encoding(self):
@@ -490,7 +491,6 @@ class TrackTests(BasicTest):
         track.add_keywords('Bye,Sam')
         self.assertEqual(track.keywords, ['Bye', 'Dolly', 'Hello', 'Sam'])
 
-
     def test_keyword_args(self):
         """Track.keywords must accept all types of iterable."""
         track = Track()
@@ -539,7 +539,7 @@ class TrackTests(BasicTest):
             self.assertIs(directory['56'], track)
             directory.remove_all()
             with self.assertRaises(IndexError):
-                directory[0] # pylint: disable=pointless-statement
+                directory[0]  # pylint: disable=pointless-statement
 
     def test_adjust_time(self):
         """adjust_time()."""

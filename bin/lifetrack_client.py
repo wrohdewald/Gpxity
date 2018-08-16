@@ -38,6 +38,7 @@ from gpxity import Track, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT
 
 
 class Main:
+
     """this is where the work is done."""
 
     def __init__(self):
@@ -61,7 +62,7 @@ class Main:
             for point in all_points[5:]:
                 track.update([point])
             track.end()
-        except Exception as _: # pylint: disable=broad-except
+        except Exception as _:  # pylint: disable=broad-except
             self.error(_)
 
     def error(self, msg, exit_code=None):
@@ -140,7 +141,6 @@ class Main:
                 self.options.timeout = tuple(float(x) for x in self.options.timeout.split(','))
             else:
                 self.options.timeout = float(self.options.timeout)
-
 
 
 sys.exit(Main().exit_code)

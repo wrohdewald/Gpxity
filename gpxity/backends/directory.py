@@ -19,11 +19,14 @@ from ..util import remove_directory
 
 __all__ = ['Directory', 'Backup']
 
+
 class Backup:
+
     """A context manager making a backup of the gpx file.
 
     If an exception happened, restore the backup.
     Otherwise, remove it again.
+
     """
 
     # pylint: disable=too-few-public-methods
@@ -60,7 +63,9 @@ class Backup:
 
 
 class Directory(Backend):
+
     """Uses a directory for storage. The filename minus the .gpx ending is used as the track id.
+
     If the track has a title but no storage id yet, use the title as storage id.
     Make the storage id unique by attaching a number if needed.
     An track without title gets a random name.
@@ -96,6 +101,7 @@ class Directory(Backend):
             Note that :attr:`fs_encoding` is independent of the platform we are running on - we
             might use a network file system.
         is_temporary (bool): True if no Url was given and we created a temporary directory
+
     """
 
    # skip_test = True
@@ -122,7 +128,7 @@ class Directory(Backend):
         """Used for formatting strings. Must be unique."""
         result = self.url
         if result:
-            if  result.startswith('./') or result == '.':
+            if result.startswith('./') or result == '.':
                 result = result[2:]
         if track:
             if result:
@@ -137,6 +143,7 @@ class Directory(Backend):
         A list with all legal categories.
 
         Returns: list(str)
+
             all legal values for category for this backend."""
         return Track.legal_categories
 
@@ -153,6 +160,7 @@ class Directory(Backend):
 
         If the content of a track changes, the symlinks might have to
         be adapted. But we do not know the name of the existing symlink anymore.
+
         So just scan them all and assign them to id_in_backend."""
         if directory is None:
             directory = self.url
@@ -179,6 +187,7 @@ class Directory(Backend):
 
         Returns:
             The new unique ident
+
         """
         value = self._sanitize_name(ident_proposal)
         if not value:
@@ -190,6 +199,7 @@ class Directory(Backend):
         """If the file name already exists, apply a serial number.
 
         If value ends with .gpx, put the serial number in front of that.
+
         """
         ctr = 0
         unique_value = value
@@ -333,6 +343,7 @@ class Directory(Backend):
         """Creates an id for track.
 
         Returns: The new ident.
+
         """
         ident = track.id_in_backend
         if ident is None:
@@ -372,6 +383,7 @@ class Directory(Backend):
         """save full gpx track.
 
         Since the file name uses title and title may have changed,
+
         compute new file name and remove the old files. We also adapt track.id_in_backend."""
         old_ident = track.id_in_backend
         new_ident = self._new_ident(track)

@@ -16,7 +16,9 @@ from ..backends import Directory
 
 __all__ = ['Mailer']
 
+
 class MailerAtom:
+
     """Holds all data representing a sent mail."""
 
     # pylint: disable=too-few-public-methods
@@ -32,9 +34,11 @@ class MailerAtom:
 
     def send(self):
         """Actually sends the mail.
+
         Mailer.url hold the mail addresses, separated by comma.
 
         Returns:
+
             The time whethe mail was sent."""
 
         with Directory(cleanup=True) as temp_dir:
@@ -57,7 +61,9 @@ class MailerAtom:
         """Returns repr."""
         return 'MailerAtom({} to {}'.format(self.track, self.url)
 
+
 class Mailer(Backend):  # pylint: disable=abstract-method
+
     """This is a minimal implementation, it only supports listing and retrieving tracks and life tracking.
 
     This is used for testing examples/mmtserver.py which in turn is used to

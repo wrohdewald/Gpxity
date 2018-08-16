@@ -11,7 +11,9 @@ import datetime
 
 __all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_track', 'collect_tracks']
 
+
 class Duration:
+
     """A context manager showing time information for debugging."""
 
     # pylint: disable=too-few-public-methods
@@ -34,12 +36,14 @@ def repr_timespan(start, end) ->str:
 
     Returns:
         a string like #h#m
+
         """
     duration = end - start
     hours = duration.seconds // 3600
     minutes = (duration.seconds - hours * 3600) // 60
     hours += duration.days * 24
     return '{}:{:02}'.format(hours, minutes)
+
 
 def uniq(lst):
     """return lst with unique elements."""
@@ -48,6 +52,7 @@ def uniq(lst):
         if _ not in seen:
             seen.append(_)
             yield _
+
 
 def remove_directory(path):
     """If this fails, show directory content."""
@@ -59,9 +64,11 @@ def remove_directory(path):
             for _ in os.listdir(path):
                 print('  ', _)
 
+
 def is_track(value):
     """Return True or False without looking at the type, so we do not need to import Track."""
     return hasattr(value, 'id_in_backend')
+
 
 def collect_tracks(sources, verbose=False):
     """A copied list with tracks combined from all sources, to be used in 'for'-loops."""

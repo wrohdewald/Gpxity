@@ -45,23 +45,25 @@ from ..version import VERSION
 
 __all__ = ['MMT']
 
+
 def _convert_time(raw_time) ->datetime.datetime:
     """MMT uses Linux timestamps. Converts that into datetime.
 
     Args:
         raw_time (int): The linux timestamp from the MMT server
+
     """
     return datetime.datetime.utcfromtimestamp(float(raw_time))
 
 
-class ParseMMTCategories(HTMLParser): # pylint: disable=abstract-method
+class ParseMMTCategories(HTMLParser):  # pylint: disable=abstract-method
 
     """Parse the legal values for category from html."""
 
     def __init__(self):
         super(ParseMMTCategories, self).__init__()
         self.seeing_category = False
-        self.result = ['Cycling'] # The default value
+        self.result = ['Cycling']  # The default value
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser."""
@@ -78,7 +80,7 @@ class ParseMMTCategories(HTMLParser): # pylint: disable=abstract-method
             self.seeing_category = False
 
 
-class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
+class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
 
     """get some attributes available only on the web page.
 
@@ -100,7 +102,7 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
         self.result['category_from_title'] = None
         self.result['category_3'] = None
         self.result['public'] = None
-        self.result['tags'] = dict() # key: name, value: id
+        self.result['tags'] = dict()  # key: name, value: id
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser."""
@@ -131,7 +133,7 @@ class ParseMMTTrack(HTMLParser): # pylint: disable=abstract-method
             self.seeing_title = True
         elif tag == 'p' and attributes['id'] == 'track-desc':
             self.seeing_description = True
-        elif tag == 'a' and attributes['class'] == 'tag-link' and  attributes['rel'] == 'tag':
+        elif tag == 'a' and attributes['class'] == 'tag-link' and attributes['rel'] == 'tag':
             assert attributes['id'].startswith('tag-')
             self.seeing_tag = attributes['id'].split('-')[2]
 
@@ -170,7 +172,9 @@ class MMTRawTrack:
 
 
 class MMT(Backend):
+
     """The implementation for MapMyTracks.
+
     The track ident is the number given by MapMyTracks.
 
     MMT knows tags. We map :attr:`Track.keywords <gpxity.Track.keywords>` to MMT tags. MMT will
@@ -185,6 +189,7 @@ class MMT(Backend):
          timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
         verify: True, False or the name of a local cert file
+
     """
 
     # pylint: disable=abstract-method
@@ -227,19 +232,20 @@ class MMT(Backend):
         if url is None:
             url = self.default_url
         super(MMT, self).__init__(url, auth, cleanup, debug, timeout, verify)
-        self.__mid = -1 # member id at MMT for auth
+        self.__mid = -1  # member id at MMT for auth
         self.__is_free_account = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
             # has a lookup table and never deletes there. So a given tag will always get
             # the same ID. We use this fact.
             # MMT internally capitalizes tags but displays them lowercase.
-        self._last_response = None # only used for debugging
+        self._last_response = None  # only used for debugging
         self.https_url = self.url.replace('http:', 'https:')
 
     def _download_legal_categories(self):
         """Needed only for unittest.
 
         Returns: list(str)
+
             all legal values for category."""
         response = requests.get(self.url + '/explore/wall', timeout=self.timeout)
         category_parser = ParseMMTCategories()
@@ -255,7 +261,7 @@ class MMT(Backend):
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
-            payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT':'9'}
+            payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT': '9'}
             login_url = '{}/login'.format(self.https_url)
             response = self._session[ident].post(
                 login_url, data=payload, timeout=self.timeout, verify=self.verify)
@@ -329,11 +335,12 @@ class MMT(Backend):
             data: should be xml and will be encoded. May be None.
             expect: If given, raise an error if this string is not part of the server answer.
             kwargs: a dict for post(). May be None. data and kwargs must not both be passed.
+
         """
         if url is None:
             url = 'api/'
         full_url = self.url + url
-        headers = {'DNT': '1'} # do not track
+        headers = {'DNT': '1'}  # do not track
         if data:
             data = data.encode('ascii', 'xmlcharrefreplace')
         else:
@@ -348,8 +355,8 @@ class MMT(Backend):
         except requests.exceptions.ReadTimeout:
             print('timeout for', data)
             raise
-        self._last_response = response # for debugging
-        if response.status_code != requests.codes.ok: # pylint: disable=no-member
+        self._last_response = response  # for debugging
+        if response.status_code != requests.codes.ok:  # pylint: disable=no-member
             self.__handle_post_error(full_url, data, response)
             return None
         result = response.text
@@ -382,6 +389,7 @@ class MMT(Backend):
         """change an attribute directly on mapmytracks.
 
         Note that we specify iso-8859-1 but use utf-8. If we correctly specify utf-8 in
+
         the xml encoding, mapmytracks.com aborts our connection."""
         attr_value = getattr(track, attribute)
         if attribute == 'description' and attr_value == self._default_description:
@@ -421,6 +429,7 @@ class MMT(Backend):
         """change category directly on mapmytracks.
 
         Note that we specify iso-8859-1 but use utf-8. If we correctly specify utf-8 in
+
         the xml encoding, mapmytracks.com aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
@@ -430,6 +439,7 @@ class MMT(Backend):
         """Returns all current MMT tags.
 
         Returns:
+
             A sorted unique list"""
         page_scan = self._scan_track_page(track)
         return list(sorted(set(page_scan['tags'])))
@@ -438,6 +448,7 @@ class MMT(Backend):
         """Add keyword as MMT tag.
 
         MMT allows adding several at once, comma separated,
+
         and we allow this too. But do not expect this to work with all backends."""
         if not values:
             return
@@ -550,6 +561,7 @@ class MMT(Backend):
         if the title has not been set, get_activities says something like "Track 2016-09-04 ..."
             while the home page says "Cycling activity". We prefer the value from the home page
             and silently ignore this inconsistency.
+
          """
         page_scan = self._scan_track_page(track)
         if page_scan['title']:
@@ -591,10 +603,12 @@ class MMT(Backend):
 
     def _write_all(self, track) ->str:
         """save full gpx track on the MMT server.
+
         We must upload the title separately.
 
         Returns:
             The new id_in_backend
+
         """
         self._current_track = track
         if not track.gpx.get_track_points_no():
@@ -636,6 +650,7 @@ class MMT(Backend):
 
         Returns:
             new_ident: New track id
+
         """
         if self.is_free_account:
             raise Exception('Your free MMT account does not allow lifetracking')
@@ -662,6 +677,7 @@ class MMT(Backend):
         Args:
             track: The lifetrack
             points: The new point
+
         """
         if MMT._current_lifetrack != track:
             raise Exception('MMT only accepts one simultaneous lifetracker per username')
@@ -676,6 +692,7 @@ class MMT(Backend):
 
         Args:
             track: The lifetrack
+
         """
         if MMT._current_lifetrack != track:
             raise Exception('MMT only accepts one simultaneous lifetracker per username')

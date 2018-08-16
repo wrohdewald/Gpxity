@@ -16,6 +16,7 @@ __all__ = ['BackendDiff']
 
 
 class BackendDiff:
+
     """Compares two backends.directory.
 
     Args:
@@ -32,11 +33,13 @@ class BackendDiff:
             100 identical positions without being identical.
         diff_flags: T=time, D=description, C=category, S=status,
             K=keywords, P=positions, Z=time offset
+
     """
 
     # pylint: disable=too-few-public-methods
 
     diff_flags = 'TDCSKPZ'
+
     class Pair:
         """Holds two comparable Items and the diff result
         Attributes:
@@ -54,6 +57,7 @@ class BackendDiff:
             Returns:
                 defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
                     Values is a list(str) with additional info
+
             """
             # pylint: disable=too-many-locals, too-many-branches
 
@@ -142,7 +146,6 @@ class BackendDiff:
                 result['Z'].append('Time offset: {}'.format(_))
 
             return result
-
 
     class BackendDiffSide:
         """Represents a side (left or right) in BackendDiff.

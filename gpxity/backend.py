@@ -22,6 +22,7 @@ __all__ = ['Backend']
 
 
 class Backend:
+
     """A place where tracks live. Something like the filesystem or http://mapmytracks.com.
 
     A Backend should hold only tracks for one person, and they
@@ -82,14 +83,13 @@ class Backend:
     class BackendException(Exception):
         """Is raised for general backend exceptions, especially error messages from a remote server"""
 
-
     supported = None
 
     skip_test = False
 
-    _legal_categories = None # Override in the backends
+    _legal_categories = None  # Override in the backends
 
-    default_url = None # Override in the backends
+    default_url = None  # Override in the backends
 
     full_support = (
         'scan', 'remove', 'lifetrack', 'get_time', 'write', 'write_title', 'write_public', 'write_category',
@@ -100,7 +100,6 @@ class Backend:
     # synchronization is sometimes slower than expected. See
     # cookie "SERVERID".
     _session = dict()
-
 
     def __init__(self, url: str = None, auth=None, cleanup: bool = False,
                  debug: bool = False, timeout=None, verify=True):
@@ -133,6 +132,7 @@ class Backend:
 
        Args:
             track: If given, add it to the identifier.
+
         """
         result = '{}:{}{}/'.format(
             self.__class__.__name__.lower(),
@@ -149,6 +149,7 @@ class Backend:
 
         Returns: list(str)
             all legal values for this backend
+
         """
         raise NotImplementedError
 
@@ -162,6 +163,7 @@ class Backend:
         Use this to avoid recursions.
 
         You should never need this unless you implement a new backend.
+
         """
         prev_decoupled = self._decoupled
         self._decoupled = True
@@ -182,11 +184,11 @@ class Backend:
         support_mappings = {
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
-            '_yield_tracks':'scan',
+            '_yield_tracks': 'scan',
             '_write_all': 'write',
-            '_remove_ident':'remove',
-            '_lifetrack_start':'lifetrack',
-            'get_time':'get_time'}
+            '_remove_ident': 'remove',
+            '_lifetrack_start': 'lifetrack',
+            'get_time': 'get_time'}
         cls.supported = set()
         for name, method in getmembers(cls, isfunction):
             if name in support_mappings:
@@ -228,6 +230,7 @@ class Backend:
 
             If you change a track such that it does not match anymore, the exception
             NoMatch will be raised and the match stays unchanged.
+
         """
         return self.__match
 
@@ -265,6 +268,7 @@ class Backend:
 
     def scan(self, now: bool = False) ->None:
         """Enforces a reload of the list of all tracks in the backend.
+
         This will be delayed until the list is actually needed again.
 
         If this finds an unsaved track not matching the current match
@@ -273,6 +277,7 @@ class Backend:
 
         Args:
             now: If True, do not delay scanning.
+
         """
         self._tracks_fully_listed = False
         if now:
@@ -313,10 +318,12 @@ class Backend:
 
     def _yield_tracks(self):
         """A generator for all tracks. It yields the next found and appends it to tracks.
+
         The tracks will not be loaded if possible.
 
         Yields:
             the next track
+
         """
         raise NotImplementedError()
 
@@ -335,6 +342,7 @@ class Backend:
         Args:
             exc_prefix: If not None, use it for the beginning of an exception message.
                 If None, never raise an exception
+
         """
         if self.__match is None:
             return True
@@ -374,6 +382,7 @@ class Backend:
             ~gpxity.Track: The saved track. If the original track lives in a different
             backend, a new track living in this backend will be created
             and returned.
+
         """
         if self._decoupled:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
@@ -415,12 +424,14 @@ class Backend:
         Returns: The new ident. If the backend does not
         create an ident in advance, return None. Such
         backends will return a new ident after writing.
+
         """
 
     def _rewrite(self, track, changes):
         """Rewrites the full track.
 
         Used only by Track when things change.
+
         """
         self._current_track = track
         assert track.backend is self
@@ -448,10 +459,12 @@ class Backend:
 
     def _write_all(self, track) ->str:
         """the actual implementation for the concrete Backend.
+
         Writes the entire Track.
 
         Returns:
             The new id_in_backend
+
         """
         raise NotImplementedError()
 
@@ -461,6 +474,7 @@ class Backend:
         Args:
             value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`
+
         """
         track = value if hasattr(value, 'id_in_backend') else self[value]
         self._current_track = track
@@ -529,6 +543,7 @@ class Backend:
         """If `cleanup` was set at init time, removes all tracks.
 
         Some backends (example: :class:`Directory <gpxity.Directory.destroy>`)
+
        may also remove the account (or directory). See also :meth:`remove_all`."""
         if self._cleanup:
             self.remove_all()
@@ -552,6 +567,7 @@ class Backend:
         """Allows accesses like alist[a_id].
 
         Do not call this when implementing a backend because this always calls scan() first.
+
         Instead use :meth:`_has_item`."""
         self._scan()
         if isinstance(index, int):
@@ -577,8 +593,9 @@ class Backend:
             raise Exception('{}: id_in_backend must be str'.format(track))
         if track.id_in_backend is not None and any(x.id_in_backend == track.id_in_backend for x in self.__tracks):
             # cannot do "in self" because we are not decoupled, so that would call _scan()
-            raise ValueError('Backend.append(track): its id_in_backend {} is already in list: Track={}, list={}'.format(
-                track.id_in_backend, self[track.id_in_backend], self.__tracks))
+            raise ValueError(
+                'Backend.append(track): its id_in_backend {} is already in list: Track={}, list={}'.format(
+                    track.id_in_backend, self[track.id_in_backend], self.__tracks))
         self.matches(track, 'append')
         self.__tracks.append(track)
 
@@ -604,11 +621,12 @@ class Backend:
     def __eq__(self, other):
         """True if both backends have the same tracks."""
         self._scan()
-        other._scan() # pylint: disable=protected-access
+        other._scan()  # pylint: disable=protected-access
         return set(x.key() for x in self) == set(x.key() for x in other)
 
     def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
         """merge other backend or a single track into this one.
+
         If two tracks have identical points, or-ify their other attributes.
         Args:
             other: The backend or a single track to be merged
@@ -616,6 +634,7 @@ class Backend:
             dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching track, just copy other into this Backend
         Returns: list(str) A list of messages for verbose output
+
         """
         # pylint: disable=too-many-branches,too-many-locals
         # TODO: test for dry_run

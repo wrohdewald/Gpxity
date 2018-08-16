@@ -35,7 +35,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track, ServerDirectory, Lifetrack, Mailer # pylint: disable=no-name-in-module
+from gpxity import Track, ServerDirectory, Lifetrack, Mailer  # pylint: disable=no-name-in-module
 
 try:
     import argcomplete
@@ -46,6 +46,7 @@ except ImportError:
 
 
 class MMTHandler(BaseHTTPRequestHandler):
+
     """handles all HTTP requests."""
 
     users = None
@@ -94,7 +95,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             exc = ValueError
         raise exc(reason)
 
-    def parseRequest(self): # pylint: disable=invalid-name
+    def parseRequest(self):  # pylint: disable=invalid-name
         """as the name says. Why do I have to implement this?."""
         if self.server.gpxdo_options.debug:
             self.server.logger.debug('got headers:')
@@ -160,7 +161,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(bytes(xml.encode('utf-8')))
 
-    def do_POST(self): # pylint: disable=invalid-name
+    def do_POST(self):  # pylint: disable=invalid-name
         """override standard."""
         if self.server.gpxdo_options.debug:
             self.server.logger.debug(
@@ -278,12 +279,15 @@ class MMTHandler(BaseHTTPRequestHandler):
         return '<type>activity_stopped</type>'
 
 
-class LifeServerMMT: # pylint: disable=too-few-public-methods
+class LifeServerMMT:  # pylint: disable=too-few-public-methods
+
     """A simple MMT server for life tracking.
+
         Currently supports only one logged in connection.
 
         This is not ready for production usage, several important
         parts are still unimplemented.
+
         """
 
     def __init__(self, options, logger):
@@ -297,7 +301,8 @@ class LifeServerMMT: # pylint: disable=too-few-public-methods
         httpd.serve_forever()
 
 
-class Main: # pylint: disable=too-few-public-methods
+class Main:  # pylint: disable=too-few-public-methods
+
     """main."""
 
     def __init__(self):
@@ -326,5 +331,6 @@ class Main: # pylint: disable=too-few-public-methods
 
         options = parser.parse_args()
         LifeServerMMT(options, logger)
+
 
 Main()

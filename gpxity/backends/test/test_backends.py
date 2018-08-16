@@ -22,6 +22,7 @@ from ... import Track, Lifetrack
 
 
 class TestBackends(BasicTest):
+
     """Are the :literal:`supported_` attributes set correctly?."""
 
     def test_supported(self):
@@ -227,7 +228,7 @@ class TestBackends(BasicTest):
         kw_a = 'A'
         kw_b = 'Berlin'
         kw_c = 'CamelCase'
-        kw_d = 'D' # self.unicode_string2
+        kw_d = 'D'  # self.unicode_string2
 
         for cls in self._find_backend_classes():
             if 'write' not in cls.supported or 'scan' not in cls.supported:
@@ -280,7 +281,7 @@ class TestBackends(BasicTest):
                         track.title = 'Title ' + self.unicode_string1
                         self.assertIsNotNone(track.backend)
                         self.assertEqual(track.backend, backend)
-                        backend2.scan() # because backend2 does not know about changes thru backend
+                        backend2.scan()  # because backend2 does not know about changes thru backend
                         track2 = backend2[0]
                         # track and track2 may not be identical. If the original track
                         # contains gpx xml data ignored by MMT, it will not be in track2.
@@ -297,6 +298,7 @@ class TestBackends(BasicTest):
         """Can we change the points of a track?.
 
         For MMT this means re-uploading and removing the previous instance, so this
+
         is not always as trivial as it should be."""
 
     def test_slow_download_many(self):
@@ -318,7 +320,7 @@ class TestBackends(BasicTest):
         """Up- and download private tracks."""
         with self.temp_backend(Directory, count=5, category='Cycling') as local:
             track = Track(gpx=self._get_gpx_from_test_file('test2'))
-            self.assertTrue(track.public) # as defined in test2.gpx keywords
+            self.assertTrue(track.public)  # as defined in test2.gpx keywords
             track.public = False
             self.assertFalse(track.public)
             local.add(track)

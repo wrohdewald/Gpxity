@@ -11,10 +11,12 @@ from configparser import ConfigParser
 
 __all__ = ['Authenticate']
 
+
 class Authenticate:
 
     """
     Get password and / or Url from auth.cfg.
+
     If nothing is useable, sets them to None.
 
     auth.cfg is expected in :literal:`~/.config/Gpxity/auth.cfg`
@@ -69,7 +71,7 @@ class Authenticate:
         self.cls = cls
         self.__username = username
         self.auth = (None, None)
-        if 'Directory' in cls.__name__  and username.startswith('gpxitytest'):
+        if 'Directory' in cls.__name__ and username.startswith('gpxitytest'):
             self.url = tempfile.mkdtemp(prefix='gpxity')
             return
         self.__path = os.path.expanduser(self.path)

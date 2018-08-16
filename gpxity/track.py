@@ -103,7 +103,7 @@ class Track:
         self.__id_in_backend = None
         self.__backend = None
         self._loaded = False
-        self._header_data = dict() # only for internal use because we clear data on _full_load()
+        self._header_data = dict()  # only for internal use because we clear data on _full_load()
         self.__gpx = gpx or GPX()
         self.__backend = None
         self.__cached_distance = None
@@ -121,6 +121,7 @@ class Track:
         This is a read-only property. It is set with :meth:`Backend.add <gpxity.Backend.add>`.
 
         It is not possible to decouple a track from its backend, use :meth:`clone()`.
+
         """
         return self.__backend
         # :attr:`Track.id_in_backend <gpxity.Track.id_in_backend>`.
@@ -130,6 +131,7 @@ class Track:
         """Every backend has its own scheme for unique track ids.
 
         Some backends may change the id if the track data changes.
+
         """
         return self.__id_in_backend
 
@@ -139,6 +141,7 @@ class Track:
 
         Args:
             value: The new value
+
         """
         if value is not None and not isinstance(value, str):
             raise Exception('{}: id_in_backend must be str'.format(value))
@@ -184,6 +187,7 @@ class Track:
 
         Returns:
             list: The names of the attributes currently marked as dirty.
+
         """
         return self.__dirty
 
@@ -195,7 +199,7 @@ class Track:
             if value == 'gpx':
                 self.__cached_distance = None
                 for other in self._similarity_others.values():
-                    del other._similarity_others[id(self)] # pylint: disable=protected-access
+                    del other._similarity_others[id(self)]  # pylint: disable=protected-access
                     # TODO: unittest where other does not exist anymore
                     del other._similarities[id(self)]  # pylint: disable=protected-access
                 self._similarity_others = weakref.WeakValueDictionary()
@@ -213,6 +217,7 @@ class Track:
 
         Returns:
             ~gpxity.Track: the new track
+
         """
         result = Track(gpx=self.gpx.clone())
         result.category = self.category
@@ -229,6 +234,7 @@ class Track:
         - we have no backend
 
         Otherwise the backend will save this track.
+
         """
         if self.backend is None:
             self._clear_dirty()
@@ -246,6 +252,7 @@ class Track:
         """Removes this track in the associated backend.
 
         If the track is not coupled with a backend, raise an Exception.
+
         """
         if self.backend is None:
             raise Exception('{}: Removing needs a backend'.format(self))
@@ -254,6 +261,7 @@ class Track:
     @property
     def time(self) ->datetime.datetime:
         """datetime.datetime: start time of track.
+
         For a simpler implementation of backends, notably MMT, we ignore
         gpx.time. Instead we return the time of the earliest track point.
         Only if there is no track point, return gpx.time. If that is unknown
@@ -264,6 +272,7 @@ class Track:
         We assume that the first point comes first in time and the last
         point comes last in time. In other words, points should be ordered
         by their time.
+
         """
         if 'time' in self._header_data:
             return self._header_data['time']
@@ -311,6 +320,7 @@ class Track:
         the backend are disabled, and if you access attributes which
         would normally trigger a full load from the backend, they will not.
         (The latter is used by __str__ and __repr__).
+
         """
         # pylint: disable=protected-access
         had_backend = self.__backend is not None
@@ -329,6 +339,7 @@ class Track:
 
         In that state, changes to Track are not written to the backend and
         the track is not marked dirty.
+
         """
         if self.backend is None:
             return True
@@ -339,6 +350,7 @@ class Track:
         """This context manager disables the direct update in the backend and saves the entire track when done.
 
         This may or may not make things faster. Directory and GPSIES profits from this, MMT maybe.
+
         """
         prev_batch_changes = self._batch_changes
         self._batch_changes = True
@@ -357,6 +369,7 @@ class Track:
         or writing to the backend.
         Returns:
             The current value or the default value (see :attr:`legal_categories`)
+
         """
         if not self._loaded and 'category' in self._header_data:
             return self._header_data['category']
@@ -378,7 +391,7 @@ class Track:
         """Loads the full track from source_backend if not yet loaded."""
         if (self.backend is not None and self.id_in_backend and not self._loaded
                 and not self.__is_decoupled and 'scan' in self.backend.supported):
-            self.backend._read_all_decoupled(self) # pylint: disable=protected-access, no-member
+            self.backend._read_all_decoupled(self)  # pylint: disable=protected-access, no-member
             self._loaded = True
 
     def add_points(self, points) ->None:
@@ -388,6 +401,7 @@ class Track:
 
         Args:
             points (list(GPXTrackPoint): The points to be added
+
         """
         if points:
             self.__add_points(points)
@@ -428,6 +442,7 @@ class Track:
 
         Args:
             indata: may be a file descriptor or str
+
         """
         assert self.__is_decoupled
         if hasattr(indata, 'read'):
@@ -466,14 +481,14 @@ class Track:
 
         Args:
             points (list(GPXTrackPoint): The points to be rounded
+
         """
         for _ in points:
             _.longitude = round(_.longitude, 6)
             _.latitude = round(_.latitude, 6)
 
     def to_xml(self) ->str:
-        """Produces exactly one line per trackpoint for easier editing (like removal of unwanted points).
-        """
+        """Produces exactly one line per trackpoint for easier editing (like removal of unwanted points)."""
         self._load_full()
         new_keywords = self.keywords
         new_keywords.append('Category:{}'.format(self.category))
@@ -491,7 +506,7 @@ class Track:
             result = result.replace('>\n<ele>', '><ele>')
             result = result.replace('>\n<time>', '><time>')
             result = result.replace('</ele>\n<time>', '</ele><time>')
-            result = result.replace('.0</ele>', '</ele>') # this could differ depending on the source
+            result = result.replace('.0</ele>', '</ele>')  # this could differ depending on the source
             result = result.replace('\n\n', '\n')
             if not result.endswith('\n'):
                 result += '\n'
@@ -505,6 +520,7 @@ class Track:
         bool: Is this a private track (can only be seen by the account holder) or is it public?.
 
             Default value is False
+
         """
         if 'public' in self._header_data:
             return self._header_data['public']
@@ -528,6 +544,7 @@ class Track:
 
         Returns:
             the GPX object
+
         """
         self._load_full()
         return self.__gpx
@@ -537,6 +554,7 @@ class Track:
         """The last time we received.
 
         Returns:
+
             The last time we received so far. If none, return None."""
         self._load_full()
         try:
@@ -547,6 +565,7 @@ class Track:
     @property
     def keywords(self):
         """list(str): represents them as a sorted list - in GPX they are comma separated.
+
             Content is whatever you want.
 
             Because the GPX format does not have attributes for everything used by all backends,
@@ -566,6 +585,7 @@ class Track:
             to :class:`~gpxity.MMT` to DirectoryB, the keywords in
             DirectoryA and DirectoryB will not be identical, for example "berlin" in DirectoryA but
             "Berlin" in DirectoryB.
+
         """
         if 'keywords' in self._header_data:
             return self._header_data['keywords']
@@ -581,6 +601,7 @@ class Track:
         Args:
             Either single str with one or more keywords, separated by commas
                 or an iterable of keywords. The new keywords. Must not have duplicates.
+
         """
         new_keywords = self.__prepare_keywords(values)
         if new_keywords != self.keywords:
@@ -601,12 +622,14 @@ class Track:
 
     def __prepare_keywords(self, values):
         """Common introductory code for add_keywords and remove_keywords.
+
         Args:
             values: Either single str with one or more keywords, separated by commas
                 or an iterable of keywords.
 
         Returns:
             A unique list of legal keywords as expected by the backend.
+
         """
         if isinstance(values, str):
             result = list(x.strip() for x in values.split(','))
@@ -621,11 +644,13 @@ class Track:
 
     def add_keywords(self, values) ->None:
         """Adds to the comma separated keywords. Duplicate keywords are silently ignored.
+
         A keyword may not contain a comma.
 
         Args:
             values: Either a single str with one or more keywords, separated by commas
                 or an iterable of keywords
+
         """
         new_keywords = set(x for x in self.__prepare_keywords(values) if x not in self.keywords)
         if new_keywords:
@@ -639,6 +664,7 @@ class Track:
         Args:
             values: Either a single str with one or more keywords, separated by commas
                 or an iterable of keywords
+
         """
         rm_keywords = list(x for x in self.__prepare_keywords(values) if x in self.keywords)
         if rm_keywords:
@@ -709,10 +735,12 @@ class Track:
 
     def identifier(self, long: bool = False) ->str:
         """The full identifier with backend name and id_in_backend.
+
         As used for gpxdo.
 
         Args:
             long: If True, give more info
+
         """
         if self.backend is None:
             long_info = ' "{}" from {}'.format(self.title or 'untitled', self.time) if long else ''
@@ -730,6 +758,7 @@ class Track:
 
         Returns:
             a string with selected attributes in printable form.
+
         """
         self._load_full()
         return 'title:{} description:{} keywords:{} category:{}: public:{} last_time:{} angle:{} points:{}'.format(
@@ -751,6 +780,7 @@ class Track:
 
         Returns:
             the distance in km, rounded to m
+
         """
         if 'distance' in self._header_data:
             return self._header_data['distance']
@@ -764,6 +794,7 @@ class Track:
         Returns:
             the angle in degrees 0..360 between start and end.
             If we have no track, return 0
+
         """
         try:
             first_point = next(self.points())
@@ -775,7 +806,7 @@ class Track:
         norm_lat = delta_lat / 90.0
         norm_long = delta_long / 180.0
         try:
-            result = degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long **2)))
+            result = degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long ** 2)))
         except ZeroDivisionError:
             return 0
         if norm_lat >= 0.0:
@@ -788,6 +819,7 @@ class Track:
 
         Yields:
             GPXTrackSegment: all segments in all tracks
+
         """
         self._load_full()
         for track in self.__gpx.tracks:
@@ -800,6 +832,7 @@ class Track:
 
         Yields:
             GPXTrackPoint: all points in all tracks and segments
+
         """
         for segment in self.segments():
             for point in segment.points:
@@ -812,9 +845,11 @@ class Track:
 
     def adjust_time(self, delta):
         """Adds a timedelta to all times.
+
         gpxpy.gpx.adjust_time does the same but it ignores waypoints.
         A newer gpxpy.py has a new bool arg for adjust_time which
         also adjusts waypoints on request but I do not want to check versions.
+
         """
         self.gpx.adjust_time(delta)
         for wpt in self.gpx.waypoints:
@@ -850,6 +885,7 @@ class Track:
             True if both tracks have identical points.
 
         All points of all tracks and segments are combined. Elevations are ignored.
+
         """
         # We do not use points_hash because we want to abort as soon as we know
         # they are different.
@@ -875,6 +911,7 @@ class Track:
             groups of tracks with overlapping times. Sorted by time.
 
         This may be very slow for many long tracks.
+
         """
         previous = None
         group = list()  # Track is  mutable, so a set is no possible
@@ -898,13 +935,13 @@ class Track:
             return True
         if self.title == '{} track'.format(self.category):
             return True
-        if  all(x in '0123456789 :-_' for x in self.title):
+        if all(x in '0123456789 :-_' for x in self.title):
             return True
         return False
 
-
     def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:  # pylint: disable=unused-argument
         """Merge other track into this one. The track points must be identical.
+
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
         Combine description and keywords.
@@ -917,6 +954,7 @@ class Track:
                 the same interface.
         Returns: list(str)
             Messages about category has been done
+
         """
         # pylint: disable=too-many-branches
         if self.identifier() == other.identifier():
@@ -980,7 +1018,7 @@ class Track:
     def __time_diff(last_point, point):
         """Returns difference in seconds, ignoring the date."""
         result = abs(last_point.hhmmss - point.hhmmss)
-        if result > 33200: # seconds in 12 hours
+        if result > 33200:  # seconds in 12 hours
             result = 86400 - result
         return result
 
@@ -991,6 +1029,7 @@ class Track:
 
     def fix(self, orux24: bool = False, jumps: bool = False):
         """Fix bugs. This may fix them or produce more bugs.
+
         Please backup your track before doing this.
 
         Args:
@@ -1001,6 +1040,7 @@ class Track:
 
         Returns:
             A list of message strings, usable for verbose output.
+
             """
         self._load_full()
         if orux24:
@@ -1014,6 +1054,7 @@ class Track:
 
         Whenever the time jumps back or more than 30
         minutes into the future or the distance exceed 5km,
+
         split the segment at that point."""
         did_break = False
         new_tracks = list()
