@@ -25,8 +25,6 @@ import traceback
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
 
-from subprocess import Popen, PIPE
-
 from gpxpy import gpx as mod_gpx
 
 GPX = mod_gpx.GPX
@@ -41,8 +39,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track
-from gpxity import ServerDirectory # pylint: disable=no-name-in-module
+from gpxity import Track, ServerDirectory, Lifetrack, Mailer # pylint: disable=no-name-in-module
 
 try:
     import argcomplete
@@ -54,9 +51,7 @@ except ImportError:
 class MMTHandler(BaseHTTPRequestHandler):
     """handles all HTTP requests"""
     users = None
-    tracking_track = None
     login_user = None
-    last_sent_time = None
     uniqueid = 123
 
     def log_message(self, format, *args):  # pylint: disable=redefined-builtin
@@ -66,18 +61,6 @@ class MMTHandler(BaseHTTPRequestHandler):
     def log_error(self, format, *args):  # pylint: disable=redefined-builtin
         """Override: redirect into logger."""
         self.server.logger.error(format % args)
-
-    def send_mail(self, reason, track):
-        """if a mail address is known, send new GPX there"""
-        if self.server.gpxdo_options.mailto:
-            msg = b'GPX is attached'
-            subject = 'New GPX: {} {}'.format(reason, track)
-            process = Popen(
-                ['mutt', '-s', subject, '-a', track.backend.gpx_path(track.id_in_backend),
-                 '--', self.server.gpxdo_options.mailto],
-                stdin=PIPE)
-            process.communicate(msg)
-            MMTHandler.last_sent_time = datetime.datetime.now()
 
     def check_basic_auth_pw(self):
         """basic http authentication"""
@@ -249,67 +232,50 @@ class MMTHandler(BaseHTTPRequestHandler):
             result.append(point)
         return result
 
-    def __starting_gpx(self, parsed):
-        """builds an initial Gpx object"""
-        segment = GPXTrackSegment()
-        segment.points = self.__points(parsed['points'])
-        track = GPXTrack()
-        track.segments.append(segment)
-        result = GPX()
-        result.tracks.append(track)
-        return result
-
     def xml_upload_activity(self, parsed):
         """as defined by the mapmytracks API"""
         track = Track()
         track.parse(parsed['gpx_file'])
         self.server.server_directory.add(track)
-        self.send_mail('upload_activity', track)
+        self.server.mailer.add(track)
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
     def xml_start_activity(self, parsed):
         """Lifetracker starts"""
-        try:
-            MMTHandler.tracking_track = Track(gpx=self.__starting_gpx(parsed))
-        except TypeError as exc:
-            return 'Cannot create a track out of {}: {}'.format(parsed, exc)
-        track = MMTHandler.tracking_track
-        track.title = parsed['title'] if 'title' in parsed else 'untitled'
+        if self.server.life:
+            raise Exception('Currently I can handle only one lifetracker')
+        self.server.life = Lifetrack([self.server.server_directory, self.server.mailer])
+        if 'title' in parsed:
+            self.server.set_title(parsed['title'])
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
-        track.public = parsed['privacy'] == 'public'
+        self.server.life.set_public(parsed['privacy'] == 'public')
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
-        track.category = parsed['activity'].capitalize()
-        self.server.server_directory.add(track)
-        self.send_mail('Start', track)
+        self.server.life.set_category(parsed['activity'].capitalize())
+        self.server.id_in_server = self.server.life.update(self.__points(parsed['points']))
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
-            track.id_in_backend)
+            self.server.id_in_server)
 
     def xml_update_activity(self, parsed):
         """Getting new points"""
-        track = MMTHandler.tracking_track
-        if parsed['activity_id'] != track.id_in_backend:
-            self.return_error(401, 'wrong track id {}, expected {}'.format(
-                parsed['activity_id'], track.id_in_backend))
+        if self.server.life is None:
+            self.return_error(401, 'No lifetracker active')
             return ''
-        else:
-            track.add_points(self.__points(parsed['points']))
-            if (MMTHandler.last_sent_time is None or
-                    (datetime.datetime.now() - MMTHandler.last_sent_time > datetime.timedelta(minutes=30))):
-                self.send_mail('{:>8.3f}km gefahren'.format(track.distance()), track)
-            if self.server.gpxdo_options.debug:
-                self.server.logger.debug('update_track: {}'.format(track))
-                self.server.logger.debug('  last time: {}'.format(track.last_time))
-            return '<type>activity_updated</type>'
+        if parsed['activity_id'] != self.server.id_in_server:
+            self.return_error(401, 'wrong track id {}, expected {}'.format(
+                parsed['activity_id'], self.server.id_in_server))
+            return ''
+        self.server.life.update(self.__points(parsed['points']))
+        return '<type>activity_updated</type>'
 
     def xml_stop_activity(self, parsed):  # pylint: disable=unused-argument
         """Client says stop."""
-        if MMTHandler.tracking_track is None:
-            self.return_error(401, 'No track in tracking mode')
+        if self.server.life is None:
+            self.return_error(401, 'No lifetracker active')
             return''
-        self.send_mail('Endstand', MMTHandler.tracking_track)
-        MMTHandler.tracking_track = None
+        self.server.life.end()
+        self.server.life = None
         return '<type>activity_stopped</type>'
 
 
@@ -326,6 +292,8 @@ class LifeServerMMT: # pylint: disable=too-few-public-methods
         httpd.gpxdo_options = options
         # define the directory in auth.cfg, using the Url=value
         httpd.server_directory = ServerDirectory(url=options.directory)
+        httpd.mailer = Mailer(url=options.mailto)
+        httpd.life = None
         httpd.logger = logger
         httpd.serve_forever()
 
