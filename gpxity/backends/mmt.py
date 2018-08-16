@@ -124,10 +124,10 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
         if tag == 'input':
             value = attributes['value'].strip()
             if (attributes['id'] == 'activity_type' and attributes['type'] == 'hidden'
-                    and attributes['name'] == 'activity_type' and value):
+                    and attributes['name'] == 'activity_type' and value):  # noqa
                 self.result['category_3'] = value
             elif (attributes['id'] == 'mid' and attributes['type'] == 'hidden'
-                  and attributes['name'] == 'mid'and value):
+                  and attributes['name'] == 'mid'and value):  # noqa
                 self.result['mid'] = value
         elif tag == 'div' and attributes['class'] == 'panel' and 'data-activity' in attributes:
             self.result['category'] = attributes['data-activity']

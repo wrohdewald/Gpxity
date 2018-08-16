@@ -414,7 +414,7 @@ class Track:
     def _load_full(self) ->None:
         """Load the full track from source_backend if not yet loaded."""
         if (self.backend is not None and self.id_in_backend and not self._loaded
-                and not self.__is_decoupled and 'scan' in self.backend.supported):
+                and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)  # pylint: disable=protected-access, no-member
             self._loaded = True
 
