@@ -15,6 +15,7 @@
 import argparse
 import os
 import sys
+import logging
 
 try:
     import argcomplete
@@ -44,11 +45,14 @@ class Main:
     def __init__(self):
         """No args."""
         # pylint: disable=too-many-branches,too-many-nested-blocks
+
         self.exit_code = 0
         self.options = None
         self.parse_commandline()
         if self.exit_code:
             return
+        self.logger = logging.getLogger()
+        self.logger.level = logging.DEBUG if self.options.debug else logging.ERROR
         self.source = None
         try:
             source = self.instantiate_object(self.options.source)
@@ -69,7 +73,7 @@ class Main:
         """Print the error message.
         Sets the process exit code.
         With --debug, re-raises the exception."""
-        print(msg)
+        self.logger(msg)
         self.exit_code = exit_code or 1
         if self.options.debug:
             raise msg

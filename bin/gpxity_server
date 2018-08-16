@@ -111,16 +111,14 @@ class MMTHandler(BaseHTTPRequestHandler):
             A dict with the parsed results or None
 
         """
-        if self.server.gpxdo_options.debug:
-            self.server.logger.debug('got headers:')
-            for key, value in self.headers.items():
-                self.server.logger.debug('  {}:{}'.format(key, value))
+        self.server.logger.debug('got headers:')
+        for key, value in self.headers.items():
+            self.server.logger.debug('  %s:%s', key, value)
         if 'Content-Length' in self.headers:
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
             parsed = parse_qs(data)
-            if self.server.gpxdo_options.debug:
-                self.server.logger.debug('got {}'.format(parsed))
+            self.server.logger.debug('got %s', parsed)
             for key, value in parsed.items():
                 if len(value) != 1:
                     self.return_error(400, '{} must appear only once'.format(key))
@@ -150,8 +148,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa pylint: disable=invalid-name
         """Override standard."""
         # TODO: empfangene cookies verwenden
-        if self.server.gpxdo_options.debug:
-            self.server.logger.debug('GET {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
+        self.server.logger.debug('GET %s %s %s', self.client_address[0], self.server.server_port, self.path)
         self.parseRequest()  # side effect: may print debug info
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
@@ -168,8 +165,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         else:
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if self.server.gpxdo_options.debug:
-            self.server.logger.debug('returning {}'.format(xml))
+        self.server.logger.debug('returning %s', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
         self.end_headers()
@@ -177,9 +173,8 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):  # noqa pylint: disable=invalid-name
         """override standard."""
-        if self.server.gpxdo_options.debug:
-            self.server.logger.debug(
-                'POST {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
+        self.server.logger.debug(
+            'POST %s %s %s', self.client_address[0], self.server.server_port, self.path)
         parsed = self.parseRequest()
         if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
             try:
@@ -203,8 +198,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        if self.server.gpxdo_options.debug:
-            self.server.logger.debug('returning {}'.format(xml))
+        self.server.logger.debug('returning %s', xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
         self.end_headers()
@@ -282,19 +276,19 @@ class MMTHandler(BaseHTTPRequestHandler):
 
         """
         if self.server.life:
-            raise Exception('Currently I can handle only one lifetracker')
+            raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.server.life))
         self.server.life = Lifetrack([self.server.server_directory, self.server.mailer])
         if 'title' in parsed:
-            self.server.set_title(parsed['title'])
+            self.server.life.set_title(parsed['title'])
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
         self.server.life.set_public(parsed['privacy'] == 'public')
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
         self.server.life.set_category(parsed['activity'].capitalize())
-        self.server.id_in_server = self.server.life.update(self.__points(parsed['points']))
+        self.server.life.update(self.__points(parsed['points']))
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
-            self.server.id_in_server)
+            self.server.life.id_in_server)
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
@@ -306,9 +300,9 @@ class MMTHandler(BaseHTTPRequestHandler):
         if self.server.life is None:
             self.return_error(401, 'No lifetracker active')
             return ''
-        if parsed['activity_id'] != self.server.id_in_server:
+        if parsed['activity_id'] != self.server.life.id_in_server:
             self.return_error(401, 'wrong track id {}, expected {}'.format(
-                parsed['activity_id'], self.server.id_in_server))
+                parsed['activity_id'], self.server.life.id_in_server))
             return ''
         self.server.life.update(self.__points(parsed['points']))
         return '<type>activity_updated</type>'
@@ -358,21 +352,15 @@ class Main:  # pylint: disable=too-few-public-methods
 
     def __init__(self):
         """See class docstring."""
-        logger = logging.getLogger('mmtserver')
-        logger.setLevel(logging.DEBUG)
-        logfile = logging.FileHandler('mmtserver.log')
-        logfile.setLevel(logging.DEBUG)
-        logger.addHandler(logfile)
-        parser = argparse.ArgumentParser('mmtserver')
+        parser = argparse.ArgumentParser('gpxity_server')
         parser.add_argument(
             '--directory', required=True,
             help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
         parser.add_argument('--servername', help='the name of this server', required=True)
         parser.add_argument('--port', help='listen on PORT', type=int, required=True)
         parser.add_argument('--mailto', help='mail new tracks to MAILTO')
-        parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
-        parser.add_argument('--debug', action='store_true', help='show debug outpus', default=False)
         parser.add_argument('--mail-interval', help='only mail every X seconds, default is 1800', type=int, default=1800)
+        parser.add_argument('--loglevel', help='define loglevel', choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection
             timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
@@ -383,7 +371,14 @@ class Main:  # pylint: disable=too-few-public-methods
             pass
 
         options = parser.parse_args()
-        LifeServerMMT(options, logger)
 
+#        logger = logging.getLogger('gpxity_server')
+        logger = logging.getLogger()
+        logger.setLevel(options.loglevel.upper())
+        logfile = logging.FileHandler(os.path.join(options.directory, 'gpxity_server.log'))
+        logfile.setLevel(logging.DEBUG)
+        logger.addHandler(logfile)
+
+        LifeServerMMT(options, logger)
 
 Main()
