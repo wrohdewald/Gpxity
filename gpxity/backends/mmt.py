@@ -243,9 +243,9 @@ class MMT(Backend):
         self.__mid = -1  # member id at MMT for auth
         self.__is_free_account = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
-            # has a lookup table and never deletes there. So a given tag will always get
-            # the same ID. We use this fact.
-            # MMT internally capitalizes tags but displays them lowercase.
+        # has a lookup table and never deletes there. So a given tag will always get
+        # the same ID. We use this fact.
+        # MMT internally capitalizes tags but displays them lowercase.
         self._last_response = None  # only used for debugging
         self.https_url = self.url.replace('http:', 'https:')
 
@@ -461,7 +461,7 @@ class MMT(Backend):
             mid=self.mid, tid=track.id_in_backend,
             hash=self.session.cookies['exp_uniqueid'],
             status=1 if track.public else 2)
-            # what a strange answer
+        # what a strange answer
 
     def _write_category(self, track):
         """change category directly on mapmytracks.
@@ -631,8 +631,8 @@ class MMT(Backend):
             return
         response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
             self.url, track.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
-            # some tracks download only a few points if mid/uid are not given, but I
-            # have not been able to write a unittest triggering that ...
+        # some tracks download only a few points if mid/uid are not given, but I
+        # have not been able to write a unittest triggering that ...
         track.parse(response.text)
         # but this does not give us track type and other things,
         # get them from the web page.
