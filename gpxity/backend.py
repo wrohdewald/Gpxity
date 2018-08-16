@@ -759,7 +759,7 @@ class Backend:
                 src_dict[_.points_hash()].append(_)
 
         # 1. get all tracks existing only in other
-        for point_hash in sorted(set(src_dict.keys()) - set(dst_dict.keys())):
+        for point_hash in sorted(src_dict.keys() - dst_dict.keys()):
             for old_track in src_dict[point_hash]:
                 if not dry_run:
                     new_track = self.add(old_track)
@@ -770,7 +770,7 @@ class Backend:
                     old_track.remove()
 
         # 2. merge the rest
-        for point_hash in set(src_dict.keys()) & set(dst_dict.keys()):
+        for point_hash in src_dict.keys() & dst_dict.keys():
             target = dst_dict[point_hash]
             for source in src_dict[point_hash]:
                 result.extend(target.merge(source, remove=remove, dry_run=dry_run))
