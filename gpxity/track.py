@@ -823,14 +823,24 @@ class Track:
             self.public, self.last_time if with_last_time else '',
             self.angle(), self.gpx.get_track_points_no())
 
-    def __eq__(self, other):
-        """equal."""
+    def __eq__(self, other) ->bool:
+        """equal.
+
+        Returns:
+            result
+
+        """
         if self is other:
             return True
         return self.key() == other.key()
 
-    def __lt__(self, other):
-        """less than."""
+    def __lt__(self, other) ->bool:
+        """less than.
+
+        Returns:
+            result
+
+        """
         return self.key() < other.key()
 
     def distance(self) ->float:

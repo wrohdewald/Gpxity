@@ -24,7 +24,12 @@ class Duration:
         self.start_time = datetime.datetime.now()
 
     def __enter__(self):
-        """See class docstring."""
+        """See class docstring.
+
+        Returns:
+            self
+
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, trback):

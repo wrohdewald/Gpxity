@@ -42,7 +42,12 @@ class Backup:
                 os.rename(self.old_pathname, self.old_pathname + '.old')
 
     def __enter__(self):
-        """See class docstring."""
+        """See class docstring.
+
+        Returns:
+            self
+
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, trback):

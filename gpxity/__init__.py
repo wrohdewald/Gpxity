@@ -3,6 +3,8 @@
 # Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
+"""define things that should be visible to the user."""
+
 # pylint: disable=wildcard-import, missing-docstring
 from .track import *
 from .lifetrack import *

@@ -672,7 +672,12 @@ class Backend:
         return result
 
     def __enter__(self):
-        """See class docstring."""
+        """See class docstring.
+
+        Returns:
+            self
+
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, trback):
@@ -680,7 +685,12 @@ class Backend:
         self.destroy()
 
     def __iter__(self):
-        """See class docstring."""
+        """See class docstring.
+
+        Returns:
+            iterator over tracks
+
+        """
         self._scan()
         return iter(self.__tracks)
 
