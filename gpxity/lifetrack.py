@@ -6,6 +6,8 @@
 
 """This module defines :class:`~gpxity.Lifetrack`."""
 
+import logging
+
 from .track import Track
 
 __all__ = ['Lifetrack']
@@ -19,11 +21,15 @@ class LifetrackTarget:
         """See class docstring."""
         self.backend = backend
         self.track = Track()
-        self.id_in_backend = None
         self.__started = False
 
-    def update(self, points):
-        """Update lifetrack into a specific track."""
+    def update(self, points) ->str:
+        """Update lifetrack into a specific track.
+
+        Returns:
+            the new id_in_backend
+
+        """
 
         # pylint: disable=protected-access
 
@@ -33,6 +39,7 @@ class LifetrackTarget:
             else:
                 raise Exception('Lifetrack.update needs points')
         old_title = self.track.title
+        new_ident = None
         try:
             with self.track._decouple():
                 if self.__started:
@@ -40,26 +47,25 @@ class LifetrackTarget:
                 else:
                     self.track.title = 'Lifetracking starts ' + self.track.title
             if 'lifetrack' in self.backend.supported:
-                print('   Lifetrack_target.update, lifetrack is supported')
                 if not self.__started:
-                    print('lifetrack._update ruft backend._lifetrack_start mit title', self.track.title)
                     new_ident = self.backend._lifetrack_start(self.track, self._prepare_points(points))
                     with self.track._decouple():
                         self.track.id_in_backend = new_ident
+                        logging.debug('track %s got ident %s', self.track, new_ident)
                 else:
-                    print('lifetrack._update ruft backend._lifetrack_update')
                     self.backend._lifetrack_update(self.track, self._prepare_points(points))
             else:
-                print('   Lifetrack._update ruft track.add_points')
-                self.track.add_points(points)
                 if not self.__started:
-                    print('   adding track to backend')
-                    self.backend.add(self.track)
-                    print('   added  track to backend')
+                    self.track = self.backend.add(self.track)
+                    new_ident = self.track.id_in_backend
+                    assert new_ident
+                assert self.track.id_in_backend
+                self.track.add_points(points)
+            return new_ident
         finally:
             with self.track._decouple():
                 self.track.title = old_title
-        self.__started = True
+            self.__started = True
 
     def end(self):
         """End lifetracking for a specific backend."""
@@ -101,9 +107,8 @@ class Lifetrack:
         else:
             _ = [target_backends]
 
-        if not any(x.__class__.__name__ == 'ServerDirectory' for x in _):
-            raise Exception('Lifetrack: At least one target must be a ServerDirectory')
         self.targets = [LifetrackTarget(x) for x in _]
+        self.id_in_server = None
 
     def update(self, points):
         """Start or update lifetrack.
@@ -113,16 +118,12 @@ class Lifetrack:
         Args:
             points(list): New points
 
-        Returns:
-            The id in the first ServerDirectory
-
         """
-        result = None
         for _ in self.targets:
-            _.update(points)
-            if result is None and _.backend.__class__.__name__ == 'ServerDirectory':
-                result = _.id_in_backend
-        return result
+            id_in_server = _.update(points)
+            assert _.track.id_in_backend, '{} in {} got no id_in_backend'.format(_.track, _.backend)
+            if self.id_in_server is None:
+                self.id_in_server = id_in_server
 
     def end(self):
         """End lifetrack.
