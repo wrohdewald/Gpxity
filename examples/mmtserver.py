@@ -39,7 +39,8 @@ from gpxity import Track, ServerDirectory, Lifetrack, Mailer # pylint: disable=n
 
 try:
     import argcomplete
-    from argcomplete import ChoicesCompleter  # pylint: disable=unused-import
+    # pylint: disable=unused-import
+    from argcomplete import ChoicesCompleter  # noqa
 except ImportError:
     pass
 
