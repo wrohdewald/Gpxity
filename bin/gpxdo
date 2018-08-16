@@ -56,12 +56,12 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
     """custom argparse type for date as YYYY-MM-DD"""
     try:
         result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
-    except ValueError as exc:
+    except ValueError:
         try:
             result = datetime.datetime.strptime(arg_date_str, "%Y-%m")
             if last:
                 result = __last_month_day(result)
-        except ValueError as exc:
+        except ValueError:
             try:
                 result = datetime.datetime.strptime(arg_date_str, "%Y")
                 if last:
