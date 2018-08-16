@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-# Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
+# Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
 """Tests for gpxity.backends."""

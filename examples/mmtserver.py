@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+# Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
+# See LICENSE for details.
+
 """implement a server using the mapmytracks protocol."""
 
 # PYTHON_ARGCOMPLETE_OK

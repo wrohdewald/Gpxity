@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) Wolfgang Rohdewald <wolfgang@rohdewald.de>
+# Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
 # PYTHON_ARGCOMPLETE_OK

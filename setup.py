@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
+# See LICENSE for details.
+
 """see https://setuptools.readthedocs.io/en/latest/setuptools.html."""
 
 from setuptools import setup, find_packages
