@@ -45,9 +45,6 @@ class BasicTest(unittest.TestCase):
 
     all_backend_classes = None
 
- #   def __init__(self):
-    #    super(BasicTest, self).__init__()
-
     def setUp(self):
         """define test specific Directory.prefix."""
         Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
