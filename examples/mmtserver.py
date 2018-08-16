@@ -163,7 +163,8 @@ class MMTHandler(BaseHTTPRequestHandler):
     def do_POST(self): # pylint: disable=invalid-name
         """override standard."""
         if self.server.gpxdo_options.debug:
-            self.server.logger.debug('POST {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
+            self.server.logger.debug(
+                'POST {} {} {}'.format(self.client_address[0], self.server.server_port, self.path))
         parsed = self.parseRequest()
         if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
             try:

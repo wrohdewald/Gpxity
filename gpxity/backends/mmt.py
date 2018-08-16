@@ -319,7 +319,8 @@ class MMT(Backend):
         self.__tag_ids[tag] = id_
         self._check_tag_ids()
 
-    def __post(self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs):
+    def __post(
+            self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs):
         """Helper for the real function with some error handling.
 
         Args:
