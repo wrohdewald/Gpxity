@@ -28,23 +28,23 @@ class TestBackends(BasicTest):
     def test_supported(self):
         """Check values in supported for all backends."""
         expect_unsupported = dict()
-        expect_unsupported[Directory] = set([
+        expect_unsupported[Directory] = {
             'lifetrack', 'write_add_keywords', 'write_remove_keywords', 'write_gpx',
-            'write_category', 'write_description', 'write_public', 'write_title'])
-        expect_unsupported[ServerDirectory] = set(['lifetrack'])
-        expect_unsupported[MMT] = set(['write_gpx'])
-        expect_unsupported[GPSIES] = set([
-            'get_time', 'lifetrack', 'write_add_keywords', 'write_remove_keywords', 'write_gpx'])
-        expect_unsupported[TrackMMT] = set([
+            'write_category', 'write_description', 'write_public', 'write_title'}
+        expect_unsupported[ServerDirectory] = {'lifetrack'}
+        expect_unsupported[MMT] = {'write_gpx'}
+        expect_unsupported[GPSIES] = {
+            'get_time', 'lifetrack', 'write_add_keywords', 'write_remove_keywords', 'write_gpx'}
+        expect_unsupported[TrackMMT] = {
             'scan', 'remove', 'write_gpx',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
-            'write_remove_keywords'])
-        expect_unsupported[Mailer] = set([
+            'write_remove_keywords'}
+        expect_unsupported[Mailer] = {
             'scan', 'remove', 'get_time',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords', 'write_gpx',
-            'write_remove_keywords', 'lifetrack'])
+            'write_remove_keywords', 'lifetrack'}
         for cls in self._find_backend_classes():
             print(cls, cls.supported)
             print(cls, expect_unsupported[cls])
@@ -256,7 +256,7 @@ class TestBackends(BasicTest):
                     with self.assertRaises(Exception):
                         track.add_keywords('Category:whatever')
                     track.add_keywords(kw_d)
-                    self.assertEqual(set(track.keywords), set([kw_a, kw_c, kw_d]))
+                    self.assertEqual(set(track.keywords), {kw_a, kw_c, kw_d})
                     backend2 = self.clone_backend(backend)
                     track2 = backend2[track.id_in_backend]
                     track2.remove_keywords(kw_d)
