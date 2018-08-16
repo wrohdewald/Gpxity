@@ -436,7 +436,8 @@ class Track:
         if points:
             if self.__gpx.tracks:
                 # make sure the same points are not added twice
-                assert points != self.__gpx.tracks[-1].segments[-1].points[-len(points):]
+                _ = self.__gpx.tracks[-1].segments[-1]
+                assert points != _.points[-len(points):]
             self._load_full()
             if not self.__gpx.tracks:
                 self.__gpx.tracks.append(GPXTrack())
@@ -1016,6 +1017,41 @@ class Track:
             return True
         return False
 
+    def __merge_metadata(self, other, dry_run):
+        """Merge metadata from other.
+
+        Used only by self.merge.
+
+        Returns:
+            a list of verbosity messages
+
+        """
+        msg = list()
+        if not other._has_default_title() and self._has_default_title():  # pylint: disable=protected-access
+            msg.append('Title: {} -> {}'.format(self.title, other.title))
+            if not dry_run:
+                self.title = other.title
+        if other.description and other.description != self.description:
+            msg.append('Additional description: {}'.format(
+                other.description))
+            if not dry_run:
+                self.description += '\n'
+                self.description += other.description
+        if other.public and not self.public:
+            msg.append('Visibility: private -> public')
+            if not dry_run:
+                self.public = True
+        if other.category != self.category:
+            msg.append('Category: {}={} wins over {}={}'.format(
+                other.identifier(), other.category, self.identifier(), self.category))
+        kw_src = set(other.keywords)
+        kw_dst = set(self.keywords)
+        if kw_src - kw_dst:
+            msg.append('New keywords: {}'.format(','.join(kw_src - kw_dst)))
+            if not dry_run:
+                self.keywords = kw_src | kw_dst
+        return msg
+
     def merge(  # pylint: disable=unused-argument
             self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
         """Merge other track into this one. The track points must be identical.
@@ -1030,42 +1066,19 @@ class Track:
             dry_run: if True, do not really apply the merge
             copy: This argument is ignored. It is only here to give Track.merge() and Backend.merge()
                 the same interface.
+
         Returns: list(str)
             Messages about category has been done
 
         """
-        # pylint: disable=too-many-branches
         if self.identifier() == other.identifier():
             raise Exception('Cannot merge identical tracks: {}'.format(self.identifier()))
         if self.points_hash() != other.points_hash():
             raise Exception(
                 'Cannot merge {} into {}, points are different'.format(
                     other.identifier(), self.identifier()))
-        msg = list()
         with self.batch_changes():
-            if not other._has_default_title() and self._has_default_title():  # pylint: disable=protected-access
-                msg.append('Title: {} -> {}'.format(self.title, other.title))
-                if not dry_run:
-                    self.title = other.title
-            if other.description and other.description != self.description:
-                msg.append('Additional description: {}'.format(
-                    other.description))
-                if not dry_run:
-                    self.description += '\n'
-                    self.description += other.description
-            if other.public and not self.public:
-                msg.append('Visibility: private -> public')
-                if not dry_run:
-                    self.public = True
-            if other.category != self.category:
-                msg.append('Category: {}={} wins over {}={}'.format(
-                    other.identifier(), other.category, self.identifier(), self.category))
-            kw_src = set(other.keywords)
-            kw_dst = set(self.keywords)
-            if kw_src - kw_dst:
-                msg.append('New keywords: {}'.format(','.join(kw_src - kw_dst)))
-                if not dry_run:
-                    self.keywords = kw_src | kw_dst
+            msg = self.__merge_metadata(other, dry_run)
             changed_point_times = 0
             for self_point, other_point in zip(self.points(), other.points()):
                 if not self_point.time:
@@ -1174,7 +1187,8 @@ class Track:
         """Try to fix Oruxmaps 24hour bug."""
         all_points = list(uniq(self.points()))
         for _ in all_points:
-            _.hhmmss = _.time.hour * 3600.0 + _.time.minute * 60 + _.time.second + _.time.microsecond / 1000000
+            _.hhmmss = _.time.hour * 3600.0 + _.time.minute * 60
+            _.hhmmss += _.time.second + _.time.microsecond / 1000000
         new_points = list([all_points.pop(0)])
         while all_points:
             last_point = new_points[-1]

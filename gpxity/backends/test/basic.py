@@ -125,7 +125,8 @@ class BasicTest(unittest.TestCase):
 
         # now set all times such that they are in order with this track and do not overlap
         # with other test tracks
-        duration = new_point.time - gpx.tracks[0].segments[0].points[0].time + datetime.timedelta(seconds=10)
+        _ = gpx.tracks[0].segments[0].points[0].time
+        duration = new_point.time - _ + datetime.timedelta(seconds=10)
         for point in gpx.walk(only_points=True):
             point.time += duration * idx
 

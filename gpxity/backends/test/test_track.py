@@ -84,7 +84,6 @@ class TrackTests(BasicTest):
         last_point2 = track2.gpx.tracks[-1].segments[-1].points[-1]
         last_point2.elevation = 500000
         self.assertEqual(last_point2.elevation, 500000)
-        self.assertEqual(track2.gpx.tracks[-1].segments[-1].points[-1].elevation, 500000)
         # here assertNotEqualTracks is wrong because keys() are still identical
         self.assertTrue(track1.points_equal(track2))
         track1.gpx.tracks.clear()
@@ -283,7 +282,9 @@ class TrackTests(BasicTest):
                     _.id_in_backend = title
                 trunk = os.path.join(directory.url, title)
                 expected_names = [trunk + x + '.gpx' for x in ('.1', '.2', '.3', '')]
-                files = sorted(os.path.join(directory.url, x) for x in os.listdir(directory.url) if x.endswith('.gpx'))
+                files = sorted(
+                    os.path.join(directory.url, x)
+                    for x in os.listdir(directory.url) if x.endswith('.gpx'))
                 self.assertEqual(files, expected_names)
                 self.assertEqual(len(dir2), 4)
                 directory.scan()

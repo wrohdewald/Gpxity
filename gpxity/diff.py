@@ -65,13 +65,16 @@ class BackendDiff:
             result = defaultdict(list)
 
             if self.left.title != self.right.title:
-                result['T'].append('"{}" <> "{}"'.format(self.left.title or '', self.right.title or ''))
+                result['T'].append('"{}" <> "{}"'.format(
+                    self.left.title or '', self.right.title or ''))
 
             if self.left.description != self.right.description:
-                result['D'].append('"{}" <> "{}"'.format(self.left.description or '', self.right.description or ''))
+                result['D'].append('"{}" <> "{}"'.format(
+                    self.left.description or '', self.right.description or ''))
 
             if self.left.category != self.right.category:
-                result['C'].append('"{}" <> "{}"'.format(self.left.category or '', self.right.category or ''))
+                result['C'].append('"{}" <> "{}"'.format(
+                    self.left.category or '', self.right.category or ''))
 
             if self.left.keywords != self.right.keywords:
                 result['K'].append('"{}" <> "{}"'.format(
@@ -119,8 +122,10 @@ class BackendDiff:
                         'points between {} and {} are missing on the left'.format(
                             *pretty_times(right_times[right_start], right_times[right_end - 1])))
                 elif tag == 'replace':
-                    if [(x[0], x[1]) for x in left_found] == [(x[0], x[1]) for x in right_found]:
-                        if len({(right_found[x][3] - left_found[x][3]) for x in range(len(left_found))}) == 1:
+                    if [x[:2] for x in left_found] == [x[:2] for x in right_found]:
+                        if len(
+                                {(right_found[x][3] - left_found[x][3])
+                                 for x in range(len(left_found))}) == 1:
                             time1, time2 = pretty_times(left_found[0][3], left_found[-1][3])
                             result['Z'].append(
                                 '{} points between {} and {} on the left are {} later on the right'.format(
@@ -137,9 +142,11 @@ class BackendDiff:
                         if verbose:
                             for left, right in zip(left_found, right_found):
                                 result['P'].append('  < {:8.6f} {:8.6f} {:5.2f} {}'.format(
-                                    left[0] or 0, left[1] or 0, left[2] or 0, left[3] or ''))
+                                    left[0] or 0, left[1] or 0,
+                                    left[2] or 0, left[3] or ''))
                                 result['P'].append('  > {:8.6f} {:8.6f} {:5.2f} {}'.format(
-                                    right[0] or 0, right[1] or 0, right[2] or 0, right[3] or ''))
+                                    right[0] or 0, right[1] or 0,
+                                    right[2] or 0, right[3] or ''))
 
             # some files have a problem with the time zone
             _ = self.left.time_offset(self.right)

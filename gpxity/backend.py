@@ -705,6 +705,24 @@ class Backend:
         other._scan()  # pylint: disable=protected-access
         return {x.key() for x in self} == {x.key() for x in other}
 
+    def __copy(self, other_tracks, remove, dry_run):
+        """Copy other_tracks into self. Used only by self.merge().
+
+        Returns:
+            verbose messages
+
+        """
+        result = list()
+        for old_track in other_tracks:
+            if not dry_run:
+                new_track = self.add(old_track)
+            result.append('{} {} -> {}'.format(
+                'blind move' if remove else 'blind copy', old_track.identifier(),
+                '' if dry_run else new_track.identifier()))
+            if remove and not dry_run:
+                old_track.remove()
+        return result
+
     def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
         """merge other backend or a single track into this one.
 
@@ -727,15 +745,7 @@ class Backend:
         result = list()
         other_tracks = collect_tracks(other)
         if copy:
-            for old_track in other_tracks:
-                if not dry_run:
-                    new_track = self.add(old_track)
-                result.append('{} {} -> {}'.format(
-                    'blind move' if remove else 'blind copy', old_track.identifier(),
-                    '' if dry_run else new_track.identifier()))
-                if remove and not dry_run:
-                    old_track.remove()
-            return result
+            return self.__copy(other_tracks, remove, dry_run)
 
         src_dict = defaultdict(list)
         dst_dict = dict()
