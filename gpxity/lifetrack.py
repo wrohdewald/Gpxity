@@ -22,7 +22,7 @@ class LifetrackTarget:
         self.__started = False
 
     def update(self, points):
-        """Updates lifetrack into a specific track."""
+        """Update lifetrack into a specific track."""
 
         # pylint: disable=protected-access
 
@@ -61,7 +61,7 @@ class LifetrackTarget:
         self.__started = True
 
     def end(self):
-        """Ends lifetracking for a specific backend."""
+        """End lifetracking for a specific backend."""
         if not self.__started:
             raise Exception('Lifetrack not yet started')
         if 'lifetrack' in self.backend.supported:
@@ -99,7 +99,7 @@ class Lifetrack:
         self.targets = [LifetrackTarget(x) for x in _]
 
     def update(self, points):
-        """Starts or updates lifetrack.
+        """Start or update lifetrack.
 
         If the backend does not support lifetrack, this just saves the track in the backend.
 
@@ -118,26 +118,26 @@ class Lifetrack:
         return result
 
     def end(self):
-        """Ends lifetrack.
+        """End lifetrack.
 
         If the backend does not support lifetrack, this does nothing."""
         for _ in self.targets:
             _.end()
 
     def set_title(self, title):
-        """Sets title for all targets."""
+        """Set title for all targets."""
         for _ in self.targets:
             with _.track._decouple():
                 _.track.title = title
 
     def set_category(self, category):
-        """Sets category for all targets."""
+        """Set category for all targets."""
         for _ in self.targets:
             with _.track._decouple():
                 _.track.category = category
 
     def set_public(self, public):
-        """Sets public for all targets."""
+        """Set public for all targets."""
         for _ in self.targets:
             with _.track._decouple():
                 _.track.public = public

@@ -81,7 +81,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 self.users[user] = password
 
     def return_error(self, code, reason, exc=None):
-        """Answers the clint with an xml formatted error message."""
+        """Answer the clint with an xml formatted error message."""
         self.server.logger.error('return_error: {} {} {}'.format(
             code, reason, exc))
         self.send_response(code)
@@ -96,7 +96,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         raise exc(reason)
 
     def parseRequest(self):  # pylint: disable=invalid-name
-        """as the name says. Why do I have to implement this?."""
+        """Get interesting things."""
         if self.server.gpxdo_options.debug:
             self.server.logger.debug('got headers:')
             for key, value in self.headers.items():
@@ -115,7 +115,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return None
 
     def homepage(self):
-        """Returns what the client needs."""
+        """Return what the client needs."""
         self.load_users()
         names = list(sorted(self.users.keys()))
         return """
@@ -124,7 +124,7 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     @staticmethod
     def answer_with_categories():
-        """Returns all categories."""
+        """Return all categories."""
         all_cat = Track.legal_categories
         return ''.join('<li><input name="add-activity-x">&nbsp;{}</li>'.format(x) for x in all_cat)
 
@@ -198,12 +198,12 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     @staticmethod
     def xml_get_time(_):
-        """as defined by the mapmytracks API."""
+        """Get server time as defined by the mapmytracks API."""
         return '<type>time</type><server_time>{}</server_time>'.format(
             int(datetime.datetime.now().timestamp()))
 
     def xml_get_tracks(self, parsed):
-        """as defined by the mapmytracks API."""
+        """List all tracks as defined by the mapmytracks API."""
         a_list = list()
         if parsed['offset'] == '0':
             for idx, _ in enumerate(self.server.server_directory):
@@ -233,7 +233,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return result
 
     def xml_upload_activity(self, parsed):
-        """as defined by the mapmytracks API."""
+        """Upload an activity as defined by the mapmytracks API."""
         track = Track()
         track.parse(parsed['gpx_file'])
         self.server.server_directory.add(track)

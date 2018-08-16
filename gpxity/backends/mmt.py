@@ -295,7 +295,7 @@ class MMT(Backend):
 
     @property
     def is_free_account(self):
-        """Returns True if the current account is not PLUS enabled."""
+        """Return True if the current account is not PLUS enabled."""
         if self.__is_free_account is None:
             self._parse_homepage()
         return self.__is_free_account
@@ -312,7 +312,7 @@ class MMT(Backend):
 
     @staticmethod
     def _encode_keyword(value):
-        """mimics the changes MMT applies to tags."""
+        """mimic the changes MMT applies to tags."""
         return ' '.join(x.capitalize() for x in value.split())
 
     def _check_tag_ids(self):
@@ -409,15 +409,15 @@ class MMT(Backend):
         self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
 
     def _write_title(self, track):
-        """changes title on remote server."""
+        """change title on remote server."""
         self._write_attribute(track, 'title')
 
     def _write_description(self, track):
-        """changes description on remote server."""
+        """change description on remote server."""
         self._write_attribute(track, 'description')
 
     def _write_public(self, track):
-        """changes public/private on remote server."""
+        """change public/private on remote server."""
         self.__post(
             with_session=True, url='user-embeds/statuschange-track', expect='access granted',
             mid=self.mid, tid=track.id_in_backend,
@@ -436,7 +436,7 @@ class MMT(Backend):
             eid=track.id_in_backend, activity=self.encode_category(track.category))
 
     def _current_tags(self, track):
-        """Returns all current MMT tags.
+        """Return all current MMT tags.
 
         Returns:
 
@@ -478,7 +478,7 @@ class MMT(Backend):
             self._found_tag_id(tag, id_)
 
     def _write_remove_keywords(self, track, values):
-        """Removes keywords from track."""
+        """Remove keywords from track."""
         # with Track.batch_changes() active, track.keywords is already in the future
         # state after all batched changes have been applied, but we need the current
         # state. Ask MMT.
@@ -499,7 +499,7 @@ class MMT(Backend):
                     self._remove_single_keyword(track, value)
 
     def _remove_single_keyword(self, track, value):
-        """Removes a specific keyword from track. Does not work correctly, see above."""
+        """Remove a specific keyword from track. Does not work correctly, see above."""
         tag = value.strip()
         if tag not in self.__tag_ids:
             self.__tag_ids.update(self._scan_track_page(track)['tags'])
@@ -635,7 +635,7 @@ class MMT(Backend):
 
     @staticmethod
     def __formatted_lifetrack_points(points):
-        """formats points for life tracking."""
+        """format points for life tracking."""
         _ = list()
         for point in points:
             _.append('{} {} {} {}'.format(
@@ -646,7 +646,7 @@ class MMT(Backend):
         return ' '.join(_)
 
     def _lifetrack_start(self, track, points) ->str:
-        """Starts a new lifetrack with initial points.
+        """Start a new lifetrack with initial points.
 
         Returns:
             new_ident: New track id
@@ -672,7 +672,7 @@ class MMT(Backend):
         return result.find('activity_id').text
 
     def _lifetrack_update(self, track, points):
-        """Updates a lifetrack with poings.
+        """Update a lifetrack with poings.
 
         Args:
             track: The lifetrack
@@ -688,7 +688,7 @@ class MMT(Backend):
             expect='activity_updated')
 
     def _lifetrack_end(self, track):
-        """Ends a lifetrack.
+        """End a lifetrack.
 
         Args:
             track: The lifetrack

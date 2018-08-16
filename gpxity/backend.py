@@ -155,7 +155,7 @@ class Backend:
 
     @contextmanager
     def _decouple(self):
-        """This context manager disables automic synchronization with the backend.
+        """Context manager: disable automic synchronization with the backend.
 
         In that state, automatic writes of changes into
         the backend are disabled, and if you access attributes which
@@ -254,7 +254,7 @@ class Backend:
 
     @staticmethod
     def _encode_keyword(value: str) ->str:
-        """Replicates the translation the backend does. MMT for example capitalizes all words."""
+        """Replicate the translation the backend does. MMT for example capitalizes all words."""
         return value
 
     def get_time(self) ->datetime.datetime:
@@ -263,11 +263,11 @@ class Backend:
         raise NotImplementedError()
 
     def _change_id(self, track, new_ident: str):
-        """Changes the id in the backend."""
+        """Change the id in the backend."""
         raise NotImplementedError
 
     def scan(self, now: bool = False) ->None:
-        """Enforces a reload of the list of all tracks in the backend.
+        """Enforce a reload of the list of all tracks in the backend.
 
         This will be delayed until the list is actually needed again.
 
@@ -284,7 +284,7 @@ class Backend:
             self._scan()
 
     def _scan(self) ->None:
-        """loads the list of all tracks in the backend if not yet done.
+        """load the list of all tracks in the backend if not yet done.
         Enforce this by calling :meth:`scan` first.
         """
         if not self._tracks_fully_listed and not self._decoupled:
@@ -308,7 +308,7 @@ class Backend:
                 self.__tracks = list(x for x in self.__tracks if self.matches(x))
 
     def _found_track(self, ident: str):
-        """Creates an empty track for ident and inserts it into this backend."""
+        """Create an empty track for ident and inserts it into this backend."""
         result = Track()
         with self._decouple():
             result._set_backend(self)  # pylint: disable=protected-access
@@ -328,16 +328,16 @@ class Backend:
         raise NotImplementedError()
 
     def _read_all_decoupled(self, track) ->None:
-        """Decouples and calls the backend specific _read_all."""
+        """Decouple and calls the backend specific _read_all."""
         with self._decouple():
             self._read_all(track)
 
     def _read_all(self, track) ->None:
-        """fills the track with all its data from source."""
+        """fill the track with all its data from source."""
         raise NotImplementedError()
 
     def matches(self, track, exc_prefix: str = None):
-        """Does track match the current match function?.
+        """match track against the current match function.
 
         Args:
             exc_prefix: If not None, use it for the beginning of an exception message.
@@ -419,7 +419,7 @@ class Backend:
         return new_track
 
     def _new_ident(self, track) ->str:
-        """Creates an id for track.
+        """Create an id for track.
 
         Returns: The new ident. If the backend does not
         create an ident in advance, return None. Such
@@ -428,7 +428,7 @@ class Backend:
         """
 
     def _rewrite(self, track, changes):
-        """Rewrites the full track.
+        """Rewrite the full track.
 
         Used only by Track when things change.
 
@@ -469,7 +469,7 @@ class Backend:
         raise NotImplementedError()
 
     def remove(self, value) ->None:
-        """Removes track. This can also be done for tracks not passing the current match function.
+        """Remove track. This can also be done for tracks not passing the current match function.
 
         Args:
             value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
@@ -527,7 +527,7 @@ class Backend:
         raise NotImplementedError()
 
     def remove_all(self):
-        """Removes all tracks we know about.
+        """Remove all tracks we know about.
 
         If their :attr:`id_in_backend` has meanwhile been changed
         through another backend instance or another process, we
@@ -564,7 +564,7 @@ class Backend:
         return False
 
     def __getitem__(self, index):
-        """Allows accesses like alist[a_id].
+        """Allow accesses like alist[a_id].
 
         Do not call this when implementing a backend because this always calls scan() first.
 
@@ -587,7 +587,7 @@ class Backend:
         return len(self.__tracks)
 
     def __append(self, track):
-        """Appends a track to the cached list."""
+        """Append a track to the cached list."""
         self._current_track = track
         if track.id_in_backend is not None and not isinstance(track.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(track))
@@ -686,7 +686,7 @@ class Backend:
 
     @staticmethod
     def _html_encode(value):
-        """encodes str to something gpies.com accepts."""
+        """encode str to something gpies.com accepts."""
         if value is None:
             return ''
         return value.encode('ascii', 'xmlcharrefreplace').decode()

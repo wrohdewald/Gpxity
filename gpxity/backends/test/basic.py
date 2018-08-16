@@ -49,7 +49,7 @@ class BasicTest(unittest.TestCase):
     #    super(BasicTest, self).__init__()
 
     def setUp(self):
-        """defines test specific Directory.prefix."""
+        """define test specific Directory.prefix."""
         Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
         print('auth file now is', Authenticate.path)
         self.start_time = datetime.datetime.now()
@@ -70,7 +70,7 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def _get_gpx_from_test_file(name: str):
-        """gets data from a predefined gpx file.
+        """get data from a predefined gpx file.
         name is without .gpx"""
         gpx_test_file = os.path.join(os.path.dirname(__file__), '{}.gpx'.format(name))
         if not os.path.exists(gpx_test_file):
@@ -82,7 +82,7 @@ class BasicTest(unittest.TestCase):
     def create_test_track(
             cls, count: int = 1, idx: int = 0, category: str = None, public: bool = False,
             start_time=None, end_time=None):
-        """creates an :class:`~gpxity.Track`.
+        """create a :class:`~gpxity.Track`.
 
         It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
@@ -225,7 +225,7 @@ class BasicTest(unittest.TestCase):
     def setup_backend(self, cls_, username: str = None, url: str = None, count: int = 0,  # pylint: disable=too-many-arguments
                       cleanup: bool = True, clear_first: bool = True, category: str = None,
                       public: bool = False, debug: bool = False):
-        """sets up an instance of a backend with count tracks.
+        """set up an instance of a backend with count tracks.
 
         If count == len(:attr:`Track.legal_categories <gpxity.Track.legal_categories>`),
         the list of tracks will always be identical. For an example
@@ -261,7 +261,7 @@ class BasicTest(unittest.TestCase):
     @staticmethod
     @contextmanager
     def lifetrackserver(directory, servername, port):
-        """Starts and ends a server for lifetrack testing."""
+        """Start and ends a server for lifetrack testing."""
         cmdline = 'mmtserver --debug --servername {} --port {} --directory {}'.format(
             servername, port, directory)
         process = Popen(cmdline.split())
@@ -284,12 +284,12 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def clone_backend(backend):
-        """returns a clone of backend."""
+        """return a clone of backend."""
         return backend.__class__(backend.url, backend.auth)
 
     @staticmethod
     def _find_backend_classes(with_skip: bool = False):
-        """Finds all backend classes. Those will be tested.
+        """Find all backend classes. Those will be tested.
 
         Args:
             with_skip: if True, also finds those with skip_test=False

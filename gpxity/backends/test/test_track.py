@@ -66,7 +66,7 @@ class TrackTests(BasicTest):
             self.assertIsNotNone(track1.id_in_backend)
 
     def test_clone(self):
-        """is the clone identical?."""
+        """True if the clone is identical."""
         track1 = self.create_test_track()
         track2 = track1.clone()
         self.assertEqualTracks(track1, track2)
@@ -167,7 +167,7 @@ class TrackTests(BasicTest):
         self.assertEqual(start_lines, end_lines)
 
     def test_parse(self):
-        """does Track parse xml correctly."""
+        """check for Track parsing xml correctly."""
         track = self.create_test_track()
         track.keywords = ['Here are some keywords']
         xml = track.to_xml()
@@ -492,7 +492,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track.keywords, ['Bye', 'Dolly', 'Hello', 'Sam'])
 
     def test_keyword_args(self):
-        """Track.keywords must accept all types of iterable."""
+        """'Track.keywords' must accept any variant of iterable."""
         track = Track()
         test_tracks = list(sorted(['a', self.unicode_string2]))
         track.keywords = set(test_tracks)

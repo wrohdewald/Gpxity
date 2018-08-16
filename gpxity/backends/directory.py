@@ -180,7 +180,7 @@ class Directory(Backend):
                         os.remove(full_name)
 
     def _new_id_from(self, ident_proposal: str) ->str:
-        """Returns not yet existant file name.
+        """Return not yet existant file name.
 
         Args:
             ident_proposal: If this proposal does not lead to a valid ident, create unique random ident.
@@ -212,7 +212,7 @@ class Directory(Backend):
         return unique_value
 
     def _make_ident_unique(self, value):
-        """Returns a unique ident."""
+        """Return a unique ident."""
         path = Directory._make_path_unique(os.path.join(self.url, value + '.gpx'))
         return os.path.basename(path)[:-4]
 
@@ -240,13 +240,13 @@ class Directory(Backend):
         return os.path.join(self.url, '{}.gpx'.format(ident))
 
     def _list_gpx(self):
-        """returns a generator of all gpx files, with .gpx removed."""
+        """return a generator of all gpx files, with .gpx removed."""
         gpx_names = (x for x in os.listdir(self.url) if x.endswith('.gpx'))
         return (x.replace('.gpx', '') for x in gpx_names)
 
     @staticmethod
     def _get_field(data, name):
-        """Gets xml field out of data."""
+        """Get xml field out of data."""
         start_html = '<{}>'.format(name)
         end_html = '</{}>'.format(name)
         data = data.split(end_html)
@@ -300,13 +300,13 @@ class Directory(Backend):
         return datetime.datetime.now()
 
     def _read_all(self, track):
-        """fills the track with all its data from source."""
+        """fill the track with all its data from source."""
         assert track.id_in_backend
         with open(self.gpx_path(track.id_in_backend), encoding='utf-8') as in_file:
             track.parse(in_file)
 
     def _remove_symlinks(self, ident: str):
-        """Removes its symlinks, empty symlink parent directories."""
+        """Remove its symlinks, empty symlink parent directories."""
         for symlink in self._symlinks[ident]:
             if os.path.exists(symlink):
                 os.remove(symlink)
@@ -318,7 +318,7 @@ class Directory(Backend):
         self._symlinks[ident] = list()
 
     def _remove_ident(self, ident: str):
-        """Removes its symlinks and the file, in this order."""
+        """Remove its symlinks and the file, in this order."""
         self._remove_symlinks(ident)
         gpx_file = self.gpx_path(ident)
         if os.path.exists(gpx_file):
@@ -340,7 +340,7 @@ class Directory(Backend):
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
     def _new_ident(self, track) ->str:
-        """Creates an id for track.
+        """Create an id for track.
 
         Returns: The new ident.
 
@@ -351,7 +351,7 @@ class Directory(Backend):
         return ident
 
     def _make_symlinks(self, track):
-        """Makes all symlinks for track."""
+        """Make all symlinks for track."""
         ident = track.id_in_backend
         gpx_pathname = self.gpx_path(ident)
         link_name = self._symlink_path(track)
@@ -362,7 +362,7 @@ class Directory(Backend):
             self._symlinks[ident].append(link_name)
 
     def _set_filetime(self, track):
-        """Sets the file modification time to track start time.
+        """Set the file modification time to track start time.
         If the track has no start time, do nothing."""
         time = track.time
         if time:
@@ -370,7 +370,7 @@ class Directory(Backend):
             os.utime(_, (time.timestamp(), time.timestamp()))
 
     def _change_id(self, track, new_ident: str):
-        """Changes the id in the backend."""
+        """Change the id in the backend."""
         assert track.id_in_backend != new_ident
         unique_id = self._new_id_from(new_ident)
         self._remove_symlinks(track.id_in_backend)

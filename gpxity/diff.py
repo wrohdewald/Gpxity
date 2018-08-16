@@ -164,7 +164,7 @@ class BackendDiff:
 
         @staticmethod
         def flatten(whatever):
-            """Flattens Backends or Tracks into a list of tracks."""
+            """Flatten Backends or Tracks into a list of tracks."""
             if isinstance(whatever, list):
                 for list_item in whatever:
                     if isinstance(list_item, Track):
@@ -180,7 +180,7 @@ class BackendDiff:
                         yield _
 
         def build_positions(self):
-            """Returns a set of long/lat tuples."""
+            """Return a set of long/lat tuples."""
             for _ in self.tracks:
                 _.positions = set([(x.longitude, x.latitude) for x in _.points()])
 

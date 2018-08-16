@@ -190,7 +190,7 @@ class TestBackends(BasicTest):
                         self.assertNotEqual(first_category, track2.category)
 
     def xtest_gpsies_bug(self):
-        """This bug only triggers sometimes: title, category or time will be wrong in track2.
+        """We have this bug only sometimes: title, category or time will be wrong in track2.
         Workaround is in GPSIES._edit."""
         for _ in range(20):
             with self.temp_backend(GPSIES, count=1, category='Horse riding', debug=True) as backend:

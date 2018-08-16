@@ -137,7 +137,7 @@ class Track:
 
     @id_in_backend.setter
     def id_in_backend(self, value: str) ->None:
-        """Changes the id in the backend. Currently supported only by Directory.
+        """Change the id in the backend. Currently supported only by Directory.
 
         Args:
             value: The new value
@@ -177,7 +177,7 @@ class Track:
     @property
     def _dirty(self) ->list:
         """
-        Is the track in sync with the backend?.
+        Check if  the track is in sync with the backend.
 
         Setting :attr:`_dirty` will directly write the changed data into the backend.
 
@@ -213,7 +213,7 @@ class Track:
         self.__dirty = list()
 
     def clone(self):
-        """Creates a new track with the same content but without backend.
+        """Create a new track with the same content but without backend.
 
         Returns:
             ~gpxity.Track: the new track
@@ -225,7 +225,7 @@ class Track:
         return result
 
     def _rewrite(self):
-        """Rewrites all changes in the associated backend.
+        """Rewrite all changes in the associated backend.
 
         If any of those conditions is met, do nothing:
 
@@ -249,7 +249,7 @@ class Track:
             self._clear_dirty()
 
     def remove(self):
-        """Removes this track in the associated backend.
+        """Remove this track in the associated backend.
 
         If the track is not coupled with a backend, raise an Exception.
 
@@ -314,7 +314,7 @@ class Track:
 
     @contextmanager
     def _decouple(self):
-        """This context manager disables automic synchronization with the backend.
+        """Context manager: disable automic synchronization with the backend.
 
         In that state, automatic writes of changes into
         the backend are disabled, and if you access attributes which
@@ -347,7 +347,7 @@ class Track:
 
     @contextmanager
     def batch_changes(self):
-        """This context manager disables the direct update in the backend and saves the entire track when done.
+        """Context manager: disable the direct update in the backend and saves the entire track when done.
 
         This may or may not make things faster. Directory and GPSIES profits from this, MMT maybe.
 
@@ -388,14 +388,14 @@ class Track:
             self._dirty = 'category'
 
     def _load_full(self) ->None:
-        """Loads the full track from source_backend if not yet loaded."""
+        """Load the full track from source_backend if not yet loaded."""
         if (self.backend is not None and self.id_in_backend and not self._loaded
                 and not self.__is_decoupled and 'scan' in self.backend.supported):
             self.backend._read_all_decoupled(self)  # pylint: disable=protected-access, no-member
             self._loaded = True
 
     def add_points(self, points) ->None:
-        """Adds points to last segment in the last track.
+        """Add points to last segment in the last track.
 
         If no track is allocated yet and points is not an empty list, allocates a track.
 
@@ -421,7 +421,7 @@ class Track:
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
     def _parse_keywords(self):
-        """self.keywords is 1:1 as parsed from xml.
+        """'self.keywords' is 1:1 as parsed from xml.
 
         Here we extract our special keywords Category: and Status:"""
         new_keywords = list()
@@ -435,7 +435,7 @@ class Track:
         self.__gpx.keywords = ', '.join(new_keywords)
 
     def parse(self, indata):
-        """Parses GPX.
+        """Parse GPX.
 
         :attr:`title`, :attr:`description` and :attr:`category` from indata have precedence over the current values.
         :attr:`public` will be or-ed
@@ -475,7 +475,7 @@ class Track:
 
     @staticmethod
     def _round_points(points):
-        """Rounds points to 6 decimal digits because some backends may cut last digits.
+        """Round points to 6 decimal digits because some backends may cut last digits.
 
         Gpsies truncates to 7 digits. The points are rounded in place!
 
@@ -488,7 +488,7 @@ class Track:
             _.latitude = round(_.latitude, 6)
 
     def to_xml(self) ->str:
-        """Produces exactly one line per trackpoint for easier editing (like removal of unwanted points)."""
+        """Produce exactly one line per trackpoint for easier editing (like removal of unwanted points)."""
         self._load_full()
         new_keywords = self.keywords
         new_keywords.append('Category:{}'.format(self.category))
@@ -529,7 +529,7 @@ class Track:
 
     @public.setter
     def public(self, value):
-        """Stores this flag as keyword 'public'."""
+        """Store this flag as keyword 'public'."""
         if value != self.__public:
             self._load_full()
             self.__public = value
@@ -564,7 +564,7 @@ class Track:
 
     @property
     def keywords(self):
-        """list(str): represents them as a sorted list - in GPX they are comma separated.
+        """list(str): represent them as a sorted list - in GPX they are comma separated.
 
             Content is whatever you want.
 
@@ -596,7 +596,7 @@ class Track:
 
     @keywords.setter
     def keywords(self, values):
-        """Replaces all keywords.
+        """Replace all keywords.
 
         Args:
             Either single str with one or more keywords, separated by commas
@@ -643,7 +643,7 @@ class Track:
         return list(sorted(result))
 
     def add_keywords(self, values) ->None:
-        """Adds to the comma separated keywords. Duplicate keywords are silently ignored.
+        """Add to the comma separated keywords. Duplicate keywords are silently ignored.
 
         A keyword may not contain a comma.
 
@@ -659,7 +659,7 @@ class Track:
             self._dirty = 'add_keywords:{}'.format(', '.join(sorted(new_keywords)))
 
     def remove_keywords(self, values) ->None:
-        """Removes keywords. Keywords not in track are silently ignored.
+        """Remove keywords. Keywords not in track are silently ignored.
 
         Args:
             values: Either a single str with one or more keywords, separated by commas
@@ -690,7 +690,7 @@ class Track:
         return 0.0
 
     def warnings(self):
-        """Returns a list of strings with easy to find problems."""
+        """Return a list of strings with easy to find problems."""
         result = list()
         if self.speed() > self.moving_speed():
             result.append('Speed {:.3f} must not be above Moving speed {:.3f}'.format(
@@ -839,12 +839,12 @@ class Track:
                 yield point
 
     def last_point(self):
-        """Returns the last point of the track."""
+        """Return the last point of the track."""
         # TODO: unittest for track without __gpx or without points
         return self.__gpx.tracks[-1].segments[-1].points[-1]
 
     def adjust_time(self, delta):
-        """Adds a timedelta to all times.
+        """Add a timedelta to all times.
 
         gpxpy.gpx.adjust_time does the same but it ignores waypoints.
         A newer gpxpy.py has a new bool arg for adjust_time which
@@ -1016,7 +1016,7 @@ class Track:
 
     @staticmethod
     def __time_diff(last_point, point):
-        """Returns difference in seconds, ignoring the date."""
+        """Return difference in seconds, ignoring the date."""
         result = abs(last_point.hhmmss - point.hhmmss)
         if result > 33200:  # seconds in 12 hours
             result = 86400 - result
@@ -1024,7 +1024,7 @@ class Track:
 
     @staticmethod
     def __point_is_near(last_point, point, delta_meter):
-        """Returns True if distance < delta_meter."""
+        """Return True if distance < delta_meter."""
         return abs(last_point.distance_2d(point)) < delta_meter
 
     def fix(self, orux24: bool = False, jumps: bool = False):
@@ -1129,7 +1129,7 @@ class Track:
         self._dirty = 'gpx'
 
     def similarity(self, other):
-        """Returns a float 0..1: 1 is identity."""
+        """Return a float 0..1: 1 is identity."""
 
         def simple(track):
             """Simplified track"""
