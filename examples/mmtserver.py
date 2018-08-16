@@ -61,8 +61,13 @@ class MMTHandler(BaseHTTPRequestHandler):
         """Override: redirect into logger."""
         self.server.logger.error(format % args)
 
-    def check_basic_auth_pw(self):
-        """basic http authentication."""
+    def check_basic_auth_pw(self) ->bool:
+        """basic http authentication.
+
+        Returns:
+            True if authentication succeeded
+
+        """
         if self.users is None:
             self.load_users()
         for pair in self.users.items():
@@ -96,7 +101,12 @@ class MMTHandler(BaseHTTPRequestHandler):
         raise exc(reason)
 
     def parseRequest(self):  # pylint: disable=invalid-name
-        """Get interesting things."""
+        """Get interesting things.
+
+        Returns:
+            A dict with the parsed results or None
+
+        """
         if self.server.gpxdo_options.debug:
             self.server.logger.debug('got headers:')
             for key, value in self.headers.items():
@@ -197,13 +207,23 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes(xml.encode('utf-8')))
 
     @staticmethod
-    def xml_get_time(_):
-        """Get server time as defined by the mapmytracks API."""
+    def xml_get_time(_) ->str:
+        """Get server time as defined by the mapmytracks API.
+
+        Returns:
+            Our answer
+
+        """
         return '<type>time</type><server_time>{}</server_time>'.format(
             int(datetime.datetime.now().timestamp()))
 
-    def xml_get_tracks(self, parsed):
-        """List all tracks as defined by the mapmytracks API."""
+    def xml_get_tracks(self, parsed) ->str:
+        """List all tracks as defined by the mapmytracks API.
+
+        Returns:
+            Our answer
+
+        """
         a_list = list()
         if parsed['offset'] == '0':
             for idx, _ in enumerate(self.server.server_directory):
@@ -218,7 +238,12 @@ class MMTHandler(BaseHTTPRequestHandler):
         return '<tracks>{}</tracks>'.format(''.join(a_list))
 
     def __points(self, raw):
-        """convert raw data back into list(GPXTrackPoint)."""
+        """convert raw data back into list(GPXTrackPoint).
+
+        Returns:
+            list(GPXTrackPoint)
+
+        """
         values = raw.split()
         if len(values) % 4:
             self.return_error(401, 'Point elements not a multiple of 4', TypeError)
@@ -232,16 +257,26 @@ class MMTHandler(BaseHTTPRequestHandler):
             result.append(point)
         return result
 
-    def xml_upload_activity(self, parsed):
-        """Upload an activity as defined by the mapmytracks API."""
+    def xml_upload_activity(self, parsed) ->str:
+        """Upload an activity as defined by the mapmytracks API.
+
+        Returns:
+            Our answer
+
+        """
         track = Track()
         track.parse(parsed['gpx_file'])
         self.server.server_directory.add(track)
         self.server.mailer.add(track)
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
-    def xml_start_activity(self, parsed):
-        """start Lifetrack server."""
+    def xml_start_activity(self, parsed) ->str:
+        """start Lifetrack server.
+
+        Returns:
+            Our answer
+
+        """
         if self.server.life:
             raise Exception('Currently I can handle only one lifetracker')
         self.server.life = Lifetrack([self.server.server_directory, self.server.mailer])
@@ -257,8 +292,13 @@ class MMTHandler(BaseHTTPRequestHandler):
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
             self.server.id_in_server)
 
-    def xml_update_activity(self, parsed):
-        """Get new points."""
+    def xml_update_activity(self, parsed) ->str:
+        """Get new points.
+
+        Returns:
+            Our answer
+
+        """
         if self.server.life is None:
             self.return_error(401, 'No lifetracker active')
             return ''
@@ -269,8 +309,13 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.server.life.update(self.__points(parsed['points']))
         return '<type>activity_updated</type>'
 
-    def xml_stop_activity(self, parsed):  # pylint: disable=unused-argument
-        """Client says stop."""
+    def xml_stop_activity(self, parsed) ->str:  # pylint: disable=unused-argument
+        """Client says stop.
+
+        Returns:
+            Our answer
+
+        """
         if self.server.life is None:
             self.return_error(401, 'No lifetracker active')
             return''

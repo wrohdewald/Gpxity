@@ -26,8 +26,13 @@ class ServerDirectory(Directory):
 
     skip_test = True
 
-    def _new_ident(self, _):
-        """Build a unique id for track."""
+    def _new_ident(self, _) ->str:
+        """Build a unique id for track.
+
+        Returns:
+            A new unique id
+
+        """
         try:
             result = str(max(int(x) for x in self._list_gpx()) + 1)
             print('new serverdirectory id:', result)
@@ -36,8 +41,12 @@ class ServerDirectory(Directory):
             return '1'
 
     def _write_all(self, track) ->str:
-        """save full gpx track. If id_in_backend is defined, keep it."""
+        """save full gpx track. If id_in_backend is defined, keep it.
 
+        Returns:
+            The new id_in_backend
+
+        """
         new_ident = track.id_in_backend or self._new_ident(track)
 
         with Backup(track):

@@ -85,8 +85,13 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         self.last_sent_time = datetime.datetime.now() - datetime.timedelta(days=5)
         self.timer = None
 
-    def _new_ident(self, _):
-        """Build a unique id for track."""
+    def _new_ident(self, _) ->str:
+        """Build a unique id for track.
+
+        Returns:
+            A new unique id.
+
+        """
         self.id_count += 1
         return str(self.id_count)
 

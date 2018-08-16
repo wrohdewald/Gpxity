@@ -37,7 +37,7 @@ def repr_timespan(start, end) ->str:
     Returns:
         a string like #h#m
 
-        """
+    """
     duration = end - start
     hours = duration.seconds // 3600
     minutes = (duration.seconds - hours * 3600) // 60
@@ -71,7 +71,12 @@ def is_track(value):
 
 
 def collect_tracks(sources, verbose=False):
-    """A copied list with tracks combined from all sources, to be used in 'for'-loops."""
+    """A copied list with tracks combined from all sources, to be used in 'for'-loops.
+
+    Returns:
+        A list of tracks
+
+    """
     if is_track(sources):
         return [sources]
     result = list()

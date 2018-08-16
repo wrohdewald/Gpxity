@@ -122,6 +122,9 @@ class Track:
 
         It is not possible to decouple a track from its backend, use :meth:`clone()`.
 
+        Returns:
+            The backend
+
         """
         return self.__backend
         # :attr:`Track.id_in_backend <gpxity.Track.id_in_backend>`.
@@ -131,6 +134,9 @@ class Track:
         """Every backend has its own scheme for unique track ids.
 
         Some backends may change the id if the track data changes.
+
+        Returns:
+            the id in the backend
 
         """
         return self.__id_in_backend
@@ -284,7 +290,12 @@ class Track:
 
     @property
     def title(self) -> str:
-        """str: The title."""
+        """str: The title.
+
+        Returns:
+            the title
+
+        """
         if 'title' in self._header_data:
             return self._header_data['title']
         self._load_full()
@@ -299,7 +310,12 @@ class Track:
 
     @property
     def description(self) ->str:
-        """str: The description."""
+        """str: The description.
+
+        Returns:
+            The description
+
+        """
         if 'description' in self._header_data:
             return self._header_data['description']
         self._load_full()
@@ -339,6 +355,9 @@ class Track:
 
         In that state, changes to Track are not written to the backend and
         the track is not marked dirty.
+
+        Returns:
+            True if we are decoupled
 
         """
         if self.backend is None:
@@ -488,7 +507,11 @@ class Track:
             _.latitude = round(_.latitude, 6)
 
     def to_xml(self) ->str:
-        """Produce exactly one line per trackpoint for easier editing (like removal of unwanted points)."""
+        """Produce exactly one line per trackpoint for easier editing (like removal of unwanted points).
+
+        Returns:
+
+            The xml string."""
         self._load_full()
         new_keywords = self.keywords
         new_keywords.append('Category:{}'.format(self.category))
@@ -520,6 +543,9 @@ class Track:
         bool: Is this a private track (can only be seen by the account holder) or is it public?.
 
             Default value is False
+
+        Returns:
+            True if track is public, False if it is private
 
         """
         if 'public' in self._header_data:
@@ -671,8 +697,13 @@ class Track:
             self.__gpx.keywords = ', '.join(x for x in self.keywords if x not in rm_keywords)
             self._dirty = 'remove_keywords:{}'.format(', '.join(rm_keywords))
 
-    def speed(self):
-        """Speed over the entire time in km/h or 0.0."""
+    def speed(self) ->float:
+        """Speed over the entire time in km/h or 0.0.
+
+        Returns:
+            The speed
+
+        """
         time_range = (self.time, self.last_time)
         if time_range[0] is None or time_range[1] is None:
             return 0.0
@@ -682,8 +713,13 @@ class Track:
             return self.distance() / seconds * 3600
         return 0.0
 
-    def moving_speed(self):
-        """Speed for time in motion in km/h."""
+    def moving_speed(self) ->float:
+        """Speed for time in motion in km/h.
+
+        Returns:
+            The moving speed
+
+        """
         bounds = self.gpx.get_moving_data()
         if bounds.moving_time:
             return bounds.moving_distance / bounds.moving_time * 3.6
@@ -740,6 +776,9 @@ class Track:
 
         Args:
             long: If True, give more info
+
+        Returns:
+            The unique full identifier
 
         """
         if self.backend is None:
@@ -858,7 +897,12 @@ class Track:
 
     def points_hash(self) -> float:
         """A hash that is hopefully different for every possible track.
+
         It is built using the combination of all points.
+
+        Returns:
+            The hash
+
         """
         self._load_full()
         result = 1.0
@@ -929,7 +973,11 @@ class Track:
             yield sorted(group, key=lambda x: x.time)
 
     def _has_default_title(self) ->bool:
-        """Try to check if track has the default title given by a backend."""
+        """Try to check if track has the default title given by a backend.
+
+        Returns:
+
+            True if so"""
         # the title of MMT might have been copied into another backend:
         if not self.title:
             return True

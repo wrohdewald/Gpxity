@@ -124,8 +124,12 @@ class Directory(Backend):
         self._symlinks = defaultdict(list)
         self._load_symlinks()
 
-    def identifier(self, track=None):
-        """Used for formatting strings. Must be unique."""
+    def identifier(self, track=None) ->str:
+        """Used for formatting strings. Must be unique.
+
+        Returns:
+
+            a unique identifier"""
         result = self.url
         if result:
             if result.startswith('./') or result == '.':
@@ -143,16 +147,27 @@ class Directory(Backend):
         A list with all legal categories.
 
         Returns: list(str)
+            all legal values for category for this backend.
 
-            all legal values for category for this backend."""
+        """
         return Track.legal_categories
 
     def decode_category(self, value: str) ->str:
-        """Not needed for directory, this is always the internal value."""
+        """Not needed for directory, this is always the internal value.
+
+        Returns:
+            the decoded category
+
+        """
         return value
 
     def encode_category(self, value: str) ->str:
-        """Not needed for directory, this is always the internal value."""
+        """Not needed for directory, this is always the internal value.
+
+        Returns:
+            the encoded category
+
+        """
         return value
 
     def _load_symlinks(self, directory=None):
@@ -195,10 +210,13 @@ class Directory(Backend):
         return self._make_ident_unique(value)
 
     @staticmethod
-    def _make_path_unique(value):
+    def _make_path_unique(value) ->str:
         """If the file name already exists, apply a serial number.
 
         If value ends with .gpx, put the serial number in front of that.
+
+        Returns:
+            the unique path name
 
         """
         ctr = 0
@@ -216,8 +234,13 @@ class Directory(Backend):
         path = Directory._make_path_unique(os.path.join(self.url, value + '.gpx'))
         return os.path.basename(path)[:-4]
 
-    def _sanitize_name(self, value):
-        """Change it to legal file name characters."""
+    def _sanitize_name(self, value) ->str:
+        """Change it to legal file name characters.
+
+        Returns:
+            the sanitized name
+
+        """
         if value is None:
             return None
         if self.fs_encoding is not None:
@@ -234,19 +257,34 @@ class Directory(Backend):
             if self.is_temporary:
                 remove_directory(self.url)
 
-    def gpx_path(self, ident):
-        """The full path name for the local copy of a track."""
+    def gpx_path(self, ident) ->str:
+        """The full path name for the local copy of a track.
+
+        Returns:
+            The full path name
+
+        """
         assert isinstance(ident, str), '{} must be str'.format(ident)
         return os.path.join(self.url, '{}.gpx'.format(ident))
 
     def _list_gpx(self):
-        """return a generator of all gpx files, with .gpx removed."""
+        """return a generator of all gpx files, with .gpx removed.
+
+        Returns:
+            A list of all gpx file names with .gpx removed
+
+        """
         gpx_names = (x for x in os.listdir(self.url) if x.endswith('.gpx'))
         return (x.replace('.gpx', '') for x in gpx_names)
 
     @staticmethod
-    def _get_field(data, name):
-        """Get xml field out of data."""
+    def _get_field(data, name) ->str:
+        """Get xml field out of data.
+
+        Returns:
+            The xml field
+
+        """
         start_html = '<{}>'.format(name)
         end_html = '</{}>'.format(name)
         data = data.split(end_html)
@@ -296,7 +334,12 @@ class Directory(Backend):
             yield track
 
     def get_time(self) ->datetime.datetime:
-        """get server time as a Linux timestamp."""
+        """get server time as a Linux timestamp.
+
+        Returns:
+            The server time
+
+        """
         return datetime.datetime.now()
 
     def _read_all(self, track):
@@ -324,9 +367,14 @@ class Directory(Backend):
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 
-    def _symlink_path(self, track):
+    def _symlink_path(self, track) ->str:
         """The path for the speaking symbolic link: YYYY/MM/title.gpx.
+
         Missing directories YYYY/MM are created.
+
+        Returns:
+            The path
+
         """
         ident = track.id_in_backend
         time = datetime.datetime.fromtimestamp(os.path.getmtime(self.gpx_path(ident)))
@@ -383,8 +431,12 @@ class Directory(Backend):
         """save full gpx track.
 
         Since the file name uses title and title may have changed,
+        compute new file name and remove the old files. We also adapt track.id_in_backend.
 
-        compute new file name and remove the old files. We also adapt track.id_in_backend."""
+        Returns:
+            the new id_in_backend
+
+        """
         old_ident = track.id_in_backend
         new_ident = self._new_ident(track)
 

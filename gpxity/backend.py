@@ -125,13 +125,16 @@ class Backend:
         self.verify = verify
         self._current_track = None
 
-    def identifier(self, track=None):
+    def identifier(self, track=None) ->str:
         """Used for formatting strings. A unique identifier for every physical backend.
 
         Two Backend() instances pointing to the same physical backend have the same identifier.
 
         Args:
             track: If given, add it to the identifier.
+
+        Returns:
+            A unique identifier
 
         """
         result = '{}:{}{}/'.format(
@@ -173,8 +176,13 @@ class Backend:
             self._decoupled = prev_decoupled
 
     @classmethod
-    def _is_implemented(cls, method):
-        """False if the first instruction in method raises NotImplementedError or if the method does nothing."""
+    def _is_implemented(cls, method) ->bool:
+        """False if the first instruction in method raises NotImplementedError or if the method does nothing.
+
+        Returns:
+            True if method is implemented
+
+        """
         first_instruction = next(dis.get_instructions(method.__code__))
         return first_instruction is not None and first_instruction.argval != 'NotImplementedError'
 
@@ -199,8 +207,10 @@ class Backend:
                     cls.supported.add(name[1:])
 
     @property
-    def debug(self):
-        """True: output HTTP debugging data to stdout."""
+    def debug(self) ->bool:
+        """True: output HTTP debugging data to stdout.
+        Returns:
+            True if debug is active"""
         return self.__debug
 
     @debug.setter
@@ -254,7 +264,12 @@ class Backend:
 
     @staticmethod
     def _encode_keyword(value: str) ->str:
-        """Replicate the translation the backend does. MMT for example capitalizes all words."""
+        """Replicate the translation the backend does. MMT for example capitalizes all words.
+
+        Returns:
+            the encoded keyword
+
+        """
         return value
 
     def get_time(self) ->datetime.datetime:
@@ -308,7 +323,12 @@ class Backend:
                 self.__tracks = list(x for x in self.__tracks if self.matches(x))
 
     def _found_track(self, ident: str):
-        """Create an empty track for ident and inserts it into this backend."""
+        """Create an empty track for ident and inserts it into this backend.
+
+        Returns:
+            the new track
+
+        """
         result = Track()
         with self._decouple():
             result._set_backend(self)  # pylint: disable=protected-access
@@ -343,6 +363,9 @@ class Backend:
             exc_prefix: If not None, use it for the beginning of an exception message.
                 If None, never raise an exception
 
+        Returns:
+            True for match
+
         """
         if self.__match is None:
             return True
@@ -352,7 +375,12 @@ class Backend:
         return match_error is None
 
     def _needs_full_save(self, changes) ->bool:
-        """Do we have to rewrite the entire track?."""
+        """Do we have to rewrite the entire track?.
+
+        Returns:
+            True if we must save fully
+
+        """
         for change in changes:
             if change == 'all':
                 return True
@@ -421,9 +449,10 @@ class Backend:
     def _new_ident(self, track) ->str:
         """Create an id for track.
 
-        Returns: The new ident. If the backend does not
-        create an ident in advance, return None. Such
-        backends will return a new ident after writing.
+        Returns:
+            The new ident. If the backend does not
+            create an ident in advance, return None. Such
+            backends will return a new ident after writing.
 
         """
 
@@ -455,7 +484,6 @@ class Backend:
                     getattr(self, write_name)(track, _[1])
                 else:
                     raise Exception('dirty {} got too many arguments:{}'.format(write_name, _[1:]))
-        return track
 
     def _write_all(self, track) ->str:
         """the actual implementation for the concrete Backend.
@@ -551,13 +579,25 @@ class Backend:
 
     def __contains__(self, value) ->bool:
         """value is either an a track or a track id.
-        Does NOT load tracks, only checks what is already known."""
+
+        Does NOT load tracks, only checks what is already known.
+
+        Returns:
+            True if we have the item
+
+        """
         self._scan()
         return self._has_item(value)
 
     def _has_item(self, index) ->bool:
         """like __contains__ but for internal use: does not call _scan first.
-        Must not call self._scan."""
+
+        Must not call self._scan.
+
+        Returns:
+            True if we have the item
+
+        """
         if hasattr(index, 'id_in_backend') and index in self.__tracks:
             return True
         if isinstance(index, str) and index in list(x.id_in_backend for x in self.__tracks):
@@ -569,7 +609,12 @@ class Backend:
 
         Do not call this when implementing a backend because this always calls scan() first.
 
-        Instead use :meth:`_has_item`."""
+        Instead use :meth:`_has_item`.
+
+        Returns:
+            the track
+
+        """
         self._scan()
         if isinstance(index, int):
             return self.__tracks[index]
@@ -578,13 +623,22 @@ class Backend:
                 return _
         raise IndexError
 
-    def __len__(self):
-        """do not call this when implementing a backend because this calls scan()."""
+    def __len__(self) ->int:
+        """do not call this when implementing a backend because this calls scan().
+
+        Returns:
+            the length
+
+        """
         self._scan()
         return len(self.__tracks)
 
-    def real_len(self):
-        """len(backend) without calling scan() first."""
+    def real_len(self) ->int:
+        """len(backend) without calling scan() first.
+
+        Returns:
+
+            the length"""
         return len(self.__tracks)
 
     def __append(self, track):
@@ -601,7 +655,12 @@ class Backend:
         self.__tracks.append(track)
 
     def __repr__(self):
-        """do not call len(self) because that does things."""
+        """do not call len(self) because that does things.
+
+        Returns:
+            The repr str
+
+        """
         dirname = ''
         if self.auth:
             dirname = self.auth[0] or ''
@@ -619,8 +678,13 @@ class Backend:
         self._scan()
         return iter(self.__tracks)
 
-    def __eq__(self, other):
-        """True if both backends have the same tracks."""
+    def __eq__(self, other) ->bool:
+        """True if both backends have the same tracks.
+
+        Returns:
+            True if both backends have the same tracks
+
+        """
         self._scan()
         other._scan()  # pylint: disable=protected-access
         return set(x.key() for x in self) == set(x.key() for x in other)
@@ -634,7 +698,9 @@ class Backend:
             remove: If True, remove merged tracks
             dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching track, just copy other into this Backend
-        Returns: list(str) A list of messages for verbose output
+
+        Returns:
+            list(str) A list of messages for verbose output
 
         """
         # pylint: disable=too-many-branches,too-many-locals
@@ -686,8 +752,13 @@ class Backend:
         return result
 
     @staticmethod
-    def _html_encode(value):
-        """encode str to something gpies.com accepts."""
+    def _html_encode(value) ->str:
+        """encode str to something gpies.com accepts.
+
+        Returns:
+            the encoded value
+
+        """
         if value is None:
             return ''
         return value.encode('ascii', 'xmlcharrefreplace').decode()

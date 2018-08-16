@@ -70,7 +70,12 @@ class LifetrackTarget:
             self.backend._lifetrack_end(self.track)  # pylint: disable=protected-access
 
     def _prepare_points(self, points):
-        """Round points."""
+        """Round points.
+
+        Returns:
+            The rounded points
+
+        """
         result = list(points)[:]
         self.track._round_points(result)  # pylint: disable=protected-access
         return result

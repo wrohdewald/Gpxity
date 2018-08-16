@@ -121,9 +121,18 @@ class TestBackends(BasicTest):
                         self.setup_backend(cls, username='wrong_password')
 
     def test_match(self):
-        """test backend match function."""
-        def match_date(track):
-            """match against a date"""
+        """test backend match function.
+
+        Returns:
+            None
+
+        """
+        def match_date(track) ->str:
+            """match against a date.
+
+            Returns:
+                None if match else an error message
+            """
             if track.time < datetime.datetime(year=2016, month=9, day=5):
                 return 'time {} is before {}'.format(track.time, '2016-09-05')
             return None
@@ -498,11 +507,20 @@ class TestBackends(BasicTest):
                             self.assertEqual(getattr(backend2[0], key), default_value)
                     self.assertEqual(getattr(backend2[0], main), test_values[main][1])
 
-    def test_keywords(self):
-        """Test arbitrary keyword changes."""
+    def test_keywords(self) ->None:
+        """Test arbitrary keyword changes.
+
+        Returns:
+            None
+
+        """
 
         def current():
-            """Returns the current keywords"""
+            """The current keywords.
+
+            Returns:
+                The current keywords
+            """
             if hasattr(backend, '_get_current_keywords'):
                 return backend._get_current_keywords(track)  # pylint: disable=protected-access
             return track.keywords

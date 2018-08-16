@@ -253,8 +253,9 @@ class GPSIES(Backend):
         """Needed only for unittest.
 
         Returns: list(str)
+            all legal values for category.
 
-            all legal values for category."""
+        """
         response = requests.post('{}?trackList.do'.format(self.url), timeout=self.timeout)
         category_parser = ParseGPSIESCategories()
         category_parser.feed(response.text)
@@ -262,7 +263,12 @@ class GPSIES(Backend):
 
     @property
     def session(self):
-        """The requests.Session for this backend. Only initialized once."""
+        """The requests.Session for this backend. Only initialized once.
+
+        Returns:
+            The session
+
+        """
         ident = self.identifier()
         if ident not in self._session:
             if not self.auth:
@@ -279,7 +285,12 @@ class GPSIES(Backend):
         return self._session[ident]
 
     def __post(self, action: str, data, files=None):
-        """common code for a POST within the session."""
+        """common code for a POST within the session.
+
+        Returns:
+            the response
+
+        """
         for key in data:
             data[key] = self._html_encode(data[key])
         if data.get('fileDescription'):
@@ -289,7 +300,12 @@ class GPSIES(Backend):
         return response
 
     def decode_category(self, value: str) ->str:
-        """Translate the value from Gpsies into internal one."""
+        """Translate the value from Gpsies into internal one.
+
+        Returns:
+            The decoded name
+
+        """
         if value.capitalize() in Track.legal_categories:
             return value.capitalize()
         if value not in self._category_decoding:
@@ -297,7 +313,12 @@ class GPSIES(Backend):
         return self._category_decoding[value]
 
     def encode_category(self, value: str) ->str:
-        """Translate internal value into Gpsies value."""
+        """Translate internal value into Gpsies value.
+
+        Returns:
+            The encoded name
+
+        """
         if value in self.legal_categories:
             return value
         if value.lower() in self.legal_categories:

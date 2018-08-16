@@ -71,7 +71,13 @@ class BasicTest(unittest.TestCase):
     @staticmethod
     def _get_gpx_from_test_file(name: str):
         """get data from a predefined gpx file.
-        name is without .gpx"""
+
+        name is without .gpx
+
+        Returns:=
+            A GPX object
+
+        """
         gpx_test_file = os.path.join(os.path.dirname(__file__), '{}.gpx'.format(name))
         if not os.path.exists(gpx_test_file):
             raise Exception('MMTTests needs a GPX file named {}.gpx for testing in {}'.format(
@@ -140,7 +146,12 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     def _random_datetime():
-        """random datetime between now() - 10 days and now()."""
+        """random datetime between now() - 10 days and now().
+
+        Returns:
+            A random datetime
+
+        """
         end = datetime.datetime.now()
         start = end - datetime.timedelta(days=10)
         delta = end - start
@@ -151,7 +162,13 @@ class BasicTest(unittest.TestCase):
     @staticmethod
     def _random_keywords(count=100):
         """A set of random keywords, but always the same.
-        We do not want to generate too many tag ids for MMT."""
+
+        We do not want to generate too many tag ids for MMT.
+
+        Returns:
+            A set of random keywords
+
+        """
         state = random.getstate()
         try:
             random.seed(1)
@@ -293,6 +310,9 @@ class BasicTest(unittest.TestCase):
 
         Args:
             with_skip: if True, also finds those with skip_test=False
+
+        Returns:
+            A list of backend classes
 
         """
         backends_directory = __file__

@@ -5,8 +5,13 @@
 from setuptools import setup, find_packages
 
 
-def readall(path):
-    """explicitly close the file again."""
+def readall(path) ->str:
+    """explicitly close the file again.
+
+    Returns:
+        The file content
+
+    """
     with open(path) as in_file:
         return in_file.read()
 

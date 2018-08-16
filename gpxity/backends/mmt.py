@@ -52,6 +52,9 @@ def _convert_time(raw_time) ->datetime.datetime:
     Args:
         raw_time (int): The linux timestamp from the MMT server
 
+    Returns:
+        The datetime
+
     """
     return datetime.datetime.utcfromtimestamp(float(raw_time))
 
@@ -245,8 +248,9 @@ class MMT(Backend):
         """Needed only for unittest.
 
         Returns: list(str)
+            all legal values for category.
 
-            all legal values for category."""
+        """
         response = requests.get(self.url + '/explore/wall', timeout=self.timeout)
         category_parser = ParseMMTCategories()
         category_parser.feed(response.text)
@@ -254,7 +258,12 @@ class MMT(Backend):
 
     @property
     def session(self):
-        """The requests.Session for this backend. Only initialized once."""
+        """The requests.Session for this backend. Only initialized once.
+
+        Returns:
+                The session
+
+        """
         ident = self.identifier()
         if ident not in self._session:
             if not self.auth:
@@ -273,13 +282,24 @@ class MMT(Backend):
 
     def decode_category(self, value: str) ->str:
         """Translate the value from MMT into internal one.
-        Since gpxity once decided to use MMT definitions for tracks, this should mostly be 1:1 here."""
+
+        Since gpxity once decided to use MMT definitions for tracks, this should mostly be 1:1 here.
+
+        Returns:
+            the decoded value
+
+        """
         if value not in Track.legal_categories:
             raise self.BackendException('MMT gave us an unknown category={}'.format(value))
         return value
 
     def encode_category(self, value: str) ->str:
-        """Translate internal value into MMT value."""
+        """Translate internal value into MMT value.
+
+        Returns:
+            the translated value
+
+        """
         if value in self.legal_categories:
             return value
         if value not in self._category_encoding:
@@ -288,7 +308,12 @@ class MMT(Backend):
 
     @property
     def mid(self):
-        """the member id on MMT belonging to auth."""
+        """the member id on MMT belonging to auth.
+
+        Returns:
+            The mid
+
+        """
         if self.__mid == -1:
             self._parse_homepage()
         return self.__mid
@@ -312,7 +337,12 @@ class MMT(Backend):
 
     @staticmethod
     def _encode_keyword(value):
-        """mimic the changes MMT applies to tags."""
+        """mimic the changes MMT applies to tags.
+
+        Returns:
+            The changed keywords
+
+        """
         return ' '.join(x.capitalize() for x in value.split())
 
     def _check_tag_ids(self):
@@ -326,7 +356,7 @@ class MMT(Backend):
         self._check_tag_ids()
 
     def __post(
-            self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs):
+            self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs) ->str:
         """Helper for the real function with some error handling.
 
         Args:
@@ -335,6 +365,9 @@ class MMT(Backend):
             data: should be xml and will be encoded. May be None.
             expect: If given, raise an error if this string is not part of the server answer.
             kwargs: a dict for post(). May be None. data and kwargs must not both be passed.
+
+        Returns:
+            the result
 
         """
         if url is None:
@@ -513,7 +546,12 @@ class MMT(Backend):
                 tag_id=self.__tag_ids[tag], entry_id=track.id_in_backend)
 
     def get_time(self) ->datetime.datetime:
-        """get MMT server time."""
+        """get MMT server time.
+
+        Returns:
+            The server time
+
+        """
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
     def _yield_tracks(self):
@@ -634,8 +672,13 @@ class MMT(Backend):
         return new_ident
 
     @staticmethod
-    def __formatted_lifetrack_points(points):
-        """format points for life tracking."""
+    def __formatted_lifetrack_points(points) ->str:
+        """format points for life tracking.
+
+        Returns:
+            The formatted points
+
+        """
         _ = list()
         for point in points:
             _.append('{} {} {} {}'.format(
