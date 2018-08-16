@@ -36,7 +36,6 @@ import html
 from html.parser import HTMLParser
 import datetime
 from collections import defaultdict
-
 import requests
 
 from .. import Backend, Track
@@ -703,7 +702,7 @@ class MMT(Backend):
         if self.is_free_account:
             raise Exception('Your free MMT account does not allow lifetracking')
         if MMT._current_lifetrack is not None:
-            raise Exception('MMT only accepts one simultaneous lifetracker per username')
+            raise Exception('start: MMT only accepts one simultaneous lifetracker per username')
         MMT._current_lifetrack = track
         result = self.__post(
             url='/',
@@ -728,7 +727,7 @@ class MMT(Backend):
 
         """
         if MMT._current_lifetrack != track:
-            raise Exception('MMT only accepts one simultaneous lifetracker per username')
+            raise Exception('update: MMT only accepts one simultaneous lifetracker per username')
         self.__post(
             url='/',
             request='update_activity', activity_id=track.id_in_backend,
@@ -743,7 +742,7 @@ class MMT(Backend):
 
         """
         if MMT._current_lifetrack != track:
-            raise Exception('MMT only accepts one simultaneous lifetracker per username')
+            raise Exception('end: MMT only accepts one simultaneous lifetracker per username')
         self.__post(url='/', request='stop_activity')
         MMT._current_lifetrack = None
 
