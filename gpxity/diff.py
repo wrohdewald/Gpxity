@@ -78,7 +78,7 @@ class BackendDiff:
             compare_attribute('S', 'public', lambda x: 'public' if x else 'private')
             return result
 
-        def __compare(self, verbose):
+        def __compare(self, verbose):  # noqa
             """Compare both tracks.
 
             Returns:
