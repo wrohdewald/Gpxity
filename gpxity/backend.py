@@ -447,7 +447,6 @@ class Backend:
                 new_track.id_in_backend = None
                 new_track._set_backend(None)  # pylint: disable=protected-access
             raise
-        return new_track
 
     def _new_ident(self, track) ->str:
         """Create an id for track.
