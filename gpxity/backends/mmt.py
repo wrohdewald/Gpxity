@@ -279,7 +279,7 @@ class MMT(Backend):
             login_url = '{}/login'.format(self.https_url)
             response = self._session[ident].post(
                 login_url, data=payload, timeout=self.timeout, verify=self.verify)
-            if not 'You are now logged in.' in response.text:
+            if 'You are now logged in.' not in response.text:
                 raise self.BackendException('Login as {} failed'.format(self.auth[0]))
             cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
