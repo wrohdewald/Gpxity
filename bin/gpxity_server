@@ -149,7 +149,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """Override standard."""
         # TODO: empfangene cookies verwenden
         self.server.logger.debug('GET %s %s %s', self.client_address[0], self.server.server_port, self.path)
-        self.parseRequest()  # side effect: may print debug info
+        self.parseRequest()  # side effect: may output debug info
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         if self.path == '/':
@@ -360,7 +360,7 @@ class Main:  # pylint: disable=too-few-public-methods
         parser.add_argument('--port', help='listen on PORT', type=int, required=True)
         parser.add_argument('--mailto', help='mail new tracks to MAILTO')
         parser.add_argument('--mail-interval', help='only mail every X seconds, default is 1800', type=int, default=1800)
-        parser.add_argument('--loglevel', help='define loglevel', choices=('debug', 'info', 'warning', 'error'), default='error')
+        parser.add_argument('--loglevel', help='set the loglevel', choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection
             timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
