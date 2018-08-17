@@ -51,7 +51,6 @@ class LifetrackTarget:
                     new_ident = self.backend._lifetrack_start(self.track, self._prepare_points(points))
                     with self.track._decouple():
                         self.track.id_in_backend = new_ident
-                        logging.debug('track %s got ident %s', self.track, new_ident)
                 else:
                     self.backend._lifetrack_update(self.track, self._prepare_points(points))
             else:

@@ -248,11 +248,11 @@ class GPSIES(Backend):
 
     default_url = 'https://www.gpsies.com'
 
-    def __init__(self, url=None, auth=None, cleanup=False, debug=False, timeout=None):
+    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring."""
         if url is None:
             url = self.default_url
-        super(GPSIES, self).__init__(url, auth, cleanup, debug, timeout)
+        super(GPSIES, self).__init__(url, auth, cleanup, timeout)
         self.session_response = None
 
     def _download_legal_categories(self):

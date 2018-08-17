@@ -20,6 +20,7 @@ import os
 import sys
 import datetime
 from collections import defaultdict
+import logging
 
 try:
     import argcomplete
@@ -68,7 +69,7 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
                     result = datetime.datetime(year=result.year+1, month=1, day=1)
                     result -= datetime.timedelta(days=1)
             except ValueError as exc:
-                print(exc)
+                logging.error(exc)
                 msg = "Given Date ({0}) not valid! Expected format YYYY-MM-DD or YYYY-MM or YYYY".format(arg_date_str)
                 raise argparse.ArgumentTypeError(msg)
     return arg_date_str if return_raw else result
@@ -186,11 +187,12 @@ class LsRow(dict):
 
     def print_row(self):
         """Show this row"""
+        line = ''
         for field in LsRow.visible_fields():
             _ = field.format_raw(self[field.head_ident])
             right = '>' if field.type_ in (int, float) else ''
-            print('{value:{right}{width}}'.format(right=right, width=field.max_length, value=_), end='  ')
-        print()
+            line += '{value:{right}{width}}  '.format(right=right, width=field.max_length, value=_)
+        logging.error(line)
 
 
 class TotalRow(LsRow):
@@ -249,7 +251,7 @@ class FreeTextRow(LsRow):
 
     def print_row(self):
         """Show the row."""
-        print(self.text)
+        logging.error(self.text)
 
 class SeparatorRow(LsRow):
     """A separator line for use before or after totals"""
@@ -260,9 +262,10 @@ class SeparatorRow(LsRow):
 
     def print_row(self):
         """Show row."""
+        line = ''
         for field in self.visible_fields():
-            print(self.separator * field.max_length, end='  ')
-        print()
+            line += self.separator * field.max_length + '  '
+        logging.error(line)
 
 
 class HeaderRow(LsRow):
@@ -282,9 +285,11 @@ class Utility:
         self.exit_code = 0
         self.options = None
         self.subparsers = None
+        logging.basicConfig(format='%(message)s', stream=sys.stdout)
         self.parse_commandline()
         if self.exit_code:
             return
+        logging.getLogger().setLevel(self.options.loglevel.upper())
         sources = []
         self.source_tracks = []
         self.similar_to = None
@@ -304,14 +309,13 @@ class Utility:
                                 self.exit_code = 2
                                 raise Exception(msg)
                             else:
-                                print(msg)
+                                logging.error(msg)
 
-                tracks = collect_tracks(sources, verbose=self.options.verbose)
+                tracks = collect_tracks(sources)
                 for track in tracks:
                     msg = self.match(track)
                     if msg:
-                        if self.options.verbose:
-                            print('{}: {}'.format(track.identifier(), msg))
+                        logging.error('%s: %s', track.identifier(), msg)
                     else:
                         self.source_tracks.append(track)
             if hasattr(self.options, 'destination') and self.destination is None:
@@ -319,8 +323,8 @@ class Utility:
                 if self.options.func not in (self.diff, self.merge):
                     if isinstance(self.destination, Track):
                         raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
-                if not isinstance(self.destination, Track) and self.options.verbose and not self.options.copy:
-                    print('collecting tracks from', self.destination.identifier() or '.')
+                if not isinstance(self.destination, Track) and not self.options.copy:
+                    logging.debug('collecting tracks from destination %s', self.destination.identifier() or '.')
 
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
@@ -329,10 +333,10 @@ class Utility:
     def error(self, msg, exit_code=None):
         """Prints the error message.
         Sets the process exit code.
-        With --debug, re-raises the exception."""
-        print(msg)
+        With loglevel debug, re-raises the exception."""
+        logging.error(msg)
         self.exit_code = exit_code or 1
-        if self.options.debug:
+        if logging.getLogger().level == logging.DEBUG:
             raise msg
 
     def move(self):
@@ -347,18 +351,16 @@ class Utility:
             except NotImplementedError:
                 pass
             _.remove()
-            if self.options.verbose:
-                print('moved {} to {}'.format(_, self.destination))
+            logging.info('moved %s to %s'.format(_, self.destination))
 
     def remove(self):
         """remove tracks"""
         for _ in self.source_tracks:
             if self.options.dry_run:
-                print('would remove {}'.format(_))
+                logging.info('would remove %s', _)
             else:
                 _.remove()
-                if self.options.verbose:
-                    print('removed {}'.format(_))
+                logging.info('removed %s', _)
 
     def list_them(self):
         """list tracks"""
@@ -419,7 +421,7 @@ class Utility:
             LsRow.find_by_head_ident('time').is_needed = True
             LsRow.find_by_head_ident('duration').is_needed = True
 
-        sort_fields = list(LsRow.find_by_head_ident(x) for x in self.options.sort.split(','))
+        sort_fields = [LsRow.find_by_head_ident(x) for x in self.options.sort.split(',')]
         for _ in sort_fields:
             _.is_needed = True
 
@@ -514,9 +516,8 @@ class Utility:
                 if _.time:
                     _.id_in_backend = str(_.time).replace(' ', '_')
             result_lines.extend(_.fix(orux24=self.options.orux24, jumps=self.options.jumps))
-        if self.options.verbose:
-            for _ in result_lines:
-                print(_)
+        for _ in result_lines:
+            logging.error(_)
 
     def keyword(self):
         """add/remove a list of keywords"""
@@ -524,41 +525,35 @@ class Utility:
             if self.options.remove:
                 if not self.options.dry_run:
                     _.remove_keywords(self.options.keywords)
-                if self.options.verbose or self.options.dry_run:
-                    print('removed {} from {}'.format(self.options.keywords, _))
+                logging.info('removed %s from %s', self.options.keywords, _)
             else:
                 if not self.options.dry_run:
                     _.add_keywords(self.options.keywords)
-                if self.options.verbose or self.options.dry_run:
-                    print('added {} to {}'.format(self.options.keywords, _))
+                logging.info('added %s to %s', self.options.keywords, _)
 
     def title(self):
         """Sets the title."""
         for _ in self.source_tracks:
             _.title = self.options.title
-            if self.options.verbose:
-                print('set title {} for {}'.format(self.options.title, _))
+            logging.info('set title %s for %s', self.options.title, _)
 
     def description(self):
         """Sets the description."""
         for _ in self.source_tracks:
             _.description = self.options.description
-            if self.options.verbose:
-                print('set description {} for {}'.format(self.options.description, _))
+            logging.info('set description %s for %s', self.options.description, _)
 
     def category(self):
         """Sets the category."""
         for _ in self.source_tracks:
             _.category = self.options.category
-            if self.options.verbose:
-                print('set category {} for {}'.format(self.options.category, _))
+            logging.info('set category %s for %s', self.options.category, _)
 
     def set_public(self, value=True):
         """Sets the status."""
         for _ in self.source_tracks:
             _.public = value
-            if self.options.verbose:
-                print('set status {} for {}'.format('public' if value else 'private', _))
+            logging.info('set status %s for %s','public' if value else 'private', _)
 
     def set_private(self):
         """Sets the status."""
@@ -568,9 +563,8 @@ class Utility:
         """Merge"""
         msg = self.destination.merge(
             self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
-        if self.options.verbose or self.options.dry_run:
-            for _ in msg:
-                print(_)
+        for _ in msg:
+            logging.info(_)
 
     def diff(self):
         """Compare"""
@@ -578,13 +572,13 @@ class Utility:
             """shows tracks appearing only on one side."""
             backends = uniq(x.backend for x in side.exclusive)
             for backend in backends:
-                print('only in {}:'.format(backend.url))
+                logging.error('only in %s:', backend.url)
                 for _ in side.exclusive:
                     if _.backend is backend:
-                        print('    {}'.format(_))
-                print()
+                        logging.error('    %s', _)
+                logging.error('')
 
-        differ = BackendDiff(self.source_tracks, self.destination, self.options.verbose)
+        differ = BackendDiff(self.source_tracks, self.destination)
         show_exclusive(differ.left)
         show_exclusive(differ.right)
 
@@ -592,18 +586,18 @@ class Utility:
 
         # pylint: disable=too-many-nested-blocks
         for left, right in backend_pairs:
-            print('Differences between {} and {}'.format(left.url, right.url))
+            logging.error('Differences between %s and %s', left.url, right.url)
             for pair in differ.similar:
                 if (pair.left.backend, pair.right.backend) == (left, right):
                     _ = ''.join(x if x in pair.differences else ' ' for x in BackendDiff.diff_flags)
-                    print('-{}  {}'.format(_, pair.left))
-                    print('+{}  {}'.format(_, pair.right))
+                    logging.error('-%s  %s', _, pair.left)
+                    logging.error('+%s  %s', _, pair.right)
                     for key, explain in pair.differences.items():
                         if explain:
                             _ = ''.join(x if x == key else ' ' for x in BackendDiff.diff_flags)
                             for explain_line in explain:
-                                print(' {}  {}'.format(_, explain_line))
-                    print()
+                                logging.error(' %s  %s', _, explain_line)
+                    logging.error('')
 
     def instantiate_object(self, name):
         """returns a backend for name.
@@ -641,7 +635,6 @@ class Utility:
             raise Exception('{} not found'.format(name))
         if track_id:
             result = result[track_id]
-        result.debug = self.options.debug
         return result
 
     def match(self, track):
@@ -702,8 +695,7 @@ class Utility:
     def build_common_parser():
         """Returns a subparser for common arguments"""
         result = argparse.ArgumentParser(add_help=False)
-        result.add_argument('--verbose', action='store_true', help='verbose output', default=False)
-        result.add_argument('--debug', action='store_true', help='debug backend traffic', default=False)
+        result.add_argument('--loglevel', help='set the loglevel', choices=('none','debug', 'info', 'warning', 'error'), default='none')
         result.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
             the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
@@ -953,9 +945,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                 self.options.source = [self.options.destination]
         elif self.options.func == self.fix:
             if self.options.title_from_id and self.options.id_from_title:
-                print('gpxdo: error: title-from-id and id-from-title cannot be combined')
+                logging.error('gpxdo: error: title-from-id and id-from-title cannot be combined')
             if self.options.id_from_title and self.options.id_from_time:
-                print('gpxdo: error: id_from_title and id_from_time cannot be combined')
+                logging.error('gpxdo: error: id_from_title and id_from_time cannot be combined')
         if self.options.only_kw:
             self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
         if self.options.only_category:
@@ -964,7 +956,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             self.options.copy = False
         if self.options.date:
             if self.options.first_date or self.options.last_date:
-                print('gpxdo: error: cannot have --date with --first-date or --last-date')
+                logging.error('gpxdo: error: cannot have --date with --first-date or --last-date')
                 self.exit_code = 2
                 return
             self.options.first_date = valid_date_argument(self.options.date, last=False, return_raw=False)
@@ -976,6 +968,11 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                 self.options.last_date = valid_date_argument(self.options.last_date, last=True, return_raw=False)
         if hasattr(self.options, 'sort') and self.options.sort == 'moving-speed':
             self.options.sort = 'moving_speed'
+        if hasattr(self.options, 'dry_run') and self.options.dry_run:
+            if self.options.loglevel != 'debug':
+                self.options.loglevel = 'info'
+        if self.options.loglevel == 'none':
+            self.options.loglevel = 'error'
 
 
 sys.exit(Utility().exit_code)

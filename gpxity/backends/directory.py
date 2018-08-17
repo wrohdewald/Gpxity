@@ -117,14 +117,14 @@ class Directory(Backend):
 
     prefix = 'gpxity.'
 
-    def __init__(self, url=None, auth=None, cleanup=False, debug=False, prefix: str = None):
+    def __init__(self, url=None, auth=None, cleanup=False, prefix: str = None):
         """See class docstring."""
         self.fs_encoding = None
         if prefix is None:
             prefix = self.__class__.prefix
         elif url:
             raise Exception('Directory does not accept both url and prefix')
-        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, debug=debug)
+        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup)
         self.is_temporary = not bool(self.url)
         if self.is_temporary:
             self.url = tempfile.mkdtemp(prefix=prefix)

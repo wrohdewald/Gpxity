@@ -80,7 +80,7 @@ def is_track(value):
     return hasattr(value, 'id_in_backend')
 
 
-def collect_tracks(sources, verbose=False):
+def collect_tracks(sources):
     """A copied list with tracks combined from all sources, to be used in 'for'-loops.
 
     Returns:
@@ -91,8 +91,7 @@ def collect_tracks(sources, verbose=False):
         return [sources]
     result = list()
     for source in sources:
-        if verbose:
-            print('collecting tracks from', source.identifier() or '.')
+        logging.debug('collecting tracks from %s', source.identifier() or '.')
         if is_track(source):
             result.append(source)
         else:

@@ -12,7 +12,6 @@ import dis
 from contextlib import contextmanager
 from collections import defaultdict
 import logging
-from http.client import HTTPConnection
 
 from .auth import Authenticate
 from .track import Track
@@ -68,7 +67,6 @@ class Backend:
         full_support (set(str)): All possible values for the supported attribute.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url.
-        debug: If True, print debugging information
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
         verify: True, False or the name of a local cert file
@@ -103,8 +101,7 @@ class Backend:
     # cookie "SERVERID".
     _session = dict()
 
-    def __init__(self, url: str = None, auth=None, cleanup: bool = False,
-                 debug: bool = False, timeout=None, verify=True):
+    def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None, verify=True):
         """See class docstring."""
         self._decoupled = False
         super(Backend, self).__init__()
@@ -125,8 +122,6 @@ class Backend:
         self._cleanup = cleanup
         self.__match = None
         self.logger = logging.getLogger(self.identifier())
-        self.__debug = None
-        self.debug = debug
         self.timeout = timeout
         self.verify = verify
         self._current_track = None
@@ -211,25 +206,6 @@ class Backend:
             elif name.startswith('_write_') and name != '_write_attribute':
                 if cls._is_implemented(method):
                     cls.supported.add(name[1:])
-
-    @property
-    def debug(self) ->bool:
-        """True: output HTTP debugging data to stdout.
-        Returns:
-            True if debug is active"""
-        return self.__debug
-
-    @debug.setter
-    def debug(self, value):
-        """see debug.getter."""
-        if self.__debug != value:
-            self.__debug = value
-            if value:
-                HTTPConnection.debuglevel = 1
-                self.logger.level = logging.DEBUG
-            else:
-                HTTPConnection.debuglevel = 0
-                self.logger.level = logging.CRITICAL + 1
 
     @property
     def match(self):
@@ -654,7 +630,6 @@ class Backend:
                     track.id_in_backend, self[track.id_in_backend], self.__tracks))
         self.matches(track, 'append')
         self.__tracks.append(track)
-        self.logger.debug('Added %s to %s', track, self)
 
     def __repr__(self):
         """do not call len(self) because that does things.

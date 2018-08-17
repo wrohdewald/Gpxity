@@ -46,8 +46,8 @@ class TestBackends(BasicTest):
             'write_category', 'write_add_keywords', 'write_gpx',
             'write_remove_keywords', 'lifetrack'}
         for cls in self._find_backend_classes():
-            print(cls, cls.supported)
-            print(cls, expect_unsupported[cls])
+            self.logger.debug('%s %s', cls, cls.supported)
+            self.logger.debug('%s %s', cls, expect_unsupported[cls])
             with self.subTest(' {}'.format(cls.__name__)):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
                 self.assertEqual(sorted(cls.supported | expect_unsupported[cls]), sorted(cls.full_support))
@@ -202,7 +202,7 @@ class TestBackends(BasicTest):
         """We have this bug only sometimes: title, category or time will be wrong in track2.
         Workaround is in GPSIES._edit."""
         for _ in range(20):
-            with self.temp_backend(GPSIES, count=1, category='Horse riding', debug=True) as backend:
+            with self.temp_backend(GPSIES, count=1, category='Horse riding') as backend:
                 track = backend[0]
                 track.title = 'A new title'
                 track.description = 'A new description'

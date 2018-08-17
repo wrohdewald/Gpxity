@@ -22,7 +22,6 @@ class BackendDiff:
     Args:
         left (Backend): A backend, a track or a list of either
         right (Backend): Same as for the left side
-        verbose: Show details about different points
 
     Attributes:
         left(:class:`BackendDiffSide`): Attributes for the left side
@@ -46,11 +45,11 @@ class BackendDiff:
             differences(dict()): Keys are Flags for differences, see BackendDiff.diff_flags.
                     Values is a list(str) with additional info
         """
-        def __init__(self, left, right, verbose):
+        def __init__(self, left, right):
             """See class docstring."""
             self.left = left
             self.right = right
-            self.differences = self.__compare(verbose)
+            self.differences = self.__compare()
 
         def __compare_metadata(self):
             """Compare some metadata between left and right.
@@ -78,7 +77,7 @@ class BackendDiff:
             compare_attribute('S', 'public', lambda x: 'public' if x else 'private')
             return result
 
-        def __compare(self, verbose):  # noqa
+        def __compare(self):  # noqa
             """Compare both tracks.
 
             Returns:
@@ -100,7 +99,7 @@ class BackendDiff:
                 return times, positions
 
             def pretty_times(time1, time2):
-                """If time2 has the same date, print only the time."""
+                """If time2 has the same date, use only the time."""
                 if time1.date() == time2.date():
                     time2 = time2.time()
                 return time1, time2
@@ -143,12 +142,11 @@ class BackendDiff:
                                 *pretty_times(
                                     min([left_times[left_start], right_times[right_start]]),
                                     max([left_times[left_end - 1], right_times[right_end - 1]]))))
-                        if verbose:
-                            for left, right in zip(left_found, right_found):
-                                for data, sign in ((left, '<'), (right, '>')):
-                                    result['P'].append(
-                                        '  {sign} {data[0]:8.6f} {data[1]:8.6f} {data[2]:5.2f} {data[3]}'.format(
-                                            sign=sign, data=data))
+                        for left, right in zip(left_found, right_found):
+                            for data, sign in ((left, '<'), (right, '>')):
+                                result['P'].append(
+                                    '  {sign} {data[0]:8.6f} {data[1]:8.6f} {data[2]:5.2f} {data[3]}'.format(
+                                        sign=sign, data=data))
 
             # some files have a problem with the time zone
             _ = self.left.time_offset(self.right)
@@ -201,7 +199,7 @@ class BackendDiff:
                 if _ not in matched:
                     self.exclusive.append(_)
 
-    def __init__(self, left, right, verbose=False):
+    def __init__(self, left, right):
         """See class docstring."""
         self.similar = []
         self.identical = []
@@ -217,7 +215,7 @@ class BackendDiff:
                     matched.append(right_track)
                 else:
                     if len(left_track.positions & right_track.positions) >= 100:
-                        self.similar.append(BackendDiff.Pair(left_track, right_track, verbose))
+                        self.similar.append(BackendDiff.Pair(left_track, right_track))
                         matched.append(left_track)
                         matched.append(right_track)
         # pylint: disable=protected-access

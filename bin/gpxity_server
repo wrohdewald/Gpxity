@@ -111,9 +111,6 @@ class MMTHandler(BaseHTTPRequestHandler):
             A dict with the parsed results or None
 
         """
-        self.server.logger.debug('got headers:')
-        for key, value in self.headers.items():
-            self.server.logger.debug('  %s:%s', key, value)
         if 'Content-Length' in self.headers:
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
@@ -372,12 +369,12 @@ class Main:  # pylint: disable=too-few-public-methods
 
         options = parser.parse_args()
 
-#        logger = logging.getLogger('gpxity_server')
         logger = logging.getLogger()
         logger.setLevel(options.loglevel.upper())
         logfile = logging.FileHandler(os.path.join(options.directory, 'gpxity_server.log'))
         logfile.setLevel(logging.DEBUG)
         logger.addHandler(logfile)
+        logging.getLogger('urllib3').level = logging.ERROR
 
         LifeServerMMT(options, logger)
 

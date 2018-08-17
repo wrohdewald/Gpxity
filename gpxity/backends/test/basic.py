@@ -49,8 +49,9 @@ class BasicTest(unittest.TestCase):
     def setUp(self):  # noqa
         """define test specific Directory.prefix."""
         Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
-        logging.getLogger().level = logging.DEBUG
-        logging.debug('auth file now is %s', Authenticate.path)
+        self.logger = logging.getLogger()
+        self.logger.level = logging.DEBUG
+        self.logger.debug('auth file now is %s', Authenticate.path)
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
@@ -65,7 +66,7 @@ class BasicTest(unittest.TestCase):
         must_be_empty = tempfile.mkdtemp(prefix=Directory.prefix)
         os.rmdir(must_be_empty)
         timedelta = datetime.datetime.now() - self.start_time
-        logging.debug('%s seconds ', timedelta.seconds)
+        self.logger.debug('%s seconds ', timedelta.seconds)
         logging.shutdown()
 
     @staticmethod
@@ -243,7 +244,7 @@ class BasicTest(unittest.TestCase):
     def setup_backend(  # pylint: disable=too-many-arguments
             self, cls_, username: str = None, url: str = None, count: int = 0,
             cleanup: bool = True, clear_first: bool = True, category: str = None,
-            public: bool = False, debug: bool = False):
+            public: bool = False):
         """set up an instance of a backend with count tracks.
 
         If count == len(:attr:`Track.legal_categories <gpxity.Track.legal_categories>`),
@@ -264,7 +265,7 @@ class BasicTest(unittest.TestCase):
 
         """
 
-        result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup, debug=debug)
+        result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup)
         if clear_first:
             result.remove_all()
         if count:
@@ -281,7 +282,7 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def lifetrackserver(directory, servername, port):
         """Start and ends a server for lifetrack testing."""
-        cmdline = 'gpxity_server --debug --servername {} --port {} --directory {}'.format(
+        cmdline = 'gpxity_server --loglevel debug --servername {} --port {} --directory {}'.format(
             servername, port, directory)
         process = Popen(cmdline.split())
         try:
@@ -293,9 +294,9 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
                      cleanup=True, clear_first=True, category=None,
-                     public: bool = False, debug: bool = False, username=None):
+                     public: bool = False, username=None):
         """Just like setup_backend but usable as a context manager. which will call destroy() when done."""
-        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public, debug)
+        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public)
         try:
             yield tmp_backend
         finally:

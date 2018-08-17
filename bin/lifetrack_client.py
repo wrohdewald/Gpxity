@@ -52,7 +52,7 @@ class Main:
         if self.exit_code:
             return
         self.logger = logging.getLogger()
-        self.logger.level = logging.DEBUG if self.options.debug else logging.ERROR
+        self.logger.setLevel(self.options.loglevel.upper())
         self.source = None
         try:
             source = self.instantiate_object(self.options.source)
@@ -73,9 +73,9 @@ class Main:
         """Print the error message.
         Sets the process exit code.
         With --debug, re-raises the exception."""
-        self.logger(msg)
+        self.logger.error(msg)
         self.exit_code = exit_code or 1
-        if self.options.debug:
+        if self.logger.level == logging.DEBUG:
             raise msg
 
     def instantiate_object(self, name):
@@ -114,7 +114,6 @@ class Main:
             raise Exception('{} not found'.format(name))
         if track_id:
             result = result[track_id]
-        result.debug = self.options.debug
         return result
 
     def parse_commandline(self):
@@ -123,8 +122,9 @@ class Main:
         parser = argparse.ArgumentParser('lifetrack_client')
         parser.add_argument('--source', help='the track with test data')
         parser.add_argument('--backend', help='the server')
-        parser.add_argument('--verbose', action='store_true', help='verbose output', default=False)
-        parser.add_argument('--debug', action='store_true', help='debug backend traffic', default=False)
+        parser.add_argument(
+            '--loglevel', help='set the loglevel',
+            choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection
             timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
