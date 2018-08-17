@@ -154,22 +154,22 @@ class LsRow(dict):
 
     @classmethod
     def visible_fields(cls):
-        """Yields all fields to be printed"""
+        """Yield all fields to be printed."""
         return (x for x in cls.fields if x.is_visible)
 
     @classmethod
     def needed_fields(cls):
-        """Yields all fields needed for print or for computation"""
+        """Yield all fields needed for output or for computation."""
         return (x for x in cls.fields if x.is_needed)
 
     @classmethod
     def visible_headers(cls):
-        """Yields all active header ident strings"""
+        """Yield all active header ident strings."""
         return (x.head_ident for x in cls.visible_fields())
 
     @classmethod
     def find_by_head_ident(cls, head_ident):
-        """Returns the field with head_ident."""
+        """Return the field with head_ident."""
         for _ in cls.fields:
             if _.head_ident == head_ident:
                 return _
@@ -177,7 +177,7 @@ class LsRow(dict):
 
     @classmethod
     def set_max_lengths(cls, rows):
-        """Sets the maximum field widths"""
+        """Set the maximum field widths."""
         for field in cls.visible_fields():
             lengths = list(
                 len(field.format_raw(x[field.head_ident])) for x in rows
@@ -185,7 +185,7 @@ class LsRow(dict):
             field.max_length = max(lengths) if lengths else 0
 
     def print_row(self):
-        """print to stdout"""
+        """Show this row"""
         for field in LsRow.visible_fields():
             _ = field.format_raw(self[field.head_ident])
             right = '>' if field.type_ in (int, float) else ''
@@ -248,7 +248,7 @@ class FreeTextRow(LsRow):
         self.text = text
 
     def print_row(self):
-        """print to stdout"""
+        """Show the row."""
         print(self.text)
 
 class SeparatorRow(LsRow):
@@ -259,7 +259,7 @@ class SeparatorRow(LsRow):
         self.separator = separator
 
     def print_row(self):
-        """print to stdout"""
+        """Show row."""
         for field in self.visible_fields():
             print(self.separator * field.max_length, end='  ')
         print()
