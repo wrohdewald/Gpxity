@@ -72,6 +72,8 @@ class Backend:
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
         verify: True, False or the name of a local cert file
+        config: A dict with all entries in auth.cfg for this backend
+
 
     """
 
@@ -112,9 +114,11 @@ class Backend:
         if isinstance(auth, str):
             _ = Authenticate(self.__class__, auth)
             self.auth = _.auth
+            self.config = _.section
             if _.url:
                 self.url = _.url
         else:
+            self.config = dict()
             self.auth = auth
         if self.url and not self.url.endswith('/'):
             self.url += '/'

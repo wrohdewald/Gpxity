@@ -72,6 +72,7 @@ class Authenticate:
         self.cls = cls
         self.__username = username
         self.auth = (None, None)
+        self.section = dict()
         if 'Directory' in cls.__name__ and username.startswith('gpxitytest'):
             self.url = tempfile.mkdtemp(prefix='gpxity')
             return
@@ -100,3 +101,4 @@ class Authenticate:
 
         self.auth = (self.__username, password)
         self.url = url
+        self.section = section
