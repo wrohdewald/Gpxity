@@ -817,9 +817,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument('--sort',
-                               help="""one or more out of identifier,title,category,time,distance,
-                               points,keywords,status,speed,moving_speed,duration,similarity
-                               separated by commas (no spaces allowed)""",
+                               help="""sort by one ore more columns, separated by commas (no spaces allowed)""",
+                               choices = ('identifier', 'title', 'category', 'time', 'distance',
+                               'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity'),
                                default='identifier')
         ls_parser.add_argument('--total',
                                help="""Show a total line""",
@@ -974,6 +974,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                 self.options.first_date = valid_date_argument(self.options.first_date, last=False, return_raw=False)
             if self.options.last_date:
                 self.options.last_date = valid_date_argument(self.options.last_date, last=True, return_raw=False)
+        if hasattr(self.options, 'sort') and self.options.sort == 'moving-speed':
+            self.options.sort = 'moving_speed'
 
 
 sys.exit(Utility().exit_code)
