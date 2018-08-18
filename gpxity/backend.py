@@ -193,6 +193,7 @@ class Backend:
         support_mappings = {
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
+            '_lifetrack_end': 'lifetrack_end',
             '_lifetrack_start': 'lifetrack',
             '_remove_ident': 'remove',
             '_write_all': 'write',

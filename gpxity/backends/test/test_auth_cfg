@@ -20,7 +20,7 @@ Password = wrong
 Password = B96nxDC3D99EhihfeC
 
 [Mailer:gpxitytest]
-Url = wr backup@rohdewald.de
+Url = backup@rohdewald.de
 
 [ServerDirectory:mmtserver]
 Url = /tmp/serverdirectory_test

@@ -16,6 +16,7 @@ import argparse
 import os
 import sys
 import logging
+import time
 
 try:
     import argcomplete
@@ -59,15 +60,28 @@ class Main:
             assert isinstance(source, Track)
             backend = self.instantiate_object(self.options.backend)
             assert isinstance(backend, Backend)
-            track = Lifetrack(backend)
-            track.title = 'Todays Lifetrack'
-            all_points = list(source.points())
-            track.update(all_points[:5])
-            for point in all_points[5:]:
-                track.update([point])
-            track.end()
+            try:
+                life = Lifetrack(backend)
+                life.set_title('Todays Lifetrack')
+                all_points = list(source.points())
+                life.update(all_points[:5])
+                delay = self.delay()
+                for point in all_points[5:]:
+                    time.sleep(next(delay))
+                    life.update([point])
+                time.sleep(next(delay))
+                life.end()
+            finally:
+                backend.destroy()
         except Exception as _:  # pylint: disable=broad-except
             self.error(_)
+
+    @staticmethod
+    def delay():
+        """Varying delay for testing."""
+        while True:
+            yield 7
+            yield 15
 
     def error(self, msg, exit_code=None):
         """Print the error message.
