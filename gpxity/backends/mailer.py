@@ -119,9 +119,9 @@ class Mailer(Backend):  # pylint: disable=abstract-method
 
     id_count = 0
 
-    def __init__(self, url=None, auth=None, cleanup=False, timeout=None, verify=True):
+    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring."""
-        super(Mailer, self).__init__(url, auth, cleanup, timeout, verify)
+        super(Mailer, self).__init__(url, auth, cleanup, timeout)
         if self.url.endswith('/'):
             self.url = self.url[:-1]
         self.history = list()

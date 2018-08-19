@@ -69,7 +69,6 @@ class Backend:
             Every implementation may define its own default for url.
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
-        verify: True, False or the name of a local cert file
         config: A dict with all entries in auth.cfg for this backend
 
 
@@ -101,7 +100,7 @@ class Backend:
     # cookie "SERVERID".
     _session = dict()
 
-    def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None, verify=True):
+    def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None):
         """See class docstring."""
         self._decoupled = False
         super(Backend, self).__init__()
@@ -123,7 +122,6 @@ class Backend:
         self.__match = None
         self.logger = logging.getLogger(self.identifier())
         self.timeout = timeout
-        self.verify = verify
         self._current_track = None
 
     def identifier(self, track=None) ->str:

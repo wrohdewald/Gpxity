@@ -195,7 +195,6 @@ class MMT(Backend):
             user account.
          timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
-        verify: True, False or the name of a local cert file
 
     """
 
@@ -235,11 +234,11 @@ class MMT(Backend):
     # every MMT account only gets one.
     _current_lifetrack = None
 
-    def __init__(self, url=None, auth=None, cleanup=False, timeout=None, verify=True):
+    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring."""
         if url is None:
             url = self.default_url
-        super(MMT, self).__init__(url, auth, cleanup, timeout, verify)
+        super(MMT, self).__init__(url, auth, cleanup, timeout)
         self.__mid = -1  # member id at MMT for auth
         self.__is_free_account = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
@@ -278,7 +277,7 @@ class MMT(Backend):
             payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT': '9'}
             login_url = '{}/login'.format(self.https_url)
             response = self._session[ident].post(
-                login_url, data=payload, timeout=self.timeout, verify=self.verify)
+                login_url, data=payload, timeout=self.timeout)
             if 'You are now logged in.' not in response.text:
                 raise self.BackendException('Login as {} failed'.format(self.auth[0]))
             cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
@@ -386,10 +385,10 @@ class MMT(Backend):
         try:
             if with_session:
                 response = self.session.post(
-                    full_url, data=data, headers=headers, timeout=self.timeout, verify=self.verify)
+                    full_url, data=data, headers=headers, timeout=self.timeout)
             else:
                 response = requests.post(
-                    full_url, data=data, headers=headers, auth=self.auth, timeout=self.timeout, verify=self.verify)
+                    full_url, data=data, headers=headers, auth=self.auth, timeout=self.timeout)
         except requests.exceptions.ReadTimeout:
             self.logger.error('%s: timeout for %s', self.identifier(), data)
             raise
