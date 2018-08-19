@@ -83,17 +83,12 @@ class MailQueue:
         mail['subject'] = self.subject()
         mail['from'] = self.mailer.config.get('From', 'gpxity')
         mail['to'] = self.mailer.url.split()
-        content = EmailMessage()
-        content.set_content('\n'.join(self.content()))
-        mail.add_attachment(content)
+        mail.set_content('\n'.join(self.content()))
 
         for key, track in self.tracks.items():
-            attachment = EmailMessage()
-            attachment.set_content(track.to_xml())
             if not key.endswith('.gpx'):
                 key += '.gpx'
-            attachment.add_header('Content-Disposition', 'attachment', filename=key)
-            mail.add_attachment(attachment)
+            mail.add_attachment(track.to_xml(), filename=key)
         with smtplib.SMTP(self.mailer.config.get('Smtp', 'localhost')) as smtp_server:
             smtp_server.send_message(mail)
         self.last_sent_time = datetime.datetime.now()
@@ -111,8 +106,11 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     Attributes:
         subject_template: This builds the mail subject. {title} and {distance} will
             be replaced by their respective values. Other placeholders are not yet defined.
-        min_interval: seconds. Mails are not sent more often. Default is 10. If None, always send immediately.
-            The first mail will always be sent immediately.
+        min_interval: seconds. Mails are not sent more often. Default is None. If None, never send until
+            Mailer.flush() is called. This is used for bundling several writes into one single mail:
+            gpxdo merge --copy will send all tracks with one single mail.
+            Lifetracking uses this to send mails with the current track only every X seconds, the
+            mail will only contain the latest version of the track.
         outstanding_tracks: Do not change this dict. Key is track.id_in_backend(), value is
             a clone of the track. This freezes the current title in the clone.
         url: Holds the address of the recipient.
@@ -128,9 +126,8 @@ class Mailer(Backend):  # pylint: disable=abstract-method
             self.url = self.url[:-1]
         self.history = list()
         self.subject_template = '{title} {distance}'
-        self.min_interval = 10
+        self.min_interval = None
         self.timer = None
-        self._start_timer(1)  # Do not delay first mail by more than 1 second
         self.queue = MailQueue(self)
 
     def _new_ident(self, _) ->str:
@@ -155,10 +152,11 @@ class Mailer(Backend):  # pylint: disable=abstract-method
             with track._decouple():  # pylint: disable=protected-access
                 track.id_in_backend = new_ident
         self.queue.append(track)
-        if self.queue.last_sent_time + datetime.timedelta(seconds=self.min_interval or 0) < datetime.datetime.now():
-            self.queue.send()
-        else:
-            self._start_timer()
+        if self.min_interval is not None:
+            if self.queue.last_sent_time + datetime.timedelta(seconds=self.min_interval) < datetime.datetime.now():
+                self.queue.send()
+            else:
+                self._start_timer()
         return track.id_in_backend
 
     def destroy(self):

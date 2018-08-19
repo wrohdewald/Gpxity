@@ -763,3 +763,9 @@ class Backend:
         if value is None:
             return ''
         return value.encode('ascii', 'xmlcharrefreplace').decode()
+
+    def flush(self):
+        """Some backends delay actual writing. This enforces writing.
+        Currently, only the Mailer backend can delay, it will bundle all
+        mailed tracks into one mail instead of sending separate mails
+        for every track. Needed for lifetracking."""

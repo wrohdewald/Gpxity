@@ -563,6 +563,7 @@ class Utility:
         """Merge"""
         msg = self.destination.merge(
             self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy)
+        self.destination.flush()
         for _ in msg:
             logging.info(_)
 
