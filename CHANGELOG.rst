@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.3.0 release 2018-06-xx
+1.3.0 release 2018-08-18
 ------------------------
 
 This release renames class Activity to Track, and it renames Track.what
@@ -38,8 +38,12 @@ where the keywords now contain "What:", change that to "Category:".
   * gpxdo --set --id-from-time is new
   * gpxdo --similar
   * new: Track.similarity(other)
+  * gpxity now uses the python logging module for all output
+  * gpxdo: replace --debug and --verbose by --loglevel
   * new backend Mailer
   * new: class Lifetrack
+  * new: bin/gpxity_server. This is unfinished work, it is intended as a server for
+    lifetracking.
 
 1.2.6 release 2018-06-05
 ------------------------
