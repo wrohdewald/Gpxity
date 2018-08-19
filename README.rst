@@ -14,6 +14,7 @@ The library currently implements those backends:
   * :class:`~gpxity.backends.mmt.MMT`: For tracks on http://mapmytracks.com
   * :class:`~gpxity.backends.trackmmt.TrackMMT`: For tracks on a very simple server emulating a
     few MMT commands (just what oruxmaps uses for uploading)
+  * :class:`~gpxity.backends.mailer.Mailer`: Mails tracks
 
 Some backends might not support everything Gxpity wants and you will get the
 exception NotImplementedError().
