@@ -29,12 +29,12 @@ class TestBackends(BasicTest):
         """Check values in supported for all backends."""
         expect_unsupported = dict()
         expect_unsupported[Directory] = {
-            'lifetrack', 'write_add_keywords', 'write_remove_keywords', 'write_gpx',
+            'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords', 'write_gpx',
             'write_category', 'write_description', 'write_public', 'write_title'}
         expect_unsupported[ServerDirectory] = {'lifetrack'}
         expect_unsupported[MMT] = {'write_gpx'}
         expect_unsupported[GPSIES] = {
-            'get_time', 'lifetrack', 'write_add_keywords', 'write_remove_keywords', 'write_gpx'}
+            'get_time', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords', 'write_gpx'}
         expect_unsupported[TrackMMT] = {
             'scan', 'remove', 'write_gpx',
             'write_title', 'write_description', 'write_public',
