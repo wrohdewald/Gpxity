@@ -25,6 +25,7 @@ from gpxpy.gpx import GPXTrackPoint
 
 from ...track import Track
 from ...backend import Backend
+from ...backends import Mailer
 from ...auth import Authenticate
 from .. import GPSIES
 
@@ -282,6 +283,8 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def lifetrackserver(directory, servername, port):
         """Start and ends a server for lifetrack testing."""
+        if Mailer.is_disabled():
+            raise Exception('gpxity_server cannot run because Mailer is disabled')
         cmdline = 'gpxity_server --loglevel debug --servername {} --port {} --directory {} --mailto {}'.format(
             servername, port, directory, os.getlogin())
         process = Popen(cmdline.split())
@@ -336,6 +339,8 @@ class BasicTest(unittest.TestCase):
                 for name, cls in getmembers(imported, isclass):
                     if name in imported.__all__ and Backend in getmro(cls)[1:]:
                         # isinstance and is do not work here
+                        if cls.is_disabled():
+                            continue
                         if with_skip or not cls.skip_test:
                             result.append(cls)
             except ImportError:

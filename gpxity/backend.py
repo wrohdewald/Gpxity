@@ -6,6 +6,7 @@
 
 """This module defines :class:`~gpxity.Backend`."""
 
+import os
 import datetime
 from inspect import getmembers, isfunction
 import dis
@@ -102,6 +103,8 @@ class Backend:
 
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None):
         """See class docstring."""
+        if self.is_disabled():
+            raise Backend.BackendException('class {} is disabled'.format(self.__class__.__name__))
         self._decoupled = False
         super(Backend, self).__init__()
         self.__tracks = list()
@@ -770,3 +773,16 @@ class Backend:
         for every track. Needed for lifetracking.
 
         """
+
+    @classmethod
+    def is_disabled(cls) ->bool:
+        """True if this backend is disabled by env variable GPXITY_DISABLE_BACKENDS.
+
+        This variable is a comma separated list of Backend class names.
+
+        Returns:
+            True if disabled
+
+        """
+        disabled = os.getenv('GPXITY_DISABLE_BACKENDS')
+        return disabled and cls.__name__ in disabled.split(',')

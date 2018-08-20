@@ -378,29 +378,30 @@ class TestBackends(BasicTest):
 
     def test_lifetrack_local(self):
         """test life tracking against a local server."""
-        with self.temp_backend(Directory) as serverdirectory:
-            with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
-                with TrackMMT(auth='gpxitytest') as uplink:
-                    with Mailer(url=os.getlogin()) as mailer:
-                        mailer.min_interval = 5
-                        life = Lifetrack([uplink, mailer])
-                        points = self._random_points(100)
-                        life.update(points[:50])
-                        time.sleep(7)
-                        life.update(points[50:])
-                        life.end()
-                        for target in life.targets:
-                            track = target.track
-                            new_id = track.id_in_backend
-                            if 'scan' in target.backend.supported:
-                                self.assertIn(new_id, uplink)
-                                self.assertSameTracks(uplink, serverdirectory)
-                        with self.assertRaises(NotImplementedError):
-                            new_id in uplink  # pylint: disable=pointless-statement
-                        self.assertEqual(len(mailer.history), 3)
-                        self.assertIn('Lifetracking starts', mailer.history[0])
-                        self.assertIn('Lifetracking continues', mailer.history[1])
-                        self.assertIn('Lifetracking ends', mailer.history[2])
+        if not TrackMMT.is_disabled() and not Mailer.is_disabled():
+            with self.temp_backend(Directory) as serverdirectory:
+                with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
+                    with TrackMMT(auth='gpxitytest') as uplink:
+                        with Mailer(url=os.getlogin()) as mailer:
+                            mailer.min_interval = 5
+                            life = Lifetrack([uplink, mailer])
+                            points = self._random_points(100)
+                            life.update(points[:50])
+                            time.sleep(7)
+                            life.update(points[50:])
+                            life.end()
+                            for target in life.targets:
+                                track = target.track
+                                new_id = track.id_in_backend
+                                if 'scan' in target.backend.supported:
+                                    self.assertIn(new_id, uplink)
+                                    self.assertSameTracks(uplink, serverdirectory)
+                            with self.assertRaises(NotImplementedError):
+                                new_id in uplink  # pylint: disable=pointless-statement
+                            self.assertEqual(len(mailer.history), 3)
+                            self.assertIn('Lifetracking starts', mailer.history[0])
+                            self.assertIn('Lifetracking continues', mailer.history[1])
+                            self.assertIn('Lifetracking ends', mailer.history[2])
 
     def test_backend_dirty(self):
         """Track._dirty."""
@@ -570,8 +571,14 @@ class TestBackends(BasicTest):
     def test_legal_categories(self):
         """Check if our fixed list of categories still matches the online service."""
         with self.temp_backend(Directory) as serverdirectory:
-            with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
-                for cls in (MMT, GPSIES, TrackMMT):
-                    with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
+            for cls in (MMT, GPSIES, TrackMMT):
+                if cls.is_disabled():
+                    continue
+                with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
+                    if cls is TrackMMT:
+                        with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
+                            downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
+                            self.assertEqual(sorted(backend.legal_categories), downloaded)
+                    else:
                         downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
                         self.assertEqual(sorted(backend.legal_categories), downloaded)
