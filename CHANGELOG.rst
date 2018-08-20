@@ -1,9 +1,10 @@
 Changelog
 =========
 
-1.3.1 release 2018-08-xx
+1.3.1 release 2018-08-19
 ------------------------
 
+  * Adapt to latest gpxpy 1.3.3
   * Fix bugs
 
 1.3.0 release 2018-08-18
