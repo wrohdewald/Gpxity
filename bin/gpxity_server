@@ -21,6 +21,7 @@ import argparse
 import logging
 import logging.handlers
 import traceback
+import smtplib
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
@@ -170,36 +171,42 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):  # noqa pylint: disable=invalid-name
         """override standard."""
-        self.server.logger.debug(
-            'POST %s %s %s', self.client_address[0], self.server.server_port, self.path)
-        parsed = self.parseRequest()
-        if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
-            try:
-                request = parsed['request']
-            except KeyError:
-                self.return_error(401, 'No request given in {}'.format(parsed))
-            try:
-                method = getattr(self, 'xml_{}'.format(request))
-            except AttributeError:
-                self.return_error(401, 'Unknown request {}'.format(parsed['request']))
-            try:
-                xml = method(parsed)
-            except Exception:
-                self.server.logger.error(traceback.format_exc())
-                raise
-            if xml is None:
+        try:
+            self.server.logger.debug(
+                'POST %s %s %s', self.client_address[0], self.server.server_port, self.path)
+            parsed = self.parseRequest()
+            if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
+                try:
+                    request = parsed['request']
+                except KeyError:
+                    self.return_error(401, 'No request given in {}'.format(parsed))
+                try:
+                    method = getattr(self, 'xml_{}'.format(request))
+                except AttributeError:
+                    self.return_error(401, 'Unknown request {}'.format(parsed['request']))
+                try:
+                    xml = method(parsed)
+                except Exception:
+                    self.server.logger.error(traceback.format_exc())
+                    raise
+                if xml is None:
+                    xml = ''
+                xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
+            else:
                 xml = ''
-            xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
-        else:
-            xml = ''
-        self.send_response(200, 'OK')
-        self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
-        self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        self.server.logger.debug('returning %s', xml)
-        self.send_header('Content-Length', len(xml))
-        self.cookies()
-        self.end_headers()
-        self.wfile.write(bytes(xml.encode('utf-8')))
+            self.send_response(200, 'OK')
+            self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
+            self.send_header('Content-Type', 'text/xml; charset=UTF-8')
+            self.server.logger.debug('returning %s', xml)
+            self.send_header('Content-Length', len(xml))
+            self.cookies()
+            self.end_headers()
+            self.wfile.write(bytes(xml.encode('utf-8')))
+        except Exception as exc:
+            if isinstance(exc, smtplib.SMTPRecipientsRefused):
+                self.return_error(500, 'Mailer: Recipients refused: {}'.format(exc.recipients))
+            else:
+                self.return_error(500, 'Unknown error {}: {}'.format(type(exc), str(exc)))
 
     @staticmethod
     def xml_get_time(_) ->str:
