@@ -55,7 +55,7 @@ setup(
     ],
     packages=find_packages(),
     install_requires=['requests', 'gpxpy>=1.2.0', 'lxml'],
-    scripts=['bin/gpxdo'],
+    scripts=['bin/gpxdo', 'bin/gpxity_server'],
     test_suite='gpxity.backends.test',
     package_data={
         'gpxity.backends.test': ['*.gpx', 'test_auth_cfg'],
