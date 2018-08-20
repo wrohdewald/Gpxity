@@ -536,6 +536,10 @@ class Track:
             result = result.replace('>\n<time>', '><time>')
             result = result.replace('</ele>\n<time>', '</ele><time>')
             result = result.replace('.0</ele>', '</ele>')  # this could differ depending on the source
+            # for newer gpxpy 1.3.3 which indents the xml:
+            result = result.replace('\n      </trkpt>', '</trkpt>')
+            result = result.replace('>\n        <ele>', '><ele>')
+            result = result.replace('>\n        <time>', '><time>')
             result = result.replace('\n\n', '\n')
             if not result.endswith('\n'):
                 result += '\n'
