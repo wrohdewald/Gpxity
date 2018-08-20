@@ -6,6 +6,7 @@
 """implements :class:`gpxity.backends.test.test_backends.TestBackends` for all backends."""
 
 import os
+import pwd
 import time
 import datetime
 import random
@@ -382,7 +383,7 @@ class TestBackends(BasicTest):
             with self.temp_backend(Directory) as serverdirectory:
                 with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
                     with TrackMMT(auth='gpxitytest') as uplink:
-                        with Mailer(url=os.getlogin()) as mailer:
+                        with Mailer(url=pwd.getpwuid(os.geteuid()).pw_name) as mailer:
                             mailer.min_interval = 5
                             life = Lifetrack([uplink, mailer])
                             points = self._random_points(100)

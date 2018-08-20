@@ -8,6 +8,7 @@
 
 import unittest
 import importlib
+import pwd
 import os
 import io
 import datetime
@@ -286,7 +287,7 @@ class BasicTest(unittest.TestCase):
         if Mailer.is_disabled():
             raise Exception('gpxity_server cannot run because Mailer is disabled')
         cmdline = 'gpxity_server --loglevel debug --servername {} --port {} --directory {} --mailto {}'.format(
-            servername, port, directory, os.getlogin())
+            servername, port, directory, pwd.getpwuid(os.geteuid()).pw_name)
         process = Popen(cmdline.split())
         try:
             time.sleep(1)  # give the server time to start
