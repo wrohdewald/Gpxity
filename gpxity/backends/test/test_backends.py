@@ -559,9 +559,12 @@ class TestBackends(BasicTest):
                     continue
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
-                        with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
-                            downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
-                            self.assertEqual(sorted(backend.legal_categories), downloaded)
+                        if not Mailer.is_disabled():
+                            # gpxity_server needs Mailer
+                            with self.lifetrackserver(
+                                    servername='localhost', port=12398, directory=serverdirectory.url):
+                                downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
+                                self.assertEqual(sorted(backend.legal_categories), downloaded)
                     else:
                         downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
                         self.assertEqual(sorted(backend.legal_categories), downloaded)
