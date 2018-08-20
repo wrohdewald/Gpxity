@@ -282,8 +282,8 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def lifetrackserver(directory, servername, port):
         """Start and ends a server for lifetrack testing."""
-        cmdline = 'gpxity_server --loglevel debug --servername {} --port {} --directory {}'.format(
-            servername, port, directory)
+        cmdline = 'gpxity_server --loglevel debug --servername {} --port {} --directory {} --mailto {}'.format(
+            servername, port, directory, os.getlogin())
         process = Popen(cmdline.split())
         try:
             time.sleep(1)  # give the server time to start
