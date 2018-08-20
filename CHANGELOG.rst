@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.3.2 release 2018-08-19
+------------------------
+
+  * make bin/install_test work with latest changes
+
 1.3.1 release 2018-08-19
 ------------------------
 
