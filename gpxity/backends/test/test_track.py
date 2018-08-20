@@ -242,8 +242,8 @@ class TrackTests(BasicTest):
                 with self.assertRaises(OSError):
                     directory.add(track)
                 self.assertIsNone(track.backend)
-            os.chmod(directory.url, 0o755)
-            directory.add(track)
+                os.chmod(directory.url, 0o755)
+                directory.add(track)
             self.assertIsNotNone(track.backend)
 
     def test_save(self):
