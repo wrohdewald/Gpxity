@@ -764,6 +764,9 @@ class Backend:
 
     def flush(self):
         """Some backends delay actual writing. This enforces writing.
+
         Currently, only the Mailer backend can delay, it will bundle all
         mailed tracks into one mail instead of sending separate mails
-        for every track. Needed for lifetracking."""
+        for every track. Needed for lifetracking.
+
+        """
