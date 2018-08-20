@@ -397,7 +397,10 @@ class TestBackends(BasicTest):
                                 self.assertSameTracks(uplink, serverdirectory)
                         with self.assertRaises(NotImplementedError):
                             new_id in uplink  # pylint: disable=pointless-statement
-                        self.assertEqual(len(mailer.history), 2)
+                        self.assertEqual(len(mailer.history), 3)
+                        self.assertIn('Lifetracking starts', mailer.history[0])
+                        self.assertIn('Lifetracking continues', mailer.history[1])
+                        self.assertIn('Lifetracking ends', mailer.history[2])
 
     def test_backend_dirty(self):
         """Track._dirty."""

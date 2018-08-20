@@ -92,6 +92,7 @@ class MailQueue:
         with smtplib.SMTP(self.mailer.config.get('Smtp', 'localhost')) as smtp_server:
             smtp_server.send_message(mail)
         self.last_sent_time = datetime.datetime.now()
+        self.mailer.history.append('to {}: {}'.format(mail['to'], mail['subject']))
         self.tracks = dict()
 
     def __repr__(self):
