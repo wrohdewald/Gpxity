@@ -314,12 +314,16 @@ class Directory(Backend):
             if len(parts) > 1:
                 # pylint: disable=protected-access
                 raw_data = parts[0].split('extensions')[0]
-                track._header_data['title'] = self._get_field(raw_data, 'name')
-                track._header_data['description'] = self._get_field(raw_data, 'desc')
+                _ = self._get_field(raw_data, 'name')
+                if _ is not None:
+                    track._header_data['title'] = _
+                _ = self._get_field(raw_data, 'desc')
+                if _ is not None:
+                    track._header_data['description'] = _
                 rest_kw = list()
-                kw_raw = self._get_field(raw_data, 'keywords')
-                if kw_raw:
-                    for keyword in (x.strip() for x in kw_raw.split(',')):
+                _ = self._get_field(raw_data, 'keywords')
+                if _:
+                    for keyword in (x.strip() for x in _.split(',')):
                         if keyword == 'Status:public':
                             track._header_data['public'] = True
                         elif keyword == 'Status:private':
@@ -330,8 +334,9 @@ class Directory(Backend):
                             rest_kw.append(keyword)
                     track._header_data['keywords'] = sorted(rest_kw)
 
-                time_raw = self._get_field(parts[1], 'time')
-                track._header_data['time'] = mod_gpxfield.parse_time(time_raw)
+                _ = self._get_field(parts[1], 'time')
+                if _ is not None:
+                    track._header_data['time'] = mod_gpxfield.parse_time(_)
 
     def _yield_tracks(self):
         """get all tracks for this user."""
