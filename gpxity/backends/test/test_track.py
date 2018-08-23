@@ -592,3 +592,13 @@ class TrackTests(BasicTest):
             backend.add(track2)
             backend.remove(track2)
             self.assertEqual(backend[0].id_in_backend, track_id)
+
+    def test_header_data(self):
+        """Test usage of Track._header_data."""
+        track = Track()
+        gpx_track = self.create_test_track()
+        track._header_data['distance'] = 5000  # pylint: disable=protected-access
+        self.assertEqual(track.distance(), 5000)
+        track.parse(gpx_track.to_xml())
+        self.assertNotIn('distance', track._header_data)  # pylint: disable=protected-access
+        self.assertEqual(track.distance(), gpx_track.distance())
