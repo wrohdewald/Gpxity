@@ -320,20 +320,9 @@ class Directory(Backend):
                 _ = self._get_field(raw_data, 'desc')
                 if _ is not None:
                     track._header_data['description'] = _
-                rest_kw = list()
                 _ = self._get_field(raw_data, 'keywords')
                 if _:
-                    for keyword in (x.strip() for x in _.split(',')):
-                        if keyword == 'Status:public':
-                            track._header_data['public'] = True
-                        elif keyword == 'Status:private':
-                            track._header_data['public'] = False
-                        elif keyword.startswith('Category:'):
-                            track._header_data['category'] = keyword.split(':')[1].strip()
-                        else:
-                            rest_kw.append(keyword)
-                    track._header_data['keywords'] = sorted(rest_kw)
-
+                    track._decode_keywords(_, into_header_data=True)
                 _ = self._get_field(parts[1], 'time')
                 if _ is not None:
                     track._header_data['time'] = mod_gpxfield.parse_time(_)

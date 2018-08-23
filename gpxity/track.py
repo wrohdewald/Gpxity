@@ -111,7 +111,7 @@ class Track:
         self._similarity_others = weakref.WeakValueDictionary()
         self._similarities = dict()
         if gpx:
-            self._parse_keywords()
+            self._decode_keywords(self.keywords)
             self._round_points(self.points())
             self._loaded = True
 
@@ -445,19 +445,51 @@ class Track:
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
-    def _parse_keywords(self):
+    def _decode_keywords(self, data, into_header_data: bool = False):
         """'self.keywords' is 1:1 as parsed from xml.
 
-        Here we extract our special keywords Category: and Status:"""
-        new_keywords = list()
-        for keyword in self.keywords:
-            if keyword.startswith('Category:'):
-                self.category = keyword.split(':')[1]
-            elif keyword.startswith('Status:'):
-                self.public = keyword.split(':')[1] == 'public'
+        Here we extract our special keywords Category: and Status:
+
+        Args:
+            into_header_data: if False, set the real track fields.
+                If True, save everything in self._header_data.
+
+        """
+        gpx_keywords = list()
+        if isinstance(data, str):
+            data = [x.strip() for x in data.split(', ')]
+        for keyword in data:
+            parts = [x.strip() for x in keyword.split(':')]
+            if into_header_data:
+                if keyword.startswith('Category:'):
+                    self._header_data['category'] = parts[1]
+                elif keyword.startswith('Status:'):
+                    self._header_data['public'] = parts[1] == 'public'
+                else:
+                    gpx_keywords.append(keyword)
             else:
-                new_keywords.append(keyword)
-        self.__gpx.keywords = ', '.join(new_keywords)
+                if keyword.startswith('Category:'):
+                    self.category = parts[1]
+                elif keyword.startswith('Status:'):
+                    self.public = parts[1] == 'public'
+                else:
+                    gpx_keywords.append(keyword)
+        if into_header_data:
+            self._header_data['keywords'] = ', '.join(sorted(gpx_keywords))
+        else:
+            self.__gpx.keywords = ', '.join(sorted(gpx_keywords))
+
+    def _encode_keywords(self) ->str:
+        """Add our special keywords Category and Status.
+
+        Returns:
+            The full list of keywords as one str
+
+        """
+        result = self.keywords
+        result.append('Category:{}'.format(self.category))
+        result.append('Status:{}'.format('public' if self.public else 'private'))
+        return ', '.join(result)
 
     def parse(self, indata):
         """Parse GPX.
@@ -486,7 +518,7 @@ class Track:
                 raise
             if 'keywords' in self._header_data:
                 del self._header_data['keywords']
-            self._parse_keywords()
+            self._decode_keywords(self.keywords)
             if 'public' in self._header_data:
                 del self._header_data['public']
             self.public = self.public or old_public
@@ -519,12 +551,9 @@ class Track:
 
             The xml string."""
         self._load_full()
-        new_keywords = self.keywords
-        new_keywords.append('Category:{}'.format(self.category))
-        new_keywords.append('Status:{}'.format('public' if self.public else 'private'))
         old_keywords = self.__gpx.keywords
         try:
-            self.__gpx.keywords = ', '.join(new_keywords)
+            self.__gpx.keywords = self._encode_keywords()
 
             result = self.__gpx.to_xml()
             result = result.replace('</trkpt><', '</trkpt>\n<')
