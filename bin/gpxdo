@@ -315,7 +315,7 @@ class Utility:
                 for track in tracks:
                     msg = self.match(track)
                     if msg:
-                        logging.error('%s: %s', track.identifier(), msg)
+                        logging.debug('%s: %s', track.identifier(), msg)
                     else:
                         self.source_tracks.append(track)
             if hasattr(self.options, 'destination') and self.destination is None:
