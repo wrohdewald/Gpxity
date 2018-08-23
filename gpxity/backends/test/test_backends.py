@@ -429,7 +429,6 @@ class TestBackends(BasicTest):
         """test gpx._dirty where id_in_backend is not the default.
 
         Currently track._dirty = 'gpx' changes the file name which is wrong."""
-        pass
 
     def test_directory(self):
         """directory creation/deletion."""

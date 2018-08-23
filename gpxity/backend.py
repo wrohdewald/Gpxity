@@ -83,7 +83,7 @@ class Backend:
     class BackendException(Exception):
         """Is raised for general backend exceptions, especially error messages from a remote server"""
 
-    supported = None
+    supported = set()
 
     skip_test = False
 
