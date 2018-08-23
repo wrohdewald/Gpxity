@@ -28,3 +28,6 @@ Url = /tmp/serverdirectory_test
 [TrackMMT:gpxitytest]
 Url = http://localhost:12398
 Password = gpxitytestpw
+
+[WPTrackserver:wrong_password]
+Password = wrong

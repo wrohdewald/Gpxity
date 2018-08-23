@@ -39,7 +39,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Track, Directory, BackendDiff, MMT, GPSIES, Mailer
+from gpxity import Track, Directory, BackendDiff, MMT, GPSIES, Mailer, WPTrackserver
 from gpxity.util import uniq, collect_tracks
 
 def __last_month_day(date):

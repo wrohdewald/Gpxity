@@ -15,7 +15,7 @@ import tempfile
 from unittest import skip
 
 from .basic import BasicTest
-from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer
+from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer, WPTrackserver
 from ...auth import Authenticate
 from ... import Track, Lifetrack
 
@@ -46,6 +46,10 @@ class TestBackends(BasicTest):
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords', 'write_gpx',
             'write_remove_keywords', 'lifetrack'}
+        expect_unsupported[WPTrackserver] = {
+            'get_time', 'lifetrack', 'lifetrack_end',
+            'write_add_keywords', 'write_remove_keywords', 'write_category',
+            'write_description', 'write_public', 'write_title', 'write_gpx'}
         for cls in self._find_backend_classes():
             self.logger.debug('%s %s', cls, cls.supported)
             self.logger.debug('%s %s', cls, expect_unsupported[cls])

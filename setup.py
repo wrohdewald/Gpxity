@@ -61,6 +61,7 @@ setup(
         'gpxity.backends.test': ['*.gpx', 'test_auth_cfg'],
     },
     extras_require={
-        'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest']
+        'WPTrackserver': ['mysqlclient'],
+        'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest'],
     }
 )

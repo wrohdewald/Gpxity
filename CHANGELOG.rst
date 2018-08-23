@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.3.3 release 2018-08-xx
+------------------------
+
+  * new Backend WPTrackserver directly accessing its mysql database
+
 1.3.2 release 2018-08-19
 ------------------------
 

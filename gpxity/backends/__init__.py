@@ -13,3 +13,4 @@ from .mmt import *
 from .gpsies import *
 from .trackmmt import *
 from .mailer import *
+from .wptrackserver import *

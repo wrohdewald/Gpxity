@@ -13,7 +13,9 @@ from .diff import *
 from .backends import *
 from .version import *
 
-__all__ = ['Track', 'Lifetrack', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'ServerDirectory', 'BackendDiff', 'VERSION']
+__all__ = [
+    'Track', 'Lifetrack', 'Directory', 'GPSIES', 'MMT', 'TrackMMT',
+    'ServerDirectory', 'BackendDiff', 'WPTrackserver', 'VERSION']
 
 
 def prepare_backends():

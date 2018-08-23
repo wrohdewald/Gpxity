@@ -44,6 +44,7 @@ class Authenticate:
     A section can define
       * Password
       * Url
+      * Mysql, used by WPTrackserver
 
     An example for user gpxitytest on gpsies.com:
 

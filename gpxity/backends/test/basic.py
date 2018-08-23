@@ -18,15 +18,17 @@ from inspect import getmembers, isclass, getmro
 from pkgutil import get_data
 import tempfile
 from contextlib import contextmanager
-from subprocess import Popen
+from subprocess import Popen, PIPE
 import logging
+import MySQLdb
+import _mysql_exceptions
 
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
 from ...track import Track
 from ...backend import Backend
-from ...backends import Mailer
+from ...backends import Mailer, WPTrackserver
 from ...auth import Authenticate
 from .. import GPSIES
 
@@ -47,6 +49,11 @@ class BasicTest(unittest.TestCase):
     """
 
     all_backend_classes = None
+
+    test_passwd = 'pwd'
+
+    mysql_ip_address = None
+    mysql_docker_name = 'gpxitytest_mysql'
 
     def setUp(self):  # noqa
         """define test specific Directory.prefix."""
@@ -255,7 +262,8 @@ class BasicTest(unittest.TestCase):
 
         Args:
             cls_ (Backend): the class of the backend to be created
-            username: use this to for a specific accout name. Default is 'gpxitytest'
+            username: use this to for a specific accout name. Default is 'gpxitytest'.
+                Special case WPTrackserver: pass the IP address of the mysql test server
             url: for the backend
             count: how many random tracks should be inserted?
             cleanup: If True, remove all tracks when done. Passed to the backend.
@@ -267,7 +275,20 @@ class BasicTest(unittest.TestCase):
 
         """
 
-        result = cls_(url, auth=username or 'gpxitytest', cleanup=cleanup)
+        if cls_ is WPTrackserver:
+            if username == 'wrong_user':
+                # we do not use auth.cfg, so mock this
+                raise KeyError
+            self.create_temp_mysqld()
+            auth = {
+                'Mysql': 'root@gpxitytest_db',
+                'Password': username or self.test_passwd,
+                'Url': self.mysql_ip_address,
+                'Username': 'gpxitytest'}
+            url = self.mysql_ip_address
+        else:
+            auth = username or 'gpxitytest'
+        result = cls_(url, auth=auth, cleanup=cleanup)
         if clear_first:
             result.remove_all()
         if count:
@@ -307,6 +328,116 @@ class BasicTest(unittest.TestCase):
             yield tmp_backend
         finally:
             tmp_backend.destroy()
+
+    @classmethod
+    def create_db_for_wptrackserver(cls):
+        """Create the mysql database for the WPTrackserver tests."""
+        while True:
+            try:
+                server = MySQLdb.connect(
+                    host=cls.mysql_ip_address, user='root', passwd=cls.test_passwd, connect_timeout=2,
+                    autocommit=True, charset='utf8',
+                    sql_mode='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION')
+                break
+            except _mysql_exceptions.OperationalError:
+                # wait until the docker instance is ready
+                time.sleep(1)
+        logging.debug('%s: connected to %s', datetime.datetime.now(), cls.mysql_ip_address)
+        cursor = server.cursor()
+        cursor.execute('create database gpxitytest_db')
+        cursor.execute('use gpxitytest_db')
+        cursor.execute("""
+            CREATE TABLE wp_ts_locations (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            trip_id int(11) NOT NULL,
+            latitude double NOT NULL,
+            longitude double NOT NULL,
+            altitude double NOT NULL,
+            speed double NOT NULL default 0.0,
+            heading double NOT NULL default 0.0,
+            updated timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created timestamp NOT NULL default '0000-00-00 00:00:00',
+            occurred timestamp not null default '0000-00-00 00:00:00',
+            comment varchar(255) NOT NULL,
+            hidden tinyint(1) NOT NULL default 0,
+            PRIMARY KEY (id),
+            KEY occurred (occurred),
+            KEY trip_id (trip_id)
+            ) ENGINE=InnoDB
+        """)
+        cursor.execute("""
+            CREATE TABLE wp_ts_tracks (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            user_id int(11) NOT NULL,
+            name varchar(255) NOT NULL,
+            updated timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created timestamp NOT NULL default '0000-00-00 00:00:00',
+            source varchar(255) NOT NULL default '',
+            comment varchar(255) NOT NULL default '',
+            distance int(11) NOT NULL,
+            PRIMARY KEY (id),
+            KEY user_id (user_id)
+         )
+        """)
+        cursor.execute("""
+            CREATE TABLE wp_users (
+            ID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_login varchar(60) NOT NULL DEFAULT '',
+            user_pass varchar(255) NOT NULL DEFAULT '',
+            user_nicename varchar(50) NOT NULL DEFAULT '',
+            user_email varchar(100) NOT NULL DEFAULT '',
+            user_url varchar(100) NOT NULL DEFAULT '',
+            user_registered datetime NOT NULL DEFAULT '1970-01-01',
+            user_activation_key varchar(255) NOT NULL DEFAULT '',
+            user_status int(11) NOT NULL DEFAULT '0',
+            display_name varchar(250) NOT NULL DEFAULT '',
+            PRIMARY KEY (ID),
+            KEY user_login_key (user_login),
+            KEY user_nicename (user_nicename),
+            KEY user_email (user_email)
+         )
+        """)
+        cursor.execute("""
+            insert into wp_users (user_login) values(%s)""", ['gpxitytest'])
+        cursor.execute("select id,user_login from wp_users")
+        logging.debug(cursor.fetchall())
+        server.commit()
+        server.close()
+
+    @classmethod
+    def find_mysql_docker(cls) ->bool:
+        """Find an already running docker.
+
+        Returns:
+            the IP address
+
+        """
+        if cls.mysql_ip_address is not None:
+            return True
+        cls.mysql_ip_address = Popen([
+            'docker', 'inspect', '--format', '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
+            cls.mysql_docker_name], stdout=PIPE).communicate()[0].decode().strip()
+        if cls.mysql_ip_address == '':
+            cls.mysql_ip_address = None
+        logging.debug('%s at ip %s', cls.mysql_docker_name, cls.mysql_ip_address)
+        return bool(cls.mysql_ip_address)
+
+    @classmethod
+    def create_temp_mysqld(cls):
+        """Create a temporary mysql server and initialize it with test data for WPTrackserver."""
+        if cls.find_mysql_docker():
+            return
+        cmd = [
+            'docker', 'run', '--name', cls.mysql_docker_name, '--detach',
+            '--env', 'MYSQL_ROOT_PASSWORD={}'.format(cls.test_passwd), 'mysql']
+        with Popen(cmd, stdout=PIPE, stderr=PIPE) as _:
+            std_err = _.stderr.read()
+            if std_err:
+                logging.error(std_err)
+                raise Exception('Cannot run docker: {}'.format(std_err.decode().strip()))
+        if not cls.find_mysql_docker():
+            raise Exception('Unknown problem while creating mysql docker')
+        cls.create_db_for_wptrackserver()
 
     @staticmethod
     def clone_backend(backend):
