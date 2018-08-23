@@ -139,9 +139,14 @@ class Backend:
             A unique identifier
 
         """
+        url = ''
+        if self.url != self.default_url:
+            url = self.url
+            if not url.endswith('/'):
+                url += '/'
         result = '{}:{}{}/'.format(
             self.__class__.__name__.lower(),
-            '' if self.url == self.default_url else self.url,
+            url,
             self.auth[0] if self.auth and self.auth[0] else '')
         if track:
             result += track.id_in_backend
