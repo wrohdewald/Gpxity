@@ -95,7 +95,7 @@ class Backend:
 
     full_support = (
         'scan', 'remove', 'lifetrack', 'lifetrack_end', 'get_time', 'write', 'write_title', 'write_public',
-        'write_category', 'write_gpx', 'write_description', 'write_add_keywords', 'write_remove_keywords')
+        'write_category', 'write_description', 'write_add_keywords', 'write_remove_keywords')
 
     # It is important that we have only one global session per identifier()
     # because gpsies.com seems to have several servers and their

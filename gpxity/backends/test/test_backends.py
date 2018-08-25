@@ -30,26 +30,26 @@ class TestBackends(BasicTest):
         """Check values in supported for all backends."""
         expect_unsupported = dict()
         expect_unsupported[Directory] = {
-            'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords', 'write_gpx',
+            'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_description', 'write_public', 'write_title'}
         expect_unsupported[ServerDirectory] = {'lifetrack'}
-        expect_unsupported[MMT] = {'write_gpx'}
+        expect_unsupported[MMT] = set()
         expect_unsupported[GPSIES] = {
-            'get_time', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords', 'write_gpx'}
+            'get_time', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords'}
         expect_unsupported[TrackMMT] = {
-            'scan', 'remove', 'write_gpx',
+            'scan', 'remove',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
         expect_unsupported[Mailer] = {
             'scan', 'remove', 'get_time',
             'write_title', 'write_description', 'write_public',
-            'write_category', 'write_add_keywords', 'write_gpx',
+            'write_category', 'write_add_keywords',
             'write_remove_keywords', 'lifetrack'}
         expect_unsupported[WPTrackserver] = {
             'get_time', 'lifetrack', 'lifetrack_end',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
-            'write_description', 'write_public', 'write_title', 'write_gpx'}
+            'write_description', 'write_public', 'write_title'}
         for cls in self._find_backend_classes():
             self.logger.debug('%s %s', cls, cls.supported)
             self.logger.debug('%s %s', cls, expect_unsupported[cls])
