@@ -311,7 +311,7 @@ class BasicTest(unittest.TestCase):
     @staticmethod
     def clone_backend(backend):
         """return a clone of backend."""
-        return backend.__class__(backend.url, backend.auth)
+        return backend.__class__(backend.url, backend.config)
 
     @staticmethod
     def _find_backend_classes(with_skip: bool = False):

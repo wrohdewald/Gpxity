@@ -56,8 +56,10 @@ class Backend:
 
     Args:
         url (str): Initial value for :attr:`url`
-        auth (tuple(str, str)): (username, password). Alternatively you can pass the username as a single string.
-            This will lookup the password from :class:`Authenticate <gpxity.auth.Authenticate>`.
+        auth (str):  The username.
+            This will lookup the password and config from :class:`Authenticate <gpxity.auth.Authenticate>`.
+            You can also pass a dict containing what would normally be obtained from
+            :class:`Authenticate <gpxity.auth.Authenticate>`. The dict must also contain 'Username'.
         cleanup (bool): If true, :meth:`destroy` will remove all tracks.
 
     Attributes:
@@ -70,7 +72,7 @@ class Backend:
             Every implementation may define its own default for url.
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
-        config: A dict with all entries in auth.cfg for this backend
+        config: A Section with all entries in auth.cfg for this backend
 
 
     """
@@ -110,15 +112,18 @@ class Backend:
         self.__tracks = list()
         self._tracks_fully_listed = False
         self.url = url or ''
+        self.config = dict()
+        self.auth = None
         if isinstance(auth, str):
             _ = Authenticate(self.__class__, auth)
             self.auth = _.auth
             self.config = _.section
+            self.config['Username'] = auth
             if _.url:
                 self.url = _.url
-        else:
-            self.config = dict()
-            self.auth = auth
+        elif auth is not None:
+            self.config = auth
+            self.auth = (self.config.get('Username'), self.config.get('Password'))
         if self.url and not self.url.endswith('/'):
             self.url += '/'
         self._cleanup = cleanup
