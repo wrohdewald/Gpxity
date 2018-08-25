@@ -149,6 +149,8 @@ class Backend:
             url,
             self.auth[0] if self.auth and self.auth[0] else '')
         if track:
+            if not result.endswith('/'):
+                result += '/'
             result += track.id_in_backend
         return result
 
