@@ -326,7 +326,8 @@ class TestBackends(BasicTest):
                                 self.assertFalse(_.public)
                             backend2 = self.clone_backend(backend)
                             with Directory(cleanup=True) as copy:
-                                copy.merge(backend2)
+                                for _ in copy.merge(backend2):
+                                    self.logger.debug(_)
                                 self.assertSameTracks(local, copy)
 
     def test_merge(self):
