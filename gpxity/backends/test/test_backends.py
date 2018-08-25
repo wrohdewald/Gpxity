@@ -295,9 +295,10 @@ class TestBackends(BasicTest):
 
     def test_slow_download_many(self):
         """Download many tracks."""
-        many = 150
-        backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
-        self.assertEqual(len(backend), many)
+        if not MMT.is_disabled():
+            many = 150
+            backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
+            self.assertEqual(len(backend), many)
 
     def test_duplicate_title(self):
         """two tracks having the same title."""
@@ -352,12 +353,13 @@ class TestBackends(BasicTest):
 
     def test_lifetrack_mmt(self):
         """test life tracking against a free account on mapmytracks.com."""
-        with MMT(auth='gpxitytest') as uplink:
-            self.assertTrue(uplink.is_free_account)
-            life = Lifetrack(uplink)
-            with self.assertRaises(Exception) as context:
-                life.update(self._random_points())
-            self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
+        if not MMT.is_disabled():
+            with MMT(auth='gpxitytest') as uplink:
+                self.assertTrue(uplink.is_free_account)
+                life = Lifetrack(uplink)
+                with self.assertRaises(Exception) as context:
+                    life.update(self._random_points())
+                self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
     def test_lifetrack_local(self):
         """test life tracking against a local server."""
@@ -462,11 +464,12 @@ class TestBackends(BasicTest):
 
     def test_mmt_empty(self):
         """MMT refuses upload without a specific error message if there is no track point."""
-        track = self.create_test_track()
-        del track.gpx.tracks[0]
-        with MMT(auth='gpxitytest', cleanup=True) as mmt:
-            with self.assertRaises(mmt.BackendException):
-                mmt.add(track)
+        if not MMT.is_disabled():
+            track = self.create_test_track()
+            del track.gpx.tracks[0]
+            with MMT(auth='gpxitytest', cleanup=True) as mmt:
+                with self.assertRaises(mmt.BackendException):
+                    mmt.add(track)
 
     def test_setters(self):
         """For all Track attributes with setters, test if we can change them without changing something else."""
