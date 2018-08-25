@@ -484,19 +484,21 @@ class Track:
             data = [x.strip() for x in data.split(', ')]
         if data is not None:
             for keyword in data:
-                parts = [x.strip() for x in keyword.split(':')]
+                _ = [x.strip() for x in keyword.split(':')]
+                what = _[0]
+                value = ':'.join(_[1:])
                 if into_header_data:
-                    if keyword.startswith('Category:'):
-                        self._header_data['category'] = parts[1]
-                    elif keyword.startswith('Status:'):
-                        self._header_data['public'] = parts[1] == 'public'
+                    if what == 'Category':
+                        self._header_data['category'] = value
+                    elif what == 'Status':
+                        self._header_data['public'] = value == 'public'
                     else:
                         gpx_keywords.append(keyword)
                 else:
-                    if keyword.startswith('Category:'):
-                        self.category = parts[1]
-                    elif keyword.startswith('Status:'):
-                        self.public = parts[1] == 'public'
+                    if what == 'Category':
+                        self.category = value
+                    elif what == 'Status':
+                        self.public = value == 'public'
                     else:
                         gpx_keywords.append(keyword)
         if into_header_data:
