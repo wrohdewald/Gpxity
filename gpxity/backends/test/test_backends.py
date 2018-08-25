@@ -109,7 +109,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             with self.subTest(' {}'.format(cls.__name__)):
                 with self.assertRaises(KeyError):
-                    self.setup_backend(cls, username='wrong')
+                    self.setup_backend(cls, username='wrong_user')
 
     def test_open_wrong_password(self):
         """Open backends with wrong password."""
