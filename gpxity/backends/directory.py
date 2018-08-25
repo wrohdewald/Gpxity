@@ -145,7 +145,9 @@ class Directory(Backend):
                 result = result[2:]
         if track:
             if result:
-                result += '/' + track.id_in_backend
+                if not result.endswith('/'):
+                    result += '/'
+                result += track.id_in_backend
             else:
                 result = track.id_in_backend
         return result
