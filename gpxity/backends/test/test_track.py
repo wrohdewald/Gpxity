@@ -457,7 +457,7 @@ class TrackTests(BasicTest):
                 track.title = title
                 self.assertEqual(track.title, title)
                 self.assertNotEqual(track.id_in_backend, title)
-                track.id_in_backend = track.title
+                track.id_in_backend = track.title.replace('/', '_')
                 self.assertEqual(track.id_in_backend, title.replace('/', '_'))
             prev_encoding = directory.fs_encoding
             directory.fs_encoding = 'whatever'
@@ -512,6 +512,8 @@ class TrackTests(BasicTest):
             track = Track()
             with self.assertRaises(Exception):
                 directory.add(track).id_in_backend = 56
+            with self.assertRaises(Exception):
+                track.id_in_backend = 'a/b'
             self.assertEqual(len(directory), 1)
             with self.assertRaises(ValueError):
                 directory.add(track)

@@ -152,8 +152,11 @@ class Track:
             value: The new value
 
         """
-        if value is not None and not isinstance(value, str):
-            raise Exception('{}: id_in_backend must be str'.format(value))
+        if value is not None:
+            if not isinstance(value, str):
+                raise Exception('{}: id_in_backend must be str'.format(value))
+            if '/' in value:
+                raise Exception('{}: / not allowed in id_in_backend'.format(value))
         if self.__id_in_backend == value:
             return
         if self.__is_decoupled:
