@@ -18,6 +18,8 @@ import weakref
 # import gpxpy.gpxfield as mod_gpxfield
 # mod_gpxfield.TIME_TYPE=None
 
+# pylint: disable=too-many-lines
+
 from gpxpy import gpx as mod_gpx
 from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length
@@ -111,7 +113,7 @@ class Track:
         self._similarity_others = weakref.WeakValueDictionary()
         self._similarities = dict()
         if gpx:
-            self._decode_keywords(self.keywords)
+            self._decode_keywords(self.__gpx.keywords)
             self._round_points(self.points())
             self._loaded = True
 
@@ -203,6 +205,8 @@ class Track:
         """See dirty.getter."""
         if not isinstance(value, str):
             raise Exception('_dirty only receives str')
+        if value in self._header_data:
+            del self._header_data[value]
         if not self.__is_decoupled:
             if value == 'gpx':
                 self.__cached_distance = None
@@ -227,6 +231,7 @@ class Track:
             ~gpxity.Track: the new track
 
         """
+        self.__resolve_header_data()
         result = Track(gpx=self.gpx.clone())
         result.category = self.category
         result.public = self.public
@@ -417,6 +422,21 @@ class Track:
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)  # pylint: disable=protected-access, no-member
             self._loaded = True
+        if not self.__is_decoupled:
+            self.__resolve_header_data()
+
+    def __resolve_header_data(self):
+        """Put header data into gpx and clear them."""
+        with self._decouple():
+            pairs = [(x[0], x[1]) for x in self._header_data.items()]
+            for key, value in pairs:
+                if key in ('title', 'description', 'category', 'public', 'keywords'):
+                    setattr(self, key, value)
+                elif key in ('time', 'distance'):
+                    pass
+                else:
+                    raise Exception('Unhandled header_data: {}/{}'.format(key, value))
+            self._header_data.clear()
 
     def add_points(self, points) ->None:
         """Add points to last segment in the last track.
@@ -455,28 +475,32 @@ class Track:
                 If True, save everything in self._header_data.
 
         """
+        # pylint: disable=too-many-branches
         gpx_keywords = list()
         if isinstance(data, str):
             data = [x.strip() for x in data.split(', ')]
-        for keyword in data:
-            parts = [x.strip() for x in keyword.split(':')]
-            if into_header_data:
-                if keyword.startswith('Category:'):
-                    self._header_data['category'] = parts[1]
-                elif keyword.startswith('Status:'):
-                    self._header_data['public'] = parts[1] == 'public'
+        if data is not None:
+            for keyword in data:
+                parts = [x.strip() for x in keyword.split(':')]
+                if into_header_data:
+                    if keyword.startswith('Category:'):
+                        self._header_data['category'] = parts[1]
+                    elif keyword.startswith('Status:'):
+                        self._header_data['public'] = parts[1] == 'public'
+                    else:
+                        gpx_keywords.append(keyword)
                 else:
-                    gpx_keywords.append(keyword)
-            else:
-                if keyword.startswith('Category:'):
-                    self.category = parts[1]
-                elif keyword.startswith('Status:'):
-                    self.public = parts[1] == 'public'
-                else:
-                    gpx_keywords.append(keyword)
+                    if keyword.startswith('Category:'):
+                        self.category = parts[1]
+                    elif keyword.startswith('Status:'):
+                        self.public = parts[1] == 'public'
+                    else:
+                        gpx_keywords.append(keyword)
         if into_header_data:
-            self._header_data['keywords'] = ', '.join(sorted(gpx_keywords))
+            self._header_data['keywords'] = sorted(gpx_keywords)
         else:
+            if 'keywords' in self._header_data:
+                del self._header_data['keywords']
             self.__gpx.keywords = ', '.join(sorted(gpx_keywords))
 
     def _encode_keywords(self) ->str:
@@ -496,6 +520,7 @@ class Track:
 
         :attr:`title`, :attr:`description` and :attr:`category` from indata have precedence over the current values.
         :attr:`public` will be or-ed
+        :attr:`keywords` will stay unchanged if indata has none, otherwise be replaced from indata
 
         Args:
             indata: may be a file descriptor or str
@@ -508,7 +533,8 @@ class Track:
             # ignore empty file
             return
         with self._decouple():
-            old_gpx = self.__gpx
+            old_title = self.title
+            old_description = self.description
             old_public = self.public
             try:
                 self.__gpx = gpxpy_parse(indata)
@@ -516,16 +542,13 @@ class Track:
                 self.backend.logger.error(
                     '%s: Track %s has illegal GPX XML: %s', self.backend, self.id_in_backend, exc)
                 raise
-            if 'keywords' in self._header_data:
-                del self._header_data['keywords']
-            self._decode_keywords(self.keywords)
-            if 'public' in self._header_data:
-                del self._header_data['public']
-            self.public = self.public or old_public
-            if old_gpx.name and not self.__gpx.name:
-                self.__gpx.name = old_gpx.name
-            if old_gpx.description and not self.__gpx.description:
-                self.__gpx.description = old_gpx.description
+            if self.__gpx.keywords:
+                self._decode_keywords(self.__gpx.keywords)
+            self.public = self.__public or old_public
+            if old_title and not self.__gpx.name:
+                self.__gpx.name = old_title
+            if old_description and not self.__gpx.description:
+                self.__gpx.description = old_description
             self._round_points(self.points())
         self._header_data = dict()
         self._loaded = True
