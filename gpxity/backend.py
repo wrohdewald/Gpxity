@@ -813,3 +813,41 @@ class Backend:
             return False
         clsname = cls.__name__.split('.')[-1].lower()
         return clsname in disabled.lower().split()
+
+    @classmethod
+    def parse_objectname(cls, name):
+        """Parse the full identifier for a track.
+
+        Args:
+            name: the full identifier for a Track
+
+        Returns:
+            A tuple with clsname, account,track_id
+
+        """
+        clsname = account = track_id = None
+        if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES', 'MAILER', 'WPTRACKSERVER'):  # noqa
+            clsname = name.split(':')[0].upper()
+            rest = name[len(clsname) + 1:]
+            if '/' in rest:
+                if rest.count('/') > 1:
+                    raise Exception('wrong syntax in {}'.format(name))
+                account, track_id = rest.split('/')
+            else:
+                account = rest
+        else:
+            if os.path.isdir(name):
+                clsname = 'DIRECTORY'
+                account = name
+            else:
+                if name.endswith('.gpx'):
+                    name = name[:-4]
+                if os.path.isfile(name + '.gpx'):
+                    clsname = 'DIRECTORY'
+                    account = os.path.dirname(name) or '.'
+                    track_id = os.path.basename(name)
+        if clsname is None:
+            raise Exception('{}: Unknown backend'.format(name))
+        if account is None:
+            raise Exception('{} not found'.format(name))
+        return clsname, account, track_id
