@@ -8,11 +8,12 @@
 
 import os
 import datetime
-from inspect import getmembers, isfunction
+from inspect import getmembers, isfunction, isclass, getmro
 import dis
 from contextlib import contextmanager
 from collections import defaultdict
 import logging
+import importlib
 
 from .auth import Authenticate
 from .track import Track
@@ -100,6 +101,8 @@ class Backend:
     # synchronization is sometimes slower than expected. See
     # cookie "SERVERID".
     _session = dict()
+
+    __all_backend_classes = None
 
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None):
         """See class docstring."""
@@ -851,3 +854,36 @@ class Backend:
         if account is None:
             raise Exception('{} not found'.format(name))
         return clsname, account, track_id
+
+    @classmethod
+    def all_backend_classes(cls):
+        """Find all backend classes.
+
+        Returns:
+            A list of all backend classes. Disabled backends are not
+            returned.
+
+        """
+        if cls.__all_backend_classes is None:
+            backends_directory = os.path.join(os.path.dirname(__file__), 'backends')
+            if not os.path.exists(backends_directory):
+                raise Exception('we are not where we should be')
+            result = list()
+            mod_names = os.listdir(backends_directory)
+            for mod in mod_names:
+                if not mod.endswith('.py'):
+                    continue
+                if mod == '__init__':
+                    continue
+                try:
+                    imported = importlib.import_module('.backends.{}'.format(mod[:-3]), __package__)
+                    classes = (x[1] for x in getmembers(imported, isclass))
+                    # isinstance and is do not work here
+                    classes = (x for x in classes if Backend in getmro(x)[1:])
+                    classes = [x for x in classes if not x.is_disabled()]
+                    result.extend(classes)
+                except ImportError:
+                    pass
+            # sort because we want things reproducibly
+            cls.__all_backend_classes = sorted(set(result), key=lambda x: x.__name__)
+        return cls.__all_backend_classes

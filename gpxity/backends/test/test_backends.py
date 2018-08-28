@@ -17,7 +17,7 @@ from unittest import skipIf
 from .basic import BasicTest, disabled
 from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer, WPTrackserver
 from ...auth import Authenticate
-from ... import Track, Lifetrack
+from ... import Track, Lifetrack, Backend
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -52,16 +52,23 @@ class TestBackends(BasicTest):
             'get_time', 'lifetrack', 'lifetrack_end',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             self.logger.debug('%s %s', cls, cls.supported)
             self.logger.debug('%s %s', cls, expect_unsupported[cls])
             with self.subTest(cls):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
                 self.assertEqual(sorted(cls.supported | expect_unsupported[cls]), sorted(cls.full_support))
 
+    def test_all_backends(self):
+        """Check if Backend.all_backend_classes works."""
+        backends = Backend.all_backend_classes()
+        expected = [Directory, GPSIES, MMT, Mailer, ServerDirectory, TrackMMT, WPTrackserver]
+        expected = [x for x in expected if not x.is_disabled()]
+        self.assertEqual(backends, expected)
+
     def test_save_empty(self):
         """Save empty track."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'write' not in cls.supported:
                 continue
             with self.subTest(cls):
@@ -92,7 +99,7 @@ class TestBackends(BasicTest):
 
     def test_slow_duplicate_tracks(self):
         """What happens if we save the same track twice?."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'remove' in cls.supported and 'write' in cls.supported:
                 with self.subTest(cls):
                     with self.temp_backend(cls) as backend:
@@ -113,14 +120,14 @@ class TestBackends(BasicTest):
 
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             with self.subTest(cls):
                 with self.assertRaises(KeyError):
                     self.setup_backend(cls, username='wrong_user')
 
     def test_open_wrong_password(self):
         """Open backends with wrong password."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'scan' not in cls.supported:
                 continue
             with self.subTest(cls):
@@ -167,7 +174,7 @@ class TestBackends(BasicTest):
 
     def test_z9_create_backend(self):
         """Test creation of a backend."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'remove' in cls.supported and 'get_time' in cls.supported:
                 with self.subTest(cls):
                     with self.temp_backend(cls, count=3) as backend:
@@ -181,7 +188,7 @@ class TestBackends(BasicTest):
 
     def test_slow_write_remoteattr(self):
         """If we change title, description, public, category in track, is the backend updated?."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(cls):
                     with self.temp_backend(cls, count=1, category='Horse riding') as backend:
@@ -230,7 +237,7 @@ class TestBackends(BasicTest):
         kw_c = 'CamelCase'
         kw_d = 'D'  # self.unicode_string2
 
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'write' not in cls.supported or 'scan' not in cls.supported:
                 continue
             with self.subTest(cls):
@@ -271,7 +278,7 @@ class TestBackends(BasicTest):
     def test_z_unicode(self):
         """Can we up- and download unicode characters in all text attributes?."""
         tstdescr = 'DESCRIPTION with ' + self.unicode_string1 + ' and ' + self.unicode_string2
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(cls):
                     with self.temp_backend(cls, count=1) as backend:
@@ -310,7 +317,7 @@ class TestBackends(BasicTest):
 
     def test_duplicate_title(self):
         """two tracks having the same title."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'remove' in cls.supported:
                 with self.subTest(cls):
                     with self.temp_backend(cls, count=2) as backend:
@@ -326,7 +333,7 @@ class TestBackends(BasicTest):
             track.public = False
             self.assertFalse(track.public)
             local.add(track)
-            for cls in self._find_backend_classes():
+            for cls in Backend.all_backend_classes():
                 if 'remove' in cls.supported:
                     with self.subTest(cls):
                         with self.temp_backend(cls) as backend:
@@ -402,7 +409,7 @@ class TestBackends(BasicTest):
     def test_backend_dirty(self):
         """Track._dirty."""
         # pylint: disable=protected-access
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'scan' not in cls.supported or 'write' not in cls.supported:
                 continue
             with self.temp_backend(cls, count=1) as backend:
@@ -484,7 +491,7 @@ class TestBackends(BasicTest):
 
     def test_setters(self):
         """For all Track attributes with setters, test if we can change them without changing something else."""
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'write' not in cls.supported or 'scan' not in cls.supported:
                 continue
             with self.temp_backend(cls, count=1) as backend:
@@ -526,7 +533,7 @@ class TestBackends(BasicTest):
                 return backend._get_current_keywords(track)  # pylint: disable=protected-access
             return track.keywords
 
-        for cls in self._find_backend_classes():
+        for cls in Backend.all_backend_classes():
             if 'write_add_keywords' not in cls.supported:
                 continue
             with self.temp_backend(cls, count=1) as backend:

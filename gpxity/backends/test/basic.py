@@ -7,14 +7,12 @@
 """Tests for gpxity.backends."""
 
 import unittest
-import importlib
 import pwd
 import os
 import io
 import datetime
 import time
 import random
-from inspect import getmembers, isclass, getmro
 from pkgutil import get_data
 import tempfile
 from contextlib import contextmanager
@@ -51,14 +49,7 @@ def disabled(*args) ->bool:
 
 class BasicTest(unittest.TestCase):
 
-    """define some helpers.
-
-    Attributes:
-        all_backend_classes: a list of all backend implementations
-
-    """
-
-    all_backend_classes = None
+    """define some helpers."""
 
     test_passwd = 'pwd'
 
@@ -146,8 +137,6 @@ class BasicTest(unittest.TestCase):
             (~gpxity.Track): A new track not bound to a backend
 
         """
-        if BasicTest.all_backend_classes is None:
-            BasicTest.all_backend_classes = BasicTest._find_backend_classes()
         gpx = cls._get_gpx_from_test_file('test')
         if start_time is not None:
             _ = start_time - gpx.tracks[0].segments[0].points[0].time
@@ -482,36 +471,3 @@ class BasicTest(unittest.TestCase):
     def clone_backend(backend):
         """return a clone of backend."""
         return backend.__class__(backend.url, backend.config)
-
-    @staticmethod
-    def _find_backend_classes():
-        """Find all backend classes. Those will be tested.
-
-        Returns:
-            A list of backend classes
-
-        """
-        backends_directory = __file__
-        while not backends_directory.endswith('backends'):
-            backends_directory = os.path.dirname(backends_directory)
-        if not os.path.exists(backends_directory):
-            raise Exception('we are not where we should be')
-        result = list()
-        mod_names = os.listdir(backends_directory)
-        for mod in mod_names:
-            if not mod.endswith('.py'):
-                continue
-            mod = mod.replace('.py', '')
-            if mod == '__init__':
-                continue
-            try:
-                imported = importlib.__import__(mod, globals(), locals(), level=2)
-                for name, cls in getmembers(imported, isclass):
-                    if name in imported.__all__ and Backend in getmro(cls)[1:]:
-                        # isinstance and is do not work here
-                        if not cls.is_disabled():
-                            result.append(cls)
-            except ImportError:
-                pass
-        # sort because we want things reproducibly
-        return sorted(set(result), key=lambda x: x.__class__.__name__)
