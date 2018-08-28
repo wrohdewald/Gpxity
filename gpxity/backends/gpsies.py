@@ -177,8 +177,6 @@ class GPSIES(Backend):
 
     # pylint: disable=abstract-method
 
-    # skip_test = True
-
     _default_description = 'None yet. Let everyone know how you got on.'
 
     legal_categories = (

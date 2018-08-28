@@ -87,8 +87,6 @@ class Backend:
 
     supported = set()
 
-    skip_test = False
-
     _legal_categories = None  # Override in the backends
 
     default_url = None  # Override in the backends

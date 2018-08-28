@@ -445,11 +445,8 @@ class BasicTest(unittest.TestCase):
         return backend.__class__(backend.url, backend.config)
 
     @staticmethod
-    def _find_backend_classes(with_skip: bool = False):
+    def _find_backend_classes():
         """Find all backend classes. Those will be tested.
-
-        Args:
-            with_skip: if True, also finds those with skip_test=False
 
         Returns:
             A list of backend classes
@@ -473,9 +470,7 @@ class BasicTest(unittest.TestCase):
                 for name, cls in getmembers(imported, isclass):
                     if name in imported.__all__ and Backend in getmro(cls)[1:]:
                         # isinstance and is do not work here
-                        if cls.is_disabled():
-                            continue
-                        if with_skip or not cls.skip_test:
+                        if not cls.is_disabled():
                             result.append(cls)
             except ImportError:
                 pass

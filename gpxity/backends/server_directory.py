@@ -24,8 +24,6 @@ class ServerDirectory(Directory):
 
     # pylint: disable=abstract-method
 
-    skip_test = True
-
     def _new_ident(self, _) ->str:
         """Build a unique id for track.
 
