@@ -711,7 +711,7 @@ class Backend:
                 old_track.remove()
         return result
 
-    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
+    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:  # noqa
         """merge other backend or a single track into this one.
 
         If two tracks have identical points, or-ify their other attributes.
@@ -762,7 +762,10 @@ class Backend:
         for point_hash in src_dict.keys() & dst_dict.keys():
             target = dst_dict[point_hash]
             for source in src_dict[point_hash]:
-                result.extend(target.merge(source, remove=remove, dry_run=dry_run))
+                if source.identifier() != target.identifier():
+                    # source == target is possible if we merge a backend with itself
+                    self.logger.debug('about to merge %s into %s', source.identifier(), target.identifier())
+                    result.extend(target.merge(source, remove=remove, dry_run=dry_run))
         return result
 
     @staticmethod
