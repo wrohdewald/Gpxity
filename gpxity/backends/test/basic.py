@@ -246,7 +246,7 @@ class BasicTest(unittest.TestCase):
 
     def assertTrackFileContains(self, track, string, msg=None):  # noqa pylint: disable=invalid-name
         """Assert that string is in the physical file. Works only for Directory backend."""
-        with open(track.backend.gpx_path(track.id_in_backend)) as trackfile:
+        with open(track.backend.gpx_path(track.id_in_backend), encoding='utf8') as trackfile:
             data = trackfile.read()
         self.assertIn(string, data, msg)
 
