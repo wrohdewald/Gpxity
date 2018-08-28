@@ -32,7 +32,9 @@ class TestBackends(BasicTest):
         expect_unsupported[Directory] = {
             'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_description', 'write_public', 'write_title'}
-        expect_unsupported[ServerDirectory] = {'lifetrack'}
+        expect_unsupported[ServerDirectory] = {
+            'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
+            'write_category', 'write_title', 'write_description', 'write_public'}
         expect_unsupported[MMT] = set()
         expect_unsupported[GPSIES] = {
             'get_time', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords'}
