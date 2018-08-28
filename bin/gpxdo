@@ -969,10 +969,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             if not self.options.source:
                 self.options.source = [self.options.destination]
         elif self.options.func == self.fix:
-            if self.options.title_from_id and self.options.id_from_title:
-                logging.error('gpxdo: error: title-from-id and id-from-title cannot be combined')
-            if self.options.id_from_title and self.options.id_from_time:
-                logging.error('gpxdo: error: id_from_title and id_from_time cannot be combined')
+            exclusive = ('id_from_title', 'title_from_id')
+            if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
+                logging.error('gpxdo: only one out of {} is allowed'.format(', '.join(exclusive).replace('_', '-')))
         if self.options.only_kw:
             self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
         if self.options.only_category:
