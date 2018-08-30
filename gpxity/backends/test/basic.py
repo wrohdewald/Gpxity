@@ -28,7 +28,7 @@ from gpxpy.gpx import GPXTrackPoint
 
 from ... import Track, Backend
 from ...auth import Authenticate
-from .. import Mailer, WPTrackserver, Directory, GPSIES
+from .. import Mailer, WPTrackserver, Directory, ServerDirectory, GPSIES
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -293,10 +293,11 @@ class BasicTest(unittest.TestCase):
 
         """
 
-        if cls_ is WPTrackserver:
+        if cls_ in (Directory, ServerDirectory, WPTrackserver):
             if username == 'wrong_user':
-                # we do not use auth.cfg, so mock this
                 raise KeyError
+
+        if cls_ is WPTrackserver:
             self.create_temp_mysqld()
             auth = {
                 'Mysql': 'root@gpxitytest_db',

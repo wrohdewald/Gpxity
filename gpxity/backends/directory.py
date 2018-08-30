@@ -93,7 +93,7 @@ class Directory(Backend):
             temporary directory named
             :attr:`prefix`.X where X are some random characters.
             If the directory does not exist, it is created.
-        auth (str): You can use this as in every backend to define Url= in auth.cfg
+        auth (str): In addition to other backends: if given and url is None, use auth as url.
         cleanup (bool): If True, :meth:`destroy` will remove all tracks. If url was
             not given, it will also remove the directory.
         prefix: The prefix for a temporary directory path. Must not be given if url is given.
@@ -118,6 +118,8 @@ class Directory(Backend):
 
     def __init__(self, url=None, auth=None, cleanup=False, prefix: str = None):
         """See class docstring."""
+        if url is None and isinstance(auth, str):
+            url = auth
         self.fs_encoding = None
         if prefix is None:
             prefix = self.__class__.prefix
