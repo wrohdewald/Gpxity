@@ -26,17 +26,14 @@ import _mysql_exceptions
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
-from ...track import Track
-from ...backend import Backend
-from ...backends import Mailer, WPTrackserver
+from ... import Track, Backend
 from ...auth import Authenticate
-from .. import GPSIES
+from .. import Mailer, WPTrackserver, Directory, GPSIES
 
 # pylint: disable=attribute-defined-outside-init
 
 __all__ = ['BasicTest']
 
-from .. import Directory
 
 
 class BasicTest(unittest.TestCase):
