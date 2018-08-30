@@ -887,3 +887,7 @@ class Backend:
             # sort because we want things reproducibly
             cls.__all_backend_classes = sorted(set(result), key=lambda x: x.__name__)
         return cls.__all_backend_classes
+
+    def clone(self):
+        """return a clone."""
+        return self.__class__(self.url, self.config)

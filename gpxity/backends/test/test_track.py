@@ -254,7 +254,7 @@ class TrackTests(BasicTest):
     def test_save(self):
         """save locally."""
         with Directory(cleanup=True) as directory:
-            dir2 = self.clone_backend(directory)
+            dir2 = directory.clone()
             try:
                 track = self.create_test_track()
                 directory.add(track)
@@ -381,7 +381,7 @@ class TrackTests(BasicTest):
             self.assertIn('id:', str(track))
 
             # str(track) must not fully load it
-            clone = self.clone_backend(directory)
+            clone = directory.clone()
             self.assertIn(' 0 points', str(clone[0]))
             self.assertEqual(clone[0].gpx.get_track_points_no(), 15)
             self.assertIn(' 15 points', str(clone[0]))
@@ -585,7 +585,7 @@ class TrackTests(BasicTest):
     def test_header_changes(self):
         """Only change things in _header_data. Assert that the full gpx is loaded before saving."""
         with self.temp_backend(Directory, count=1) as backend:
-            backend2 = self.clone_backend(backend)
+            backend2 = backend.clone()
             backend2[0].description = 'test'
             self.assertTrackFileContains(backend2[0], '<trk>')
         with self.temp_backend(Directory, count=1) as backend:

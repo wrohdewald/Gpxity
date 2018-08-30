@@ -206,7 +206,7 @@ class TestBackends(BasicTest):
                         track.description = 'A new description'
                         track.category = 'Cycling'
                         # make sure there is no cache in the way
-                        backend2 = self.clone_backend(backend)
+                        backend2 = backend.clone()
                         track2 = backend2[0]
                         self.assertEqualTracks(track, track2, with_category=False)
                         self.assertNotEqual(first_public, track2.public)
@@ -224,7 +224,7 @@ class TestBackends(BasicTest):
                 track.description = 'A new description'
                 track.category = 'Cycling'
                 # make sure there is no cache in the way
-                backend2 = self.clone_backend(backend)
+                backend2 = backend.clone()
                 track2 = backend2[0]
                 self.assertEqualTracks(track, track2, with_category=True)
 
@@ -255,7 +255,7 @@ class TestBackends(BasicTest):
                         track.add_keywords('Category:whatever')
                     track.add_keywords(kw_d)
                     self.assertEqual(set(track.keywords), {kw_a, kw_c, kw_d})
-                    backend2 = self.clone_backend(backend)
+                    backend2 = backend.clone()
                     track2 = backend2[track.id_in_backend]
                     track2.remove_keywords(kw_d)
                     self.assertEqual(track2.keywords, ([kw_a, kw_c]))
@@ -282,7 +282,7 @@ class TestBackends(BasicTest):
             if 'remove' in cls.supported:
                 with self.subTest(cls):
                     with self.temp_backend(cls, count=1) as backend:
-                        backend2 = self.clone_backend(backend)
+                        backend2 = backend.clone()
                         track = backend[0]
                         self.assertIsNotNone(track.backend)
                         track.title = 'Title ' + self.unicode_string1
@@ -340,7 +340,7 @@ class TestBackends(BasicTest):
                             backend.merge(local)
                             for _ in backend:
                                 self.assertFalse(_.public)
-                            backend2 = self.clone_backend(backend)
+                            backend2 = backend.clone()
                             with Directory(cleanup=True) as copy:
                                 for _ in copy.merge(backend2):
                                     self.logger.debug(_)
@@ -363,7 +363,7 @@ class TestBackends(BasicTest):
     def test_scan(self):
         """some tests about Backend.scan()."""
         with self.temp_backend(Directory, count=5) as source:
-            backend2 = self.clone_backend(source)
+            backend2 = source.clone()
             track = self.create_test_track()
             backend2.add(track)
             self.assertEqual(len(backend2), 6)
@@ -421,7 +421,7 @@ class TestBackends(BasicTest):
                 track.category = 'Driving'
                 track._dirty = 'gpx'
                 self.assertFalse(track._dirty)
-                backend2 = self.clone_backend(backend)
+                backend2 = backend.clone()
                 self.assertEqual(backend2[0].category, 'Driving')
                 b2track = backend2[0]
                 self.assertEqual(b2track.category, 'Driving')
@@ -430,7 +430,7 @@ class TestBackends(BasicTest):
                 self.assertEqual(backend2[0].category, 'Driving')
                 track.title = 'new title'
                 self.assertEqual(track.category, 'Driving')
-                backend3 = self.clone_backend(backend)
+                backend3 = backend.clone()
                 self.assertEqual(backend3[0].category, 'Driving')
                 self.assertFalse(track._dirty)
                 with track.batch_changes():
@@ -440,7 +440,7 @@ class TestBackends(BasicTest):
                 with track.batch_changes():
                     track.title = 'new 3'
                     track.keywords = ['Something', 'something xlse']
-                backend4 = self.clone_backend(backend)
+                backend4 = backend.clone()
                 self.assertEqual(backend4[0].title, 'new 3')
 
     def test_directory_dirty(self):
@@ -496,7 +496,7 @@ class TestBackends(BasicTest):
                 continue
             with self.temp_backend(cls, count=1) as backend:
                 track = backend[0]
-                backend2 = self.clone_backend(backend)
+                backend2 = backend.clone()
                 self.assertEqualTracks(track, backend2[0], with_category=False)
                 test_values = {
                     'title': ('default title', 'Täst Titel'),
@@ -537,7 +537,7 @@ class TestBackends(BasicTest):
             if 'write_add_keywords' not in cls.supported:
                 continue
             with self.temp_backend(cls, count=1) as backend:
-                backend2 = self.clone_backend(backend)
+                backend2 = backend.clone()
                 track = backend[0]
                 keywords = {
                     backend._encode_keyword(x)  # pylint: disable=protected-access

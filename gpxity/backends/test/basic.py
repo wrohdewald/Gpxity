@@ -466,8 +466,3 @@ class BasicTest(unittest.TestCase):
         if not cls.find_mysql_docker():
             raise Exception('Unknown problem while creating mysql docker')
         cls.create_db_for_wptrackserver()
-
-    @staticmethod
-    def clone_backend(backend):
-        """return a clone of backend."""
-        return backend.__class__(backend.url, backend.config)
