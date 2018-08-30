@@ -225,7 +225,7 @@ class GPSIES(Backend):
         'Jet skiing': 'motorboat',
         'Kayaking': 'boating',
         'Kiteboarding': 'sailing',
-        'Motor racing': 'car',
+        'Motor racing': 'motorbiking',
         'Motorcycling': 'motorbiking',
         'Mountain biking': 'mountainbiking',
         'Mountaineering': 'climbing',
