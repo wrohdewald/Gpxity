@@ -35,6 +35,19 @@ from .. import Mailer, WPTrackserver, Directory, GPSIES
 __all__ = ['BasicTest']
 
 
+def disabled(*args) ->bool:
+    """True if any of the backends is disabled.
+
+    Returns:
+        True or False
+
+    """
+    reason = list()
+    for _ in args:
+        if _.is_disabled():
+            reason.append(_.__name__)
+    return bool(reason), '{} {} disabled'.format(','.join(reason), 'is' if len(reason) == 1 else 'are')  # noqa
+
 
 class BasicTest(unittest.TestCase):
 

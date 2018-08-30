@@ -12,9 +12,9 @@ import datetime
 import random
 import tempfile
 
-from unittest import skip
+from unittest import skipIf
 
-from .basic import BasicTest
+from .basic import BasicTest, disabled
 from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer, WPTrackserver
 from ...auth import Authenticate
 from ... import Track, Lifetrack
@@ -74,6 +74,7 @@ class TestBackends(BasicTest):
                     else:
                         self.assertIsNotNone(backend.add(track))
 
+    @skipIf(*disabled(Directory))
     def test_directory_backend(self):
         """Manipulate backend."""
         track = self.create_test_track()
@@ -127,6 +128,7 @@ class TestBackends(BasicTest):
                     with self.assertRaises(cls.BackendException):
                         self.setup_backend(cls, username='wrong_password')
 
+    @skipIf(*disabled(Directory))
     def test_match(self):
         """test backend match function.
 
@@ -299,12 +301,12 @@ class TestBackends(BasicTest):
 
         is not always as trivial as it should be."""
 
+    @skipIf(*disabled(MMT))
     def test_slow_download_many(self):
         """Download many tracks."""
-        if not MMT.is_disabled():
-            many = 150
-            backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
-            self.assertEqual(len(backend), many)
+        many = 150
+        backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
+        self.assertEqual(len(backend), many)
 
     def test_duplicate_title(self):
         """two tracks having the same title."""
@@ -315,6 +317,7 @@ class TestBackends(BasicTest):
                         backend[0].title = 'TITLE'
                         backend[1].title = 'TITLE'
 
+    @skipIf(*disabled(Directory))
     def test_private(self):
         """Up- and download private tracks."""
         with self.temp_backend(Directory, count=5, category='Cycling') as local:
@@ -336,10 +339,10 @@ class TestBackends(BasicTest):
                                     self.logger.debug(_)
                                 self.assertSameTracks(local, copy)
 
+    @skipIf(*disabled(Directory))
     def test_merge(self):
         """merge backends."""
         with self.temp_backend(Directory, count=5) as source:
-
             with self.temp_backend(Directory, username='gpxitytest2', count=4) as sink:
                 for _ in list(sink)[1:]:
                     _.adjust_time(datetime.timedelta(hours=100))
@@ -349,6 +352,7 @@ class TestBackends(BasicTest):
                 sink.merge(source, remove=True)
                 self.assertEqual(len(source), 0)
 
+    @skipIf(*disabled(Directory))
     def test_scan(self):
         """some tests about Backend.scan()."""
         with self.temp_backend(Directory, count=5) as source:
@@ -358,42 +362,42 @@ class TestBackends(BasicTest):
             self.assertEqual(len(backend2), 6)
             source.scan()  # because it cannot know backend2 added something
 
+    @skipIf(*disabled(MMT))
     def test_lifetrack_mmt(self):
         """test life tracking against a free account on mapmytracks.com."""
-        if not MMT.is_disabled():
-            with MMT(auth='gpxitytest') as uplink:
-                self.assertTrue(uplink.is_free_account)
-                life = Lifetrack(uplink)
-                with self.assertRaises(Exception) as context:
-                    life.update(self._random_points())
-                self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
+        with MMT(auth='gpxitytest') as uplink:
+            self.assertTrue(uplink.is_free_account)
+            life = Lifetrack(uplink)
+            with self.assertRaises(Exception) as context:
+                life.update(self._random_points())
+            self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
+    @skipIf(*disabled(Directory, TrackMMT, Mailer))
     def test_lifetrack_local(self):
         """test life tracking against a local server."""
-        if not TrackMMT.is_disabled() and not Mailer.is_disabled():
-            with self.temp_backend(Directory) as serverdirectory:
-                with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
-                    with TrackMMT(auth='gpxitytest') as uplink:
-                        with Mailer(url=pwd.getpwuid(os.geteuid()).pw_name) as mailer:
-                            mailer.min_interval = 5
-                            life = Lifetrack([uplink, mailer])
-                            points = self._random_points(100)
-                            life.update(points[:50])
-                            time.sleep(7)
-                            life.update(points[50:])
-                            life.end()
-                            for target in life.targets:
-                                track = target.track
-                                new_id = track.id_in_backend
-                                if 'scan' in target.backend.supported:
-                                    self.assertIn(new_id, uplink)
-                                    self.assertSameTracks(uplink, serverdirectory)
-                            with self.assertRaises(NotImplementedError):
-                                new_id in uplink  # pylint: disable=pointless-statement
-                            self.assertEqual(len(mailer.history), 3)
-                            self.assertIn('Lifetracking starts', mailer.history[0])
-                            self.assertIn('Lifetracking continues', mailer.history[1])
-                            self.assertIn('Lifetracking ends', mailer.history[2])
+        with self.temp_backend(Directory) as serverdirectory:
+            with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
+                with TrackMMT(auth='gpxitytest') as uplink:
+                    with Mailer(url=pwd.getpwuid(os.geteuid()).pw_name) as mailer:
+                        mailer.min_interval = 5
+                        life = Lifetrack([uplink, mailer])
+                        points = self._random_points(100)
+                        life.update(points[:50])
+                        time.sleep(7)
+                        life.update(points[50:])
+                        life.end()
+                        for target in life.targets:
+                            track = target.track
+                            new_id = track.id_in_backend
+                            if 'scan' in target.backend.supported:
+                                self.assertIn(new_id, uplink)
+                                self.assertSameTracks(uplink, serverdirectory)
+                        with self.assertRaises(NotImplementedError):
+                            new_id in uplink  # pylint: disable=pointless-statement
+                        self.assertEqual(len(mailer.history), 3)
+                        self.assertIn('Lifetracking starts', mailer.history[0])
+                        self.assertIn('Lifetracking continues', mailer.history[1])
+                        self.assertIn('Lifetracking ends', mailer.history[2])
 
     def test_backend_dirty(self):
         """Track._dirty."""
@@ -437,6 +441,7 @@ class TestBackends(BasicTest):
 
         Currently track._dirty = 'gpx' changes the file name which is wrong."""
 
+    @skipIf(*disabled(Directory))
     def test_directory(self):
         """directory creation/deletion."""
         with self.assertRaises(Exception):
@@ -468,14 +473,14 @@ class TestBackends(BasicTest):
         self.assertTrue(os.path.exists(auth_dir))
         os.rmdir(auth_dir)
 
+    @skipIf(*disabled(MMT))
     def test_mmt_empty(self):
         """MMT refuses upload without a specific error message if there is no track point."""
-        if not MMT.is_disabled():
-            track = self.create_test_track()
-            del track.gpx.tracks[0]
-            with MMT(auth='gpxitytest', cleanup=True) as mmt:
-                with self.assertRaises(mmt.BackendException):
-                    mmt.add(track)
+        track = self.create_test_track()
+        del track.gpx.tracks[0]
+        with MMT(auth='gpxitytest', cleanup=True) as mmt:
+            with self.assertRaises(mmt.BackendException):
+                mmt.add(track)
 
     def test_setters(self):
         """For all Track attributes with setters, test if we can change them without changing something else."""
@@ -560,6 +565,7 @@ class TestBackends(BasicTest):
                     backend2[0].keywords)
                 self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
+    @skipIf(*disabled(Directory))
     def test_legal_categories(self):
         """Check if our fixed list of categories still matches the online service."""
         with self.temp_backend(Directory) as serverdirectory:

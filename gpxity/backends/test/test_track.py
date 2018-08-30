@@ -16,8 +16,9 @@ import io
 import filecmp
 import tempfile
 import datetime
+from unittest import skipIf
 
-from .basic import BasicTest
+from .basic import BasicTest, disabled
 from ... import Track
 from .. import Directory
 from ...util import repr_timespan
@@ -29,6 +30,7 @@ class TrackTests(BasicTest):
 
     """track tests."""
 
+    @skipIf(*disabled(Directory))
     def test_init(self):
         """test initialisation."""
         track = Track()
@@ -54,6 +56,7 @@ class TrackTests(BasicTest):
         finally:
             os.rmdir(test_url)
 
+    @skipIf(*disabled(Directory))
     def test_track_list(self):
         """test list of tracks."""
         with Directory(cleanup=True) as directory:
@@ -229,6 +232,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track2.title, 'Title2')
         self.assertEqual(track2.description, 'Description2')
 
+    @skipIf(*disabled(Directory))
     def test_save_dir(self):
         """Correct files?."""
         with Directory(cleanup=True) as directory:
@@ -246,6 +250,7 @@ class TrackTests(BasicTest):
                 directory.add(track)
             self.assertIsNotNone(track.backend)
 
+    @skipIf(*disabled(Directory))
     def test_save(self):
         """save locally."""
         with Directory(cleanup=True) as directory:
@@ -354,6 +359,7 @@ class TrackTests(BasicTest):
             track2.gpx.tracks[-1].segments[-1].points[-1].longitude = old_long
             self.assertTrue(track1.points_equal(track2))
 
+    @skipIf(*disabled(Directory))
     def test_str(self):
         """test __str__."""
         track = Track()
@@ -429,6 +435,7 @@ class TrackTests(BasicTest):
         self.assertIn('angle:{}'.format(track.angle()), key)
         self.assertIn('points:{}'.format(track.gpx.get_track_points_no()), key)
 
+    @skipIf(*disabled(Directory))
     def test_symlinks(self):
         """Directory symlinks."""
         with Directory(cleanup=True) as directory:
@@ -442,6 +449,7 @@ class TrackTests(BasicTest):
             directory.scan()  # this loads symlinks. It removes the dead link.
             self.assertFalse(os.path.exists(source))
 
+    @skipIf(*disabled(Directory))
     def test_fs_encoding(self):
         """fs_encoding."""
         with Directory(cleanup=True) as directory:
@@ -506,6 +514,7 @@ class TrackTests(BasicTest):
         track.keywords = test_tracks * 2
         self.assertEqual(track.keywords, test_tracks)
 
+    @skipIf(*disabled(Directory))
     def test_id(self):
         """id_in_backend must be str."""
         with Directory(cleanup=True) as directory:
@@ -520,6 +529,7 @@ class TrackTests(BasicTest):
             directory.add(track.clone())
             self.assertEqual(len(directory), 2)
 
+    @skipIf(*disabled(Directory))
     def test_in(self):
         """x in backend."""
         with Directory(cleanup=True) as directory:
@@ -532,6 +542,7 @@ class TrackTests(BasicTest):
             self.assertNotIn(track, directory)
             self.assertNotIn(track.id_in_backend, directory)
 
+    @skipIf(*disabled(Directory))
     def test_getitem(self):
         """backend[idx]."""
         with Directory(cleanup=True) as directory:
@@ -570,6 +581,7 @@ class TrackTests(BasicTest):
         group2 = list([track4])
         self.assertEqual(list(Track.overlapping_times(group1 + group2)), list([group1]))
 
+    @skipIf(*disabled(Directory))
     def test_header_changes(self):
         """Only change things in _header_data. Assert that the full gpx is loaded before saving."""
         with self.temp_backend(Directory, count=1) as backend:
@@ -585,6 +597,7 @@ class TrackTests(BasicTest):
             backend2[0].category = 'Mountain biking'
             self.assertTrackFileContains(backend2[0], '<trk>')
 
+    @skipIf(*disabled(Directory))
     def test_remove_track(self):
         """If a backend has several identical tracks, make sure we remove the right one."""
         with self.temp_backend(Directory, count=1) as backend:
