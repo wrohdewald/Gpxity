@@ -649,7 +649,7 @@ class Utility:
             elif clsname == 'WPTRACKSERVER':
                 result = WPTrackserver(auth=account)
             elif clsname == 'DIRECTORY':
-                result = Directory(url=account)
+                result = Directory(auth=account)
             self.backends[cache_key] = result
         if track_id:
             result = result[track_id]

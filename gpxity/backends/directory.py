@@ -122,6 +122,7 @@ class Directory(Backend):
         """See class docstring."""
         if url is None and isinstance(auth, str):
             url = auth
+            auth = None
         self.fs_encoding = None
         if prefix is None:
             prefix = self.__class__.prefix

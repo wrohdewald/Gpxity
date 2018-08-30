@@ -5,6 +5,7 @@
 
 """This module defines :class:`~gpxity.Authenticate`."""
 
+import logging
 import os
 from configparser import ConfigParser
 
@@ -24,7 +25,7 @@ class Authenticate:
        auth.cfg is not encrypted. Better not use this unless you know what you are doing!
 
     Args:
-        cls (Backend): The class of the backend
+        backend (Backend): The backend
         username (str): For the wanted account in the backend
 
     Attributes:
@@ -66,12 +67,14 @@ class Authenticate:
 
     path = '~/.config/Gpxity/auth.cfg'
 
-    def __init__(self, cls, username: str = None):
+    def __init__(self, backend, username: str = None):
         """See class docstring."""
 
-        self.cls = cls
+        logging.debug('Authenticate(%s, %s)', backend, username)
+        self.backend = backend
         self.__username = username
         self.auth = (None, None)
+        self.url = None
         self.section = dict()
         self.__path = os.path.expanduser(self.path)
         with open(self.__path) as auth_file:
@@ -80,21 +83,22 @@ class Authenticate:
     def _parse_config(self, data):
         """try to use data."""
 
-        password = url = None
+        password = None
 
         config = ConfigParser()
         config.read_string(data)
 
-        config_key = '{}:{}'.format(self.cls.__name__, self.__username)
+        config_key = '{}:{}'.format(self.backend.__class__.__name__, self.__username)
         try:
-            section = config[config_key]
+            self.section = config[config_key]
         except KeyError:
-            raise KeyError('Section [{}] not found in {}'.format(config_key, self.__path))
-        if 'Password' in section:
-            password = section['Password']
-        if 'Url' in section:
-            url = section['Url']
+            if self.backend.needs_config:
+                raise KeyError('Section [{}] not found in {}'.format(config_key, self.__path))
+        if 'Password' in self.section:
+            password = self.section['Password']
+        if 'Url' in self.section:
+            self.url = self.section['Url']
+        else:
+            self.url = self.backend.url
 
         self.auth = (self.__username, password)
-        self.url = url
-        self.section = section

@@ -109,6 +109,7 @@ class Backend:
 
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None):
         """See class docstring."""
+        logging.debug('Backend(%s: url=%s, auth=%s)', self.__class__.__name__, url, auth)
         if self.is_disabled():
             raise Backend.BackendException('class {} is disabled'.format(self.__class__.__name__))
         self._decoupled = False
@@ -119,7 +120,7 @@ class Backend:
         self.config = dict()
         self.auth = None
         if isinstance(auth, str):
-            _ = Authenticate(self.__class__, auth)
+            _ = Authenticate(self, auth)
             self.auth = _.auth
             self.config = _.section
             self.config['Username'] = auth

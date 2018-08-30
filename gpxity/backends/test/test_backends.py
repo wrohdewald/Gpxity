@@ -472,11 +472,11 @@ class TestBackends(BasicTest):
         os.rmdir(test_url)
 
         dir_c = Directory(auth='gpxitytest2')
-        auth_dir = Authenticate(Directory, 'gpxitytest2').url
+        auth_dir = Authenticate(dir_c, 'gpxitytest2').url
         if not auth_dir.endswith('/'):
             auth_dir += '/'
         self.assertFalse(dir_c.is_temporary)
-        self.assertNotEqual(dir_c.url, auth_dir)
+        self.assertEqual(dir_c.url, auth_dir)
         dir_c.destroy()
         self.assertTrue(os.path.exists(auth_dir))
         os.rmdir(auth_dir)
