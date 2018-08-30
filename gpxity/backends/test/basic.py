@@ -289,7 +289,7 @@ class BasicTest(unittest.TestCase):
 
         """
 
-        if cls_ in (Directory, ServerDirectory, WPTrackserver):
+        if not cls_.needs_config:
             if username == 'wrong_user':
                 raise KeyError
 

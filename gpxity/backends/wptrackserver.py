@@ -63,6 +63,8 @@ class WPTrackserver(Backend):
 
     legal_categories = MMT.legal_categories
 
+    needs_config = False
+
     _keywords_marker = '\nKEYWORDS: '
 
     def __init__(self, url=None, auth=None, cleanup=False, timeout=None):

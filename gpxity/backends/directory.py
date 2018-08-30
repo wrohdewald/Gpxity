@@ -116,6 +116,8 @@ class Directory(Backend):
 
     prefix = 'gpxity.'
 
+    needs_config = False
+
     def __init__(self, url=None, auth=None, cleanup=False, prefix: str = None):
         """See class docstring."""
         if url is None and isinstance(auth, str):

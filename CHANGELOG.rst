@@ -6,6 +6,7 @@ Changelog
 
   * new Backend WPTrackserver directly accessing its mysql database
   * new: Backend.clone()
+  * new: Backend.needs_config
 
 1.3.2 release 2018-08-19
 ------------------------

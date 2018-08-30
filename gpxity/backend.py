@@ -74,6 +74,7 @@ class Backend:
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
         config: A Section with all entries in auth.cfg for this backend
+        needs_config: If True, the Backend class expects data in auth.cfg
 
 
     """
@@ -91,6 +92,8 @@ class Backend:
     _legal_categories = None  # Override in the backends
 
     default_url = None  # Override in the backends
+
+    needs_config = True
 
     full_support = (
         'scan', 'remove', 'lifetrack', 'lifetrack_end', 'get_time', 'write', 'write_title', 'write_public',
