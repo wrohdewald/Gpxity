@@ -123,6 +123,8 @@ class Directory(Backend):
             prefix = self.__class__.prefix
         elif url:
             raise Exception('Directory does not accept both url and prefix')
+        if (auth and auth.startswith('gpxitytest')) or (url and url.startswith('gpxitytest')):
+            url = tempfile.mkdtemp(prefix='gpxity')
         super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup)
         self.is_temporary = not bool(self.url)
         if self.is_temporary:

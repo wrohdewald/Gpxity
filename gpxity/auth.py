@@ -6,7 +6,6 @@
 """This module defines :class:`~gpxity.Authenticate`."""
 
 import os
-import tempfile
 from configparser import ConfigParser
 
 __all__ = ['Authenticate']
@@ -74,13 +73,9 @@ class Authenticate:
         self.__username = username
         self.auth = (None, None)
         self.section = dict()
-        if 'Directory' in cls.__name__ and username.startswith('gpxitytest'):
-            self.url = tempfile.mkdtemp(prefix='gpxity')
-            return
         self.__path = os.path.expanduser(self.path)
         with open(self.__path) as auth_file:
             self._parse_config(auth_file.read())
-        return
 
     def _parse_config(self, data):
         """try to use data."""
