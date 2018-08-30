@@ -288,11 +288,13 @@ class BasicTest(unittest.TestCase):
             raise Exception('gpxity_server cannot run because Mailer is disabled')
         cmdline = 'gpxity_server --loglevel debug --servername {} --port {} --directory {} --mailto {}'.format(
             servername, port, directory, pwd.getpwuid(os.geteuid()).pw_name)
+        logging.debug(cmdline)
         process = Popen(cmdline.split())
         try:
             time.sleep(1)  # give the server time to start
             yield
         finally:
+            logging.debug('killing gpxity_server')
             process.kill()
 
     @contextmanager
