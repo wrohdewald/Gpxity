@@ -205,16 +205,16 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
-    def assertSameTracks(self, backend1, backend2, with_category=True):  # noqa pylint: disable=invalid-name
+    def assertSameTracks(self, backend1, backend2, msg=None, with_category=True):  # noqa pylint: disable=invalid-name
         """both backends must hold identical tracks."""
         self.maxDiff = None  # pylint: disable=invalid-name
         if backend1 != backend2:
             with_last_time = not (isinstance(backend1, GPSIES) or isinstance(backend2, GPSIES))
             keys1 = sorted(x.key(with_category, with_last_time) for x in backend1)
             keys2 = sorted(x.key(with_category, with_last_time) for x in backend2)
-            self.assertEqual(keys1, keys2)
+            self.assertEqual(keys1, keys2, msg)
 
-    def assertEqualTracks(self, track1, track2, xml: bool = False, with_category: bool = True):  # noqa pylint: disable=invalid-name
+    def assertEqualTracks(self, track1, track2, msg=None, xml: bool = False, with_category: bool = True):  # noqa pylint: disable=invalid-name
         """both tracks must be identical. We test more than necessary for better test coverage.
 
         Args:
@@ -226,22 +226,22 @@ class BasicTest(unittest.TestCase):
         # starting at 2010-01-01 00:00. Until I find the reason, ignore point times for comparison.
         with_last_time = not (isinstance(track1.backend, GPSIES) or isinstance(track2.backend, GPSIES))
 
-        self.assertEqual(track1.key(with_category, with_last_time), track2.key(with_category, with_last_time))
-        self.assertTrue(track1.points_equal(track2))
+        self.assertEqual(track1.key(with_category, with_last_time), track2.key(with_category, with_last_time), msg)
+        self.assertTrue(track1.points_equal(track2), msg)
         if xml:
-            self.assertEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
+            self.assertEqual(track1.gpx.to_xml(), track2.gpx.to_xml(), msg)
 
-    def assertNotEqualTracks(self, track1, track2, with_category: bool = True):  # noqa pylint: disable=invalid-name
+    def assertNotEqualTracks(self, track1, track2, msg=None, with_category: bool = True):  # noqa pylint: disable=invalid-name
         """both tracks must be different. We test more than necessary for better test coverage."""
-        self.assertNotEqual(track1.key(with_category), track2.key(with_category))
-        self.assertFalse(track1.points_equal(track2))
-        self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml())
+        self.assertNotEqual(track1.key(with_category), track2.key(with_category), msg)
+        self.assertFalse(track1.points_equal(track2), msg)
+        self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml(), msg)
 
-    def assertTrackFileContains(self, track, string):  # noqa pylint: disable=invalid-name
+    def assertTrackFileContains(self, track, string, msg=None):  # noqa pylint: disable=invalid-name
         """Assert that string is in the physical file. Works only for Directory backend."""
         with open(track.backend.gpx_path(track.id_in_backend)) as trackfile:
             data = trackfile.read()
-        self.assertIn(string, data)
+        self.assertIn(string, data, msg)
 
     def setup_backend(  # pylint: disable=too-many-arguments
             self, cls_, username: str = None, url: str = None, count: int = 0,
