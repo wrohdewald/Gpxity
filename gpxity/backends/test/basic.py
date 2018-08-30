@@ -75,6 +75,14 @@ class BasicTest(unittest.TestCase):
         self.logger.debug('%s seconds ', timedelta.seconds)
         logging.shutdown()
 
+    @contextmanager
+    def subTest(self, name, **params):  # noqa pylint: disable=arguments-differ
+        """With pytest, subTest does not do much. At least print the name."""
+        if not isinstance(name, str):
+            name = name.__name__
+        self.logger.debug('subTest %s', name)
+        yield super(BasicTest, self).subTest(' ' + name, **params)
+
     @staticmethod
     def _get_gpx_from_test_file(name: str):
         """get data from a predefined gpx file.

@@ -55,7 +55,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             self.logger.debug('%s %s', cls, cls.supported)
             self.logger.debug('%s %s', cls, expect_unsupported[cls])
-            with self.subTest(' {}'.format(cls.__name__)):
+            with self.subTest(cls):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
                 self.assertEqual(sorted(cls.supported | expect_unsupported[cls]), sorted(cls.full_support))
 
@@ -64,7 +64,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'write' not in cls.supported:
                 continue
-            with self.subTest(' {}'.format(cls.__name__)):
+            with self.subTest(cls):
                 can_remove = 'remove' in cls.supported
                 with self.temp_backend(cls, cleanup=can_remove, clear_first=can_remove) as backend:
                     track = Track()
@@ -93,7 +93,7 @@ class TestBackends(BasicTest):
         """What happens if we save the same track twice?."""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported and 'write' in cls.supported:
-                with self.subTest(' {}'.format(cls.__name__)):
+                with self.subTest(cls):
                     with self.temp_backend(cls) as backend:
                         track = self.create_test_track()
                         backend.add(track)
@@ -113,7 +113,7 @@ class TestBackends(BasicTest):
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
         for cls in self._find_backend_classes():
-            with self.subTest(' {}'.format(cls.__name__)):
+            with self.subTest(cls):
                 with self.assertRaises(KeyError):
                     self.setup_backend(cls, username='wrong_user')
 
@@ -122,7 +122,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'scan' not in cls.supported:
                 continue
-            with self.subTest(' {}'.format(cls.__name__)):
+            with self.subTest(cls):
                 if not issubclass(cls, Directory):
                     with self.assertRaises(cls.BackendException):
                         self.setup_backend(cls, username='wrong_password')
@@ -144,7 +144,7 @@ class TestBackends(BasicTest):
                 return 'time {} is before {}'.format(track.time, '2016-09-05')
             return None
         cls = Directory
-        with self.subTest(' {}'.format(cls.__name__)):
+        with self.subTest(cls):
             with self.temp_backend(cls, count=3) as backend:
                 for idx, _ in enumerate(backend):
                     _.adjust_time(datetime.timedelta(hours=idx))
@@ -167,7 +167,7 @@ class TestBackends(BasicTest):
         """Test creation of a backend."""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported and 'get_time' in cls.supported:
-                with self.subTest(' {}'.format(cls.__name__)):
+                with self.subTest(cls):
                     with self.temp_backend(cls, count=3) as backend:
                         self.assertEqual(len(backend), 3)
                         first_time = backend.get_time()
@@ -181,7 +181,7 @@ class TestBackends(BasicTest):
         """If we change title, description, public, category in track, is the backend updated?."""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
-                with self.subTest(' {}'.format(cls.__name__)):
+                with self.subTest(cls):
                     with self.temp_backend(cls, count=1, category='Horse riding') as backend:
                         track = backend[0]
                         first_public = track.public
@@ -231,7 +231,7 @@ class TestBackends(BasicTest):
         for cls in self._find_backend_classes():
             if 'write' not in cls.supported or 'scan' not in cls.supported:
                 continue
-            with self.subTest(' {}'.format(cls.__name__)):
+            with self.subTest(cls):
                 is_mmt = cls.__name__ == 'MMT'
                 with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt) as backend:
                     if not backend:
@@ -271,7 +271,7 @@ class TestBackends(BasicTest):
         tstdescr = 'DESCRIPTION with ' + self.unicode_string1 + ' and ' + self.unicode_string2
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
-                with self.subTest(' {}'.format(cls.__name__)):
+                with self.subTest(cls):
                     with self.temp_backend(cls, count=1) as backend:
                         backend2 = self.clone_backend(backend)
                         track = backend[0]
@@ -310,7 +310,7 @@ class TestBackends(BasicTest):
         """two tracks having the same title."""
         for cls in self._find_backend_classes():
             if 'remove' in cls.supported:
-                with self.subTest(' {}'.format(cls.__name__)):
+                with self.subTest(cls):
                     with self.temp_backend(cls, count=2) as backend:
                         backend[0].title = 'TITLE'
                         backend[1].title = 'TITLE'
@@ -325,7 +325,7 @@ class TestBackends(BasicTest):
             local.add(track)
             for cls in self._find_backend_classes():
                 if 'remove' in cls.supported:
-                    with self.subTest(' {}'.format(cls.__name__)):
+                    with self.subTest(cls):
                         with self.temp_backend(cls) as backend:
                             backend.merge(local)
                             for _ in backend:
