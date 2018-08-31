@@ -81,8 +81,13 @@ class BasicTest(unittest.TestCase):
             os.mkdir(path)
         Directory.prefix = path
 
+        if not Mailer.is_disabled():
+            self.start_mailserver()
+
     def tearDown(self):  # noqa
         """Check if there are still /tmp/gpxitytest.* directories."""
+        if not Mailer.is_disabled():
+            self.stop_mailserver()
         os.rmdir(Directory.prefix)
         timedelta = datetime.datetime.now() - self.start_time
         self.logger.debug('%s seconds ', timedelta.seconds)
@@ -335,6 +340,20 @@ class BasicTest(unittest.TestCase):
             yield
         finally:
             process.kill()
+
+    def start_mailserver(self):
+        """Start an smptd server for mail testing."""
+        self.mailserver_process = Popen(
+            'aiosmtpd -u -n -d'.split(),
+            stdout=open('{}/smtpd_stdout'.format(Directory.prefix), 'w'),
+            stderr=open('{}/smtpd_stderr'.format(Directory.prefix), 'w'))
+        time.sleep(1)  # give the server time to start
+
+    def stop_mailserver(self):
+        """Stop the smtp server for mail testing."""
+        self.mailserver_process.kill()
+        os.remove('{}/smtpd_stdout'.format(Directory.prefix))
+        os.remove('{}/smtpd_stderr'.format(Directory.prefix))
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments

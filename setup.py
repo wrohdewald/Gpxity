@@ -62,6 +62,6 @@ setup(
     },
     extras_require={
         'WPTrackserver': ['mysqlclient'],
-        'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest'],
+        'develop': ['coverage', 'sphinx', 'sphinx-autodoc-annotation', 'pytest', 'aiosmtpd'],
     }
 )

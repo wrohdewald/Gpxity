@@ -89,7 +89,7 @@ class MailQueue:
             if not key.endswith('.gpx'):
                 key += '.gpx'
             mail.add_attachment(track.to_xml(), filename=key)
-        with smtplib.SMTP(self.mailer.config.get('Smtp', 'localhost')) as smtp_server:
+        with smtplib.SMTP(self.mailer.config.get('Smtp', 'localhost'), port=8025) as smtp_server:
             smtp_server.send_message(mail)
         self.last_sent_time = datetime.datetime.now()
         self.mailer.history.append('to {}: {}'.format(mail['to'], mail['subject']))
