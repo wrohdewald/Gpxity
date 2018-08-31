@@ -62,11 +62,11 @@ class BasicTest(unittest.TestCase):
 
         if not os.path.exists(path):
             os.mkdir(path)
+        Directory.prefix = path
 
     def tearDown(self):  # noqa
         """Check if there are still /tmp/gpxitytest.* directories."""
-        must_be_empty = tempfile.mkdtemp(prefix=Directory.prefix)
-        os.rmdir(must_be_empty)
+        os.rmdir(Directory.prefix)
         timedelta = datetime.datetime.now() - self.start_time
         self.logger.debug('%s seconds ', timedelta.seconds)
         logging.shutdown()
