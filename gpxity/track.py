@@ -11,6 +11,7 @@ import datetime
 from contextlib import contextmanager
 from functools import total_ordering
 import weakref
+from copy import deepcopy
 
 # This code would speed up parsing GPX by about 30%. When doing
 # that, GPX will only return str instead of datetime for times.
@@ -103,6 +104,7 @@ class Track:
         self._batch_changes = False
         self.__category = self.legal_categories[0]
         self.__public = False
+        self._ids = dict()
         self.__id_in_backend = None
         self.__backend = None
         self._loaded = False
@@ -144,6 +146,11 @@ class Track:
         """
         return self.__id_in_backend
 
+    def __add_to_ids(self, ident):
+        """Add an id to Track.ids."""
+        if self.backend is not None and ident is not None:
+            self._ids[self.backend.identifier()] = ident
+
     @id_in_backend.setter
     def id_in_backend(self, value: str) ->None:
         """Change the id in the backend. Currently supported only by Directory.
@@ -162,6 +169,7 @@ class Track:
         if self.__is_decoupled:
             # internal use
             self.__id_in_backend = value
+            self.__add_to_ids(value)
         else:
             if not self.__id_in_backend:
                 raise Exception('Cannot set id_in_backend for yet unsaved track {}'.format(self))
@@ -238,6 +246,7 @@ class Track:
         result = Track(gpx=self.gpx.clone())
         result.category = self.category
         result.public = self.public
+        result._ids = deepcopy(self._ids)  # pylint: disable=protected-access
         return result
 
     def _rewrite(self):
@@ -424,6 +433,7 @@ class Track:
         if (self.backend is not None and self.id_in_backend and not self._loaded
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)  # pylint: disable=protected-access, no-member
+            self.__add_to_ids(self.id_in_backend)
             self._loaded = True
         if not self.__is_decoupled:
             self.__resolve_header_data()
@@ -437,6 +447,8 @@ class Track:
                     setattr(self, key, value)
                 elif key in ('time', 'distance'):
                     pass
+                elif key == 'ids':
+                    self._ids = value
                 else:
                     raise Exception('Unhandled header_data: {}/{}'.format(key, value))
             self._header_data.clear()
@@ -468,7 +480,7 @@ class Track:
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
-    def _decode_keywords(self, data, into_header_data: bool = False):
+    def _decode_keywords(self, data, into_header_data: bool = False):  # noqa
         """'self.keywords' is 1:1 as parsed from xml.
 
         Here we extract our special keywords Category: and Status:
@@ -480,6 +492,7 @@ class Track:
         """
         # pylint: disable=too-many-branches
         gpx_keywords = list()
+        ids = dict()
         if isinstance(data, str):
             data = [x.strip() for x in data.split(', ')]
         if data is not None:
@@ -492,6 +505,10 @@ class Track:
                         self._header_data['category'] = value
                     elif what == 'Status':
                         self._header_data['public'] = value == 'public'
+                    elif what == 'Id':
+                        _ = value.split('/')
+                        backend_name = '/'.join(_[:-1])
+                        ids[backend_name] = _[-1]
                     else:
                         gpx_keywords.append(keyword)
                 else:
@@ -499,14 +516,22 @@ class Track:
                         self.category = value
                     elif what == 'Status':
                         self.public = value == 'public'
+                    elif what == 'Id':
+                        _ = value.split('/')
+                        backend_name = '/'.join(_[:-1])
+                        ids[backend_name] = _[-1]
                     else:
                         gpx_keywords.append(keyword)
         if into_header_data:
             self._header_data['keywords'] = sorted(gpx_keywords)
+            self._header_data['ids'] = ids
         else:
             if 'keywords' in self._header_data:
                 del self._header_data['keywords']
             self.__gpx.keywords = ', '.join(sorted(gpx_keywords))
+            if 'ids' in self._header_data:
+                del self._header_data['ids']
+            self._ids = ids
 
     def _encode_keywords(self) ->str:
         """Add our special keywords Category and Status.
@@ -518,6 +543,9 @@ class Track:
         result = self.keywords
         result.append('Category:{}'.format(self.category))
         result.append('Status:{}'.format('public' if self.public else 'private'))
+        for key, value in self.ids.items():
+            # TODO: encode the , to something else
+            result.append('Id:{}/{}'.format(key, value))
         return ', '.join(result)
 
     def parse(self, indata):
@@ -707,7 +735,7 @@ class Track:
     @staticmethod
     def _check_keyword(keyword):
         """Must not be one of our internally used codes."""
-        internal = (('Category', 'category'), ('Status', 'public'))
+        internal = (('Category', 'category'), ('Status', 'public'), ('Id', 'ids'))
         for internal_kw, attr in internal:
             if keyword.startswith(internal_kw + ':'):
                 raise Exception('Do not use {} directly, use Track.{}'.format(internal_kw, attr))
@@ -1321,3 +1349,21 @@ class Track:
             if start_time_delta == end_time_delta:
                 return start_time_delta
         return None
+
+    @property
+    def ids(self) ->dict:
+        """Return ids for all backends where this track has already been.
+
+        This is a dict. key is the name of the backend, value is the track id within.
+        You can modify it but your changes will never be saved.
+
+        Returns:
+            the dict
+
+        """
+        if 'ids' in self._header_data:
+            result = self._header_data['ids']
+        else:
+            self._load_full()
+            result = self._ids
+        return deepcopy(result)

@@ -325,6 +325,8 @@ class Utility:
                         raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
                 if not isinstance(self.destination, Track) and not self.options.copy:
                     logging.debug('collecting tracks from destination %s', self.destination.identifier() or '.')
+            if hasattr(self.options, 'id_from_backend') and self.options.id_from_backend:
+                self.source = Backend.instantiate(self.options.id_from_backend)
 
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
@@ -393,6 +395,7 @@ class Utility:
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
             (self.options.time, 'Time', lambda x: x.time, '{}', datetime.datetime),
             (self.options.category, 'Category', lambda x: x.category),
+            (self.options.ids, 'Ids', lambda x: ','.join(x.ids)),
             (self.options.keywords, 'Keywords', lambda x: ','.join(y for y in x.keywords)),
             (self.options.distance > 0, 'Distance', lambda x: x.distance(), '{:>8.3f}km', float),
             (self.options.points, 'Points', lambda x: x.gpx.get_track_points_no(), '{:>6}', int),
@@ -507,7 +510,13 @@ class Utility:
                 _.title = _.id_in_backend
             if self.options.id_from_title:
                 _.id_in_backend = _.title
-            if self.options.id_from_time:
+            elif self.options.id_from_backend:
+                backend_id = self.source.identifier()
+                if backend_id.endswith('/'):
+                    backend_id = backend_id[:-1]
+                new_id = _.ids[backend_id]
+                _.id_in_backend = new_id
+            elif self.options.id_from_time:
                 if _.time:
                     _.id_in_backend = str(_.time).replace(' ', '_')
             result_lines.extend(_.fix(orux24=self.options.orux24, jumps=self.options.jumps))
@@ -760,6 +769,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                 action='store_true', default=False)
         fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
                                 action='store_true', default=False)
+        fix_parser.add_argument('--id-from-backend', help='use last known id for a track in BACKEND')
         self.add_multi_source(fix_parser)
 
         ls_parser = self.subparsers.add_parser(
@@ -783,6 +793,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         ls_parser.add_argument('--title', help='show the title',
                                action='store_true', default=False)
         ls_parser.add_argument('--category', help='show the track type',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--ids', help='show the ids',
                                action='store_true', default=False)
         ls_parser.add_argument('--time', help='show the time',
                                action='store_true', default=False)
@@ -902,7 +914,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             if not self.options.source:
                 self.options.source = [self.options.destination]
         elif self.options.func == self.fix:
-            exclusive = ('id_from_title', 'title_from_id')
+            exclusive = ('id_from_title', 'title_from_id', 'id_from_backend')
             if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
                 logging.error('gpxdo: only one out of {} is allowed'.format(', '.join(exclusive).replace('_', '-')))
         if self.options.only_kw:
