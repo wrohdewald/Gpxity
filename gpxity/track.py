@@ -706,11 +706,11 @@ class Track:
 
     @staticmethod
     def _check_keyword(keyword):
-        """Must not be Category: or Status:."""
-        if keyword.startswith('Category:'):
-            raise Exception('Do not use this directly,  use Track.category')
-        if keyword.startswith('Status:'):
-            raise Exception('Do not use this directly,  use Track.public')
+        """Must not be one of our internally used codes."""
+        internal = (('Category', 'category'), ('Status', 'public'))
+        for internal_kw, attr in internal:
+            if keyword.startswith(internal_kw + ':'):
+                raise Exception('Do not use {} directly, use Track.{}'.format(internal_kw, attr))
         if ',' in keyword:
             raise Exception('No comma allowed within a keyword')
 
