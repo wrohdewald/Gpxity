@@ -98,7 +98,9 @@ class BasicTest(unittest.TestCase):
         """With pytest, subTest does not do much. At least print the name."""
         if not isinstance(name, str):
             name = name.__name__
-        self.logger.debug('subTest %s', name)
+        _ = '{} subTest {}: {}'.format('-' * 10, self.id().split('.')[-1], name)
+        _ += '-' * (80 - len(_))
+        self.logger.debug(_)
         yield super(BasicTest, self).subTest(' ' + name, **params)
 
     @staticmethod
