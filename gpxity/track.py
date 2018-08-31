@@ -343,15 +343,15 @@ class Track:
 
         """
         # pylint: disable=protected-access
-        had_backend = self.__backend is not None
-        prev_value = self.__backend._decoupled if had_backend else False
-        if had_backend:
-            self.__backend._decoupled = True
+        from_backend = self.__backend
+        prev_value = from_backend._decoupled if from_backend is not None else None
+        if from_backend is not None:
+            from_backend._decoupled = True
         try:
             yield
         finally:
-            if had_backend and self.__backend is not None:
-                self.__backend._decoupled = prev_value
+            if from_backend is not None:
+                from_backend._decoupled = prev_value
 
     @property
     def __is_decoupled(self):

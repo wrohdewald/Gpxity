@@ -160,7 +160,7 @@ class Backend:
 
     @contextmanager
     def _decouple(self):
-        """Context manager: disable automic synchronization with the backend.
+        """Context manager: disable automic synchronization for the backend.
 
         In that state, automatic writes of changes into
         the backend are disabled, and if you access attributes which

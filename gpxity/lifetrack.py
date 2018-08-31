@@ -50,7 +50,8 @@ class LifetrackTarget:
             if 'lifetrack' in self.backend.supported:
                 if not self.__started:
                     new_ident = self.backend._lifetrack_start(self.track, self._prepare_points(points))
-                    with self.track._decouple():
+                    with self.backend._decouple():
+                        self.track._set_backend(self.backend)
                         self.track.id_in_backend = new_ident
                 else:
                     self.backend._lifetrack_update(self.track, self._prepare_points(points))
