@@ -146,7 +146,7 @@ class LsRow(dict):
                 track.moving_duration = datetime.timedelta(seconds=bounds.moving_time)
                 track.moving_distance = bounds.moving_distance / 1000.0
 
-            track.gpxdo_identifier = track.identifier()
+            track.gpxdo_identifier = str(track)
             if isinstance(track.backend, Directory):
                 if list(self.visible_headers()) == ['identifier']:
                     track.gpxdo_identifier += '.gpx'
@@ -315,7 +315,7 @@ class Utility:
                 for track in tracks:
                     msg = self.match(track)
                     if msg:
-                        logging.debug('%s: %s', track.identifier(), msg)
+                        logging.debug('%s: %s', track, msg)
                     else:
                         self.source_tracks.append(track)
             if hasattr(self.options, 'destination') and self.destination is None:
@@ -511,6 +511,7 @@ class Utility:
             if self.options.id_from_title:
                 _.id_in_backend = _.title
             elif self.options.id_from_backend:
+                # TODO: ist das so richtig????
                 backend_id = self.source.identifier()
                 new_id = _.ids[backend_id]
                 _.id_in_backend = new_id

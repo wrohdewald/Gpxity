@@ -671,7 +671,7 @@ class MMT(Backend):
         if old_ident:
             self._remove_ident(old_ident)
         track.id_in_backend = new_ident
-        self.logger.debug('%s fully written', track.identifier())
+        self.logger.debug('%s fully written', track)
         return new_ident
 
     @staticmethod

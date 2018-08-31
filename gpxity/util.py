@@ -91,7 +91,7 @@ def collect_tracks(sources):
         return [sources]
     result = list()
     for source in sources:
-        logging.debug('collecting tracks from %s', source.identifier() or '.')
+        logging.debug('collecting tracks from %s', source)
         if is_track(source):
             result.append(source)
         else:

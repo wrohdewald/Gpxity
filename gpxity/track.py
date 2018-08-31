@@ -267,7 +267,7 @@ class Track:
             return
         if 'write' not in self.backend.supported:
             # TODO: unittest
-            raise Exception('Rewriting {}: "write" is not supported'.format(self.identifier()))
+            raise Exception('Rewriting {}: "write" is not supported'.format(self))
         if not self.__is_decoupled and not self._batch_changes:
             with self._decouple():
                 self.backend._rewrite(self, self.__dirty)  # pylint: disable=protected-access
@@ -872,26 +872,12 @@ class Track:
         """The str.
 
         Returns:
-            the str
+            a unique full identifier
 
         """
-        return self.__repr__()
 
-    def identifier(self, long: bool = False) ->str:
-        """The full identifier with backend name and id_in_backend.
-
-        As used for gpxdo.
-
-        Args:
-            long: If True, give more info
-
-        Returns:
-            The unique full identifier
-
-        """
         if self.backend is None:
-            long_info = ' "{}" from {}'.format(self.title or 'untitled', self.time) if long else ''
-            return 'unsaved: {}'.format(long_info)
+            return 'unsaved: "{}" from {} id={}'.format(self.title or 'untitled', self.time, id(self))
         return self.backend.identifier() + '/' + (self.id_in_backend or 'unsaved')
 
     def key(self, with_category: bool = True, with_last_time: bool = True) ->str:
@@ -1133,7 +1119,7 @@ class Track:
                 self.public = True
         if other.category != self.category:
             msg.append('Category: {}={} wins over {}={}'.format(
-                other.identifier(), other.category, self.identifier(), self.category))
+                other, other.category, self, self.category))
         kw_src = set(other.keywords)
         kw_dst = set(self.keywords)
         if kw_src - kw_dst:
@@ -1161,12 +1147,10 @@ class Track:
             Messages about category has been done
 
         """
-        if self.identifier() == other.identifier():
-            raise Exception('Cannot merge identical tracks: {}'.format(self.identifier()))
+        if str(self) == str(other):
+            raise Exception('Cannot merge identical tracks: {}'.format(self))
         if self.points_hash() != other.points_hash():
-            raise Exception(
-                'Cannot merge {} into {}, points are different'.format(
-                    other.identifier(), self.identifier()))
+            raise Exception('Cannot merge {} into {}, points are different'.format(other, self))
         with self.batch_changes():
             msg = self.__merge_metadata(other, dry_run)
             changed_point_times = 0
@@ -1182,15 +1166,12 @@ class Track:
                     changed_point_times, self.gpx.get_track_points_no()))
         if msg:
             msg = ['     ' + x for x in msg]
-            msg.insert(0, 'Merged{} {}'.format(
-                ' and removed' if remove else '', other.identifier(long=True)))
-            msg.insert(1, '{}  into {}'.format(
-                ' ' * len(' and removed') if remove else '', self.identifier(long=True)))
+            msg.insert(0, 'Merged{} {!r}'.format(' and removed' if remove else '', other))
+            msg.insert(1, '{}  into {!r}'.format(' ' * len(' and removed') if remove else '', self))
         if remove:
             if len(msg) <= 2:
                 msg.append(
-                    'Removed duplicate {}: It was identical with {}'.format(
-                        other.identifier(long=True), self.identifier(long=True)))
+                    'Removed duplicate {!r}: It was identical with {!r}'.format(other, self))
             if not dry_run:
                 other.remove()
         return msg

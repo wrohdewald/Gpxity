@@ -385,7 +385,7 @@ class GPSIES(Backend):
             time.sleep(1)
             if ctr > 50:
                 raise Backend.BackendException(
-                    'GPSIES: _edit fails to change track {}: {}'.format(track.identifier(), msg))
+                    'GPSIES: _edit fails to change track {}: {}'.format(track, msg))
             time.sleep(2)
 
     def _yield_tracks(self):
@@ -459,7 +459,7 @@ class GPSIES(Backend):
                 'GPSies is my hobby website and is funded by advertising'
             )
             if not any(x in _ for x in ignore_messages):
-                self.logger.warning('%s: %s', self._current_track.identifier(), _)
+                self.logger.warning('%s: %s', self._current_track, _)
 
     def _remove_ident(self, ident: str):
         """remove on the server."""

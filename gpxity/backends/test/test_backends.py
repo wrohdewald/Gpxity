@@ -53,8 +53,6 @@ class TestBackends(BasicTest):
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
         for cls in Backend.all_backend_classes():
-            self.logger.debug('%s %s', cls, cls.supported)
-            self.logger.debug('%s %s', cls, expect_unsupported[cls])
             with self.subTest(cls):
                 self.assertTrue(cls.supported & expect_unsupported[cls] == set())
                 self.assertEqual(sorted(cls.supported | expect_unsupported[cls]), sorted(cls.full_support))

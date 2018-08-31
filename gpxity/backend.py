@@ -766,8 +766,7 @@ class Backend:
                 if not dry_run:
                     new_track = self.add(old_track)
                 result.append('{} {} -> {}'.format(
-                    'move' if remove else 'copy', old_track.identifier(),
-                    new_track.identifier() if new_track else self.identifier()))
+                    'move' if remove else 'copy', old_track, new_track if new_track else self))
                 if remove and not dry_run:
                     old_track.remove()
 
@@ -775,9 +774,9 @@ class Backend:
         for point_hash in src_dict.keys() & dst_dict.keys():
             target = dst_dict[point_hash]
             for source in src_dict[point_hash]:
-                if source.identifier() != target.identifier():
+                if str(source) != str(target):
                     # source == target is possible if we merge a backend with itself
-                    self.logger.debug('about to merge %s into %s', source.identifier(), target.identifier())
+                    self.logger.debug('about to merge %s into %s', source, target)
                     result.extend(target.merge(source, remove=remove, dry_run=dry_run))
         return result
 
@@ -936,7 +935,7 @@ class Backend:
             try:
                 result = result[track_id]
             except IndexError:
-                raise Exception('Backend {} does not have {}'.format(result.identifier(), track_id))
+                raise Exception('Backend {} does not have {}'.format(result, track_id))
 
         assert result is not None
         return result

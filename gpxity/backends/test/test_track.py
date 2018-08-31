@@ -360,7 +360,7 @@ class TrackTests(BasicTest):
             self.assertTrue(track1.points_equal(track2))
 
     @skipIf(*disabled(Directory))
-    def test_str(self):
+    def test_repr(self):
         """test __str__."""
         track = Track()
         self.assertNotIn('id:', str(track))
@@ -369,22 +369,22 @@ class TrackTests(BasicTest):
             track.title = 'Title'
             track.category = 'Running'
             track.add_points(self._random_points(10))
-            self.assertIn('Title', str(track))
-            self.assertIn('public' if track.public else 'private', str(track))
-            self.assertIn('Running', str(track))
-            self.assertIn(repr_timespan(track.time, track.last_time), str(track))
-            self.assertTrue(str(track).startswith('Track('))
-            self.assertTrue(str(track).endswith(')'))
+            self.assertIn('Title', repr(track))
+            self.assertIn('public' if track.public else 'private', repr(track))
+            self.assertIn('Running', repr(track))
+            self.assertIn(repr_timespan(track.time, track.last_time), repr(track))
+            self.assertTrue(repr(track).startswith('Track('))
+            self.assertTrue(repr(track).endswith(')'))
             track.add_points(self._random_points(count=5))
-            self.assertIn(' 15 points', str(track))
+            self.assertIn(' 15 points', repr(track))
             directory.add(track)
-            self.assertIn('id:', str(track))
+            self.assertIn('id:', repr(track))
 
-            # str(track) must not fully load it
+            # repr(track) must not fully load it
             clone = directory.clone()
-            self.assertIn(' 0 points', str(clone[0]))
+            self.assertIn(' 0 points', repr(clone[0]))
             self.assertEqual(clone[0].gpx.get_track_points_no(), 15)
-            self.assertIn(' 15 points', str(clone[0]))
+            self.assertIn(' 15 points', repr(clone[0]))
 
     def test_angle(self):
         """test Track.angle."""
