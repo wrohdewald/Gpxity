@@ -130,6 +130,17 @@ class Backend:
         self.timeout = timeout
         self._current_track = None
 
+    def _has_default_url(self) ->bool:
+        """Check if the backend has the default url.
+
+        Returns:
+            True if so
+
+        """
+        if self.default_url is None:
+            return False
+        return self.url == self.default_url or self.url == self.default_url + '/'
+
     def identifier(self, track=None) ->str:
         """Used for formatting strings. A unique identifier for every physical backend.
 
@@ -143,7 +154,7 @@ class Backend:
 
         """
         url = ''
-        if self.url != self.default_url:
+        if not self._has_default_url():
             url = self.url
             if not url.endswith('/'):
                 url += '/'
