@@ -94,21 +94,15 @@ class Lifetrack:
     """Life tracking. The data will be forwarded to all given backends.
 
     Args:
-        target_tracks: Those tracks will receive the lifetracking data.
-            This may be a list(Track) or a single track.
+        target_backends: Those tracks will receive the lifetracking data.
 
     """
 
     # pylint: disable=protected-access
 
-    def __init__(self, target_backends):
+    def __init__(self, *target_backends):
         """See class docstring."""
-        if isinstance(target_backends, list):
-            _ = target_backends
-        else:
-            _ = [target_backends]
-
-        self.targets = [LifetrackTarget(x) for x in _]
+        self.targets = [LifetrackTarget(x) for x in target_backends]
         self.id_in_server = None
 
     def update(self, points):

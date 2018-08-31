@@ -387,7 +387,7 @@ class TestBackends(BasicTest):
                 with TrackMMT(auth='gpxitytest') as uplink:
                     with Mailer(url=pwd.getpwuid(os.geteuid()).pw_name) as mailer:
                         mailer.min_interval = 5
-                        life = Lifetrack([uplink, mailer])
+                        life = Lifetrack(uplink, mailer)
                         points = self._random_points(100)
                         life.update(points[:50])
                         time.sleep(7)
