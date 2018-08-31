@@ -470,7 +470,7 @@ class TestBackends(BasicTest):
         dir_a.destroy()
         self.assertFalse(os.path.exists(a_url))
 
-        test_url = tempfile.mkdtemp() + '/'
+        test_url = tempfile.mkdtemp()
         dir_b = Directory(url=test_url, cleanup=True)
         self.assertFalse(dir_b.is_temporary)
         self.assertTrue(dir_b.url == test_url)
@@ -480,8 +480,6 @@ class TestBackends(BasicTest):
 
         dir_c = Directory(auth='gpxitytest2')
         auth_dir = Authenticate(dir_c, 'gpxitytest2').url
-        if not auth_dir.endswith('/'):
-            auth_dir += '/'
         self.assertFalse(dir_c.is_temporary)
         self.assertEqual(dir_c.url, auth_dir)
         dir_c.destroy()

@@ -512,8 +512,6 @@ class Utility:
                 _.id_in_backend = _.title
             elif self.options.id_from_backend:
                 backend_id = self.source.identifier()
-                if backend_id.endswith('/'):
-                    backend_id = backend_id[:-1]
                 new_id = _.ids[backend_id]
                 _.id_in_backend = new_id
             elif self.options.id_from_time:

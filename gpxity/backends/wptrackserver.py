@@ -71,8 +71,6 @@ class WPTrackserver(Backend):
         """See class docstring. The url is host."""
         super(WPTrackserver, self).__init__(url, auth, cleanup, timeout)
         self.logger.debug('new WPTrackserver:%s', id(self))
-        if self.url.endswith('/'):
-            self.url = self.url[:-1]
         try:
             user, database = self.config['Mysql'].split('@')
         except ValueError:

@@ -152,7 +152,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
         if self.path == '/':
             xml = self.homepage()
-        elif self.path.endswith('//explore/wall'):
+        elif self.path.endswith('/explore/wall'):
             # the client wants to find out legal categories
             xml = self.answer_with_categories()
         elif self.path.startswith('//assets/php/gpx.php'):

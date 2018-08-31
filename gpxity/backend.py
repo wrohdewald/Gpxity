@@ -69,7 +69,8 @@ class Backend:
             which normally results in a new ident for the track.
         full_support (set(str)): All possible values for the supported attribute.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
-            Every implementation may define its own default for url.
+            Every implementation may define its own default for url. Must never end with '/' except for
+            Directory(url='/').
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
         config: A Section with all entries in auth.cfg for this backend
@@ -116,6 +117,7 @@ class Backend:
         super(Backend, self).__init__()
         self.__tracks = list()
         self._tracks_fully_listed = False
+        self._check_url(url)
         self.url = url or ''
         self.config = dict()
         self.auth = None
@@ -129,8 +131,6 @@ class Backend:
         elif auth is not None:
             self.config = auth
             self.auth = (self.config.get('Username'), self.config.get('Password'))
-        if self.url and not self.url.endswith('/'):
-            self.url += '/'
         self._cleanup = cleanup
         self.__match = None
         self.logger = logging.getLogger(self.identifier())
@@ -146,7 +146,13 @@ class Backend:
         """
         if self.default_url is None:
             return False
-        return self.url == self.default_url or self.url == self.default_url + '/'
+        return self.url == self.default_url
+
+    @staticmethod
+    def _check_url(value):
+        """Check syntax for url."""
+        if value and value.endswith('/') and value != '/':
+            raise Backend.BackendException('url must not end with /')
 
     def identifier(self, track=None) ->str:
         """Used for formatting strings. A unique identifier for every physical backend.
@@ -162,9 +168,7 @@ class Backend:
         """
         url = ''
         if not self._has_default_url():
-            url = self.url
-            if not url.endswith('/'):
-                url += '/'
+            url = self.url + '/'
         result = '{}:{}{}/'.format(
             self.__class__.__name__.lower(),
             url,

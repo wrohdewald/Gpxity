@@ -374,7 +374,7 @@ class MMT(Backend):
         """
         if url is None:
             url = 'api/'
-        full_url = self.url + url
+        full_url = self.url + '/' + url
         headers = {'DNT': '1'}  # do not track
         if data:
             data = data.encode('ascii', 'xmlcharrefreplace')

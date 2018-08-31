@@ -123,8 +123,6 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring."""
         super(Mailer, self).__init__(url, auth, cleanup, timeout)
-        if self.url.endswith('/'):
-            self.url = self.url[:-1]
         self.history = list()
         self.subject_template = '{title} {distance}'
         self.min_interval = None
