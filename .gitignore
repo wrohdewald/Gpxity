@@ -4,6 +4,7 @@ __pycache__
 build
 dist
 gpxity/version.py
+gpxity_server.log
 Gpxity.egg-info
 **auth.cfg
 TODO

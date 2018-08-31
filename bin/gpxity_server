@@ -378,7 +378,7 @@ class Main:  # pylint: disable=too-few-public-methods
 
         logger = logging.getLogger()
         logger.setLevel(options.loglevel.upper())
-        logfile = logging.FileHandler(os.path.join(options.directory, 'gpxity_server.log'))
+        logfile = logging.FileHandler('gpxity_server.log')
         logfile.setLevel(logging.DEBUG)
         logger.addHandler(logfile)
         logging.getLogger('urllib3').level = logging.ERROR
