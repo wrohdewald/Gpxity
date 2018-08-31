@@ -395,8 +395,9 @@ class TestBackends(BasicTest):
                 if 'scan' in target.backend.supported:
                     self.assertIn(new_id, uplink)
                     self.assertSameTracks(uplink, serverdirectory)
-                with self.assertRaises(NotImplementedError):
-                    new_id in uplink  # pylint: disable=pointless-statement
+                else:
+                    with self.assertRaises(NotImplementedError):
+                        new_id in target.backend  # pylint: disable=pointless-statement
 
         with self.temp_backend(Directory) as serverdirectory:
             with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
