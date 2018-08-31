@@ -169,7 +169,7 @@ class Backend:
         url = ''
         if not self._has_default_url():
             url = self.url + '/'
-        result = '{}:{}{}/'.format(
+        result = '{}:{}{}'.format(
             self.__class__.__name__.lower(),
             url,
             self.auth[0] if self.auth and self.auth[0] else '')
