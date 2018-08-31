@@ -320,11 +320,10 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def lifetrackserver(directory, servername, port):
         """Start and ends a server for lifetrack testing."""
-        if Mailer.is_disabled():
-            raise Exception('gpxity_server cannot run because Mailer is disabled')
-        cmdline = 'gpxity_server --loglevel debug --servername {} --port {} --directory {} --mailto {}'.format(
-            servername, port, directory, pwd.getpwuid(os.geteuid()).pw_name)
-        logging.debug(cmdline)
+        cmdline = 'bin/gpxity_server --loglevel debug --servername {} --port {} --directory {}'.format(
+            servername, port, directory)
+        if not Mailer.is_disabled():
+            cmdline += ' --mailto {}'.format(pwd.getpwuid(os.geteuid()).pw_name)
         process = Popen(cmdline.split())
         try:
             time.sleep(1)  # give the server time to start

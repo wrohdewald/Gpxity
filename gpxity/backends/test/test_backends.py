@@ -379,32 +379,38 @@ class TestBackends(BasicTest):
                 life.update(self._random_points())
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
-    @skipIf(*disabled(Directory, TrackMMT, Mailer))
+    @skipIf(*disabled(Directory, TrackMMT))
     def test_lifetrack_local(self):
         """test life tracking against a local server."""
+        def track(*args):
+            life = Lifetrack(*args)
+            points = self._random_points(100)
+            life.update(points[:50])
+            time.sleep(7)
+            life.update(points[50:])
+            life.end()
+            for target in life.targets:
+                track = target.track
+                new_id = track.id_in_backend
+                if 'scan' in target.backend.supported:
+                    self.assertIn(new_id, uplink)
+                    self.assertSameTracks(uplink, serverdirectory)
+                with self.assertRaises(NotImplementedError):
+                    new_id in uplink  # pylint: disable=pointless-statement
+
         with self.temp_backend(Directory) as serverdirectory:
             with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
                 with TrackMMT(auth='gpxitytest') as uplink:
-                    with Mailer(url=pwd.getpwuid(os.geteuid()).pw_name) as mailer:
-                        mailer.min_interval = 5
-                        life = Lifetrack(uplink, mailer)
-                        points = self._random_points(100)
-                        life.update(points[:50])
-                        time.sleep(7)
-                        life.update(points[50:])
-                        life.end()
-                        for target in life.targets:
-                            track = target.track
-                            new_id = track.id_in_backend
-                            if 'scan' in target.backend.supported:
-                                self.assertIn(new_id, uplink)
-                                self.assertSameTracks(uplink, serverdirectory)
-                        with self.assertRaises(NotImplementedError):
-                            new_id in uplink  # pylint: disable=pointless-statement
-                        self.assertEqual(len(mailer.history), 3)
-                        self.assertIn('Lifetracking starts', mailer.history[0])
-                        self.assertIn('Lifetracking continues', mailer.history[1])
-                        self.assertIn('Lifetracking ends', mailer.history[2])
+                    if Mailer.is_disabled():
+                        track(uplink)
+                    else:
+                        with Mailer(url=pwd.getpwuid(os.geteuid()).pw_name) as mailer:
+                            mailer.min_interval = 5
+                            track(uplink, mailer)
+                            self.assertEqual(len(mailer.history), 3)
+                            self.assertIn('Lifetracking starts', mailer.history[0])
+                            self.assertIn('Lifetracking continues', mailer.history[1])
+                            self.assertIn('Lifetracking ends', mailer.history[2])
 
     def test_backend_dirty(self):
         """Track._dirty."""

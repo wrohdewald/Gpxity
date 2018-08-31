@@ -269,7 +269,8 @@ class MMTHandler(BaseHTTPRequestHandler):
         track = Track()
         track.parse(parsed['gpx_file'])
         self.server.server_directory.add(track)
-        self.server.mailer.add(track)
+        if self.server.mailer:
+            self.server.mailer.add(track)
         return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
 
     def xml_start_activity(self, parsed) ->str:
@@ -281,7 +282,10 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         if self.server.life:
             raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.server.life))
-        self.server.life = Lifetrack(self.server.server_directory, self.server.mailer)
+        if self.server.mailer is not None:
+            self.server.life = Lifetrack(self.server.server_directory, self.server.mailer)
+        else:
+            self.server.life = Lifetrack(self.server.server_directory)
         if 'title' in parsed:
             self.server.life.set_title(parsed['title'])
         if 'privicity' in parsed:
@@ -343,8 +347,11 @@ class LifeServerMMT:  # pylint: disable=too-few-public-methods
         httpd.gpxdo_options = options
         # define the directory in auth.cfg, using the Url=value
         httpd.server_directory = ServerDirectory(url=options.directory)
-        httpd.mailer = Mailer(url=options.mailto)
-        httpd.mailer.min_interval = options.mail_interval
+        if options.mailto:
+            httpd.mailer = Mailer(url=options.mailto)
+            httpd.mailer.min_interval = options.mail_interval
+        else:
+            httpd.mailer = None
         httpd.life = None
         httpd.logger = logger
         httpd.serve_forever()
@@ -362,7 +369,7 @@ class Main:  # pylint: disable=too-few-public-methods
             help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
         parser.add_argument('--servername', help='the name of this server', required=True)
         parser.add_argument('--port', help='listen on PORT', type=int, required=True)
-        parser.add_argument('--mailto', help='mail new tracks to MAILTO', required=True)
+        parser.add_argument('--mailto', help='mail new tracks to MAILTO', default=None)
         parser.add_argument('--mail-interval', help='only mail every X seconds, default is 1800', type=int, default=1800)
         parser.add_argument('--loglevel', help='set the loglevel', choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
