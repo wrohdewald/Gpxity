@@ -892,7 +892,7 @@ class Track:
         if self.backend is None:
             long_info = ' "{}" from {}'.format(self.title or 'untitled', self.time) if long else ''
             return 'unsaved: {}'.format(long_info)
-        return self.backend.identifier(self)
+        return self.backend.identifier() + '/' + (self.id_in_backend or 'unsaved')
 
     def key(self, with_category: bool = True, with_last_time: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but sufficiently safe IMHO.

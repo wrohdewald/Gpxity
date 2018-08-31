@@ -154,13 +154,10 @@ class Backend:
         if value and value.endswith('/') and value != '/':
             raise Backend.BackendException('url must not end with /')
 
-    def identifier(self, track=None) ->str:
+    def identifier(self) ->str:
         """Used for formatting strings. A unique identifier for every physical backend.
 
         Two Backend() instances pointing to the same physical backend have the same identifier.
-
-        Args:
-            track: If given, add it to the identifier.
 
         Returns:
             A unique identifier
@@ -173,10 +170,6 @@ class Backend:
             self.__class__.__name__.lower(),
             url,
             self.auth[0] if self.auth and self.auth[0] else '')
-        if track:
-            if not result.endswith('/'):
-                result += '/'
-            result += track.id_in_backend
         return result
 
     @property
