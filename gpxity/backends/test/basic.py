@@ -312,7 +312,6 @@ class BasicTest(unittest.TestCase):
             time.sleep(1)  # give the server time to start
             yield
         finally:
-            logging.debug('killing gpxity_server')
             process.kill()
 
     @contextmanager
