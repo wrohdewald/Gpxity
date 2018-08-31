@@ -892,6 +892,7 @@ class Track:
                 tracks for equality like in unittests because values can change
                 and information can get lost while copying between different
                 backends
+            with_last_time: If False, do not use self.last_time.
 
         Returns:
             a string with selected attributes in printable form.
