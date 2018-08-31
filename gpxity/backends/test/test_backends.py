@@ -412,36 +412,37 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes():
             if 'scan' not in cls.supported or 'write' not in cls.supported:
                 continue
-            with self.temp_backend(cls, count=1) as backend:
-                track = backend[0]
-                with self.assertRaises(Exception):
-                    track._dirty = False
-                self.assertFalse(track._dirty)
-                # version 1.1 should perhaps be a test on its own, see Track.to_xml()
-                track.category = 'Driving'
-                track._dirty = 'gpx'
-                self.assertFalse(track._dirty)
-                backend2 = backend.clone()
-                self.assertEqual(backend2[0].category, 'Driving')
-                b2track = backend2[0]
-                self.assertEqual(b2track.category, 'Driving')
-                b2track.title = 'another new title'
-                self.assertEqual(b2track.category, 'Driving')
-                self.assertEqual(backend2[0].category, 'Driving')
-                track.title = 'new title'
-                self.assertEqual(track.category, 'Driving')
-                backend3 = backend.clone()
-                self.assertEqual(backend3[0].category, 'Driving')
-                self.assertFalse(track._dirty)
-                with track.batch_changes():
-                    track.title = 'new 2'
-                    self.assertEqual(track._dirty, ['title'])
-                self.assertFalse(track._dirty)
-                with track.batch_changes():
-                    track.title = 'new 3'
-                    track.keywords = ['Something', 'something xlse']
-                backend4 = backend.clone()
-                self.assertEqual(backend4[0].title, 'new 3')
+            with self.subTest(cls):
+                with self.temp_backend(cls, count=1) as backend:
+                    track = backend[0]
+                    with self.assertRaises(Exception):
+                        track._dirty = False
+                    self.assertFalse(track._dirty)
+                    # version 1.1 should perhaps be a test on its own, see Track.to_xml()
+                    track.category = 'Driving'
+                    track._dirty = 'gpx'
+                    self.assertFalse(track._dirty)
+                    backend2 = backend.clone()
+                    self.assertEqual(backend2[0].category, 'Driving')
+                    b2track = backend2[0]
+                    self.assertEqual(b2track.category, 'Driving')
+                    b2track.title = 'another new title'
+                    self.assertEqual(b2track.category, 'Driving')
+                    self.assertEqual(backend2[0].category, 'Driving')
+                    track.title = 'new title'
+                    self.assertEqual(track.category, 'Driving')
+                    backend3 = backend.clone()
+                    self.assertEqual(backend3[0].category, 'Driving')
+                    self.assertFalse(track._dirty)
+                    with track.batch_changes():
+                        track.title = 'new 2'
+                        self.assertEqual(track._dirty, ['title'])
+                    self.assertFalse(track._dirty)
+                    with track.batch_changes():
+                        track.title = 'new 3'
+                        track.keywords = ['Something', 'something xlse']
+                    backend4 = backend.clone()
+                    self.assertEqual(backend4[0].title, 'new 3')
 
     def test_directory_dirty(self):
         """test gpx._dirty where id_in_backend is not the default.
@@ -494,26 +495,27 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes():
             if 'write' not in cls.supported or 'scan' not in cls.supported:
                 continue
-            with self.temp_backend(cls, count=1) as backend:
-                track = backend[0]
-                backend2 = backend.clone()
-                self.assertEqualTracks(track, backend2[0], with_category=False)
-                test_values = {
-                    'title': ('default title', 'Täst Titel'),
-                    'description': ('default description', 'Täst description'),
-                    'category': ('Driving', 'Rowing'), 'public': (True, False)}
-                if cls is not GPSIES:
-                    test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
-                for main in test_values:
-                    for key, (default_value, _) in test_values.items():
-                        if key != main:
-                            setattr(track, key, default_value)
-                    setattr(track, main, test_values[main][1])
-                    backend2.scan()
-                    for key, (default_value, _) in test_values.items():
-                        if key != main:
-                            self.assertEqual(getattr(backend2[0], key), default_value)
-                    self.assertEqual(getattr(backend2[0], main), test_values[main][1])
+            with self.subTest(cls):
+                with self.temp_backend(cls, count=1) as backend:
+                    track = backend[0]
+                    backend2 = backend.clone()
+                    self.assertEqualTracks(track, backend2[0], with_category=False)
+                    test_values = {
+                        'title': ('default title', 'Täst Titel'),
+                        'description': ('default description', 'Täst description'),
+                        'category': ('Driving', 'Rowing'), 'public': (True, False)}
+                    if cls is not GPSIES:
+                        test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
+                    for main in test_values:
+                        for key, (default_value, _) in test_values.items():
+                            if key != main:
+                                setattr(track, key, default_value)
+                        setattr(track, main, test_values[main][1])
+                        backend2.scan()
+                        for key, (default_value, _) in test_values.items():
+                            if key != main:
+                                self.assertEqual(getattr(backend2[0], key), default_value)
+                        self.assertEqual(getattr(backend2[0], main), test_values[main][1])
 
     def test_keywords(self) ->None:
         """Test arbitrary keyword changes.
@@ -536,41 +538,42 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes():
             if 'write_add_keywords' not in cls.supported:
                 continue
-            with self.temp_backend(cls, count=1) as backend:
-                backend2 = backend.clone()
-                track = backend[0]
-                keywords = {
-                    backend._encode_keyword(x)  # pylint: disable=protected-access
-                    for x in self._random_keywords(count=50)}
-                for _ in range(20):
-                    self.assertEqual(current(), track.keywords)
-                    add_keywords = set(random.sample(keywords, random.randint(0, 30)))
-                    remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
-                    if not add_keywords & remove_keywords:
-                        continue
-                    expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
-                    track.add_keywords(add_keywords)
-                    self.assertEqual(current(), sorted(list(set(track.keywords) | add_keywords)))
-                    track.remove_keywords(remove_keywords)
-                    self.assertEqual(current(), sorted(expected_keywords))
-                    self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
-                    backend2.scan()
-                    self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
-                with track.batch_changes():
-                    for _ in range(50):
+            with self.subTest(cls):
+                with self.temp_backend(cls, count=1) as backend:
+                    backend2 = backend.clone()
+                    track = backend[0]
+                    keywords = {
+                        backend._encode_keyword(x)  # pylint: disable=protected-access
+                        for x in self._random_keywords(count=50)}
+                    for _ in range(20):
+                        self.assertEqual(current(), track.keywords)
                         add_keywords = set(random.sample(keywords, random.randint(0, 30)))
                         remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
                         if not add_keywords & remove_keywords:
                             continue
                         expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
                         track.add_keywords(add_keywords)
+                        self.assertEqual(current(), sorted(list(set(track.keywords) | add_keywords)))
                         track.remove_keywords(remove_keywords)
+                        self.assertEqual(current(), sorted(expected_keywords))
                         self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
-                backend2.scan()
-                self.assertEqual(
-                    backend2._get_current_keywords(backend2[0]),  # pylint: disable=protected-access
-                    backend2[0].keywords)
-                self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
+                        backend2.scan()
+                        self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
+                    with track.batch_changes():
+                        for _ in range(50):
+                            add_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                            remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                            if not add_keywords & remove_keywords:
+                                continue
+                            expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
+                            track.add_keywords(add_keywords)
+                            track.remove_keywords(remove_keywords)
+                            self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
+                    backend2.scan()
+                    self.assertEqual(
+                        backend2._get_current_keywords(backend2[0]),  # pylint: disable=protected-access
+                        backend2[0].keywords)
+                    self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
     @skipIf(*disabled(Directory))
     def test_legal_categories(self):
@@ -579,14 +582,15 @@ class TestBackends(BasicTest):
             for cls in (MMT, GPSIES, TrackMMT):
                 if cls.is_disabled():
                     continue
-                with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
-                    if cls is TrackMMT:
-                        if not Mailer.is_disabled():
-                            # gpxity_server needs Mailer
-                            with self.lifetrackserver(
-                                    servername='localhost', port=12398, directory=serverdirectory.url):
-                                downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
-                                self.assertEqual(sorted(backend.legal_categories), downloaded)
-                    else:
-                        downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
-                        self.assertEqual(sorted(backend.legal_categories), downloaded)
+                with self.subTest(cls):
+                    with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
+                        if cls is TrackMMT:
+                            if not Mailer.is_disabled():
+                                # gpxity_server needs Mailer
+                                with self.lifetrackserver(
+                                        servername='localhost', port=12398, directory=serverdirectory.url):
+                                    downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
+                                    self.assertEqual(sorted(backend.legal_categories), downloaded)
+                        else:
+                            downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
+                            self.assertEqual(sorted(backend.legal_categories), downloaded)
