@@ -10,6 +10,7 @@ Changelog
   * new: Track.ids and gpxdo fix --id-from-backend
   * new: gpxdo cp
   * new: Track.first_different_point()
+  * Track.merge() has new arg partial_tracks
 
 1.3.2 release 2018-08-19
 ------------------------

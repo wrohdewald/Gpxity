@@ -627,8 +627,32 @@ class TrackTests(BasicTest):
         track2.add_points(self._random_points(5))
         self.assertEqual(track1.gpx.get_track_points_no() + 5, track2.gpx.get_track_points_no())
         self.assertEqual(track1.first_different_point(track2), track1.gpx.get_track_points_no())
+        self.assertEqual(track2.first_different_point(track1), track1.gpx.get_track_points_no())
         points2 = list(track2.points())
         points2[2].latitude = 5
         self.assertEqual(track1.first_different_point(track2), 2)
         track2.gpx.tracks = list()
         self.assertEqual(track1.first_different_point(track2), 0)
+
+    def test_merge_partial_tracks(self):
+        """Test Track.merge(partial_tracks=True)."""
+
+        track1 = self.create_test_track()
+        track2 = track1.clone()
+        self.assertEqual(track1.first_different_point(track2), track1.gpx.get_track_points_no())
+
+        track2.add_points(self._random_points(5))
+        msg = track1.merge(track2, partial_tracks=True)
+        for _ in msg:
+            self.logger.debug(_)
+        self.assertEqual(track1.gpx.get_track_points_no(), track2.gpx.get_track_points_no())
+        self.assertEqual(track1.first_different_point(track2), track2.gpx.get_track_points_no())
+
+        points2 = track2.point_list()
+        points2[2].latitude = 5
+        with self.assertRaises(Exception) as context:
+            msg = track1.merge(track2, partial_tracks=True)
+        self.assertEqual(
+            str(context.exception),
+            'Cannot merge {} with 27 points into {} with 27 points, only the first 2 positions are identical'.format(
+                track2, track1))

@@ -1149,8 +1149,35 @@ class Track:
                 self.keywords = kw_src | kw_dst
         return msg
 
-    def merge(  # pylint: disable=unused-argument
-            self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:
+    def can_merge(self, other, partial_tracks: bool = False):
+        """Check if self and other are mergeable.
+
+        Returns: (bool, str)
+            a string explaing why this is not mergeable or None if mergeable
+
+        """
+        if str(self) == str(other):
+            return False, 'Cannot merge identical tracks {}'.format(self)
+        reason = None
+        self_points = self.gpx.get_track_points_no()
+        other_points = other.gpx.get_track_points_no()
+
+        same_point_count = self.first_different_point(other)
+
+        if partial_tracks:
+            reason = same_point_count < min([self_points, other_points])
+        else:
+            reason = len({same_point_count, self_points, other_points}) > 1
+        if reason:
+            return False, (
+                'Cannot merge {} with {} points into {} with {} points, '
+                'only the first {} positions are identical'.format(
+                    other, other_points, self, self_points, same_point_count))
+        return True, None
+
+    def merge(  # noqa pylint: disable=unused-argument
+            self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
+            partial_tracks: bool = False) ->list:
         """Merge other track into this one. The track points must be identical.
 
         If either is public, the result is public.
@@ -1163,26 +1190,34 @@ class Track:
             dry_run: if True, do not really apply the merge
             copy: This argument is ignored. It is only here to give Track.merge() and Backend.merge()
                 the same interface.
+            partial_tracks: merges other track
+                if either track starts with the other track
 
         Returns: list(str)
             Messages about category has been done
 
         """
-        if str(self) == str(other):
-            raise Exception('Cannot merge identical tracks: {}'.format(self))
-        if self.points_hash() != other.points_hash():
-            raise Exception('Cannot merge {} into {}, points are different'.format(other, self))
+        msg = []
+        mergable, _ = self.can_merge(other, partial_tracks)
+        if not mergable:
+            raise Exception(_)
         with self.batch_changes():
-            msg = self.__merge_metadata(other, dry_run)
+            if other.gpx.get_track_points_no() > self.gpx.get_track_points_no():
+                if not dry_run:
+                    self.gpx.tracks = deepcopy(other.gpx.tracks)
+                    self.rewrite()
+                msg.append('{} got entire gpx.tracks from {}'.format(self, other))
+            msg.extend(self.__merge_metadata(other, dry_run))  # pylint: disable=protected-access
             changed_point_times = 0
-            for self_point, other_point in zip(self.points(), other.points()):
+            other_points = list(other.points())
+            for self_point, other_point in zip(self.points(), other_points):
                 if not self_point.time:
                     if not dry_run:
                         self_point.time = other_point.time
                     changed_point_times += 1
             if changed_point_times:
                 if not dry_run:
-                    self._dirty = 'gpx'
+                    self.rewrite()
                 msg.append('Copied times for {} out of {} points'.format(
                     changed_point_times, self.gpx.get_track_points_no()))
         if msg:
