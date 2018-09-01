@@ -561,6 +561,14 @@ class Utility:
         """Sets the status."""
         self.set_public(False)
 
+    def copy(self):
+        """Copy"""
+        msg = self.destination.merge(
+            self.source_tracks, dry_run=self.options.dry_run, copy=True)
+        self.destination.flush()
+        for _ in msg:
+            logging.info(_)
+
     def merge(self):
         """Merge"""
         msg = self.destination.merge(
@@ -773,6 +781,18 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         ls_parser.add_argument('--warnings', help='show warnings',
                                action='store_true', default=False)
         self.add_multi_source(ls_parser)
+
+        cp_parser = self.subparsers.add_parser(
+            'cp', help="""
+            copy tracks. This can be much faster for remote backends because
+            tracks with the same points are not merged.""",
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        cp_parser.set_defaults(func=self.copy)
+        cp_parser.add_argument('--dry-run', help='only show what would change',
+                                  action='store_true', default=False)
+        self.add_multi_source(cp_parser)
+        self.add_destination(cp_parser)
 
         merge_parser = self.subparsers.add_parser(
             'merge', help="""
