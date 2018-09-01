@@ -156,7 +156,7 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
                 _ = data.split('|')[1].split('@')[0].strip()
                 self.result['category_from_title'] = ' '.join(_.split(' ')[:-2])
             except BaseException:
-                self.backend.logger.warning('%s: Cannot parse %s', self.backend.identifier(), data)
+                self.backend.logger.warning('%s: Cannot parse %s', self.backend, data)
                 self.result['category_from_title'] = ''
         if self.seeing_status:
             self.result['public'] = data.strip() != 'Only you can see this activity'
@@ -266,7 +266,7 @@ class MMT(Backend):
                 The session
 
         """
-        ident = self.identifier()
+        ident = str(self)
         if ident not in self._session:
             if not self.auth:
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
@@ -388,7 +388,7 @@ class MMT(Backend):
                 response = requests.post(
                     full_url, data=data, headers=headers, auth=self.auth, timeout=self.timeout)
         except requests.exceptions.ReadTimeout:
-            self.logger.error('%s: timeout for %s', self.identifier(), data)
+            self.logger.error('%s: timeout for %s', self, data)
             raise
         self._last_response = response  # for debugging
         if response.status_code != requests.codes.ok:  # pylint: disable=no-member
@@ -716,7 +716,7 @@ class MMT(Backend):
             # tags='TODO',
             unique_token='{}'.format(id(track)))
         result = result.find('activity_id').text
-        self.logger.error('%s: lifetracking started', self.identifier())
+        self.logger.error('%s: lifetracking started', self)
         return result
 
     def _lifetrack_update(self, track, points):
@@ -749,7 +749,8 @@ class MMT(Backend):
 
     def destroy(self):
         """also close session."""
+        # TODO: session/destroy are quite similar between MMT and GPSIES
         super(MMT, self).destroy()
-        ident = self.identifier()
+        ident = str(self)
         if ident in self._session:
             self._session[ident].close()

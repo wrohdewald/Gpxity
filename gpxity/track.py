@@ -149,7 +149,7 @@ class Track:
     def __add_to_ids(self, ident):
         """Add an id to Track.ids."""
         if self.backend is not None and ident is not None:
-            self._ids[self.backend.identifier()] = ident
+            self._ids[str(self.backend)] = ident
 
     @id_in_backend.setter
     def id_in_backend(self, value: str) ->None:
@@ -878,7 +878,11 @@ class Track:
 
         if self.backend is None:
             return 'unsaved: "{}" from {} id={}'.format(self.title or 'untitled', self.time, id(self))
-        return self.backend.identifier() + '/' + (self.id_in_backend or 'unsaved')
+        ident = self.id_in_backend or 'unsaved'
+        if str(self.backend) == '.':
+            # current directory
+            return ident
+        return '{}/{}'.format(self.backend, ident)
 
     def key(self, with_category: bool = True, with_last_time: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but sufficiently safe IMHO.

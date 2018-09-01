@@ -185,7 +185,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         self._write_all(track)
         self.flush()
 
-    def identifier(self) ->str:
+    def __str__(self) ->str:
         """A unique identifier.
 
         Returns:

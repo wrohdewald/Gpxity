@@ -139,16 +139,18 @@ class Directory(Backend):
         self._symlinks = defaultdict(list)
         self._load_symlinks()
 
-    def identifier(self) ->str:
-        """Used for formatting strings. Must be unique.
+    def __str__(self) ->str:
+        """Used for formatting strings. Must be unique within the process.
 
         Returns:
 
             a unique identifier"""
         result = self.url
         if result:
-            if result.startswith('./') or result == '.':
+            if result.startswith('./'):
                 result = result[2:]
+        else:
+            result = '.'
         return result
 
     @property

@@ -99,7 +99,7 @@ class Backend:
         'scan', 'remove', 'lifetrack', 'lifetrack_end', 'get_time', 'write', 'write_title', 'write_public',
         'write_category', 'write_description', 'write_add_keywords', 'write_remove_keywords')
 
-    # It is important that we have only one global session per identifier()
+    # It is important that we have only one global session
     # because gpsies.com seems to have several servers and their
     # synchronization is sometimes slower than expected. See
     # cookie "SERVERID".
@@ -133,7 +133,7 @@ class Backend:
             self.auth = (self.config.get('Username'), self.config.get('Password'))
         self._cleanup = cleanup
         self.__match = None
-        self.logger = logging.getLogger(self.identifier())
+        self.logger = logging.getLogger(str(self))
         self.timeout = timeout
         self._current_track = None
 
@@ -154,8 +154,8 @@ class Backend:
         if value and value.endswith('/') and value != '/':
             raise Backend.BackendException('url must not end with /')
 
-    def identifier(self) ->str:
-        """Used for formatting strings. A unique identifier for every physical backend.
+    def __str__(self) ->str:
+        """A unique identifier for every physical backend.
 
         Two Backend() instances pointing to the same physical backend have the same identifier.
 
@@ -695,7 +695,7 @@ class Backend:
         self._scan()
         return iter(self.__tracks)
 
-    def __eq__(self, other) ->bool:
+    def __eq__(self, other) ->bool:  # TODO: use str
         """True if both backends have the same tracks.
 
         Returns:
@@ -718,8 +718,7 @@ class Backend:
             if not dry_run:
                 new_track = self.add(old_track)
             result.append('{} {} -> {}'.format(
-                'blind move' if remove else 'blind copy', old_track.identifier(),
-                '' if dry_run else new_track.identifier()))
+                'blind move' if remove else 'blind copy', old_track, '' if dry_run else new_track))
             if remove and not dry_run:
                 old_track.remove()
         return result
@@ -757,7 +756,7 @@ class Backend:
             else:
                 src_dict[_].append(self_track)
         for _ in other_tracks:
-            if _.backend.identifier() != self.identifier():
+            if str(_.backend) != str(self):
                 src_dict[_.points_hash()].append(_)
 
         # 1. get all tracks existing only in other

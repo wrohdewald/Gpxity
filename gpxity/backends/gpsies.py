@@ -273,7 +273,7 @@ class GPSIES(Backend):
             The session
 
         """
-        ident = self.identifier()
+        ident = str(self)
         if ident not in self._session:
             if not self.auth:
                 raise Exception('{}: Needs authentication data'.format(ident))
@@ -414,7 +414,7 @@ class GPSIES(Backend):
             if raw_data.distance:
                 track._header_data['distance'] = raw_data.distance
             track._header_data['public'] = raw_data.public
-            if self.identifier() not in self._session:  # anonymous, no login
+            if str(self) not in self._session:  # anonymous, no login
                 track.public = True
             yield track
 

@@ -511,8 +511,7 @@ class Utility:
             if self.options.id_from_title:
                 _.id_in_backend = _.title
             elif self.options.id_from_backend:
-                # TODO: ist das so richtig????
-                backend_id = self.source.identifier()
+                backend_id = str(self.source)
                 new_id = _.ids[backend_id]
                 _.id_in_backend = new_id
             elif self.options.id_from_time:
