@@ -617,3 +617,18 @@ class TrackTests(BasicTest):
         track.parse(gpx_track.to_xml())
         self.assertNotIn('distance', track._header_data)  # pylint: disable=protected-access
         self.assertEqual(track.distance(), gpx_track.distance())
+
+    def test_first_different_point(self):
+        """Test Track.first_different_point."""
+
+        track1 = self.create_test_track()
+        track2 = track1.clone()
+        self.assertEqual(track1.first_different_point(track2), track1.gpx.get_track_points_no())
+        track2.add_points(self._random_points(5))
+        self.assertEqual(track1.gpx.get_track_points_no() + 5, track2.gpx.get_track_points_no())
+        self.assertEqual(track1.first_different_point(track2), track1.gpx.get_track_points_no())
+        points2 = list(track2.points())
+        points2[2].latitude = 5
+        self.assertEqual(track1.first_different_point(track2), 2)
+        track2.gpx.tracks = list()
+        self.assertEqual(track1.first_different_point(track2), 0)

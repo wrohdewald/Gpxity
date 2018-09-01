@@ -1032,6 +1032,23 @@ class Track:
             result %= 1e20
         return result
 
+    def first_different_point(self, other) ->int:
+        """Say how many starting points are identical.
+
+        Returns:
+            the index of the first different point
+
+        """
+        _ = -1
+        for _, (point1, point2) in enumerate(zip(self.points(), other.points())):
+            # GPXTrackPoint has no __eq__ and no working hash()
+            # those are only the most important attributes:
+            if point1.longitude != point2.longitude:
+                return _
+            if point1.latitude != point2.latitude:
+                return _
+        return _ + 1
+
     def points_equal(self, other) ->bool:
         """
         Compare points for same position.
