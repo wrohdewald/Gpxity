@@ -726,50 +726,6 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             epilog=self.help_epilog)
         self.subparsers = parser.add_subparsers()
 
-        mv_parser = self.subparsers.add_parser(
-            'mv', help='move sources to a destination backend',
-            parents=[self.common_parser, self.range_parser],
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-        mv_parser.set_defaults(func=self.move)
-        self.add_multi_source(mv_parser)
-        self.add_destination(mv_parser)
-
-        rm_parser = self.subparsers.add_parser(
-            'rm', help='remove tracks',
-            parents=[self.common_parser, self.range_parser],
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-        rm_parser.set_defaults(func=self.remove)
-        rm_parser.add_argument('--dry-run', help='only show what would be removed',
-                               action='store_true', default=False)
-        self.add_multi_source(rm_parser)
-
-        fix_parser = self.subparsers.add_parser(
-            'fix', help="""try to fix some GPX format bugs in tracks.
-                First BACKUP the tracks! This can destroy them!""",
-            parents=[self.common_parser, self.range_parser],
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-        fix_parser.set_defaults(func=self.fix)
-        fix_parser.add_argument(
-            '--orux24',
-            help="""BACKUP your tracks first! This can destroy them!
-            Try to fix old oruxmaps bug where the date jumps back by one day""",
-            action='store_true', default=False)
-        fix_parser.add_argument(
-            '--jumps',
-            help="""BACKUP your tracks first! This can destroy them!
-            Whenever the time jumps back or more than 30 minutes into the future
-            or when the distance speed between two points exceed 5km,
-            split into two segments at that point""",
-            action='store_true', default=False)
-        fix_parser.add_argument('--title-from-id', help='use id for title',
-                                action='store_true', default=False)
-        fix_parser.add_argument('--id-from-title', help='use title for id, works only for Directory',
-                                action='store_true', default=False)
-        fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
-                                action='store_true', default=False)
-        fix_parser.add_argument('--id-from-backend', help='use last known id for a track in BACKEND')
-        self.add_multi_source(fix_parser)
-
         ls_parser = self.subparsers.add_parser(
             'ls', help='list tracks', parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -818,6 +774,77 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         self.add_multi_source(ls_parser)
 
+        merge_parser = self.subparsers.add_parser(
+            'merge', help="""
+            merge tracks: If their trackpoints are identical, add metadata like name,
+            description or keywords from source to destination""",
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        merge_parser.set_defaults(func=self.merge)
+        merge_parser.add_argument('--dry-run', help='only show what would change',
+                                  action='store_true', default=False)
+        merge_parser.add_argument('--remove', help='remove merged tracks',
+                                  action='store_true', default=False)
+        merge_parser.add_argument(
+            '--copy', help='If the target is a backend, do not look for similar track. '
+            'Just copy. This is much faster for remote backends.',
+            action='store_true', default=False)
+        self.add_multi_source(merge_parser)
+        self.add_destination(merge_parser)
+
+        mv_parser = self.subparsers.add_parser(
+            'mv', help='move sources to a destination backend',
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        mv_parser.set_defaults(func=self.move)
+        self.add_multi_source(mv_parser)
+        self.add_destination(mv_parser)
+
+        rm_parser = self.subparsers.add_parser(
+            'rm', help='remove tracks',
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        rm_parser.set_defaults(func=self.remove)
+        rm_parser.add_argument('--dry-run', help='only show what would be removed',
+                               action='store_true', default=False)
+        self.add_multi_source(rm_parser)
+
+        diff_parser = self.subparsers.add_parser(
+            'diff', help="""
+            compare tracks between source and destination""",
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        diff_parser.set_defaults(func=self.diff)
+        self.add_multi_source(diff_parser, must_have=True)
+        self.add_destination(diff_parser)
+
+        fix_parser = self.subparsers.add_parser(
+            'fix', help="""try to fix some GPX format bugs in tracks.
+                First BACKUP the tracks! This can destroy them!""",
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        fix_parser.set_defaults(func=self.fix)
+        fix_parser.add_argument(
+            '--orux24',
+            help="""BACKUP your tracks first! This can destroy them!
+            Try to fix old oruxmaps bug where the date jumps back by one day""",
+            action='store_true', default=False)
+        fix_parser.add_argument(
+            '--jumps',
+            help="""BACKUP your tracks first! This can destroy them!
+            Whenever the time jumps back or more than 30 minutes into the future
+            or when the distance speed between two points exceed 5km,
+            split into two segments at that point""",
+            action='store_true', default=False)
+        fix_parser.add_argument('--title-from-id', help='use id for title',
+                                action='store_true', default=False)
+        fix_parser.add_argument('--id-from-title', help='use title for id, works only for Directory',
+                                action='store_true', default=False)
+        fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
+                                action='store_true', default=False)
+        fix_parser.add_argument('--id-from-backend', help='use last known id for a track in BACKEND')
+        self.add_multi_source(fix_parser)
+
         keyword_parser = self.define_attr_parser(
             'kw', helptext='add or remove keywords', func=self.keyword,
             arg_name='keywords', arg_help='keywords separated by commas')
@@ -843,33 +870,6 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             'public', helptext='set the status to public', func=self.set_public)
         self.define_attr_parser(
             'private', helptext='set the status to private', func=self.set_private)
-
-        merge_parser = self.subparsers.add_parser(
-            'merge', help="""
-            merge tracks: If their trackpoints are identical, add metadata like name,
-            description or keywords from source to destination""",
-            parents=[self.common_parser, self.range_parser],
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-        merge_parser.set_defaults(func=self.merge)
-        merge_parser.add_argument('--dry-run', help='only show what would change',
-                                  action='store_true', default=False)
-        merge_parser.add_argument('--remove', help='remove merged tracks',
-                                  action='store_true', default=False)
-        merge_parser.add_argument(
-            '--copy', help='If the target is a backend, do not look for similar track. '
-            'Just copy. This is much faster for remote backends.',
-            action='store_true', default=False)
-        self.add_multi_source(merge_parser)
-        self.add_destination(merge_parser)
-
-        diff_parser = self.subparsers.add_parser(
-            'diff', help="""
-            compare tracks between source and destination""",
-            parents=[self.common_parser, self.range_parser],
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-        diff_parser.set_defaults(func=self.diff)
-        self.add_multi_source(diff_parser, must_have=True)
-        self.add_destination(diff_parser)
 
         try:
             argcomplete.autocomplete(parser)
