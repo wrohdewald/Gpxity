@@ -1044,7 +1044,6 @@ class Track:
         """
         # We do not use points_hash because we want to abort as soon as we know
         # they are different.
-        self._load_full()
         if self.gpx.get_track_points_no() != other.gpx.get_track_points_no():
             return False
         if self.angle() != other.angle():
