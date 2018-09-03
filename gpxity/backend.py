@@ -723,8 +723,30 @@ class Backend:
                 old_track.remove()
         return result
 
-    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False) ->list:  # noqa
-        """merge other backend or a single track into this one.
+    def __find_mergable_groups(self, tracks, partial_tracks: bool = False):
+        """Find mergable groups.
+
+        Returns:
+            A list of tracks. The first one is the sink for the others
+
+        """
+        result = list()
+        rest = list(self)
+        rest.extend(x for x in tracks if str(x.backend) != str(self))
+        while rest:
+            root = rest[0]
+            group = list([root])
+            group.extend(x for x in rest[1:] if root.can_merge(x, partial_tracks)[0])
+            # merge target should be the longest track in self:
+            group.sort(key=lambda x: (x.backend is self, x.gpx.get_track_points_no()), reverse=True)
+            result.append(group)
+            for _ in group:
+                rest = [x for x in rest if x is not _]
+        return result
+
+    def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
+              partial_tracks: bool = False) ->list:  # noqa
+        """merge other backend or a single track into this one. Tracks within self are also merged.
 
         If two tracks have identical points, or-ify their other attributes.
         Args:
@@ -732,6 +754,8 @@ class Backend:
             remove: If True, remove merged tracks
             dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching track, just copy other into this Backend
+            partial_tracks: merges shorter track into longer track
+                if the longer track starts with the shorter track
 
         Returns:
             list(str) A list of messages for verbose output
@@ -747,36 +771,25 @@ class Backend:
         if copy:
             return self.__copy(other_tracks, remove, dry_run)
 
-        src_dict = defaultdict(list)
-        dst_dict = dict()
-        for self_track in self:
-            _ = self_track.points_hash()
-            if _ not in dst_dict:
-                dst_dict[_] = self_track
-            else:
-                src_dict[_].append(self_track)
-        for _ in other_tracks:
-            if str(_.backend) != str(self):
-                src_dict[_.points_hash()].append(_)
-
-        # 1. get all tracks existing only in other
-        for point_hash in sorted(src_dict.keys() - dst_dict.keys()):
-            for old_track in src_dict[point_hash]:
-                if not dry_run:
-                    new_track = self.add(old_track)
+        null_datetime = datetime.datetime(year=1, month=1, day=1)
+        groups = self.__find_mergable_groups(other, partial_tracks)
+        merge_groups = [x for x in groups if len(x) > 1]
+        merge_groups.sort(key=lambda x: x[0].time or null_datetime)
+        if merge_groups:
+            result.append('{} mergable groups:'.format(len(merge_groups)))
+            for _ in merge_groups:
+                result.append('  {} ----> {}'.format(', '.join(str(x) for x in _[1:]), _[0]))  # noqa
+        for destination, *sources in groups:
+            if destination.backend is not self:
+                new_destination = destination if dry_run else self.add(destination)
                 result.append('{} {} -> {}'.format(
-                    'move' if remove else 'copy', old_track, new_track if new_track else self))
+                    'move' if remove else 'copy', destination, self if dry_run else new_destination))
                 if remove and not dry_run:
-                    old_track.remove()
-
-        # 2. merge the rest
-        for point_hash in src_dict.keys() & dst_dict.keys():
-            target = dst_dict[point_hash]
-            for source in src_dict[point_hash]:
-                if str(source) != str(target):
-                    # source == target is possible if we merge a backend with itself
-                    self.logger.debug('about to merge %s into %s', source, target)
-                    result.extend(target.merge(source, remove=remove, dry_run=dry_run))
+                    destination.remove()
+                destination = new_destination
+            for source in sources:
+                result.extend(destination.merge(
+                    source, remove=remove, dry_run=dry_run, partial_tracks=partial_tracks))
         return result
 
     @staticmethod

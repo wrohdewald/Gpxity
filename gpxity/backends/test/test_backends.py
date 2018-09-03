@@ -347,15 +347,47 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(Directory))
     def test_merge_backends(self):
         """merge backends."""
-        with self.temp_backend(Directory, count=5) as source:
-            with self.temp_backend(Directory, count=4) as sink:
+        def dump(msg):
+            for line in msg:
+                self.logger.debug(line)
+        org_source_len = 2
+        assert org_source_len >= 2
+        org_sink_len = 2
+        assert org_sink_len >= 2
+        with self.temp_backend(Directory, url='source', count=org_source_len) as source:
+            with self.temp_backend(Directory, url='sink', count=org_sink_len) as sink:
                 for _ in list(sink)[1:]:
                     _.adjust_time(datetime.timedelta(hours=100))
-                sink.merge(source)
-                self.assertEqual(len(source), 5)
-                self.assertEqual(len(sink), 8)
-                sink.merge(source, remove=True)
-                self.assertEqual(len(source), 0)
+
+                # let's have two identical tracks in source without match in sink:
+                next(source[0].points()).latitude = 6
+                source.add(source[0].clone())
+
+                # and two identical tracks in sink without match in source:
+                next(sink[1].points()).latitude = 7
+                sink.add(sink[1].clone())
+
+                # and one track twice in source and once in sink:
+                sink.add(source[0])
+
+                # and one track once in source and once in sink:
+                sink.add(source[1])
+
+                self.assertEqual(len(source), org_source_len + 1)
+                self.assertEqual(len(sink), org_sink_len + 3)
+
+                dump(sink.merge(source, dry_run=True))
+                self.assertEqual(len(source), org_source_len + 1)
+                self.assertEqual(len(sink), org_sink_len + 3)
+
+                dump(sink.merge(source))
+                self.assertEqual(len(source), org_source_len + 1)
+                self.assertEqual(len(sink), org_source_len + org_sink_len + 1)
+
+                for _ in range(2):
+                    dump(sink.merge(source, remove=True))
+                    self.assertEqual(len(source), 0)
+                    self.assertEqual(len(sink), org_source_len + org_sink_len)
 
     @skipIf(*disabled(Directory))
     def test_scan(self):
