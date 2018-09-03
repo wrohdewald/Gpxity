@@ -1222,12 +1222,12 @@ class Track:
                     changed_point_times, self.gpx.get_track_points_no()))
         if msg:
             msg = ['     ' + x for x in msg]
-            msg.insert(0, 'Merged{} {!r}'.format(' and removed' if remove else '', other))
-            msg.insert(1, '{}  into {!r}'.format(' ' * len(' and removed') if remove else '', self))
+            msg.insert(0, 'merge{} {!r}'.format(' and remove' if remove else '', other))
+            msg.insert(1, '{}  into {!r}'.format(' ' * len(' and remove') if remove else '', self))
         if remove:
             if len(msg) <= 2:
                 msg.append(
-                    'Removed duplicate {!r}: It was identical with {!r}'.format(other, self))
+                    'remove duplicate {!r}: It was identical with {!r}'.format(other, self))
             if not dry_run:
                 other.remove()
         return msg
