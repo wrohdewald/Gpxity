@@ -849,8 +849,6 @@ class Track:
         with self._decouple():
             # this should not automatically load the entire track
             parts = []
-            if self.id_in_backend is not None:
-                parts.append('id:{}'.format(self.id_in_backend))
             parts.append('public' if self.public else 'private')
             if self.__gpx:
                 parts.append(self.category)
@@ -866,7 +864,7 @@ class Track:
                     parts.append('{:4.2f}km'.format(self._header_data['distance']))
                 else:
                     parts.append('{} points'.format(self.gpx.get_track_points_no()))
-            return 'Track({})'.format(' '.join(parts))
+            return '{}({})'.format(str(self), ' '.join(parts))
 
     def __str__(self) ->str:
         """The str.

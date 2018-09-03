@@ -373,12 +373,11 @@ class TrackTests(BasicTest):
             self.assertIn('public' if track.public else 'private', repr(track))
             self.assertIn('Running', repr(track))
             self.assertIn(repr_timespan(track.time, track.last_time), repr(track))
-            self.assertTrue(repr(track).startswith('Track('))
+            self.assertTrue(repr(track).startswith(str(track)))
             self.assertTrue(repr(track).endswith(')'))
             track.add_points(self._random_points(count=5))
             self.assertIn(' 15 points', repr(track))
             directory.add(track)
-            self.assertIn('id:', repr(track))
 
             # repr(track) must not fully load it
             clone = directory.clone()
