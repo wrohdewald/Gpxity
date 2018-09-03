@@ -58,6 +58,7 @@ class BasicTest(unittest.TestCase):
 
     def setUp(self):  # noqa
         """define test specific Directory.prefix."""
+        self.maxDiff = None  # pylint: disable=invalid-name
         Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
         self.logger = logging.getLogger()
         self.logger.level = logging.DEBUG
@@ -65,7 +66,7 @@ class BasicTest(unittest.TestCase):
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
-        Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:])
+        Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '_'  # noqa
         path = tempfile.mkdtemp(prefix=Directory.prefix)
 
         if not os.path.exists(path):

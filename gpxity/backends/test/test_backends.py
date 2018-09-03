@@ -348,7 +348,7 @@ class TestBackends(BasicTest):
     def test_merge_backends(self):
         """merge backends."""
         with self.temp_backend(Directory, count=5) as source:
-            with self.temp_backend(Directory, username='gpxitytest2', count=4) as sink:
+            with self.temp_backend(Directory, count=4) as sink:
                 for _ in list(sink)[1:]:
                     _.adjust_time(datetime.timedelta(hours=100))
                 sink.merge(source)
@@ -457,9 +457,6 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(Directory))
     def test_directory(self):
         """directory creation/deletion."""
-        with self.assertRaises(Exception):
-            with Directory('url', prefix='x', cleanup=True):
-                pass
 
         dir_a = Directory(cleanup=True)
         self.assertTrue(dir_a.is_temporary)
@@ -476,9 +473,10 @@ class TestBackends(BasicTest):
         self.assertTrue(os.path.exists(test_url))
         os.rmdir(test_url)
 
-        dir_c = Directory(auth='gpxitytest2')
-        auth_dir = Authenticate(dir_c, 'gpxitytest2').url
-        self.assertFalse(dir_c.is_temporary)
+        dir_c = Directory(auth='gpxitytest')
+        auth_dir = Authenticate(dir_c, 'gpxitytest').url
+        self.assertTrue(dir_c.is_temporary)
+
         self.assertEqual(dir_c.url, auth_dir)
         dir_c.destroy()
         self.assertTrue(os.path.exists(auth_dir))

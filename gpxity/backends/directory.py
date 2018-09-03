@@ -96,7 +96,6 @@ class Directory(Backend):
         auth (str): In addition to other backends: if given and url is None, use auth as url.
         cleanup (bool): If True, :meth:`destroy` will remove all tracks. If url was
             not given, it will also remove the directory.
-        prefix: The prefix for a temporary directory path. Must not be given if url is given.
 
     Attributes:
         prefix (str):  Class attribute, may be changed. The default prefix for
@@ -118,22 +117,19 @@ class Directory(Backend):
 
     needs_config = False
 
-    def __init__(self, url=None, auth=None, cleanup=False, timeout=None, prefix: str = None):
+    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring."""
         if url is None and isinstance(auth, str):
             url = auth
             auth = None
-        self.fs_encoding = None
-        if prefix is None:
-            prefix = self.__class__.prefix
-        elif url:
-            raise Exception('Directory does not accept both url and prefix')
-        if (auth and auth.startswith('gpxitytest')) or (url and url.startswith('gpxitytest')):
-            url = tempfile.mkdtemp(prefix='gpxity')
-        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, timeout=timeout)
-        self.is_temporary = not bool(self.url)
+        if url and url.startswith('gpxitytest'):
+            url = None
+        self.is_temporary = url is None
         if self.is_temporary:
-            self.url = tempfile.mkdtemp(prefix=prefix)
+            url = tempfile.mkdtemp(prefix=self.__class__.prefix)
+
+        self.fs_encoding = None
+        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, timeout=timeout)
         if not os.path.exists(self.url):
             os.makedirs(self.url)
         self._symlinks = defaultdict(list)
