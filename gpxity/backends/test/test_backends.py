@@ -340,7 +340,7 @@ class TestBackends(BasicTest):
                                 self.assertSameTracks(local, copy)
 
     @skipIf(*disabled(Directory))
-    def test_merge(self):
+    def test_merge_backends(self):
         """merge backends."""
         with self.temp_backend(Directory, count=5) as source:
             with self.temp_backend(Directory, username='gpxitytest2', count=4) as sink:
