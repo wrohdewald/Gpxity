@@ -321,7 +321,8 @@ class Backend:
                 # applied in a second loop. This way the Backend implementations
                 # do not have to worry about the match code.
                 with self._decouple():
-                    list(self._yield_tracks())
+                    for _ in self._yield_tracks():
+                        self.logger.debug('found %s', repr(_))
             finally:
                 self.__match = match_function
             if self.__match is not None:

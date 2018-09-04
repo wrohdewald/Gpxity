@@ -108,7 +108,6 @@ class WPTrackserver(Backend):
         self._cursor.execute(
             'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s', [self.user_id])
         for _ in self._cursor.fetchall():
-            self.logger.debug('_yield_tracks found %s', _)
             track = self._found_track('{:06}'.format(_[0]))
             self._enrich_with_headers(track, _)
             yield track
@@ -128,7 +127,6 @@ class WPTrackserver(Backend):
 
     def _read_all(self, track) ->None:
         """Read the full track."""
-        self.logger.debug('read_all for %s', track.id_in_backend)
         assert track.id_in_backend
         self._cursor.execute(
             'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [track.id_in_backend])
