@@ -633,7 +633,7 @@ class Utility:
             return 'Speed is above {}'.format(self.options.max_speed)
         if self.options.min_points and track.gpx.get_track_points_no() < self.options.min_points:
             return 'point count {} is below {}'.format(track.gpx.get_track_points_no(), self.options.min_points)
-        if self.options.max_points and track.gpx.get_track_points_no() > self.options.max_points:
+        if self.options.max_points is not None and track.gpx.get_track_points_no() > self.options.max_points:
             return 'point count {} is above {}'.format(track.gpx.get_track_points_no(), self.options.max_points)
         if self.options.only_kw and not self.options.only_kw & set(track.keywords):
             return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(track.keywords))
