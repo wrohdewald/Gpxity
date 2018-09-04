@@ -351,7 +351,7 @@ class Utility:
             except NotImplementedError:
                 pass
             _.remove()
-            logging.info('moved %s to %s'.format(_, self.destination))
+            logging.info('moved %s to %s', _, self.destination)
 
     def remove(self):
         """remove tracks"""
