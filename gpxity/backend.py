@@ -11,7 +11,6 @@ import datetime
 from inspect import getmembers, isfunction, isclass, getmro
 import dis
 from contextlib import contextmanager
-from collections import defaultdict
 import logging
 import importlib
 
@@ -106,6 +105,7 @@ class Backend:
     _session = dict()
 
     __all_backend_classes = None
+    __all_backends = dict()
 
     def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None):
         """See class docstring."""
@@ -822,6 +822,22 @@ class Backend:
         return clsname in disabled.lower().split()
 
     @classmethod
+    def find_class(cls, name: str):
+        """Find the Backend class name "name".
+
+        Args:
+            name: May be anycase (upper,lower)
+
+        Returns:
+            the backend class or None
+
+        """
+        for _ in cls.all_backend_classes():
+            if _.__name__.lower() == name.lower():
+                return _
+        return None
+
+    @classmethod
     def parse_objectname(cls, name):
         """Parse the full identifier for a track.
 
@@ -833,26 +849,29 @@ class Backend:
 
         """
         clsname = account = track_id = None
-        if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES', 'MAILER', 'WPTRACKSERVER'):  # noqa
-            clsname = name.split(':')[0].upper()
-            rest = name[len(clsname) + 1:]
-            if '/' in rest:
-                if rest.count('/') > 1:
-                    raise Exception('wrong syntax in {}'.format(name))
-                account, track_id = rest.split('/')
-            else:
-                account = rest
+        if os.path.isdir(name):
+            clsname = 'Directory'
+            account = name
         else:
-            if os.path.isdir(name):
-                clsname = 'DIRECTORY'
-                account = name
-            else:
-                if name.endswith('.gpx'):
-                    name = name[:-4]
-                if os.path.isfile(name + '.gpx'):
-                    clsname = 'DIRECTORY'
-                    account = os.path.dirname(name) or '.'
-                    track_id = os.path.basename(name)
+            if name.endswith('.gpx'):
+                name = name[:-4]
+            if os.path.isfile(name + '.gpx'):
+                clsname = 'Directory'
+                account = os.path.dirname(name) or '.'
+                track_id = os.path.basename(name)
+            elif ':' in name:
+                _ = cls.find_class(name.split(':')[0])
+                if _ is None:
+                    raise Backend.BackendException('Backends of type {} are not available'.format(name.split(':')[0]))
+                clsname = _.__name__
+                if clsname:
+                    rest = name[len(clsname) + 1:]
+                    if '/' in rest:
+                        if rest.count('/') > 1:
+                            raise Exception('wrong syntax in {}'.format(name))
+                        account, track_id = rest.split('/')
+                    else:
+                        account = rest
         if clsname is None:
             raise Exception('{}: Unknown backend'.format(name))
         if account is None:
@@ -895,3 +914,32 @@ class Backend:
     def clone(self):
         """return a clone."""
         return self.__class__(self.url, self.config)
+
+    @classmethod
+    def instantiate(cls, name, timeout=None):
+        """Instantiate a Backend out of its identifier.
+
+        Args:
+            timeout: Needed for creating backends like MMT or GPSIES
+
+        Returns:
+            A backend. If it has already been instantiated, return the cached value.
+
+        """
+        # pylint: disable=too-many-branches
+        clsname, account, track_id = Backend.parse_objectname(name)
+        cache_key = (clsname, account)
+        if cache_key in cls.__all_backends:
+            result = cls.__all_backends[cache_key]
+        else:
+            backend_class = [x for x in Backend.all_backend_classes() if x.__name__ == clsname][0]
+            result = backend_class(auth=account, timeout=timeout)
+            cls.__all_backends[cache_key] = result
+        if track_id:
+            try:
+                result = result[track_id]
+            except IndexError:
+                raise Exception('Backend {} does not have {}'.format(result.identifier(), track_id))
+
+        assert result is not None
+        return result

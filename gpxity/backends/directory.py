@@ -118,7 +118,7 @@ class Directory(Backend):
 
     needs_config = False
 
-    def __init__(self, url=None, auth=None, cleanup=False, prefix: str = None):
+    def __init__(self, url=None, auth=None, cleanup=False, timeout=None, prefix: str = None):
         """See class docstring."""
         if url is None and isinstance(auth, str):
             url = auth
@@ -130,7 +130,7 @@ class Directory(Backend):
             raise Exception('Directory does not accept both url and prefix')
         if (auth and auth.startswith('gpxitytest')) or (url and url.startswith('gpxitytest')):
             url = tempfile.mkdtemp(prefix='gpxity')
-        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup)
+        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, timeout=timeout)
         self.is_temporary = not bool(self.url)
         if self.is_temporary:
             self.url = tempfile.mkdtemp(prefix=prefix)

@@ -56,9 +56,9 @@ class Main:
         self.logger.setLevel(self.options.loglevel.upper())
         self.source = None
         try:
-            source = self.instantiate_object(self.options.source)
+            source = Backend.instantiate(self.options.source)
             assert isinstance(source, Track)
-            backend = self.instantiate_object(self.options.backend)
+            backend = Backend.instantiate(self.options.backend)
             assert isinstance(backend, Backend)
             try:
                 life = Lifetrack(backend)
