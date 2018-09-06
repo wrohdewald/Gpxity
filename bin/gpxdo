@@ -521,6 +521,8 @@ class Utility:
                 if _.time:
                     _.id_in_backend = str(_.time).replace(' ', '_')
             result_lines.extend(_.fix(orux24=self.options.orux24, jumps=self.options.jumps))
+            if self.options.add_minutes:
+                _.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
         for _ in result_lines:
             logging.error(_)
 
@@ -870,6 +872,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
                                 action='store_true', default=False)
         fix_parser.add_argument('--id-from-backend', help='use last known id for a track in BACKEND')
+        fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
         self.add_multi_source(fix_parser)
 
         keyword_parser = self.define_attr_parser(
