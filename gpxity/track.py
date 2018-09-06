@@ -901,7 +901,7 @@ class Track:
 
     def points(self):
         """
-        A generator over all ponts.
+        A generator over all points.
 
         Yields:
             GPXTrackPoint: all points in all tracks and segments
