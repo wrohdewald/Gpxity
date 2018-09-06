@@ -500,11 +500,6 @@ class Utility:
             yield prev, _
             prev = _
 
-    @staticmethod
-    def fix_track(track):
-        """fix some bugs in the GPX file"""
-        track.fix()
-
     def fix(self):
         """fix tracks"""
         result_lines = []
