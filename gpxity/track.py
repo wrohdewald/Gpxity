@@ -1206,7 +1206,7 @@ class Track:
         """Split segments at jumps.
 
         Whenever the time jumps back or more than 30
-        minutes into the future or the distance exceed 5km,
+        minutes into the future or the distance exceeds 5km,
 
         split the segment at that point."""
         did_break = False
