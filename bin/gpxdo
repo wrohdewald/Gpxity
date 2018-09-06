@@ -529,6 +529,8 @@ class Utility:
                 if _.gpx.get_track_points_no() != point_count:
                     logging.info('{}: reduced points from {} to {}'.format(_, point_count, _.gpx.get_track_points_no()))
                     _.rewrite()
+            if self.options.split:
+                _.split()
         for _ in result_lines:
             logging.error(_)
 
@@ -882,6 +884,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             '--simplify',
             help='Reduce track points. The new track may move MAX meters away from the original',
             metavar='MAX', type=int, default=None)
+        fix_parser.add_argument('--split', help='create a single Track for every track/segment',
+                                action='store_true', default=False)
         fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
         self.add_multi_source(fix_parser)
 

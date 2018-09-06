@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from functools import total_ordering
 import weakref
 from copy import deepcopy
+import logging
 
 # This code would speed up parsing GPX by about 30%. When doing
 # that, GPX will only return str instead of datetime for times.
@@ -1402,3 +1403,18 @@ class Track:
             self._load_full()
             result = self._ids
         return deepcopy(result)
+
+    def split(self):
+        """Create separate tracks for every track/segment."""
+        backend = self.backend
+        self.remove()
+        try:
+            for segment in self.segments():
+                track = self.clone()
+                gpx_track = GPXTrack()
+                gpx_track.segments.append(segment)
+                track.gpx.tracks = [gpx_track]
+                backend.add(track)
+        except BaseException as exc:
+            logging.error('split:%s', exc)
+            backend.add(self)
