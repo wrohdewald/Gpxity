@@ -299,6 +299,8 @@ class Utility:
                 self.similar_to = Backend.instantiate(self.options.similar)
             if self.options.source:
                 for _ in self.options.source:
+                    if _.endswith('/') and _ != '/':
+                        _ = _[:-1]
                     sources.append(Backend.instantiate(_))
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
