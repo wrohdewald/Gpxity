@@ -12,6 +12,7 @@ Changelog
   * new: Track.first_different_point()
   * Track.merge(), Backend.merge() and gpxdo merge have a new arg partial_tracks
   * new: gpxdo fix --add-minutes
+  * new: gpxdo fix --simplify
 
 1.3.2 release 2018-08-19
 ------------------------

@@ -523,6 +523,12 @@ class Utility:
             result_lines.extend(_.fix(orux24=self.options.orux24, jumps=self.options.jumps))
             if self.options.add_minutes:
                 _.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
+            if self.options.simplify:
+                point_count = _.gpx.get_track_points_no()
+                _.gpx.simplify(self.options.simplify)
+                if _.gpx.get_track_points_no() != point_count:
+                    logging.info('{}: reduced points from {} to {}'.format(_, point_count, _.gpx.get_track_points_no()))
+                    _.rewrite()
         for _ in result_lines:
             logging.error(_)
 
@@ -872,6 +878,10 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
                                 action='store_true', default=False)
         fix_parser.add_argument('--id-from-backend', help='use last known id for a track in BACKEND')
+        fix_parser.add_argument(
+            '--simplify',
+            help='Reduce track points. The new track may move MAX meters away from the original',
+            metavar='MAX', type=int, default=None)
         fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
         self.add_multi_source(fix_parser)
 
