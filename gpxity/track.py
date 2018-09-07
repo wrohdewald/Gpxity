@@ -1238,7 +1238,7 @@ class Track:
                 if either track starts with the other track
 
         Returns: list(str)
-            Messages about category has been done
+            Messages about what has been done.
 
         """
         assert isinstance(other, Track)
