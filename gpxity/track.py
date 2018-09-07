@@ -6,7 +6,7 @@
 
 """This module defines :class:`~gpxity.Track`."""
 
-from math import asin, sqrt, degrees
+from math import asin, sqrt, degrees, isclose
 import datetime
 from contextlib import contextmanager
 from functools import total_ordering
@@ -27,7 +27,7 @@ from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length
 from gpxpy.geo import simplify_polyline
 
-from .util import repr_timespan, uniq
+from .util import repr_timespan, uniq, positions_equal
 
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
@@ -1060,9 +1060,12 @@ class Track:
                 return _
         return _ + 1
 
-    def points_equal(self, other) ->bool:
+    def points_equal(self, other, digits=4) ->bool:
         """
         Compare points for same position.
+
+        Args:
+            digits: Number of after comma digits to compare
 
         Returns:
             True if both tracks have identical points.
@@ -1074,14 +1077,10 @@ class Track:
         # they are different.
         if self.gpx.get_track_points_no() != other.gpx.get_track_points_no():
             return False
-        if self.angle() != other.angle():
+        if not isclose(self.angle(), other.angle(), rel_tol=1 / 10**digits):
             return False
         for _, (point1, point2) in enumerate(zip(self.points(), other.points())):
-            # GPXTrackPoint has no __eq__ and no working hash()
-            # those are only the most important attributes:
-            if point1.longitude != point2.longitude:
-                return False
-            if point1.latitude != point2.latitude:
+            if not positions_equal(point1, point2, digits):
                 return False
         return True
 

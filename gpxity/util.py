@@ -9,8 +9,10 @@
 import os
 import datetime
 import logging
+from math import isclose
 
-__all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_track', 'collect_tracks']
+__all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_track', 'collect_tracks',
+           'positions_equal']
 
 
 class Duration:
@@ -98,3 +100,17 @@ def collect_tracks(sources):
             logging.debug('collecting tracks from %s', source)
             result.extend(source)
     return result
+
+
+def positions_equal(pos1, pos2, digits=4):
+    """Check if both points have the same position.
+
+    Args:
+        digits: Number of after comma digits to compare
+
+    Returns:
+        True if so
+
+    """
+    _ = 1 / 10 ** digits
+    return isclose(pos1.longitude, pos2.longitude, rel_tol=_) and isclose(pos1.latitude, pos2.latitude, rel_tol=_)
