@@ -591,9 +591,11 @@ class Utility:
         else:
             msg = list()
             for _ in self.source_tracks:
-                if self.destination.can_merge(_, partial_tracks=self.options.partial_tracks)[0]:
+                try:
                     msg.extend(self.destination.merge(_, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
                     partial_tracks=self.options.partial_tracks))
+                except Track.CannotMerge as exc:
+                    msg.append(str(exc))
         if not self.options.dry_run:
             if isinstance(self.destination, Backend):
                 self.destination.flush()

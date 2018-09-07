@@ -86,6 +86,9 @@ class Track:
 
     # pylint: disable = too-many-instance-attributes,too-many-public-methods
 
+    class CannotMerge(Exception):
+        """Is raised if  Track.merge() fails."""
+
     legal_categories = (
         # values from MMT
         'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
@@ -1224,6 +1227,8 @@ class Track:
             partial_tracks: bool = False) ->list:
         """Merge other track into this one. The track points must be identical.
 
+        If merging is not possible, raise Track.CannotMerge.
+
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
         Combine description and keywords.
@@ -1245,7 +1250,7 @@ class Track:
         msg = []
         mergable, _ = self.can_merge(other, partial_tracks)
         if not mergable:
-            raise Exception(_)
+            raise Track.CannotMerge(_)
         with self.batch_changes():
             if other.gpx.get_track_points_no() > self.gpx.get_track_points_no():
                 if not dry_run:
