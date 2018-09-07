@@ -586,6 +586,18 @@ class Track:
             self._round_points(self.points())
         self._header_data = dict()
         self._loaded = True
+        self.__workaround_for_gpxpy_issue_140()
+
+    def __workaround_for_gpxpy_issue_140(self):
+        """Remove empty track extension elements.
+
+        Maybe we have to do that for other extension elements too.
+        But I hope gpxity can soon enough depend on a fixed stable
+        version of gpxpy.
+
+        """
+        for track in self.gpx.tracks:
+            track.extensions = [x for x in track.extensions if len(x) or x.text is not None]
 
     @staticmethod
     def _round_points(points):
