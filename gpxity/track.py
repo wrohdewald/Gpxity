@@ -84,7 +84,7 @@ class Track:
 
     """
 
-    # pylint: disable = too-many-instance-attributes
+    # pylint: disable = too-many-instance-attributes,too-many-public-methods
 
     legal_categories = (
         # values from MMT
@@ -999,6 +999,15 @@ class Track:
             for point in segment.points:
                 yield point
 
+    def point_list(self):
+        """A flat list with all points.
+
+        Returns:
+            The list
+
+        """
+        return sum((x.points for x in self.segments()), [])
+
     def last_point(self):
         """Return the last point of the track."""
         # TODO: unittest for track without __gpx or without points
@@ -1083,6 +1092,31 @@ class Track:
             if not positions_equal(point1, point2, digits):
                 return False
         return True
+
+    def index(self, other, digits=4):
+        """Check if this track contains other track.gpx.
+
+        This only works if all values for latitude and longitude are
+        nearly identical.
+
+        Useful if one of the tracks had geofencing applied.
+
+        Args:
+            digits: How many after point digits are used
+
+        Returns:
+            None or the starting index for other.points in self.points
+
+        """
+        self_points = self.point_list()
+        other_points = other.point_list()
+        for self_idx in range(len(self_points) - len(other_points) + 1):
+            for other_idx, other_point in enumerate(other_points):
+                if not positions_equal(self_points[self_idx + other_idx], other_point, digits):
+                    break
+            else:
+                return self_idx
+        return None
 
     @staticmethod
     def overlapping_times(tracks):

@@ -14,6 +14,7 @@ Changelog
   * new: gpxdo fix --add-minutes
   * new: gpxdo fix --simplify
   * new: gpxdo fix --split
+  * new: track.index(other)
 
 1.3.2 release 2018-08-19
 ------------------------
