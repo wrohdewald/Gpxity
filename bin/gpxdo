@@ -584,10 +584,21 @@ class Utility:
 
     def merge(self):
         """Merge"""
-        msg = self.destination.merge(
-            self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
-            partial_tracks=self.options.partial_tracks)
-        self.destination.flush()
+        if isinstance(self.destination, Backend):
+            msg = self.destination.merge(
+                self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
+                partial_tracks=self.options.partial_tracks)
+        else:
+            msg = list()
+            for _ in self.source_tracks:
+                if self.destination.can_merge(_, partial_tracks=self.options.partial_tracks)[0]:
+                    msg.extend(self.destination.merge(_, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
+                    partial_tracks=self.options.partial_tracks))
+        if not self.options.dry_run:
+            if isinstance(self.destination, Backend):
+                self.destination.flush()
+            else:
+                self.destination.backend.flush()
         for _ in msg:
             logging.info(_)
 
