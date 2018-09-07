@@ -39,7 +39,7 @@ __all__ = ['Track']
 
 
 @total_ordering
-class Track:
+class Track:  # pylint: disable=too-many-public-methods
 
     """Represents a track.
 
@@ -1055,23 +1055,6 @@ class Track:
             result %= 1e20
         return result
 
-    def first_different_point(self, other) ->int:
-        """Say how many starting points are identical.
-
-        Returns:
-            the index of the first different point
-
-        """
-        _ = -1
-        for _, (point1, point2) in enumerate(zip(self.points(), other.points())):
-            # GPXTrackPoint has no __eq__ and no working hash()
-            # those are only the most important attributes:
-            if point1.longitude != point2.longitude:
-                return _
-            if point1.latitude != point2.latitude:
-                return _
-        return _ + 1
-
     def points_equal(self, other, digits=4) ->bool:
         """
         Compare points for same position.
@@ -1199,28 +1182,32 @@ class Track:
     def can_merge(self, other, partial_tracks: bool = False):
         """Check if self and other are mergeable.
 
-        Returns: (bool, str)
-            a string explaing why this is not mergeable or None if mergeable
+        args:
+            other: The other Track
+            partial_tracks: If True, they are mergeable if one of them contains
+                the other one.
+
+        Returns: (int, str)
+            int is either None or the starting index of the shorter track in the longer track
+            str is either None or a string explaing why this is not mergeable
 
         """
         if str(self) == str(other):
-            return False, 'Cannot merge identical tracks {}'.format(self)
-        reason = None
-        self_points = self.gpx.get_track_points_no()
-        other_points = other.gpx.get_track_points_no()
-
-        same_point_count = self.first_different_point(other)
+            return None, 'Cannot merge identical tracks {}'.format(self)
 
         if partial_tracks:
-            reason = same_point_count < min([self_points, other_points])
-        else:
-            reason = len({same_point_count, self_points, other_points}) > 1
-        if reason:
-            return False, (
-                'Cannot merge {} with {} points into {} with {} points, '
-                'only the first {} positions are identical'.format(
-                    other, other_points, self, self_points, same_point_count))
-        return True, None
+            other_in_self = self.index(other)
+            if other_in_self is not None:
+                return other_in_self, None
+            self_in_other = other.index(self)
+            if self_in_other is not None:
+                return self_in_other, None
+        elif self.points_equal(other):
+            return 0, None
+        return None, (
+            'Cannot merge {} with {} points into {} with {} points'.format(
+                other, other.gpx.get_track_points_no(),
+                self, self.gpx.get_track_points_no()))
 
     def merge(  # noqa pylint: disable=unused-argument
             self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
@@ -1240,7 +1227,7 @@ class Track:
             copy: This argument is ignored. It is only here to give Track.merge() and Backend.merge()
                 the same interface.
             partial_tracks: merges other track
-                if either track starts with the other track
+                if either track is part of the other one
 
         Returns: list(str)
             Messages about what has been done.
@@ -1248,8 +1235,8 @@ class Track:
         """
         assert isinstance(other, Track)
         msg = []
-        mergable, _ = self.can_merge(other, partial_tracks)
-        if not mergable:
+        shorter_at, _ = self.can_merge(other, partial_tracks)
+        if shorter_at is None:
             raise Track.CannotMerge(_)
         with self.batch_changes():
             if other.gpx.get_track_points_no() > self.gpx.get_track_points_no():
@@ -1259,8 +1246,9 @@ class Track:
                 msg.append('{} got entire gpx.tracks from {}'.format(self, other))
             msg.extend(self.__merge_metadata(other, dry_run))  # pylint: disable=protected-access
             changed_point_times = 0
-            other_points = list(other.points())
-            for self_point, other_point in zip(self.points(), other_points):
+            self_points = self.point_list()[shorter_at:]
+            for self_point, other_point in zip(self_points, other.points()):
+                # TODO: unittest with shorter track
                 if not self_point.time:
                     if not dry_run:
                         self_point.time = other_point.time

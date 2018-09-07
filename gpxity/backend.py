@@ -737,7 +737,7 @@ class Backend:
         while rest:
             root = rest[0]
             group = list([root])
-            group.extend(x for x in rest[1:] if root.can_merge(x, partial_tracks)[0])
+            group.extend(x for x in rest[1:] if root.can_merge(x, partial_tracks)[0] is not None)  # noqa
             # merge target should be the longest track in self:
             group.sort(key=lambda x: (x.backend is self, x.gpx.get_track_points_no()), reverse=True)
             result.append(group)
@@ -755,8 +755,8 @@ class Backend:
             remove: If True, remove merged tracks
             dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching track, just copy other into this Backend
-            partial_tracks: merges shorter track into longer track
-                if the longer track starts with the shorter track
+            partial_tracks: If True, two tracks are mergeable if one of them contains
+                the other one.
 
         Returns:
             list(str) A list of messages for verbose output

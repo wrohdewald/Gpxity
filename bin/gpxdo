@@ -832,8 +832,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                   action='store_true', default=False)
         merge_parser.add_argument('--remove', help='remove merged tracks',
                                   action='store_true', default=False)
-        merge_parser.add_argument('--partial-tracks', help='merges two tracks'
-                                  'if either one starts with the other one',
+        merge_parser.add_argument('--partial-tracks',
+                                   help='merges two tracks if one is part of the other',
                                   action='store_true', default=False)
         merge_parser.add_argument(
             '--copy', help='If the target is a backend, do not look for similar track. '
