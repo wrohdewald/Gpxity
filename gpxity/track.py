@@ -1208,6 +1208,7 @@ class Track:
             Messages about category has been done
 
         """
+        assert isinstance(other, Track)
         msg = []
         mergable, _ = self.can_merge(other, partial_tracks)
         if not mergable:
