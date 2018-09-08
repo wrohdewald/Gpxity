@@ -279,6 +279,28 @@ class Backend:
         """
         return value
 
+    @staticmethod
+    def _encode_description(track) ->str:
+        """A backend might put keywords into the description. WPTrackserver does.
+
+        Returns: The string to be saved in the backend
+
+        """
+        return track.description
+
+    def _decode_description(self, track, value, into_header_data=False):
+        """A backend might put keywords into the description. WPTrackserver does.
+
+        Returns: The description
+
+        """
+        assert self._decoupled
+        if into_header_data:
+            track._header_data['description'] = value
+        else:
+            track.description = value
+        return value
+
     def get_time(self) ->datetime.datetime:
         """get time from the server where backend is located as a Linux timestamp.
         A backend implementation does not have to support this."""

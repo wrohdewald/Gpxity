@@ -627,3 +627,24 @@ class TestBackends(BasicTest):
                     else:
                         downloaded = backend._download_legal_categories()
                         self.assertEqual(sorted(backend.legal_categories), downloaded)
+
+    def test_long_description(self):
+        """Test long descriptions."""
+        unlimited_length = 50000  # use this if the backend sets no limit
+        for cls in Backend.all_backend_classes():
+            if 'scan' not in cls.supported:
+                continue
+            with self.subTest(cls):
+                with self.temp_backend(cls, count=1) as backend:
+                    track = backend[0]
+                    max_length = backend._max_length.get('description') or unlimited_length
+                    # a backend may encode keywords in description
+                    max_descr_length = max_length - (len(backend._encode_description(track)) - len(track.description))
+                    track.description = ('long description' * 4000)[:max_descr_length]
+                    self.assertEqual(len(backend._encode_description(track)), max_length)
+                    clone = backend.clone()[0]
+                    self.assertEqual(track.description, clone.description)
+                    if max_length < unlimited_length:
+                        try_description = ('long description' * 4000)
+                        track.description = try_description
+                        self.assertEqual(backend._encode_description(track), try_description[:max_length])

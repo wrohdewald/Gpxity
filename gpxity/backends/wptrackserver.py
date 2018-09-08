@@ -12,6 +12,9 @@ All this is added to the description when writing and extracted when reading. So
 the description in the backend will contain all keywords, but Track.description
 does not.
 
+The database has a maximum field length of 255 for strings. If it is exceeded, the
+last part of the strings will be thrown away silently when writing into the database.
+
 """
 
 # pylint: disable=protected-access
@@ -91,17 +94,48 @@ class WPTrackserver(Backend):
             raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.auth[0]))
         self.user_id = row[0]
 
+    def _encode_description(self, track):
+        """Encode keywords in description.
+
+        If description exceeds its maximum length, first remove keywords and then
+        shorten the description.
+
+        Returns: The string to be saved in the database.
+
+        """
+        def fmt_result():
+            return '{}{}{}'.format(
+                track.description, self._keywords_marker, ', '.join(kw_parts))
+
+        max_length = self._max_length['description']
+        kw_parts = track._encode_keywords().split(', ')
+        result = fmt_result()
+        if len(result) > max_length:
+            while kw_parts and len(result) > max_length:
+                kw_parts = kw_parts[:-1]
+                result = fmt_result()
+        return result[:max_length]
+
+    def _decode_description(self, track, value, into_header_data=False):
+        """Extract keywords.
+
+        Returns: The decoded description
+
+        """
+        if self._keywords_marker in value:
+            descr, raw_keywords = value.split(self._keywords_marker)
+            # not into_header_data! because _read_all only delivers points
+            track._decode_keywords(raw_keywords)
+        else:
+            descr = value
+        track._header_data['description'] = descr
+        return descr
+
     def _enrich_with_headers(self, track, row):
         """Get header values out of row."""
         track._header_data['time'] = row[1]
         track._header_data['title'] = row[2]
-        if self._keywords_marker in row[3]:
-            descr, raw_keywords = row[3].split(self._keywords_marker)
-            # not into_header_data! because _read_all only delivers points
-            track._decode_keywords(raw_keywords)
-        else:
-            descr = row[3]
-        track._header_data['description'] = descr
+        self._decode_description(track, row[3])
         track._header_data['distance'] = row[4] / 1000.0
 
     def _yield_tracks(self):
@@ -135,25 +169,25 @@ class WPTrackserver(Backend):
 
     def _save_header(self, track):
         """Write all header fields. May set track.id_in_backend."""
-        description = '{}{}{}'.format(
-            track.description, self._keywords_marker, track._encode_keywords())  # pylint: disable=protected-access
+        description = self._encode_description(track)
+        title = track.title[:self._max_length['title']]
         track_time = track.time or datetime.datetime(year=1970, month=1, day=1, hour=1)
         if track.id_in_backend is None:
             self._cursor.execute(
                 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s)',
-                (self.user_id, track.title, track_time, description, track.distance(), ''))
+                (self.user_id, title, track_time, description, track.distance(), ''))
             track.id_in_backend = str(self._cursor.lastrowid)
             self.logger.debug(
                 'new id %s: insert into wp_ts_tracks(user_id,name,created,comment,distance,source) '
                 'values(%s,%s,%s,%s,%s,%s)',
-                track.id_in_backend, self.user_id, track.title, track_time, description, track.distance(), '')
+                track.id_in_backend, self.user_id, title, track_time, description, track.distance(), '')
         else:
             self._cursor.execute(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
-                (track.title, track_time, description, track.distance(), track.id_in_backend))
+                (title, track_time, description, track.distance(), track.id_in_backend))
             self.logger.debug(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
-                track.title, track_time, description, track.distance(), track.id_in_backend)
+                title, track_time, description, track.distance(), track.id_in_backend)
             self.logger.debug('save_header: rewrite %s', track.id_in_backend)
 
     def _write_all(self, track) ->str:
