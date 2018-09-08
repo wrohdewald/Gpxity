@@ -559,7 +559,7 @@ class TestBackends(BasicTest):
 
         """
         for cls in Backend.all_backend_classes():
-            if 'write_add_keywords' not in cls.supported:
+            if 'scan' not in cls.supported:
                 continue
             with self.subTest(cls):
                 with self.temp_backend(cls, count=1) as backend:
@@ -570,12 +570,12 @@ class TestBackends(BasicTest):
                         for x in self._random_keywords(count=50)}
                     for _ in range(20):
                         self.assertEqual(backend._get_current_keywords(track), track.keywords)
-                        add_keywords = set(random.sample(keywords, random.randint(0, 30)))
-                        remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                        add_keywords = set(random.sample(keywords, random.randint(0, 10)))
+                        remove_keywords = set(random.sample(keywords, random.randint(0, 10)))
                         if not add_keywords & remove_keywords:
                             continue
                         expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
-                        track.add_keywords(add_keywords)
+                        track.add_keywords(list(add_keywords) * 2)
                         self.assertEqual(
                             backend._get_current_keywords(track),
                             sorted(list(set(track.keywords) | add_keywords)))
@@ -586,8 +586,8 @@ class TestBackends(BasicTest):
                         self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
                     with track.batch_changes():
                         for _ in range(50):
-                            add_keywords = set(random.sample(keywords, random.randint(0, 30)))
-                            remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
+                            add_keywords = set(random.sample(keywords, random.randint(0, 10)))
+                            remove_keywords = set(random.sample(keywords, random.randint(0, 10)))
                             if not add_keywords & remove_keywords:
                                 continue
                             expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords

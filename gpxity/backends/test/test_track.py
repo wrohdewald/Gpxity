@@ -623,7 +623,10 @@ class TrackTests(BasicTest):
         """Test Track.merge(partial_tracks=True)."""
 
         track1 = self.create_test_track()
+        track1.title = '44432321'
+        track1.keywords = 'KeyA,KeyB,KeyA'
         track2 = track1.clone()
+        track2.title = 'Track2-title'
         self.assertTrue(track1.points_equal(track2, digits=9))
 
         track2.add_points(self._random_points(5))
@@ -632,6 +635,7 @@ class TrackTests(BasicTest):
             self.logger.debug(_)
         self.assertEqual(track1.gpx.get_track_points_no(), track2.gpx.get_track_points_no())
         self.assertTrue(track1.points_equal(track2, digits=9))
+        self.assertEqual(track1.title, 'Track2-title')
 
         points2 = track2.point_list()
         points2[2].latitude = 5
