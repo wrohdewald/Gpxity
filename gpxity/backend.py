@@ -729,8 +729,6 @@ class Backend:
             True if both backends have the same tracks
 
         """
-        self._scan()
-        other._scan()
         return {x.key() for x in self} == {x.key() for x in other}
 
     def __copy(self, other_tracks, remove, dry_run):
