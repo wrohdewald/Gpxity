@@ -5,6 +5,8 @@
 
 """implements :class:`gpxity.backends.test.test_backends.TestBackends` for all backends."""
 
+# pylint: disable=protected-access
+
 import os
 import pwd
 import time
@@ -445,7 +447,6 @@ class TestBackends(BasicTest):
 
     def test_backend_dirty(self):
         """Track._dirty."""
-        # pylint: disable=protected-access
         for cls in Backend.all_backend_classes():
             if 'scan' not in cls.supported or 'write' not in cls.supported:
                 continue
@@ -576,7 +577,7 @@ class TestBackends(BasicTest):
                     backend2 = backend.clone()
                     track = backend[0]
                     keywords = {
-                        backend._encode_keyword(x)  # pylint: disable=protected-access
+                        backend._encode_keyword(x)
                         for x in self._random_keywords(count=50)}
                     for _ in range(20):
                         self.assertEqual(current(), track.keywords)
@@ -604,7 +605,7 @@ class TestBackends(BasicTest):
                             self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
                     backend2.scan()
                     self.assertEqual(
-                        backend2._get_current_keywords(backend2[0]),  # pylint: disable=protected-access
+                        backend2._get_current_keywords(backend2[0]),
                         backend2[0].keywords)
                     self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
@@ -621,8 +622,8 @@ class TestBackends(BasicTest):
                             # gpxity_server needs Mailer
                             with self.lifetrackserver(
                                     servername='localhost', port=12398, directory=serverdirectory.url):
-                                downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
+                                downloaded = backend._download_legal_categories()
                                 self.assertEqual(sorted(backend.legal_categories), downloaded)
                     else:
-                        downloaded = backend._download_legal_categories()  # pylint: disable=protected-access
+                        downloaded = backend._download_legal_categories()
                         self.assertEqual(sorted(backend.legal_categories), downloaded)

@@ -28,7 +28,7 @@ from ... import Track
 from ...auth import Authenticate
 from .. import Mailer, WPTrackserver, Directory, GPSIES
 
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=attribute-defined-outside-init,protected-access
 
 __all__ = ['BasicTest']
 

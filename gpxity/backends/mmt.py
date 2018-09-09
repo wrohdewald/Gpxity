@@ -29,6 +29,8 @@ There are some problems with the server running at mapmytracks.com:
 
 """
 
+# pylint: disable=protected-access
+
 # TODO: logout
 
 from xml.etree import ElementTree
@@ -570,7 +572,6 @@ class MMT(Backend):
             for _ in chunk:
                 raw_data = MMTRawTrack(_)
                 track = self._found_track(raw_data.track_id)
-                # pylint: disable=protected-access
                 track._header_data['title'] = raw_data.title
                 track._header_data['category'] = self.decode_category(raw_data.category)
                 track._header_data['time'] = raw_data.time

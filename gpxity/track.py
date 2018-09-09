@@ -6,6 +6,8 @@
 
 """This module defines :class:`~gpxity.Track`."""
 
+# pylint: disable=protected-access
+
 from math import asin, sqrt, degrees, isclose
 import datetime
 from contextlib import contextmanager
@@ -180,7 +182,7 @@ class Track:  # pylint: disable=too-many-public-methods
             if not value:
                 raise Exception('Cannot remove id_in_backend for saved track {}'.format(self))
             with self._decouple():
-                self.backend._change_id(self, value)  # pylint: disable=protected-access
+                self.backend._change_id(self, value)
 
     def _set_backend(self, value):
         """To be used only by backend implementations."""
@@ -226,9 +228,9 @@ class Track:  # pylint: disable=too-many-public-methods
             if value == 'gpx':
                 self.__cached_distance = None
                 for other in self._similarity_others.values():
-                    del other._similarity_others[id(self)]  # pylint: disable=protected-access
+                    del other._similarity_others[id(self)]
                     # TODO: unittest where other does not exist anymore
-                    del other._similarities[id(self)]  # pylint: disable=protected-access
+                    del other._similarities[id(self)]
                 self._similarity_others = weakref.WeakValueDictionary()
                 self._similarities = dict()
             self.__dirty.append(value)
@@ -250,7 +252,7 @@ class Track:  # pylint: disable=too-many-public-methods
         result = Track(gpx=self.gpx.clone())
         result.category = self.category
         result.public = self.public
-        result._ids = deepcopy(self._ids)  # pylint: disable=protected-access
+        result._ids = deepcopy(self._ids)
         return result
 
     def _rewrite(self):
@@ -274,7 +276,7 @@ class Track:  # pylint: disable=too-many-public-methods
             raise Exception('Rewriting {}: "write" is not supported'.format(self))
         if not self.__is_decoupled and not self._batch_changes:
             with self._decouple():
-                self.backend._rewrite(self, self.__dirty)  # pylint: disable=protected-access
+                self.backend._rewrite(self, self.__dirty)
             self._clear_dirty()
 
     def remove(self):
@@ -363,7 +365,6 @@ class Track:  # pylint: disable=too-many-public-methods
         (The latter is used by __str__ and __repr__).
 
         """
-        # pylint: disable=protected-access
         from_backend = self.__backend
         prev_value = from_backend._decoupled if from_backend is not None else None
         if from_backend is not None:
@@ -387,7 +388,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         if self.backend is None:
             return True
-        return self.backend._decoupled  # pylint: disable=protected-access
+        return self.backend._decoupled
 
     @contextmanager
     def batch_changes(self):
@@ -436,7 +437,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """Load the full track from source_backend if not yet loaded."""
         if (self.backend is not None and self.id_in_backend and not self._loaded
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
-            self.backend._read_all_decoupled(self)  # pylint: disable=protected-access, no-member
+            self.backend._read_all_decoupled(self)
             self.__add_to_ids(self.id_in_backend)
             self._loaded = True
         if not self.__is_decoupled:
@@ -777,7 +778,7 @@ class Track:  # pylint: disable=too-many-public-methods
             self._check_keyword(_)
         self._load_full()
         if self.backend is not None:
-            result = (self.backend._encode_keyword(x) for x in result)  # pylint:disable=protected-access
+            result = (self.backend._encode_keyword(x) for x in result)
         return list(sorted(result))
 
     def add_keywords(self, values) ->None:
@@ -1154,7 +1155,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         msg = list()
-        if not other._has_default_title() and self._has_default_title():  # pylint: disable=protected-access
+        if not other._has_default_title() and self._has_default_title():
             msg.append('Title: {} -> {}'.format(self.title, other.title))
             if not dry_run:
                 self.title = other.title
@@ -1244,7 +1245,7 @@ class Track:  # pylint: disable=too-many-public-methods
                     self.gpx.tracks = deepcopy(other.gpx.tracks)
                     self.rewrite()
                 msg.append('{} got entire gpx.tracks from {}'.format(self, other))
-            msg.extend(self.__merge_metadata(other, dry_run))  # pylint: disable=protected-access
+            msg.extend(self.__merge_metadata(other, dry_run))
             changed_point_times = 0
             self_points = self.point_list()[shorter_at:]
             for self_point, other_point in zip(self_points, other.points()):
@@ -1405,8 +1406,8 @@ class Track:  # pylint: disable=too-many-public-methods
             result = similar_length * similar_points
             self._similarity_others[id(other)] = other
             self._similarities[id(other)] = result
-            other._similarity_others[id(self)] = self  # pylint: disable=protected-access
-            other._similarities[id(self)] = result  # pylint: disable=protected-access
+            other._similarity_others[id(self)] = self
+            other._similarities[id(self)] = result
         return self._similarities[id(other)]
 
     def time_offset(self, other):

@@ -6,6 +6,8 @@
 
 """This module defines :class:`~gpxity.Backend`."""
 
+# pylint: disable=protected-access
+
 from collections import defaultdict
 from difflib import SequenceMatcher
 
@@ -218,6 +220,5 @@ class BackendDiff:
                         self.similar.append(BackendDiff.Pair(left_track, right_track))
                         matched.append(left_track)
                         matched.append(right_track)
-        # pylint: disable=protected-access
         self.left._find_exclusives(matched)
         self.right._find_exclusives(matched)

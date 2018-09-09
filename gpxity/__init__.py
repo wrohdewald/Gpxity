@@ -5,7 +5,8 @@
 
 """define things that should be visible to the user."""
 
-# pylint: disable=wildcard-import, missing-docstring
+# pylint: disable=wildcard-import, missing-docstring,protected-access
+
 from .track import *
 from .lifetrack import *
 from .backend import *
@@ -24,7 +25,7 @@ def prepare_backends():
         cls = globals()[key]
         if hasattr(cls, "__mro__") and cls is not Backend:
             if cls.__mro__[-2] == Backend:
-                cls._define_support()  # pylint: disable=protected-access
+                cls._define_support()
 
 
 prepare_backends()

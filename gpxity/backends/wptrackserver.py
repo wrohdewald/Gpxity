@@ -14,6 +14,8 @@ does not.
 
 """
 
+# pylint: disable=protected-access
+
 import datetime
 
 from gpxpy import gpx as mod_gpx
@@ -91,7 +93,6 @@ class WPTrackserver(Backend):
 
     def _enrich_with_headers(self, track, row):
         """Get header values out of row."""
-        # pylint: disable=protected-access
         track._header_data['time'] = row[1]
         track._header_data['title'] = row[2]
         if self._keywords_marker in row[3]:

@@ -6,6 +6,8 @@
 
 """This module defines :class:`~gpxity.Lifetrack`."""
 
+# pylint: disable=protected-access
+
 from .track import Track
 
 __all__ = ['Lifetrack']
@@ -28,8 +30,6 @@ class LifetrackTarget:
             the new id_in_backend
 
         """
-
-        # pylint: disable=protected-access
 
         if not points:
             if not self.__started:
@@ -73,9 +73,9 @@ class LifetrackTarget:
         if not self.__started:
             raise Exception('Lifetrack not yet started')
         if 'lifetrack_end' in self.backend.supported:
-            with self.track._decouple():  # pylint: disable=protected-access
+            with self.track._decouple():
                 self.track.title = 'Lifetracking ends: ' + self.track.title
-            self.backend._lifetrack_end(self.track)  # pylint: disable=protected-access
+            self.backend._lifetrack_end(self.track)
 
     def _prepare_points(self, points):
         """Round points.
@@ -85,7 +85,7 @@ class LifetrackTarget:
 
         """
         result = list(points)[:]
-        self.track._round_points(result)  # pylint: disable=protected-access
+        self.track._round_points(result)
         return result
 
 
@@ -97,8 +97,6 @@ class Lifetrack:
         target_backends: Those tracks will receive the lifetracking data.
 
     """
-
-    # pylint: disable=protected-access
 
     def __init__(self, *target_backends):
         """See class docstring."""

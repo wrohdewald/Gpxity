@@ -11,6 +11,8 @@ They only use backend Directory, so there is no network traffic involved
 
 """
 
+# pylint: disable=protected-access
+
 import os
 import io
 import filecmp
@@ -37,7 +39,7 @@ class TrackTests(BasicTest):
         self.assertFalse(track.public)
         with Directory(cleanup=True) as backend:
             track = Track()
-            track._set_backend(backend)  # pylint: disable=protected-access
+            track._set_backend(backend)
             self.assertEqual(len(backend), 0)
             backend.add(track)
             self.assertEqual(len(backend), 1)
@@ -611,10 +613,10 @@ class TrackTests(BasicTest):
         """Test usage of Track._header_data."""
         track = Track()
         gpx_track = self.create_test_track()
-        track._header_data['distance'] = 5000  # pylint: disable=protected-access
+        track._header_data['distance'] = 5000
         self.assertEqual(track.distance(), 5000)
         track.parse(gpx_track.to_xml())
-        self.assertNotIn('distance', track._header_data)  # pylint: disable=protected-access
+        self.assertNotIn('distance', track._header_data)
         self.assertEqual(track.distance(), gpx_track.distance())
 
     def test_merge_partial_tracks(self):

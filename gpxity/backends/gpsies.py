@@ -11,6 +11,8 @@ so ginge das mit dem API-Key: https://github.com/telemaxx/gpsiesreader/blob/mast
 
 """
 
+# pylint: disable=protected-access
+
 from html.parser import HTMLParser
 import datetime
 import time
@@ -407,7 +409,6 @@ class GPSIES(Backend):
             response = self.__post('userList', data=data)
             page_parser.feed(response.text)
         for raw_data in page_parser.result['tracks']:
-            # pylint: disable=protected-access
             track = self._found_track(raw_data.track_id)
             track._header_data['title'] = raw_data.title
             track._header_data['time'] = raw_data.time
@@ -434,7 +435,6 @@ class GPSIES(Backend):
         response = self.__post('download', data=data)
         track.parse(response.text)
         # in Track, the results of a full load override _header_data
-        # pylint: disable=protected-access
         if 'public' in track._header_data:
             # _header_data is empty if this is a new track we just wrote
             _ = track._header_data['public']

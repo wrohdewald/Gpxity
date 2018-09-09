@@ -6,6 +6,8 @@
 
 """This implements a mailing backend. It can only write."""
 
+# pylint: disable=protected-access
+
 import datetime
 from threading import Timer
 import smtplib
@@ -151,7 +153,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         """
         if track.id_in_backend is None:
             new_ident = self._new_ident(track)
-            with track._decouple():  # pylint: disable=protected-access
+            with track._decouple():
                 track.id_in_backend = new_ident
         self.queue.append(track)
         if self.min_interval is not None:

@@ -6,6 +6,8 @@
 
 """This module defines :class:`~gpxity.Backend`."""
 
+# pylint: disable=protected-access
+
 import os
 import datetime
 from inspect import getmembers, isfunction, isclass, getmro
@@ -337,7 +339,7 @@ class Backend:
         """
         result = Track()
         with self._decouple():
-            result._set_backend(self)  # pylint: disable=protected-access
+            result._set_backend(self)
             result.id_in_backend = ident
         self.__append(result)
         return result
@@ -429,7 +431,7 @@ class Backend:
                 raise ValueError('Already in list: Track {} with id={}'.format(track, id(track)))
             new_track = track
         with self._decouple():
-            new_track._set_backend(self)  # pylint: disable=protected-access
+            new_track._set_backend(self)
             if track.keywords:
                 _ = (x.strip() for x in track.keywords)
                 track.gpx.keywords = ', '.join(self._encode_keyword(x) for x in _)
@@ -437,7 +439,7 @@ class Backend:
             with self._decouple():
                 self._write_all(new_track)
             self.__append(new_track)
-            track._clear_dirty()  # pylint: disable=protected-access
+            track._clear_dirty()
             return new_track
         except Exception:
             # do not do self.remove. If we try to upload the same track to gpsies,
@@ -448,7 +450,7 @@ class Backend:
             self.__tracks = [x for x in self.__tracks if x is not new_track]
             with self._decouple():
                 new_track.id_in_backend = None
-                new_track._set_backend(None)  # pylint: disable=protected-access
+                new_track._set_backend(None)
             raise
 
     def _new_ident(self, track) ->str:
@@ -471,7 +473,7 @@ class Backend:
         assert track.backend is self
         assert self._has_item(track.id_in_backend), '{}: its id_in_backend {} is not in {}'.format(
             track, track.id_in_backend, ' / '.join(str(x) for x in self))
-        assert track._dirty  # pylint: disable=protected-access
+        assert track._dirty
 
         needs_full_save = self._needs_full_save(changes)
 
@@ -515,7 +517,7 @@ class Backend:
         if track.id_in_backend:
             self._remove_ident(track.id_in_backend)
         with self._decouple():
-            track._set_backend(None)  # pylint: disable=protected-access
+            track._set_backend(None)
             try:
                 self.__tracks = [x for x in self.__tracks if x.id_in_backend != track.id_in_backend]
             except ValueError:
@@ -704,7 +706,7 @@ class Backend:
 
         """
         self._scan()
-        other._scan()  # pylint: disable=protected-access
+        other._scan()
         return {x.key() for x in self} == {x.key() for x in other}
 
     def __copy(self, other_tracks, remove, dry_run):

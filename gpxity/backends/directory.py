@@ -6,6 +6,8 @@
 
 """Defines :class:`gpxity.Directory`."""
 
+# pylint: disable=protected-access
+
 
 import os
 import datetime
@@ -54,7 +56,7 @@ class Backup:
         """See class docstring."""
         if exc_value:
             self.undo_rename()
-            with self.track._decouple():  # pylint: disable=protected-access
+            with self.track._decouple():
                 self.track.id_in_backend = self.old_id
         else:
             if self.old_pathname is not None:
@@ -311,7 +313,6 @@ class Directory(Backend):
             data = raw_file.read(10000)
             parts = data.split('<trk>')
             if len(parts) > 1:
-                # pylint: disable=protected-access
                 raw_data = parts[0].split('extensions')[0]
                 _ = self._get_field(raw_data, 'name')
                 if _ is not None:
