@@ -558,17 +558,6 @@ class TestBackends(BasicTest):
             None
 
         """
-
-        def current():
-            """The current keywords.
-
-            Returns:
-                The current keywords
-            """
-            if hasattr(backend, '_get_current_keywords'):
-                return backend._get_current_keywords(track)  # pylint: disable=protected-access
-            return track.keywords
-
         for cls in Backend.all_backend_classes():
             if 'write_add_keywords' not in cls.supported:
                 continue
@@ -580,16 +569,18 @@ class TestBackends(BasicTest):
                         backend._encode_keyword(x)
                         for x in self._random_keywords(count=50)}
                     for _ in range(20):
-                        self.assertEqual(current(), track.keywords)
+                        self.assertEqual(backend._get_current_keywords(track), track.keywords)
                         add_keywords = set(random.sample(keywords, random.randint(0, 30)))
                         remove_keywords = set(random.sample(keywords, random.randint(0, 30)))
                         if not add_keywords & remove_keywords:
                             continue
                         expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
                         track.add_keywords(add_keywords)
-                        self.assertEqual(current(), sorted(list(set(track.keywords) | add_keywords)))
+                        self.assertEqual(
+                            backend._get_current_keywords(track),
+                            sorted(list(set(track.keywords) | add_keywords)))
                         track.remove_keywords(remove_keywords)
-                        self.assertEqual(current(), sorted(expected_keywords))
+                        self.assertEqual(backend._get_current_keywords(track), sorted(expected_keywords))
                         self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
                         backend2.scan()
                         self.assertEqual(sorted(expected_keywords), backend2[0].keywords)

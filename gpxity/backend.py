@@ -976,3 +976,12 @@ class Backend:
 
         assert result is not None
         return result
+
+    def _get_current_keywords(self, track):  # pylint:disable=no-self-use
+        """A backend might be able to return the currently stored keywords.
+
+        This is useful for unittests: Compare the internal state with what the
+        backend actually says.
+
+        """
+        return track.keywords
