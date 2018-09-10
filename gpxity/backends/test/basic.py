@@ -290,9 +290,6 @@ class BasicTest(unittest.TestCase):
 
         """
 
-        if not cls_.needs_config:
-            if username == 'wrong_user':
-                raise KeyError
 
         if cls_ is WPTrackserver:
             self.create_temp_mysqld()

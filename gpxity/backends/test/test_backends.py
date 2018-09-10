@@ -121,6 +121,8 @@ class TestBackends(BasicTest):
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
         for cls in Backend.all_backend_classes():
+            if cls in (Directory, ServerDirectory):
+                continue
             with self.subTest(cls):
                 with self.assertRaises(KeyError):
                     self.setup_backend(cls, username='wrong_user')
