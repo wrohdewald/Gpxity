@@ -290,19 +290,26 @@ class BasicTest(unittest.TestCase):
 
         """
 
+        if username is None:
+            username = 'gpxitytest'
 
         if cls_ is WPTrackserver:
             self.create_temp_mysqld()
             auth = {
                 'Mysql': 'root@gpxitytest_db',
-                'Password': username or self.test_passwd,
+                'Password': self.test_passwd,
                 'Url': self.mysql_ip_address,
-                'Username': 'gpxitytest'}
+                'Username': username}
             url = self.mysql_ip_address
+        elif cls_ is Mailer:
+            auth = {
+                'Username': username,
+                'port': 8025,
+                'url': pwd.getpwuid(os.geteuid()).pw_name}
         else:
-            auth = username or 'gpxitytest'
+            auth = username
         result = cls_(url, auth=auth, cleanup=cleanup)
-        if clear_first:
+        if clear_first and'scan' in cls_.supported and 'write' in cls_.supported:
             result.remove_all()
         if count:
             # if count == 0, skip this. Needed for write-only backends like Mailer.
@@ -321,7 +328,7 @@ class BasicTest(unittest.TestCase):
         cmdline = 'bin/gpxity_server --loglevel debug --servername {} --port {} --directory {}'.format(
             servername, port, directory)
         if not Mailer.is_disabled():
-            cmdline += ' --mailto {}'.format(pwd.getpwuid(os.geteuid()).pw_name)
+            cmdline += ' --mailto {} --smtp-port 8025'.format(pwd.getpwuid(os.geteuid()).pw_name)
         process = Popen(cmdline.split())
         try:
             time.sleep(1)  # give the server time to start

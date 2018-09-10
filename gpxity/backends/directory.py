@@ -124,7 +124,7 @@ class Directory(Backend):
         if url is None and isinstance(auth, str):
             url = auth
             auth = None
-        if url and url.startswith('gpxitytest'):
+        if isinstance(url, str) and url.startswith('gpxitytest'):
             url = None
         self.is_temporary = url is None
         if self.is_temporary:

@@ -118,28 +118,35 @@ class Backend:
         if self.is_disabled():
             raise Backend.BackendException('class {} is disabled'.format(self.__class__.__name__))
         self._decoupled = False
-        super(Backend, self).__init__()
         self.__tracks = list()
         self._tracks_fully_listed = False
-        self._check_url(url)
-        self.url = url or ''
-        self.config = dict()
-        self.auth = None
-        if isinstance(auth, str):
-            _ = Authenticate(self, auth)
-            self.auth = _.auth
-            self.config = _.section
-            self.config['Username'] = auth
-            if _.url:
-                self.url = _.url
-        elif auth is not None:
-            self.config = auth
-            self.auth = (self.config.get('Username'), self.config.get('Password'))
+        if isinstance(url, Authenticate):
+            self.config = url
+        else:
+            self.config = Authenticate(self, url, auth)
         self._cleanup = cleanup
         self.__match = None
         self.logger = logging.getLogger(str(self))
         self.timeout = timeout
         self._current_track = None
+
+    @property
+    def url(self):
+        """get self.config['url'].
+
+        Returns: The url
+
+        """
+        return self.config.url
+
+    @property
+    def auth(self):
+        """get self.config['url'].
+
+        Returns: The url
+
+        """
+        return (self.config.username, self.config.password)
 
     def _has_default_url(self) ->bool:
         """Check if the backend has the default url.
@@ -151,12 +158,6 @@ class Backend:
         if self.default_url is None:
             return False
         return self.url == self.default_url
-
-    @staticmethod
-    def _check_url(value):
-        """Check syntax for url."""
-        if value and value.endswith('/') and value != '/':
-            raise Backend.BackendException('url must not end with /')
 
     def __str__(self) ->str:
         """A unique identifier for every physical backend.
@@ -946,7 +947,7 @@ class Backend:
 
     def clone(self):
         """return a clone."""
-        return self.__class__(self.url, self.config)
+        return self.__class__(self.config)
 
     @classmethod
     def instantiate(cls, name, timeout=None):

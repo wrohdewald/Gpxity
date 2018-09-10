@@ -8,7 +8,6 @@
 # pylint: disable=protected-access
 
 import os
-import pwd
 import time
 import datetime
 import random
@@ -439,7 +438,7 @@ class TestBackends(BasicTest):
                     if Mailer.is_disabled():
                         track(uplink)
                     else:
-                        with Mailer(url=pwd.getpwuid(os.geteuid()).pw_name) as mailer:
+                        with self.temp_backend(Mailer) as mailer:
                             mailer.min_interval = 5
                             track(uplink, mailer)
                             self.assertEqual(len(mailer.history), 3)
@@ -512,7 +511,7 @@ class TestBackends(BasicTest):
         auth_dir = Authenticate(dir_c, 'gpxitytest').url
         self.assertTrue(dir_c.is_temporary)
 
-        self.assertEqual(dir_c.url, auth_dir)
+        self.assertIn('/gpxity.TestBackends.test_directory_', dir_c.url)
         dir_c.destroy()
         self.assertTrue(os.path.exists(auth_dir))
         os.rmdir(auth_dir)

@@ -12,6 +12,7 @@ import datetime
 from threading import Timer
 import smtplib
 from email.message import EmailMessage
+
 from .. import Backend
 
 __all__ = ['Mailer']
@@ -81,9 +82,10 @@ class MailQueue:
         """Actually send the mail if there are any points."""
         if not self.tracks:
             return
+        section = self.mailer.config.section
         mail = EmailMessage()
         mail['subject'] = self.subject()
-        mail['from'] = self.mailer.config.get('From', 'gpxity')
+        mail['from'] = section.get('From', 'gpxity')
         mail['to'] = self.mailer.url.split()
         mail.set_content('\n'.join(self.content()))
 
@@ -92,9 +94,8 @@ class MailQueue:
                 key += '.gpx'
             mail.add_attachment(track.to_xml(), filename=key)
         with smtplib.SMTP(  # noqa
-                self.mailer.config.get('Smtp', 'localhost'),
-                port=int(self.mailer.config.get('port', '25'))) as smtp_server:
-            # TODO: unittest braucht 8025
+                section.get('Smtp', 'localhost'),
+                port=int(section.get('port', '25'))) as smtp_server:
             smtp_server.send_message(mail)
         self.last_sent_time = datetime.datetime.now()
         self.mailer.history.append('to {}: {}'.format(mail['to'], mail['subject']))
