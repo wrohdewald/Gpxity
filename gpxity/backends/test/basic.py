@@ -327,6 +327,15 @@ class BasicTest(unittest.TestCase):
             time.sleep(1)  # give the server time to start
             yield
         finally:
+            logfile = os.path.join(directory, 'gpxity_server.log')
+            if os.path.exists(logfile):
+                for _ in open(logfile):
+                    logging.debug('SRV: %s', _.rstrip())
+                os.remove(logfile)
+            elif os.path.exists(directory):
+                logging.debug('SRV: Directory exists but not gpxity_server.log')
+            else:
+                logging.debug('SRV: Directory %s does not exist', directory)
             process.kill()
 
     def start_mailserver(self):
@@ -340,8 +349,16 @@ class BasicTest(unittest.TestCase):
     def stop_mailserver(self):
         """Stop the smtp server for mail testing."""
         self.mailserver_process.kill()
-        os.remove('{}/smtpd_stdout'.format(Directory.prefix))
-        os.remove('{}/smtpd_stderr'.format(Directory.prefix))
+        for _ in ('out', 'err'):
+            filename = '{}/smtpd_std{}'.format(Directory.prefix, _)
+            if not os.path.exists(filename):
+                logging.debug('MAIL: %s not found', filename)
+                continue
+            if _ == 'err':
+                for fileline in open(filename):
+                    if not fileline.startswith('INFO:'):
+                        logging.debug('MAIL:%s: %s', _, fileline.rstrip())
+            os.remove(filename)
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
