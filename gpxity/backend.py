@@ -902,8 +902,12 @@ class Backend:
         return clsname, account, track_id
 
     @classmethod
-    def all_backend_classes(cls):
+    def all_backend_classes(cls, exclude=None, needs=None):
         """Find all backend classes.
+
+        Args:
+            exclude: A list with classes to be excluded
+            needs: set(str) with needed supported actions
 
         Returns:
             A list of all backend classes. Disabled backends are not
@@ -914,7 +918,7 @@ class Backend:
             backends_directory = os.path.join(os.path.dirname(__file__), 'backends')
             if not os.path.exists(backends_directory):
                 raise Exception('we are not where we should be')
-            result = list()
+            cls.__all_backend_classes = list()
             mod_names = os.listdir(backends_directory)
             for mod in mod_names:
                 if not mod.endswith('.py'):
@@ -927,12 +931,17 @@ class Backend:
                     # isinstance and is do not work here
                     classes = (x for x in classes if Backend in getmro(x)[1:])
                     classes = [x for x in classes if not x.is_disabled()]
-                    result.extend(classes)
+                    cls.__all_backend_classes.extend(classes)
                 except ImportError:
                     pass
-            # sort because we want things reproducibly
-            cls.__all_backend_classes = sorted(set(result), key=lambda x: x.__name__)
-        return cls.__all_backend_classes
+            cls.__all_backend_classes = set(cls.__all_backend_classes)
+        if exclude is None:
+            exclude = list()
+        if needs is None:
+            needs = set()
+        return sorted(
+            (x for x in cls.__all_backend_classes
+             if x not in exclude and needs < x.supported), key=lambda x: x.__name__)
 
     def clone(self):
         """return a clone."""
