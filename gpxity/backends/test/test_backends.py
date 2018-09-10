@@ -17,7 +17,6 @@ from unittest import skipIf
 
 from .basic import BasicTest, disabled
 from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer, WPTrackserver
-from ...auth import Authenticate
 from ... import Track, Lifetrack, Backend
 
 # pylint: disable=attribute-defined-outside-init
@@ -492,13 +491,10 @@ class TestBackends(BasicTest):
         os.rmdir(test_url)
 
         dir_c = Directory(auth='gpxitytest')
-        auth_dir = Authenticate(dir_c, 'gpxitytest').url
         self.assertTrue(dir_c.is_temporary)
 
         self.assertIn('/gpxity.TestBackends.test_directory_', dir_c.url)
         dir_c.destroy()
-        self.assertTrue(os.path.exists(auth_dir))
-        os.rmdir(auth_dir)
 
     @skipIf(*disabled(MMT))
     def test_mmt_empty(self):
