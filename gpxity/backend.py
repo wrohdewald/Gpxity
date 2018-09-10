@@ -868,40 +868,38 @@ class Backend:
             name: the full identifier for a Track
 
         Returns:
-            A tuple with clsname, account,track_id
+            A tuple with class, account,track_id
 
         """
-        clsname = account = track_id = None
+        backend_class = account = track_id = None
         if os.path.isdir(name):
-            clsname = 'Directory'
+            backend_class = cls.find_class('Directory')
             account = name
         else:
             id_name = name
             if id_name.endswith('.gpx'):
                 id_name = name[:-4]
             if os.path.isfile(id_name + '.gpx'):
-                clsname = 'Directory'
+                backend_class = cls.find_class('Directory')
                 account = os.path.dirname(id_name) or '.'
                 track_id = os.path.basename(id_name)
             elif ':' in name:
                 parts = name.split(':')
-                _ = cls.find_class(parts[0])
-                if _ is None:
+                backend_class = cls.find_class(parts[0])
+                if backend_class is None:
                     raise Backend.BackendException('Backends of type {} are not available'.format(parts[0]))
-                clsname = _.__name__
-                if clsname:
-                    rest = ':'.join(parts[1:])
-                    if '/' in rest:
-                        if rest.count('/') > 1:
-                            raise Exception('wrong syntax in {}'.format(name))
-                        account, track_id = rest.split('/')
-                    else:
-                        account = rest
-        if clsname is None:
+                rest = ':'.join(parts[1:])
+                if '/' in rest:
+                    if rest.count('/') > 1:
+                        raise Exception('wrong syntax in {}'.format(name))
+                    account, track_id = rest.split('/')
+                else:
+                    account = rest
+        if backend_class is None:
             raise Exception('{}: Unknown backend'.format(name))
         if account is None:
             raise Exception('{} not found'.format(name))
-        return clsname, account, track_id
+        return backend_class, account, track_id
 
     @classmethod
     def all_backend_classes(cls, exclude=None, needs=None):
@@ -961,12 +959,12 @@ class Backend:
 
         """
         # pylint: disable=too-many-branches
-        clsname, account, track_id = Backend.parse_objectname(name)
+        backend_class, account, track_id = Backend.parse_objectname(name)
+        clsname = backend_class.__name__
         cache_key = (clsname, account)
         if cache_key in cls.__all_backends:
             result = cls.__all_backends[cache_key]
         else:
-            backend_class = [x for x in Backend.all_backend_classes() if x.__name__ == clsname][0]
             result = backend_class(auth=account, timeout=timeout)
             cls.__all_backends[cache_key] = result
         if track_id:
