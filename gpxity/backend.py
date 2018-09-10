@@ -101,6 +101,8 @@ class Backend:
         'scan', 'remove', 'lifetrack', 'lifetrack_end', 'get_time', 'write', 'write_title', 'write_public',
         'write_category', 'write_description', 'write_add_keywords', 'write_remove_keywords')
 
+    _max_length = dict()
+
     # It is important that we have only one global session
     # because gpsies.com seems to have several servers and their
     # synchronization is sometimes slower than expected. See

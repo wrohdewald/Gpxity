@@ -397,16 +397,18 @@ class BasicTest(unittest.TestCase):
             CREATE TABLE wp_ts_tracks (
             id int(11) NOT NULL AUTO_INCREMENT,
             user_id int(11) NOT NULL,
-            name varchar(255) NOT NULL,
+            name varchar({title_length}) NOT NULL,
             updated timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
             created timestamp NOT NULL default '0000-00-00 00:00:00',
             source varchar(255) NOT NULL default '',
-            comment varchar(255) NOT NULL default '',
+            comment varchar({descr_length}) NOT NULL default '',
             distance int(11) NOT NULL,
             PRIMARY KEY (id),
             KEY user_id (user_id)
          )
-        """)
+        """.format(
+            descr_length=WPTrackserver._max_length['description'],
+            title_length=WPTrackserver._max_length['title']))
         cursor.execute("""
             CREATE TABLE wp_users (
             ID bigint(20) unsigned NOT NULL AUTO_INCREMENT,

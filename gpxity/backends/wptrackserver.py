@@ -72,6 +72,8 @@ class WPTrackserver(Backend):
 
     _keywords_marker = '\nKEYWORDS: '
 
+    _max_length = {'title': 255, 'description': 255}
+
     def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring. The url is host."""
         super(WPTrackserver, self).__init__(url, auth, cleanup, timeout)

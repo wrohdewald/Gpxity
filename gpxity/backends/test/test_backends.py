@@ -636,6 +636,8 @@ class TestBackends(BasicTest):
                     clone = backend.clone()[0]
                     self.assertEqual(track.description, clone.description)
                     if max_length < unlimited_length:
-                        try_description = ('long description' * 4000)
-                        track.description = try_description
-                        self.assertEqual(backend._encode_description(track), try_description[:max_length])
+                        try_description = 'long description' * 4000
+                        encoded = backend._encode_description(track)
+                        decoded = backend._decode_description(track, encoded)
+                        self.assertEqual(len(encoded), max_length)
+                        self.assertTrue(try_description.startswith(decoded))
