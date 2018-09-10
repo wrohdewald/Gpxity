@@ -871,23 +871,11 @@ class Backend:
             A tuple with class, account,track_id
 
         """
-        backend_class = account = track_id = None
-        if os.path.isdir(name):
-            backend_class = cls.find_class('Directory')
-            account = name
-        else:
-            id_name = name
-            if id_name.endswith('.gpx'):
-                id_name = name[:-4]
-            if os.path.isfile(id_name + '.gpx'):
-                backend_class = cls.find_class('Directory')
-                account = os.path.dirname(id_name) or '.'
-                track_id = os.path.basename(id_name)
-            elif ':' in name:
-                parts = name.split(':')
-                backend_class = cls.find_class(parts[0])
-                if backend_class is None:
-                    raise Backend.BackendException('Backends of type {} are not available'.format(parts[0]))
+        account = track_id = None
+        if ':' in name:
+            parts = name.split(':')
+            backend_class = cls.find_class(parts[0])
+            if backend_class:
                 rest = ':'.join(parts[1:])
                 if '/' in rest:
                     if rest.count('/') > 1:
@@ -895,10 +883,20 @@ class Backend:
                     account, track_id = rest.split('/')
                 else:
                     account = rest
-        if backend_class is None:
-            raise Exception('{}: Unknown backend'.format(name))
-        if account is None:
-            raise Exception('{} not found'.format(name))
+                if account is None:
+                    raise Exception('{} not found'.format(name))
+                return backend_class, account, track_id
+
+        if os.path.isdir(name):
+            backend_class = cls.find_class('Directory')
+            account = name
+        else:
+            id_name = name
+            if id_name.endswith('.gpx'):
+                id_name = id_name[:-4]
+            backend_class = cls.find_class('Directory')
+            account = os.path.dirname(id_name) or '.'
+            track_id = os.path.basename(id_name)
         return backend_class, account, track_id
 
     @classmethod
