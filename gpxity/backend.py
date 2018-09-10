@@ -876,19 +876,21 @@ class Backend:
             clsname = 'Directory'
             account = name
         else:
-            if name.endswith('.gpx'):
-                name = name[:-4]
-            if os.path.isfile(name + '.gpx'):
+            id_name = name
+            if id_name.endswith('.gpx'):
+                id_name = name[:-4]
+            if os.path.isfile(id_name + '.gpx'):
                 clsname = 'Directory'
-                account = os.path.dirname(name) or '.'
-                track_id = os.path.basename(name)
+                account = os.path.dirname(id_name) or '.'
+                track_id = os.path.basename(id_name)
             elif ':' in name:
-                _ = cls.find_class(name.split(':')[0])
+                parts = name.split(':')
+                _ = cls.find_class(parts[0])
                 if _ is None:
-                    raise Backend.BackendException('Backends of type {} are not available'.format(name.split(':')[0]))
+                    raise Backend.BackendException('Backends of type {} are not available'.format(parts[0]))
                 clsname = _.__name__
                 if clsname:
-                    rest = name[len(clsname) + 1:]
+                    rest = ':'.join(parts[1:])
                     if '/' in rest:
                         if rest.count('/') > 1:
                             raise Exception('wrong syntax in {}'.format(name))
