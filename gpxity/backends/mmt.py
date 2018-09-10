@@ -270,16 +270,14 @@ class MMT(Backend):
         """
         ident = str(self)
         if ident not in self._session:
-            if not self.auth:
-                raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
-            payload = {'username': self.auth[0], 'password': self.auth[1], 'ACT': '9'}
+            payload = {'username': self.config.username, 'password': self.config.password, 'ACT': '9'}
             login_url = '{}/login'.format(self.https_url)
             response = self._session[ident].post(
                 login_url, data=payload, timeout=self.timeout)
             if 'You are now logged in.' not in response.text:
-                raise self.BackendException('Login as {} failed'.format(self.auth[0]))
+                raise self.BackendException('Login as {} failed'.format(self.config.username))
             cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
         return self._session[ident]
@@ -359,7 +357,7 @@ class MMT(Backend):
         self.__tag_ids[tag] = id_
         self._check_tag_ids()
 
-    def __post(
+    def __post(  # noqa
             self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs) ->str:
         """Helper for the real function with some error handling.
 
@@ -378,6 +376,8 @@ class MMT(Backend):
             url = 'api/'
         full_url = self.url + '/' + url
         headers = {'DNT': '1'}  # do not track
+        if not self.config.username or not self.config.password:
+            raise self.BackendException('{}: Needs authentication data'.format(self.url))
         if data:
             data = data.encode('ascii', 'xmlcharrefreplace')
         else:
@@ -388,7 +388,8 @@ class MMT(Backend):
                     full_url, data=data, headers=headers, timeout=self.timeout)
             else:
                 response = requests.post(
-                    full_url, data=data, headers=headers, auth=self.auth, timeout=self.timeout)
+                    full_url, data=data, headers=headers,
+                    auth=(self.config.username, self.config.password), timeout=self.timeout)
         except requests.exceptions.ReadTimeout:
             self.logger.error('%s: timeout for %s', self, data)
             raise
@@ -440,7 +441,7 @@ class MMT(Backend):
             '<{attr}>{value}</{attr}></message>'.format(
                 attr=attribute,
                 eid=track.id_in_backend,
-                usrid=self.auth[0],
+                usrid=self.config.username,
                 value=attr_value,
                 uid=self.session.cookies['exp_uniqueid'])
         self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
@@ -495,7 +496,7 @@ class MMT(Backend):
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<tagnames>{value}</tagnames></message>'.format(
                 eid=track.id_in_backend,
-                usrid=self.auth[0],
+                usrid=self.config.username,
                 value=values,
                 uid=self.session.cookies['exp_uniqueid'])
         text = self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
@@ -564,11 +565,12 @@ class MMT(Backend):
         while True:
             old_len = self.real_len()
             response = self.__post(
-                request='get_activities', author=self.auth[0],
+                request='get_activities', author=self.config.username,
                 offset=old_len)
             chunk = response.find('activities')
             if not chunk:
                 return
+            self.logger.debug('got chunk %s %s', type(chunk), chunk)
             for _ in chunk:
                 raw_data = MMTRawTrack(_)
                 track = self._found_track(raw_data.track_id)

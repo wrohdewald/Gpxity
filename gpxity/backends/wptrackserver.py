@@ -82,18 +82,18 @@ class WPTrackserver(Backend):
             user, database = self.config.mysql.split('@')
         except ValueError:
             raise Backend.BackendException('Url is illegal: {}'.format(self.url))
-        self.logger.debug('connecting to %s as %s with pw %s to db %s', self.url, user, self.auth[1], database)
+        self.logger.debug('connecting to %s as %s with pw %s to db %s', self.url, user, self.config.password, database)
         try:
             self._db = MySQLdb.connect(
-                host=self.url, user=user, passwd=self.auth[1], database=database,
+                host=self.url, user=user, passwd=self.config.password, database=database,
                 autocommit=True, charset='utf8')
         except _mysql_exceptions.OperationalError as exc:
             raise Backend.BackendException(exc)
         self._cursor = self._db.cursor()
-        self._cursor.execute('select id from wp_users where user_login=%s', [self.auth[0]])
+        self._cursor.execute('select id from wp_users where user_login=%s', [self.config.username])
         row = self._cursor.fetchone()
         if row is None:
-            raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.auth[0]))
+            raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.config.username))
         self.user_id = row[0]
 
     def _encode_description(self, track):

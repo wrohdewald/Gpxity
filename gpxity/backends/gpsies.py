@@ -277,10 +277,10 @@ class GPSIES(Backend):
         """
         ident = str(self)
         if ident not in self._session:
-            if not self.auth:
-                raise Exception('{}: Needs authentication data'.format(ident))
+            if not self.config.username or not self.config.password:
+                raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
-            data = {'username': self.auth[0], 'password': self.auth[1]}
+            data = {'username': self.config.username, 'password': self.config.password}
             self.session_response = self._session[ident].post(
                 '{}/loginLayer.do?language=en'.format(self.url),
                 data=data, timeout=self.timeout)
@@ -393,7 +393,7 @@ class GPSIES(Backend):
     def _yield_tracks(self):
         """get all tracks for this user."""
 
-        data = {'username': self.auth[0]}
+        data = {'username': self.config.username}
         response = self.__post('trackList', data=data)
         page_parser = ParseGPSIESList()
         page_parser.feed(response.text)

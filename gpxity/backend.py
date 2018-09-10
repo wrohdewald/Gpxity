@@ -139,15 +139,6 @@ class Backend:
         """
         return self.config.url
 
-    @property
-    def auth(self):
-        """get self.config['url'].
-
-        Returns: The url
-
-        """
-        return (self.config.username, self.config.password)
-
     def _has_default_url(self) ->bool:
         """Check if the backend has the default url.
 
@@ -174,7 +165,7 @@ class Backend:
         result = '{}:{}{}'.format(
             self.__class__.__name__.lower(),
             url,
-            self.auth[0] if self.auth and self.auth[0] else '')
+            self.config.username)
         return result
 
     @property
@@ -693,9 +684,7 @@ class Backend:
             The repr str
 
         """
-        dirname = ''
-        if self.auth:
-            dirname = self.auth[0] or ''
+        dirname = self.config.username
         result = '{}({} in {}{})'.format(
             self.__class__.__name__, len(self.__tracks), self.url, dirname)
         return result

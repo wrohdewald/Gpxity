@@ -642,3 +642,16 @@ class TestBackends(BasicTest):
                         decoded = backend._decode_description(track, encoded)
                         self.assertEqual(len(encoded), max_length)
                         self.assertTrue(try_description.startswith(decoded))
+
+    def test_no_auth(self):
+        """Some backends must fail if given no login data."""
+        for cls in Backend.all_backend_classes():
+            if 'scan' not in cls.supported:
+                continue
+            if not cls.needs_config:
+                continue
+            for _ in ({'username': 'gpxitytest', 'password': ''}, {'username': ''}, {}, {'password': 'test'}):
+                with self.assertRaises(Backend.BackendException) as context:
+                    with self.temp_backend(cls, username=_):
+                        pass
+                self.assertEqual(str(context.exception), '{}: Needs authentication data'.format(cls.default_url))
