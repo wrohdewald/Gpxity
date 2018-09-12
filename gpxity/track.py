@@ -110,7 +110,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self._batch_changes = False
         self.__category = self.legal_categories[0]
         self.__public = False
-        self._ids = dict()
+        self._ids = list()
         self.__id_in_backend = None
         self.__backend = None
         self._loaded = False
@@ -155,7 +155,7 @@ class Track:  # pylint: disable=too-many-public-methods
     def __add_to_ids(self, ident):
         """Add an id to Track.ids."""
         if self.backend is not None and ident is not None:
-            self._ids[str(self.backend)] = ident
+            self._ids.insert(0, (str(self.backend), ident))
 
     @id_in_backend.setter
     def id_in_backend(self, value: str) ->None:
@@ -497,7 +497,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         # pylint: disable=too-many-branches
         gpx_keywords = list()
-        ids = dict()
+        ids = list()
         if isinstance(data, str):
             data = [x.strip() for x in data.split(', ')]
         if data is not None:
@@ -552,9 +552,9 @@ class Track:  # pylint: disable=too-many-public-methods
         result = self.keywords
         result.append('Category:{}'.format(self.category))
         result.append('Status:{}'.format('public' if self.public else 'private'))
-        for key, value in self.ids.items():
+        for _ in self.ids:
             # TODO: encode the , to something else
-            result.append('Id:{}/{}'.format(key, value))
+            result.append('Id:{}/{}'.format(*_))
         return ', '.join(result)
 
     def parse(self, indata):
@@ -1431,14 +1431,14 @@ class Track:  # pylint: disable=too-many-public-methods
         return None
 
     @property
-    def ids(self) ->dict:
+    def ids(self):
         """Return ids for all backends where this track has already been.
 
-        This is a dict. key is the name of the backend, value is the track id within.
+        This is a list of pairs. pair[0] is the name of the backend, pair[1] is the track id within.
         You can modify it but your changes will never be saved.
 
-        Returns:
-            the dict
+        Returns: list( (str, str))
+            a list of tuple pairs with str(backend) and id_in_backend
 
         """
         if 'ids' in self._header_data:
