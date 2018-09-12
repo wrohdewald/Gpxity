@@ -446,13 +446,9 @@ class Backend:
             if any(x is track for x in self.__tracks):
                 raise ValueError('Already in list: Track {} with id={}'.format(track, id(track)))
             new_track = track
-        with self._decouple():
-            new_track._set_backend(self)
-            if track.keywords:
-                _ = (x.strip() for x in track.keywords)
-                track.gpx.keywords = ', '.join(self._encode_keyword(x) for x in _)
         try:
             with self._decouple():
+                new_track._set_backend(self)
                 self._write_all(new_track)
             self.__append(new_track)
             track._clear_dirty()
