@@ -152,11 +152,6 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         return self.__id_in_backend
 
-    def __add_to_ids(self, ident):
-        """Add an id to Track.ids."""
-        if self.backend is not None and ident is not None:
-            self._ids.insert(0, (str(self.backend), ident))
-
     @id_in_backend.setter
     def id_in_backend(self, value: str) ->None:
         """Change the id in the backend. Currently supported only by Directory.
@@ -172,10 +167,11 @@ class Track:  # pylint: disable=too-many-public-methods
                 raise Exception('{}: / not allowed in id_in_backend'.format(value))
         if self.__id_in_backend == value:
             return
+        if self.__id_in_backend:
+            self._ids.insert(0, (str(self.backend), self.__id_in_backend))
         if self.__is_decoupled:
             # internal use
             self.__id_in_backend = value
-            self.__add_to_ids(value)
         else:
             if not self.__id_in_backend:
                 raise Exception('Cannot set id_in_backend for yet unsaved track {}'.format(self))
@@ -253,6 +249,8 @@ class Track:  # pylint: disable=too-many-public-methods
         result.category = self.category
         result.public = self.public
         result._ids = deepcopy(self._ids)
+        if self.backend is not None:
+            result._ids.insert(0, (str(self.backend), self.__id_in_backend))
         return result
 
     def _rewrite(self):
@@ -438,7 +436,6 @@ class Track:  # pylint: disable=too-many-public-methods
         if (self.backend is not None and self.id_in_backend and not self._loaded
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)
-            self.__add_to_ids(self.id_in_backend)
             self._loaded = True
         if not self.__is_decoupled:
             self.__resolve_header_data()
@@ -1436,6 +1433,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         This is a list of pairs. pair[0] is the name of the backend, pair[1] is the track id within.
         You can modify it but your changes will never be saved.
+        They are sorted by ascending age.
 
         Returns: list( (str, str))
             a list of tuple pairs with str(backend) and id_in_backend
