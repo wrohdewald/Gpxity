@@ -14,6 +14,7 @@ They only use backend Directory, so there is no network traffic involved
 # pylint: disable=protected-access
 
 import os
+import sys
 import io
 import filecmp
 import tempfile
@@ -21,7 +22,7 @@ import datetime
 from unittest import skipIf
 
 from .basic import BasicTest, disabled
-from ... import Track
+from ... import Track, Backend
 from .. import Directory
 from ...util import repr_timespan
 
@@ -453,7 +454,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_fs_encoding(self):
         """fs_encoding."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             track = Track()
             directory.add(track)
             org_ident = track.id_in_backend
@@ -468,13 +469,18 @@ class TrackTests(BasicTest):
                 self.assertNotEqual(track.id_in_backend, title)
                 track.id_in_backend = track.title.replace('/', '_')
                 self.assertEqual(track.id_in_backend, title.replace('/', '_'))
-            prev_encoding = directory.fs_encoding
-            directory.fs_encoding = 'whatever'
-            try:
-                with self.assertRaises(Exception):
-                    track.id_in_backend = 'TITLE'
-            finally:
-                directory.fs_encoding = prev_encoding
+
+        prev_encoding = sys.getfilesystemencoding
+        try:
+            sys.getfilesystemencoding = lambda: 'wrong'
+            with self.assertRaises(Backend.BackendException) as context:
+                Directory(cleanup=True)
+            expect = (
+                'Backend Directory needs a unicode file system encoding,'
+                ' .* has wrong. Please change your locale settings.')
+            self.assertRegex(str(context.exception), expect, msg='{} != {}'.format(context.exception, expect))
+        finally:
+            sys.getfilesystemencoding = prev_encoding
 
     def test_local_keywords(self):
         """Some keyword tests. More see in test_backends."""

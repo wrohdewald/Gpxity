@@ -10,6 +10,7 @@
 
 
 import os
+import sys
 import datetime
 import tempfile
 from collections import defaultdict
@@ -130,8 +131,14 @@ class Directory(Backend):
         if self.is_temporary:
             url = tempfile.mkdtemp(prefix=self.__class__.prefix)
 
-        self.fs_encoding = None
         super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, timeout=timeout)
+
+        self.fs_encoding = sys.getfilesystemencoding()
+        if not self.fs_encoding.lower().startswith('utf-8'):
+            raise Backend.BackendException(
+                'Backend Directory needs a unicode file system encoding, {} has {}.'
+                ' Please change your locale settings.'.format(self, self.fs_encoding))
+
         if not os.path.exists(self.url):
             os.makedirs(self.url)
         self._symlinks = defaultdict(list)
@@ -244,7 +251,8 @@ class Directory(Backend):
         path = Directory._make_path_unique(os.path.join(self.url, value + '.gpx'))
         return os.path.basename(path)[:-4]
 
-    def _sanitize_name(self, value) ->str:
+    @staticmethod
+    def _sanitize_name(value) ->str:
         """Change it to legal file name characters.
 
         Returns:
@@ -253,8 +261,6 @@ class Directory(Backend):
         """
         if value is None:
             return None
-        if self.fs_encoding is not None:
-            raise Exception('No support for fs_encoding={}'.format(self.fs_encoding))
         return value.replace('/', '_')
 
     def destroy(self):
