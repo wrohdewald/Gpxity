@@ -513,7 +513,9 @@ class Track:  # pylint: disable=too-many-public-methods
                     elif what == 'Id':
                         _ = value.split('/')
                         backend_name = '/'.join(_[:-1])
-                        ids[backend_name] = _[-1]
+                        if backend_name == '':
+                            backend_name = '.'
+                        ids.append((backend_name, _[-1]))
                     else:
                         gpx_keywords.append(keyword)
                 else:
@@ -524,7 +526,9 @@ class Track:  # pylint: disable=too-many-public-methods
                     elif what == 'Id':
                         _ = value.split('/')
                         backend_name = '/'.join(_[:-1])
-                        ids[backend_name] = _[-1]
+                        if backend_name == '':
+                            backend_name = '.'
+                        ids.append((backend_name, _[-1]))
                     else:
                         gpx_keywords.append(keyword)
         if into_header_data:
