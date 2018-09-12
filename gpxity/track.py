@@ -1434,6 +1434,8 @@ class Track:  # pylint: disable=too-many-public-methods
         This is a list of pairs. pair[0] is the name of the backend, pair[1] is the track id within.
         You can modify it but your changes will never be saved.
         They are sorted by ascending age.
+        Only the 5 youngest are kept.
+        If the same filename appears in more than one directory, keep only the youngest.
 
         Returns: list( (str, str))
             a list of tuple pairs with str(backend) and id_in_backend
@@ -1444,7 +1446,29 @@ class Track:  # pylint: disable=too-many-public-methods
         else:
             self._load_full()
             result = self._ids
-        return deepcopy(result)
+        return self.__clean_ids(result)
+
+    @staticmethod
+    def __clean_ids(original):
+        """Remove redundancies and old ids.append.
+
+        1. if the same id_in_backend is in several directories, keep only the first one
+        2. keep only 5
+
+        Returns: The cleaned list if ids
+
+        """
+        result = list()
+        seen = set()
+        for _ in original:
+            is_dir = ':' not in _[0]
+            if is_dir:
+                if _[1] not in seen:
+                    seen.add(_[1])
+                    result.append(_)
+            else:
+                result.append(_)
+        return result[:5]
 
     def split(self):
         """Create separate tracks for every track/segment."""
