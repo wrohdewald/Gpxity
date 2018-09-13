@@ -880,7 +880,7 @@ class Track:  # pylint: disable=too-many-public-methods
                     parts.append(str(self.time))
                 if 'distance' in self._header_data:
                     parts.append('{:4.2f}km'.format(self._header_data['distance']))
-                else:
+                elif self.gpx.get_track_points_no() or self._loaded:
                     parts.append('{} points'.format(self.gpx.get_track_points_no()))
             return '{}({})'.format(str(self), ' '.join(parts))
 

@@ -384,7 +384,7 @@ class TrackTests(BasicTest):
 
             # repr(track) must not fully load it
             clone = directory.clone()
-            self.assertIn(' 0 points', repr(clone[0]))
+            self.assertNotIn(' points', repr(clone[0]))
             self.assertEqual(clone[0].gpx.get_track_points_no(), 15)
             self.assertIn(' 15 points', repr(clone[0]))
 
