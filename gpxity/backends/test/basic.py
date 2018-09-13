@@ -203,8 +203,9 @@ class BasicTest(unittest.TestCase):
             basis += '/-_+.% $"|\\'
             result = set()
             while len(result) < count:
-                _ = ''.join(random.choice(basis) for x in range(4))
-                result.add(_.strip())
+                candidate = ''.join(random.choice(basis) for x in range(4))
+                if candidate[0] not in ' -' and candidate[-1] not in ' ':
+                    result.add(candidate)
             return result
         finally:
             random.setstate(state)
