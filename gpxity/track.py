@@ -189,7 +189,7 @@ class Track:  # pylint: disable=too-many-public-methods
             if old_backend is None or old_backend.__class__ != value.__class__:
                 # encode keywords for the new backend
                 # TODO: unittest
-                self.__gpx.keywords = ', '.join(self.__prepare_keywords(self.__gpx.keywords))
+                self.change_keywords(self.__gpx.keywords)
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`."""
@@ -528,6 +528,7 @@ class Track:  # pylint: disable=too-many-public-methods
                         ids.append((backend_name, _[-1]))
                     else:
                         gpx_keywords.append(keyword)
+        gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
         if into_header_data:
             self._header_data['keywords'] = sorted(gpx_keywords)
             self._header_data['ids'] = ids
@@ -743,12 +744,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 or an iterable of keywords. The new keywords. Must not have duplicates.
 
         """
-        new_keywords = self.__prepare_keywords(values)
-        if new_keywords != self.keywords:
-            with self.batch_changes():
-                if self.__gpx.keywords:
-                    self.remove_keywords(self.__gpx.keywords)
-            self.add_keywords(new_keywords)
+        self.change_keywords(values, replace=True)
 
     @staticmethod
     def _check_keyword(keyword):
@@ -761,55 +757,78 @@ class Track:  # pylint: disable=too-many-public-methods
             raise Exception('No comma allowed within a keyword')
 
     def __prepare_keywords(self, values):
-        """Common introductory code for add_keywords and remove_keywords.
+        """Common introductory code for change_keywords.
+
+        The values may be preceded with a '-' which will be preserved in the result._ids
 
         Args:
             values: Either single str with one or more keywords, separated by commas
                 or an iterable of keywords.
 
         Returns:
-            A unique list of legal keywords as expected by the backend.
+            A set of legal keywords as expected by the backend.
 
         """
         if isinstance(values, str):
-            result = [x.strip() for x in values.split(',')]
+            lst = [x.strip() for x in values.split(',')]
         else:
-            result = list(values)
-        for _ in result:
-            self._check_keyword(_)
-        self._load_full()
+            lst = list(values)
+        pairs = list()
+        for _ in lst:
+            if _.startswith('-'):
+                pairs.append((False, _[1:]))
+            else:
+                pairs.append((True, _))
+        for _ in pairs:
+            self._check_keyword(_[1])
         if self.backend is not None:
-            result = (self.backend._encode_keyword(x) for x in result)
-        return list(sorted(result))
+            pairs = [(x[0], self.backend._encode_keyword(x[1])) for x in pairs]
+        adding = {x[1] for x in pairs if x[0]}
+        removing = {x[1] for x in pairs if not x[0]}
+        return adding, removing
 
-    def add_keywords(self, values) ->None:
-        """Add to the comma separated keywords. Duplicate keywords are silently ignored.
+    def change_keywords(self, values, replace=False, dry_run=False):
+        """Change keywords.
 
+        Duplicate keywords are silently ignored.
         A keyword may not contain a comma.
+        Keywords with a preceding '-' are removed, the others are added.
+            Raise an Exception if a keyword is both added and removed.
 
         Args:
             values: Either a single str with one or more keywords, separated by commas
                 or an iterable of keywords
+            replace: if True, replace current keywords with the new ones. Ignores keywords
+                preceded with a '-'.
+            dry_run: if True, only return the new keywords but do not make that change
+
+        Returns:
+            The new keywords
 
         """
-        new_keywords = {x for x in self.__prepare_keywords(values) if x not in self.keywords}
-        if new_keywords:
-            all_new_keywords = set(self.keywords) | new_keywords
-            self.__gpx.keywords = ', '.join(sorted(all_new_keywords))
-            self._dirty = 'add_keywords:{}'.format(', '.join(sorted(new_keywords)))
+        self._load_full()
+        have = {*self.keywords}
+        add, remove = self.__prepare_keywords(values)
+        if add & remove:
+            raise Exception('Cannot both add and remove keywords {}'.format(add & remove))
 
-    def remove_keywords(self, values) ->None:
-        """Remove keywords. Keywords not in track are silently ignored.
+        if replace:
+            remove = have - add
+        else:
+            add -= have
+            remove &= have
 
-        Args:
-            values: Either a single str with one or more keywords, separated by commas
-                or an iterable of keywords
-
-        """
-        rm_keywords = [x for x in self.__prepare_keywords(values) if x in self.keywords]
-        if rm_keywords:
-            self.__gpx.keywords = ', '.join(x for x in self.keywords if x not in rm_keywords)
-            self._dirty = 'remove_keywords:{}'.format(', '.join(rm_keywords))
+        new = (have | add) - remove
+        if not dry_run and new != have:
+            self.__gpx.keywords = ', '.join(sorted(new))
+            with self.batch_changes():
+                if add:
+                    self._dirty = 'add_keywords:{}'.format(', '.join(add))
+                if remove:
+                    self._dirty = 'remove_keywords:{}'.format(', '.join(remove))
+        assert sorted(new) == self.keywords, (
+            'change_keywords failed. Expected: {}, got: {}'.format(sorted(new), self.keywords))
+        return sorted(new)
 
     def speed(self) ->float:
         """Speed over the entire time in km/h or 0.0.

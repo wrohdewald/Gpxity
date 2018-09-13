@@ -15,6 +15,7 @@ Changelog
   * new: gpxdo fix --simplify
   * new: gpxdo fix --split
   * new: track.index(other)
+  * new: simplify keyword handling: eleminate gpxdo kw --remove 
 
 1.3.2 release 2018-08-19
 ------------------------

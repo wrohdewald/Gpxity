@@ -537,14 +537,9 @@ class Utility:
     def keyword(self):
         """add/remove a list of keywords"""
         for _ in self.source_tracks:
-            if self.options.remove:
-                if not self.options.dry_run:
-                    _.remove_keywords(self.options.keywords)
-                logging.info('removed %s from %s', self.options.keywords, _)
-            else:
-                if not self.options.dry_run:
-                    _.add_keywords(self.options.keywords)
-                logging.info('added %s to %s', self.options.keywords, _)
+            old_kw = _.keywords
+            _.change_keywords(self.options.keywords, dry_run=self.options.dry_run)
+            logging.info('%s: %s --> %s', _, old_kw, _.keywords)
 
     def title(self):
         """Sets the title."""
@@ -903,11 +898,12 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_multi_source(fix_parser)
 
         keyword_parser = self.define_attr_parser(
-            'kw', helptext='add or remove keywords', func=self.keyword,
+            'kw', helptext="""add keywords. A keyword preceded with - will be removed. Examples: \n
+                kw A,-B
+                kw -- -A""",
+            func=self.keyword,
             arg_name='keywords', arg_help='keywords separated by commas')
         keyword_parser.add_argument('--dry-run', help='only show what would be done',
-                                    action='store_true', default=False)
-        keyword_parser.add_argument('--remove', help='remove keywords. Default is to add them.',
                                     action='store_true', default=False)
 
         self.define_attr_parser(

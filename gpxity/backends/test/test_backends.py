@@ -222,11 +222,22 @@ class TestBackends(BasicTest):
     def test_z2_keywords(self):
         """save and load keywords.
 
-        For now, all test keywords start with uppercase, avoiding MMT problems"""
+        For now, all test keywords start with uppercase, avoiding MMT problems
+        """         # noqa hides bug in eric6 style checker
+
         kw_a = 'A'
         kw_b = 'Berlin'
         kw_c = 'CamelCase'
         kw_d = self.unicode_string2
+
+        def minus(value):
+            """
+
+            Returns:
+                value preceded with -
+
+            """
+            return '-' + value
 
         for cls in Backend.all_backend_classes(needs={'write', 'scan', 'keywords'}):
             with self.subTest(cls):
@@ -238,29 +249,29 @@ class TestBackends(BasicTest):
                     track.keywords = list()
                     self.assertEqual(track.keywords, list())
                     track.keywords = ([kw_a, kw_b, kw_c])
-                    track.remove_keywords(kw_b)
+                    track.change_keywords(minus(kw_b))
                     self.assertEqual(track.keywords, ([kw_a, kw_c]))
                     with self.assertRaises(Exception):
-                        track.add_keywords('Category:whatever')
-                    track.add_keywords(kw_d)
+                        track.change_keywords('Category:whatever')
+                    track.change_keywords(kw_d)
                     self.assertEqual(set(track.keywords), {kw_a, kw_c, kw_d})
                     backend2 = backend.clone()
                     track2 = backend2[track.id_in_backend]
-                    track2.remove_keywords(kw_d)
+                    track2.change_keywords(minus(kw_d))
                     self.assertEqual(track2.keywords, ([kw_a, kw_c]))
                     self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
                     backend.scan()
                     self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
                     self.assertEqual(backend[track.id_in_backend].keywords, ([kw_a, kw_c]))
-                    track.remove_keywords(kw_a)
+                    track.change_keywords(minus(kw_a))
                     # this is tricky: The current implementation assumes that track.keywords is
                     # current - which it is not. track still thinks kw_d is there but it has been
                     # removed by somebody else. MMT has a work-around for removing tracks which
                     # removes them all and re-adds all wanted. So we get kw_d back.
                     self.assertEqual(track.keywords, ([kw_c, kw_d]))
-                    # track2.remove_keywords(kw_a)
-                    track.remove_keywords(kw_c)
-                    track.remove_keywords(kw_d)
+                    # track2.change_keywords(minus(kw_a))
+                    track.change_keywords(minus(kw_c))
+                    track.change_keywords(minus(kw_d))
                     backend.scan()
                     self.assertEqual(backend[0].keywords, list())
 
@@ -552,24 +563,26 @@ class TestBackends(BasicTest):
                         if not add_keywords & remove_keywords:
                             continue
                         expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
-                        track.add_keywords(list(add_keywords) * 2)
+                        track.change_keywords(list(add_keywords) * 2)
                         self.assertEqual(
                             backend._get_current_keywords(track),
                             sorted(list(set(track.keywords) | add_keywords)))
-                        track.remove_keywords(remove_keywords)
+                        track.change_keywords('-' + x for x in remove_keywords)
                         self.assertEqual(backend._get_current_keywords(track), sorted(expected_keywords))
                         self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
                         backend2.scan()
                         self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
                     with track.batch_changes():
-                        for _ in range(50):
-                            add_keywords = set(random.sample(keywords, random.randint(0, 10)))
-                            remove_keywords = set(random.sample(keywords, random.randint(0, 10)))
+                        # WPTrackserver has limited field lengths
+                        loops, kwcount = (5, 5) if cls is WPTrackserver else (50, 10)
+                        for _ in range(loops):
+                            add_keywords = set(random.sample(keywords, random.randint(0, kwcount)))
+                            remove_keywords = set(random.sample(keywords, random.randint(0, kwcount))) & add_keywords
                             if not add_keywords & remove_keywords:
                                 continue
                             expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
-                            track.add_keywords(add_keywords)
-                            track.remove_keywords(remove_keywords)
+                            track.change_keywords(add_keywords)
+                            track.change_keywords('-' + x for x in remove_keywords)
                             self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
                     backend2.scan()
                     self.assertEqual(
