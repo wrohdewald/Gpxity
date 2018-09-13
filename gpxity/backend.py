@@ -785,5 +785,7 @@ class Backend:
 
         """
         disabled = os.getenv('GPXITY_DISABLE_BACKENDS')
-        clsname = cls.__name__.split('.')[-1]
-        return bool(disabled) and clsname in disabled.split()
+        if not disabled:
+            return False
+        clsname = cls.__name__.split('.')[-1].lower()
+        return clsname in disabled.lower().split()
