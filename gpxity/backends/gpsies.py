@@ -512,3 +512,9 @@ class GPSIES(Backend):
         super(GPSIES, self).destroy()
         if self.session:
             self.session.close()
+
+    @classmethod
+    def _define_support(cls):
+        """GPSIES special case."""
+        super(GPSIES, cls)._define_support()
+        cls.supported.remove('keywords')

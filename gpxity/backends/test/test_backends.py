@@ -37,7 +37,7 @@ class TestBackends(BasicTest):
             'write_category', 'write_title', 'write_description', 'write_public'}
         expect_unsupported[MMT] = set()
         expect_unsupported[GPSIES] = {
-            'get_time', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords'}
+            'get_time', 'lifetrack', 'lifetrack_end', 'keywords', 'write_add_keywords', 'write_remove_keywords'}
         expect_unsupported[TrackMMT] = {
             'scan', 'remove',
             'write_title', 'write_description', 'write_public',
@@ -228,7 +228,7 @@ class TestBackends(BasicTest):
         kw_c = 'CamelCase'
         kw_d = self.unicode_string2
 
-        for cls in Backend.all_backend_classes(needs={'write', 'scan'}):
+        for cls in Backend.all_backend_classes(needs={'write', 'scan', 'keywords'}):
             with self.subTest(cls):
                 is_mmt = cls.__name__ == 'MMT'
                 with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt) as backend:
@@ -537,7 +537,7 @@ class TestBackends(BasicTest):
             None
 
         """
-        for cls in Backend.all_backend_classes(needs={'scan'}):
+        for cls in Backend.all_backend_classes(needs={'scan', 'keywords'}):
             with self.subTest(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     backend2 = backend.clone()

@@ -99,7 +99,7 @@ class Backend:
 
     full_support = (
         'scan', 'remove', 'lifetrack', 'lifetrack_end', 'get_time', 'write', 'write_title', 'write_public',
-        'write_category', 'write_description', 'write_add_keywords', 'write_remove_keywords')
+        'write_category', 'write_description', 'keywords', 'write_add_keywords', 'write_remove_keywords')
 
     _max_length = dict()
 
@@ -222,6 +222,7 @@ class Backend:
             '_yield_tracks': 'scan',
             'get_time': 'get_time'}
         cls.supported = set()
+        cls.supported.add('keywords')  # default
         for name, method in getmembers(cls, isfunction):
             if name in support_mappings:
                 if cls._is_implemented(method):
