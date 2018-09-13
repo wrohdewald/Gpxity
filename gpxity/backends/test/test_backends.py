@@ -226,7 +226,7 @@ class TestBackends(BasicTest):
         kw_a = 'A'
         kw_b = 'Berlin'
         kw_c = 'CamelCase'
-        kw_d = 'D'  # self.unicode_string2
+        kw_d = self.unicode_string2
 
         for cls in Backend.all_backend_classes(needs={'write', 'scan'}):
             with self.subTest(cls):
