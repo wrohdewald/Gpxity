@@ -152,7 +152,7 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
         if self.seeing_title:
             self.result['title'] = data.strip()
         if self.seeing_description:
-            self.result['description'] = data.strip()
+            self.result['description'] = html.unescape(data.strip())
         if self.seeing_category:
             try:
                 _ = data.split('|')[1].split('@')[0].strip()
@@ -610,7 +610,7 @@ class MMT(Backend):
         if page_scan['title']:
             track.title = page_scan['title']
         if page_scan['description']:
-            _ = page_scan['description']
+            _ = html.unescape(page_scan['description'])
             if _ == self._default_description:
                 _ = ''
             track.description = _
