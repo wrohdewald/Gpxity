@@ -316,7 +316,7 @@ class Directory(Backend):
     def _enrich_with_headers(self, track):
         """Quick scan of file for getting some header fields."""
         with open(self.gpx_path(track.id_in_backend), encoding='utf8') as raw_file:
-            data = raw_file.read(10000)
+            data = raw_file.read(100000)
             parts = data.split('<trk>')
             if len(parts) > 1:
                 raw_data = parts[0].split('extensions')[0]
