@@ -8,7 +8,6 @@
 
 # pylint: disable=protected-access
 
-
 import os
 import sys
 import datetime
@@ -131,6 +130,9 @@ class Directory(Backend):
         if self.is_temporary:
             url = tempfile.mkdtemp(prefix=self.__class__.prefix)
 
+        if isinstance(url, str):
+            if url != '/' and url.endswith('/'):
+                url = url[:-1]
         super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, timeout=timeout)
 
         self.fs_encoding = sys.getfilesystemencoding()
