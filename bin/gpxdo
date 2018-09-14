@@ -520,7 +520,7 @@ class Utility:
             elif self.options.id_from_time:
                 if _.time:
                     _.id_in_backend = str(_.time).replace(' ', '_')
-            result_lines.extend(_.fix(orux24=self.options.orux24, jumps=self.options.jumps))
+            result_lines.extend(_.fix(orux=self.options.orux, jumps=self.options.jumps))
             if self.options.add_minutes:
                 _.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
             if self.options.simplify:
@@ -870,7 +870,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         fix_parser.set_defaults(func=self.fix)
         fix_parser.add_argument(
-            '--orux24',
+            '--orux',
             help="""BACKUP your tracks first! This can destroy them!
             Try to fix old oruxmaps bug where the date jumps back by one day""",
             action='store_true', default=False)

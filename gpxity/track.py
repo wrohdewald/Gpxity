@@ -1304,13 +1304,13 @@ class Track:  # pylint: disable=too-many-public-methods
         """Return True if distance < delta_meter."""
         return abs(last_point.distance_2d(point)) < delta_meter
 
-    def fix(self, orux24: bool = False, jumps: bool = False):
+    def fix(self, orux: bool = False, jumps: bool = False):
         """Fix bugs. This may fix them or produce more bugs.
 
         Please backup your track before doing this.
 
         Args:
-            orux24: Older Oruxmaps switched the day back by one
+            orux: Older Oruxmaps switched the day back by one
                 day after exactly 24 hours.
             jumps: Whenever the time jumps back or more than 30
             minutes into the future, split the segment at that point.
@@ -1320,8 +1320,8 @@ class Track:  # pylint: disable=too-many-public-methods
 
             """
         self._load_full()
-        if orux24:
-            self.__fix_orux24()
+        if orux:
+            self.__fix_orux()
         if jumps:
             self.__fix_jumps()
         return []
@@ -1369,8 +1369,12 @@ class Track:  # pylint: disable=too-many-public-methods
             self.gpx.tracks = new_tracks
             self._dirty = 'gpx'
 
-    def __fix_orux24(self):
-        """Try to fix Oruxmaps 24hour bug."""
+    def __fix_orux(self):
+        """Try to fix Oruxmaps problems.
+
+        1. the 24h bugs
+
+        """
         all_points = list(uniq(self.points()))
         for _ in all_points:
             _.hhmmss = _.time.hour * 3600.0 + _.time.minute * 60
