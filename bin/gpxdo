@@ -682,7 +682,7 @@ class Utility:
         result.add_argument('--min-speed', help='Limit tracks by minimal speed', type=int, default=None)
         result.add_argument('--max-speed', help='Limit tracks by maximal speed', type=int, default=None)
         result.add_argument('--only-keywords', help='Limit tracks by keywords', default=None)
-        result.add_argument('--only-category', help='Limit tracks by category', default=None)
+        result.add_argument('--only-category', help='Limit tracks by category', default=None, choices=Track.legal_categories)
         result.add_argument('--similar', help='Limit tracks by similarity to track SIMILAR', default=None)
         return result
 
