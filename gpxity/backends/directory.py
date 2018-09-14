@@ -321,7 +321,8 @@ class Directory(Backend):
             data = raw_file.read(100000)
             parts = data.split('<trk>')
             if len(parts) > 1:
-                raw_data = parts[0].split('extensions')[0]
+                raw_data = parts[0].split('<extensions')[0]
+                raw_data = raw_data.split('</metadata>')[0]
                 _ = self._get_field(raw_data, 'name')
                 if _ is not None:
                     track._header_data['title'] = _
