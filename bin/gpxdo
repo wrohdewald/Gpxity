@@ -635,14 +635,14 @@ class Utility:
     def match(self, track):
         """Check against the selecting options. Does cheap check first."""
         # pylint: disable=too-many-return-statements, too-many-branches
-        if track.time:
-            if self.options.first_date and track.time < self.options.first_date:
-                return 'time {} is before {}'.format(track.time, self.options.first_date)
-            if self.options.last_date:
-                if self.options.last_date.date() and track.time.date() > self.options.last_date.date():
-                    return 'time {} is after {}'.format(track.time, self.options.last_date)
-        else:
-            if self.options.first_date or self.options.last_date:
+        if self.options.first_date or self.options.last_date:
+            if track.time:
+                if self.options.first_date and track.time < self.options.first_date:
+                    return 'time {} is before {}'.format(track.time, self.options.first_date)
+                if self.options.last_date:
+                    if self.options.last_date.date() and track.time.date() > self.options.last_date.date():
+                        return 'time {} is after {}'.format(track.time, self.options.last_date)
+            else:
                 return 'has no time'
         if self.options.min_distance and track.distance() < self.options.min_distance:
             return 'distance {} is below {}'.format(track.distance(), self.options.min_distance)
