@@ -656,8 +656,8 @@ class Utility:
             return 'point count {} is below {}'.format(track.gpx.get_track_points_no(), self.options.min_points)
         if self.options.max_points is not None and track.gpx.get_track_points_no() > self.options.max_points:
             return 'point count {} is above {}'.format(track.gpx.get_track_points_no(), self.options.max_points)
-        if self.options.only_kw and not self.options.only_kw & set(track.keywords):
-            return 'keywords {} are not in {}'.format(','.join(self.options.only_kw), ','.join(track.keywords))
+        if self.options.only_keywords and not self.options.only_keywords & set(track.keywords):
+            return 'keywords {} are not in {}'.format(','.join(self.options.only_keywords), ','.join(track.keywords))
         if self.options.only_category and track.category not in self.options.only_category:
             return '{} is different from {}'.format(','.join(self.options.only_category), ','.join(track.category))
         if self.similar_to and track.similarity(self.similar_to) < 0.5:
@@ -681,7 +681,7 @@ class Utility:
         result.add_argument('--max-distance', help='Limit tracks by maximal distance', type=int, default=None)
         result.add_argument('--min-speed', help='Limit tracks by minimal speed', type=int, default=None)
         result.add_argument('--max-speed', help='Limit tracks by maximal speed', type=int, default=None)
-        result.add_argument('--only-kw', help='Limit tracks by keywords', default=None)
+        result.add_argument('--only-keywords', help='Limit tracks by keywords', default=None)
         result.add_argument('--only-category', help='Limit tracks by category', default=None)
         result.add_argument('--similar', help='Limit tracks by similarity to track SIMILAR', default=None)
         return result
@@ -898,9 +898,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_multi_source(fix_parser)
 
         keyword_parser = self.define_attr_parser(
-            'kw', helptext="""add keywords. A keyword preceded with - will be removed. Examples: \n
-                kw A,-B
-                kw -- -A""",
+            'keywords', helptext="""add keywords. A keyword preceded with - will be removed. Examples: \n
+                keywords A,-B
+                keywords -- -A""",
             func=self.keyword,
             arg_name='keywords', arg_help='keywords separated by commas')
         keyword_parser.add_argument('--dry-run', help='only show what would be done',
@@ -968,8 +968,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             exclusive = ('id_from_title', 'title_from_id', 'id_from_backend')
             if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
                 logging.error('gpxdo: only one out of {} is allowed'.format(', '.join(exclusive).replace('_', '-')))
-        if self.options.only_kw:
-            self.options.only_kw = set(x.strip() for x in self.options.only_kw.split(','))
+        if self.options.only_keywords:
+            self.options.only_keywords = set(x.strip() for x in self.options.only_keywords.split(','))
         if self.options.only_category:
             self.options.only_category = set(x.strip() for x in self.options.only_category.split(','))
         if not hasattr(self.options, 'copy'):
