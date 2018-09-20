@@ -190,13 +190,12 @@ class LsRow(dict):
 
     def print_row(self):
         """Show this row"""
-        line = ''
+        raw_fields = list()
         for field in LsRow.visible_fields():
             _ = field.format_raw(self[field.head_ident])
             right = '>' if field.type_ in (int, float) else ''
-            line += '{value:{right}{width}}{sep}'.format(
-		right=right, width=field.max_length, value=_, sep=LsField.separator)
-        logging.error(line)
+            raw_fields.append('{value:{right}{width}}'.format(right=right, width=field.max_length, value=_))
+        logging.error(LsField.separator.join(raw_fields))
 
 
 class TotalRow(LsRow):
