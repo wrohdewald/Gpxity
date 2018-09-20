@@ -21,6 +21,7 @@ import sys
 import datetime
 from collections import defaultdict
 import logging
+import textwrap
 
 try:
     import argcomplete
@@ -79,6 +80,7 @@ class LsField:
     # pylint: disable=too-few-public-methods
 
     separator = '  '  # separator between fields
+    max_display_width = 30  # where to break long strings into continuation lines
 
     def __init__(self, is_visible, header, value_function, field_fmt=None, type_=None):
         self.is_visible = is_visible
@@ -154,6 +156,7 @@ class LsRow(dict):
                     track.gpxdo_identifier += '.gpx'
             for field in self.needed_fields():
                 self[field.head_ident] = field.value(track)
+        self.continuations = list()
 
     @classmethod
     def visible_fields(cls):
@@ -186,16 +189,33 @@ class LsRow(dict):
         for field in cls.visible_fields():
             field.x_position = position
             field.max_length = max((len(field.format_raw(x[field.head_ident])) for x in check_rows), default=0)
+            field.max_length = min(field.max_length, LsField.max_display_width)
             position += field.max_length + len(LsField.separator)
+
+    def _break_long_fields(self):
+        """Break long fields into continuation lines."""
+        fields = LsRow.visible_fields()
+        for idx, field in enumerate(fields):
+            _ = field.format_raw(self[field.head_ident])
+            wrapped = textwrap.wrap(_, LsField.max_display_width)
+            if len(wrapped) > 1:
+                assert field.type_ == str
+                self[field.head_ident] = wrapped.pop(0)
+                self.continuations.extend([''] * (len(wrapped) - len(self.continuations)))
+                for cont_idx,  value in enumerate(wrapped):
+                    self.continuations[cont_idx] = self.continuations[cont_idx].ljust(field.x_position) + value
 
     def print_row(self):
         """Show this row"""
+        self._break_long_fields()
         raw_fields = list()
         for field in LsRow.visible_fields():
             _ = field.format_raw(self[field.head_ident])
             right = '>' if field.type_ in (int, float) else ''
             raw_fields.append('{value:{right}{width}}'.format(right=right, width=field.max_length, value=_))
         logging.error(LsField.separator.join(raw_fields))
+        for _ in self.continuations:
+            logging.error(_)
 
 
 class TotalRow(LsRow):
