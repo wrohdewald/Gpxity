@@ -92,6 +92,7 @@ class LsField:
         if type_ is None:
             type_ = str
         self.type_ = type_
+        self.x_position = 0
         self.max_length = 0
         LsRow.fields.append(self)
 
@@ -181,8 +182,11 @@ class LsRow(dict):
     def set_max_lengths(cls, rows):
         """Set the maximum field widths."""
         check_rows = [x for x in rows if isinstance(x, LsRow) and not isinstance(x, SeparatorRow)]
+        position = 0
         for field in cls.visible_fields():
+            field.x_position = position
             field.max_length = max((len(field.format_raw(x[field.head_ident])) for x in check_rows), default=0)
+            position += field.max_length + len(LsField.separator)
 
     def print_row(self):
         """Show this row"""
