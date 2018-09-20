@@ -120,7 +120,7 @@ class LsField:
         if value == self.zero():
             return ''
         if isinstance(value, str):
-            return ' '.join(x.strip() for x in value.split('\n')).strip()
+            return ' '.join(x.strip() for x in value.splitlines()).strip()
         if self.field_fmt == 'duration':
             hours = value.seconds // 3600
             minutes = (value.seconds - hours * 3600) // 60
