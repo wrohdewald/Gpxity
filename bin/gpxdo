@@ -78,6 +78,7 @@ class LsField:
     """Abstracts a column in the ls output."""
     # pylint: disable=too-few-public-methods
 
+    separator = '  '  # separator between fields
 
     def __init__(self, is_visible, header, value_function, field_fmt=None, type_=None):
         self.is_visible = is_visible
@@ -125,7 +126,7 @@ class LsField:
             hours += value.days * 24
             return '{:3}:{:02}'.format(hours, minutes)
         if self.field_fmt == 'warnings':
-            return '  '.join(value)
+            return LsField.separator.join(value)
         return self.field_fmt.format(value)
 
 
@@ -189,7 +190,8 @@ class LsRow(dict):
         for field in LsRow.visible_fields():
             _ = field.format_raw(self[field.head_ident])
             right = '>' if field.type_ in (int, float) else ''
-            line += '{value:{right}{width}}  '.format(right=right, width=field.max_length, value=_)
+            line += '{value:{right}{width}}{sep}'.format(
+		right=right, width=field.max_length, value=_, sep=LsField.separator)
         logging.error(line)
 
 
@@ -254,15 +256,15 @@ class FreeTextRow(LsRow):
 class SeparatorRow(LsRow):
     """A separator line for use before or after totals"""
 
-    def __init__(self, separator):
+    def __init__(self, separator_char):
         super(SeparatorRow, self).__init__()
-        self.separator = separator
+        self.separator_char = separator_char
 
     def print_row(self):
         """Show row."""
         line = ''
         for field in self.visible_fields():
-            line += self.separator * field.max_length + '  '
+            line += self.separator_char * field.max_length + LsField.separator
         logging.error(line)
 
 
