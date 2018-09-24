@@ -1326,7 +1326,7 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__fix_jumps()
         return []
 
-    def __fix_jumps(self):
+    def __fix_jumps(self):  # noqa pylint: disable=too-many-branches
         """Split segments at jumps.
 
         Whenever the time jumps back or more than 30
@@ -1348,6 +1348,9 @@ class Track:  # pylint: disable=too-many-public-methods
                     needs_break = False
                     if point.time is None and prev_point.time is not None:
                         needs_break = True
+                    elif point.time is None and prev_point.time is None:
+                        if point.distance_2d(prev_point) > 5000:
+                            needs_break = True
                     elif point.time is not None and prev_point.time is None:
                         needs_break = True
                     elif point.time - prev_point.time > datetime.timedelta(minutes=30):
