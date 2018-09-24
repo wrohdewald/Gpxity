@@ -22,6 +22,7 @@ import datetime
 from collections import defaultdict
 import logging
 import textwrap
+import geocoder
 
 try:
     import argcomplete
@@ -40,7 +41,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Track, Directory, Backend, BackendDiff
+from gpxity import Track, Directory, Backend, BackendDiff, Locate
 from gpxity.util import uniq, collect_tracks
 
 def __last_month_day(date):
@@ -460,6 +461,10 @@ class Utility:
             mainsort = self.options.sort.split(',')[0]
             group_keys = sorted(set(yield_all_group_keys(mainsort)), key=lambda x: '' if x is None else x)
 
+        if self.options.locate:
+            locator = Locate(self.options.locate, self.source_tracks, provider=self.options.location_provider)
+            self.source_tracks = locator.found(max_away=self.options.max_away)
+
         track_groups = defaultdict(list)
         all_tracks = list()
         for _ in self.source_tracks:
@@ -467,12 +472,11 @@ class Utility:
             for group in yield_track_group_keys(_, mainsort):
                 track_groups[group].append(row)
             all_tracks.append(row)
-
         all_lines = list()
         for group_key in group_keys:
             group_tracks = track_groups[group_key][:]
             group_lines = list()
-            if sort_fields:
+            if sort_fields and not self.options.locate:
                 group_tracks.sort(
                     key=lambda x: tuple(x[y.head_ident] for y in sort_fields))
             for line in group_tracks:
@@ -825,6 +829,16 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         ls_parser.add_argument('--warnings', help='show warnings',
                                action='store_true', default=False)
+        ls_parser.add_argument('--location-provider', help="data provider",
+            choices=geocoder.api.options.keys(), default='osm')
+        ls_parser.add_argument(
+            '--locate', action='append',
+            help="""the name of a place. --location can be repeated. Find tracks touching all locations, order by best match""")
+        ls_parser.add_argument(
+            '--max-away', type=float, default=100,
+            help="""to be used with --locate: show only tracks which are not more than MAX_AWAY kilometers farther away from given places.
+                The distance to all places is added to one value and the compared with MAX_AWAY.
+                Default is 100km.""")
         self.add_multi_source(ls_parser)
 
         cp_parser = self.subparsers.add_parser(
@@ -984,6 +998,10 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                     self.options.moving_speed = True
             if not self.options.source:
                 self.options.source = ['.']
+            if self.options.locate and self.options.sort != 'identifier':
+                logging.error('gpxdo: --location implies an order, do not use --sort')
+                self.exit_code = 2
+                return
         elif self.options.func == self.merge:
             if not self.options.source:
                 self.options.source = [self.options.destination]
@@ -991,6 +1009,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             exclusive = ('id_from_title', 'title_from_id', 'id_from_backend')
             if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
                 logging.error('gpxdo: only one out of {} is allowed'.format(', '.join(exclusive).replace('_', '-')))
+                self.exit_code = 2
+                return
         if self.options.only_keywords:
             self.options.only_keywords = set(x.strip() for x in self.options.only_keywords.split(','))
         if self.options.only_category:

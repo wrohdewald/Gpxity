@@ -11,11 +11,12 @@ from .track import *
 from .lifetrack import *
 from .backend import *
 from .diff import *
+from .locate import *
 from .backends import *
 from .version import *
 
 __all__ = [
-    'Track', 'Lifetrack', 'Directory', 'GPSIES', 'MMT', 'TrackMMT',
+    'Track', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT',
     'ServerDirectory', 'BackendDiff', 'WPTrackserver', 'VERSION']
 
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxity -->
-<!-- Saved: 2018-08-23, 12:48:19 -->
+<!-- Saved: 2018-09-25, 08:27:40 -->
 <!-- Copyright (C) 2018 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
@@ -13,8 +13,8 @@
   <Email>wolfgang@rohdewald.de</Email>
   <Sources>
     <Source>bin/gpxdo</Source>
-    <Source>bin/lifetrack_client.py</Source>
     <Source>bin/gpxity_server</Source>
+    <Source>bin/lifetrack_client.py</Source>
     <Source>gpxity/__init__.py</Source>
     <Source>gpxity/auth.py</Source>
     <Source>gpxity/backend.py</Source>
@@ -32,6 +32,7 @@
     <Source>gpxity/backends/wptrackserver.py</Source>
     <Source>gpxity/diff.py</Source>
     <Source>gpxity/lifetrack.py</Source>
+    <Source>gpxity/locate.py</Source>
     <Source>gpxity/track.py</Source>
     <Source>gpxity/util.py</Source>
     <Source>setup.py</Source>

@@ -17,6 +17,7 @@ Changelog
   * new: track.index(other)
   * new: simplify keyword handling: eleminate gpxdo kw --remove 
   * gpxdo kw is now gpxdo keywords
+  * new: gpxdo ls --locate and class Locate
 
 1.3.2 release 2018-08-19
 ------------------------
