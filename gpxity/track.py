@@ -8,7 +8,7 @@
 
 # pylint: disable=protected-access
 
-from math import asin, sqrt, degrees, isclose
+from math import asin, sqrt, degrees
 import datetime
 from contextlib import contextmanager
 from functools import total_ordering
@@ -1092,8 +1092,6 @@ class Track:  # pylint: disable=too-many-public-methods
         # We do not use points_hash because we want to abort as soon as we know
         # they are different.
         if self.gpx.get_track_points_no() != other.gpx.get_track_points_no():
-            return False
-        if not isclose(self.angle(), other.angle(), rel_tol=1 / 10**digits):
             return False
         for _, (point1, point2) in enumerate(zip(self.points(), other.points())):
             if not positions_equal(point1, point2, digits):
