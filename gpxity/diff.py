@@ -132,10 +132,14 @@ class BackendDiff:
                                 {(right_found[x][3] - left_found[x][3])
                                  for x in range(len(left_found))}) == 1:
                             time1, time2 = pretty_times(left_found[0][3], left_found[-1][3])
-                            result['Z'].append(
-                                '{} points between {} and {} on the left are {} later on the right'.format(
-                                    len(left_found), time1, time2, right_found[0][3] - left_found[0][3]
-                                ))
+                            timedelta = right_found[0][3] - left_found[0][3]
+                            if timedelta:
+                                result['Z'].append(
+                                    '{} points between {} and {} on the left are {} later on the right'.format(
+                                        len(left_found), time1, time2, timedelta))
+                            else:
+                                # if points are different but times are the same, it must be the height. Ignore that.
+                                pass
                         else:
                             result['Z'].append('Points have different times')
                     else:
