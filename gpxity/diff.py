@@ -220,7 +220,8 @@ class BackendDiff:
                     matched.append(left_track)
                     matched.append(right_track)
                 else:
-                    if len(left_track.positions & right_track.positions) >= 100:
+                    maxlen = max(len(left_track.positions), len(right_track.positions))
+                    if len(left_track.positions & right_track.positions) >= maxlen * 0.9:
                         self.similar.append(BackendDiff.Pair(left_track, right_track))
                         matched.append(left_track)
                         matched.append(right_track)
