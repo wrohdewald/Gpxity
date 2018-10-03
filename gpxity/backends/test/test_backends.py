@@ -405,7 +405,7 @@ class TestBackends(BasicTest):
             self.assertTrue(uplink.is_free_account)
             life = Lifetrack(uplink)
             with self.assertRaises(Exception) as context:
-                life.update(self._random_points())
+                life.start(self._random_points())
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
     @skipIf(*disabled(Directory, TrackMMT))
@@ -414,7 +414,7 @@ class TestBackends(BasicTest):
         def track(*args):
             life = Lifetrack(*args)
             points = self._random_points(100)
-            life.update(points[:50])
+            life.start(points[:50])
             time.sleep(7)
             life.update(points[50:])
             life.end()

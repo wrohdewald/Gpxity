@@ -63,9 +63,8 @@ class Main:
             assert isinstance(backend, Backend)
             try:
                 life = Lifetrack(backend)
-                life.set_title('Todays Lifetrack')
                 all_points = list(source.points())
-                life.update(all_points[:5])
+                life.start(all_points[:5])
                 for point in all_points[5:]:
                     time.sleep(random.randrange(10))
                     life.update([point])

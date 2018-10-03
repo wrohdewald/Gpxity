@@ -8,6 +8,8 @@
 
 # pylint: disable=protected-access
 
+import datetime
+
 from .track import Track
 
 __all__ = ['Lifetrack']
@@ -104,6 +106,27 @@ class Lifetrack:
         self.targets = [LifetrackTarget(x) for x in target_backends if x is not None]
         self.id_in_server = None
 
+    def start(self, points, title=None, public=None, category=None):
+        """Start lifetracking.
+
+        Returns: The new id_in_backend
+
+        """
+        if title is None:
+            title = str(datetime.datetime.now())[:16]
+        if public is None:
+            public = False
+        if category is None:
+            category = self.targets[0].backend.legal_categories[0]
+
+        for _ in self.targets:
+            with _.track._decouple():
+                _.track.title = title
+                _.track.public = public
+                _.track.category = category
+        self.update(points)
+        return self.id_in_server
+
     def update(self, points):
         """Start or update lifetrack.
 
@@ -126,20 +149,3 @@ class Lifetrack:
         for _ in self.targets:
             _.end()
 
-    def set_title(self, title):
-        """Set title for all targets."""
-        for _ in self.targets:
-            with _.track._decouple():
-                _.track.title = title
-
-    def set_category(self, category):
-        """Set category for all targets."""
-        for _ in self.targets:
-            with _.track._decouple():
-                _.track.category = category
-
-    def set_public(self, public):
-        """Set public for all targets."""
-        for _ in self.targets:
-            with _.track._decouple():
-                _.track.public = public

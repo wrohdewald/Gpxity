@@ -286,16 +286,17 @@ class MMTHandler(BaseHTTPRequestHandler):
             if parsed.get('source') == 'OruxMaps':
                 # shorten monster title 2018-10-03 00:0020181003_0018
                 title = title[:16]
-            life.set_title(title)
+        else:
+            title = None
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
-        life.set_public(parsed['privacy'] == 'public')
+        public=parsed['privacy'] == 'public'
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
-        life.set_category(parsed['activity'].capitalize())
-        life.update(self.__points(parsed['points']))
-        return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
-            life.id_in_server)
+        category = parsed['activity'].capitalize()
+        points = self.__points(parsed['points'])
+        new_ident = life.start(points, title, public, category)
+        return '<type>activity_started</type><activity_id>{}</activity_id>'.format(new_ident)
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
