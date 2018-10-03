@@ -257,7 +257,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         values = raw.split()
         if len(values) % 4:
-            self.return_error(401, 'Point elements not a multiple of 4', TypeError)
+            self.return_error(401, 'Point element count {} is not a multiple of 4'.format(len(values)), TypeError)
         result = list()
         for idx in range(0, len(values), 4):
             point = GPXTrackPoint(
