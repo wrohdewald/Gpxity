@@ -287,7 +287,6 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer
 
         """
-        life = self.server.lifestart()
         if 'title' in parsed:
             title = parsed['title']
             if parsed.get('source') == 'OruxMaps':
@@ -302,8 +301,20 @@ class MMTHandler(BaseHTTPRequestHandler):
         # and Oruxmaps does so too.
         category = parsed['activity'].capitalize()
         points = self.__points(parsed['points'])
+
+        life = Lifetrack(self.server.server_directory, self.server.mailer)
         new_ident = life.start(points, title, public, category)
+        self.server.trackers[new_ident] = life
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(new_ident)
+
+    def use_tracker(self, parsed):
+        """Find matching tracker. Fail if no tracker is running at all.
+
+        Returns: the wanted tracker.
+
+        """
+        ident = parsed['activity_id']
+        return self.server.trackers.get(ident)
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
@@ -312,14 +323,14 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer
 
         """
-        if self.server.life is None:
-            self.return_error(401, 'No lifetracker active')
+        tracker = self.use_tracker(parsed)
+        if tracker is None:
+            self.return_error(401, 'activity_id {} is not known'.format(parsed['activity_id']))
             return ''
-        if parsed['activity_id'] != self.server.life.id_in_server:
-            self.return_error(401, 'wrong track id {}, expected {}'.format(
-                parsed['activity_id'], self.server.life.id_in_server))
+        tracker.update(self.__points(parsed['points']))
+        if tracker.done:
+            self.return_error(401, 'update_activity: {} was already stopped'.format(tracker))
             return ''
-        self.server.life.update(self.__points(parsed['points']))
         return '<type>activity_updated</type>'
 
     def xml_stop_activity(self, parsed) ->str:  # pylint: disable=unused-argument
@@ -329,11 +340,14 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer
 
         """
-        if self.server.life is None:
-            self.return_error(401, 'No lifetracker active')
-            return''
-        self.server.life.end()
-        self.server.life = None
+        trackers = [self.use_tracker(parsed)]
+        if trackers == [None]:
+            trackers = [x for x in self.server.trackers.values() if not x.done]
+        for tracker in trackers:
+            if tracker.done:
+                self.return_error(401, 'stop_activity has already been called for {}'.format(tracker))
+            else:
+                tracker.end()
         return '<type>activity_stopped</type>'
 
 
@@ -345,6 +359,11 @@ class LifeServerMMT(HTTPServer):
 
     This is not ready for production usage, several important
     parts are still unimplemented.
+
+    Attributes:
+        trackers: A dict of all Lifetrack instances, key is the id_in_backend (activity_id).
+            No tracker is ever removed. At least for now. Change that some time after
+            Oruxmaps got a fix for not doing update_activity after stop_activity.
 
     """
 
@@ -365,18 +384,7 @@ class LifeServerMMT(HTTPServer):
             self.mailer.min_interval = options.mail_interval
         else:
             self.mailer = None
-        self.life = None
-
-    def lifestart(self):
-        """Create the Lifetrack instance.
-
-        Returns: The new instance
-
-        """
-        if self.life:
-            raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.life))
-        self.life = Lifetrack(self.server_directory, self.mailer)
-        return self.life
+        self.trackers = dict()
 
     def second(self):
         return '{:10.4f}'.format(datetime.datetime.now().timestamp() - self.start_second)
