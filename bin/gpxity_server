@@ -67,7 +67,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     login_user = None
     uniqueid = 123
 
-    def log_message(self, format, *args):  # pylint: disable=redefined-builtin
+    def log_info(self, format, *args):  # pylint: disable=redefined-builtin
         """Override: Redirect into logger."""
         self.server.logger.info(format % args)
 
@@ -101,8 +101,7 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def return_error(self, code, reason):
         """Answer the clint with an xml formatted error message."""
-        self.server.logger.error('return_error: {} {}'.format(
-            code, reason))
+        self.server.logger.info('return_error: {} {}'.format(code, reason))
         self.send_response(code)
         xml = '<type>error</type><reason>{}</reason>'.format(reason)
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
@@ -151,8 +150,7 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):  # noqa pylint: disable=invalid-name
         """Override standard."""
-        # TODO: empfangene cookies verwenden
-        self.server.logger.debug('GET %s %s %s', self.client_address[0], self.server.server_port, self.path)
+        self.server.logger.info('%s GET %s %s %s', self.server.second(), self.client_address[0], self.server.server_port, self.path)
         self.parseRequest()  # side effect: may output debug info
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
@@ -169,7 +167,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         else:
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        self.server.logger.debug('returning %s', xml)
+        self.server.logger.info('%s  returning %s', self.server.second(), xml)
         self.send_header('Content-Length', len(xml))
         self.cookies()
         self.end_headers()
@@ -178,9 +176,12 @@ class MMTHandler(BaseHTTPRequestHandler):
     def do_POST(self):  # noqa pylint: disable=invalid-name
         """override standard."""
         try:
-            self.server.logger.debug(
-                'POST %s %s %s', self.client_address[0], self.server.server_port, self.path)
             parsed = self.parseRequest()
+            _ = ' with {} points'.format(len(parsed['points'].split(' ')) // 4) if 'points' in parsed else ''
+            self.server.logger.info(
+                '%s POST from %s on port %s %s request=%s activity_id=%s%s',
+                self.server.second(), self.client_address[0], self.server.server_port, self.path, parsed.get('request'),
+                parsed.get('activity_id'), _)
             if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
                 try:
                     request = parsed['request']
@@ -195,6 +196,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 except Exception:
                     self.server.logger.error(traceback.format_exc())
                     raise
+                self.server.logger.info('%s   returning %s', self.server.second(), xml)
                 if xml is None:
                     xml = ''
                 xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
@@ -203,7 +205,6 @@ class MMTHandler(BaseHTTPRequestHandler):
             self.send_response(200, 'OK')
             self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
             self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-            self.server.logger.debug('returning %s', xml)
             self.send_header('Content-Length', len(xml))
             self.cookies()
             self.end_headers()
@@ -354,6 +355,7 @@ class LifeServerMMT(HTTPServer):
         self.logger = logger
         # define the directory in auth.cfg, using the Url=value
         self.server_directory = ServerDirectory(url=options.directory)
+        self.start_second = datetime.datetime.now().timestamp()
         if options.mailto:
             auth = {
                 'from': 'gpxity',
@@ -375,6 +377,9 @@ class LifeServerMMT(HTTPServer):
             raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.life))
         self.life = Lifetrack(self.server_directory, self.mailer)
         return self.life
+
+    def second(self):
+        return '{:10.4f}'.format(datetime.datetime.now().timestamp() - self.start_second)
 
 class Main:  # pylint: disable=too-few-public-methods
 
