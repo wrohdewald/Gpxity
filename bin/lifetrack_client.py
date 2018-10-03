@@ -17,6 +17,7 @@ import os
 import sys
 import logging
 import time
+import random
 
 try:
     import argcomplete
@@ -65,23 +66,15 @@ class Main:
                 life.set_title('Todays Lifetrack')
                 all_points = list(source.points())
                 life.update(all_points[:5])
-                delay = self.delay()
                 for point in all_points[5:]:
-                    time.sleep(next(delay))
+                    time.sleep(random.randrange(10))
                     life.update([point])
-                time.sleep(next(delay))
+                time.sleep(random.randrange(10))
                 life.end()
             finally:
                 backend.destroy()
         except Exception as _:  # pylint: disable=broad-except
             self.error(_)
-
-    @staticmethod
-    def delay():
-        """Varying delay for testing."""
-        while True:
-            yield 7
-            yield 15
 
     def error(self, msg, exit_code=None):
         """Print the error message.
