@@ -5,7 +5,16 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""implement a server using the mapmytracks protocol."""
+"""implement a server using the mapmytracks protocol.
+
+There is one notable difference:
+
+https://github.com/MapMyTracks/api/blob/master/services/stop_activity.md
+says stop_activity has no parameter activity_id. Our server needs it,
+Oruxmaps delivers it. Maybe the MMT API definition is wrong.
+See https://github.com/MapMyTracks/api/issues/25
+
+"""
 
 # PYTHON_ARGCOMPLETE_OK
 # for command line argument completion, put this into your .bashrc:
