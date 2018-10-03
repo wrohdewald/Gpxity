@@ -323,15 +323,16 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer
 
         """
+        updated = '<type>activity_updated</type>'
         tracker = self.use_tracker(parsed)
         if tracker is None:
             self.return_error(401, 'activity_id {} is not known'.format(parsed['activity_id']))
-            return ''
+            return updated
         tracker.update(self.__points(parsed['points']))
         if tracker.done:
             self.return_error(401, 'update_activity: {} was already stopped'.format(tracker))
-            return ''
-        return '<type>activity_updated</type>'
+            return updated
+        return updated
 
     def xml_stop_activity(self, parsed) ->str:  # pylint: disable=unused-argument
         """Client says stop.
