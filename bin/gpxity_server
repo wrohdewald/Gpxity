@@ -331,7 +331,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         return '<type>activity_stopped</type>'
 
 
-class LifeServerMMT:  # pylint: disable=too-few-public-methods
+class LifeServerMMT(HTTPServer):
 
     """A simple MMT server for life tracking.
 
@@ -344,22 +344,21 @@ class LifeServerMMT:  # pylint: disable=too-few-public-methods
 
     def __init__(self, options, logger):
         """See class docstring."""
-        httpd = HTTPServer((options.servername, options.port), MMTHandler)
-        httpd.gpxdo_options = options
+        super(LifeServerMMT, self).__init__((options.servername, options.port), MMTHandler)
+        self.gpxdo_options = options
+        self.logger = logger
         # define the directory in auth.cfg, using the Url=value
-        httpd.server_directory = ServerDirectory(url=options.directory)
+        self.server_directory = ServerDirectory(url=options.directory)
         if options.mailto:
             auth = {
                 'from': 'gpxity',
                 'port': options.smtp_port,
                 'Url': options.mailto}
-            httpd.mailer = Mailer(auth=auth)
-            httpd.mailer.min_interval = options.mail_interval
+            self.mailer = Mailer(auth=auth)
+            self.mailer.min_interval = options.mail_interval
         else:
-            httpd.mailer = None
-        httpd.life = None
-        httpd.logger = logger
-        httpd.serve_forever()
+            self.mailer = None
+        self.life = None
 
 
 class Main:  # pylint: disable=too-few-public-methods
@@ -396,6 +395,6 @@ class Main:  # pylint: disable=too-few-public-methods
         logger.addHandler(logfile)
         logging.getLogger('urllib3').level = logging.ERROR
 
-        LifeServerMMT(options, logger)
+        LifeServerMMT(options, logger).serve_forever()
 
 Main()
