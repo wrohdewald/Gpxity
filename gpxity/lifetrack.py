@@ -95,12 +95,13 @@ class Lifetrack:
 
     Args:
         target_backends: Those tracks will receive the lifetracking data.
+        An arg None will be ignored.
 
     """
 
     def __init__(self, *target_backends):
         """See class docstring."""
-        self.targets = [LifetrackTarget(x) for x in target_backends]
+        self.targets = [LifetrackTarget(x) for x in target_backends if x is not None]
         self.id_in_server = None
 
     def update(self, points):

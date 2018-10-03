@@ -282,10 +282,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         if self.server.life:
             raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.server.life))
-        if self.server.mailer is not None:
-            self.server.life = Lifetrack(self.server.server_directory, self.server.mailer)
-        else:
-            self.server.life = Lifetrack(self.server.server_directory)
+        self.server.life = Lifetrack(self.server.server_directory, self.server.mailer)
         if 'title' in parsed:
             self.server.life.set_title(parsed['title'])
         if 'privicity' in parsed:
