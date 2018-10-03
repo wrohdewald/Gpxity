@@ -149,3 +149,5 @@ class Lifetrack:
         for _ in self.targets:
             _.end()
 
+    def __str__(self):  # noqa
+        return 'Lifetrack({})'.format(self.id_in_server)
