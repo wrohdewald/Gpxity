@@ -177,11 +177,12 @@ class MMTHandler(BaseHTTPRequestHandler):
         """override standard."""
         try:
             parsed = self.parseRequest()
-            _ = ' with {} points'.format(len(parsed['points'].split(' ')) // 4) if 'points' in parsed else ''
+            points = ' with {} points'.format(len(parsed['points'].split(' ')) // 4) if 'points' in parsed else ''
+            ident=' id={}'.format(parsed['activity_id']) if 'activity_id' in parsed else ''
             self.server.logger.info(
-                '%s POST from %s on port %s %s request=%s activity_id=%s%s',
+                '%s POST from %s on port %s %s request=%s %s%s',
                 self.server.second(), self.client_address[0], self.server.server_port, self.path, parsed.get('request'),
-                parsed.get('activity_id'), _)
+                ident, points)
             if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
                 try:
                     request = parsed['request']
@@ -310,11 +311,11 @@ class MMTHandler(BaseHTTPRequestHandler):
     def use_tracker(self, parsed):
         """Find matching tracker. Fail if no tracker is running at all.
 
-        Returns: the wanted tracker.
+        Returns: the wanted tracker or None.
 
         """
-        ident = parsed['activity_id']
-        return self.server.trackers.get(ident)
+        if 'activity_id' in parsed:
+            return self.server.trackers.get(parsed['activity_id'])
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
