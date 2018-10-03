@@ -5,6 +5,8 @@
 # See LICENSE for details.
 
 """
+This implements :class:`gpxity.WPTrackServer`.
+
 WPTrackserver talks directly to the WP mysql database holding the trackserver data.
 
 This backend does not directly support Track.category, Track.status, Track.keywords.

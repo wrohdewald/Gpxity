@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This implements a mailing backend. It can only write."""
+"""This implements :class:`gpxity.Mailer`: a mailing backend. It can only write."""
 
 # pylint: disable=protected-access
 

@@ -1,10 +1,6 @@
 gpxity package
 ==============
 
-.. automodule:: gpxity
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 Subpackages
 -----------
@@ -13,11 +9,8 @@ Subpackages
 
     gpxity.backends
 
-Submodules
-----------
-
 gpxity.track module
-----------------------
+-------------------
 
 .. automodule:: gpxity.track
     :members:

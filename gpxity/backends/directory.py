@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""Defines :class:`gpxity.Directory`."""
+"""This implements :class:`gpxity.Directory`."""
 
 # pylint: disable=protected-access
 

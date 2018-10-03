@@ -20,4 +20,5 @@ test "$currentdir" != Gpxity && (
 
 cd doc
 
+make clean
 make html

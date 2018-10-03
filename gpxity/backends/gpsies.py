@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpsies.GPSIES` for https://www.gpsies.com.
+This implements :class:`gpxity.GPSIES` for https://www.gpsies.com.
 
 so ginge das mit dem API-Key: https://github.com/telemaxx/gpsiesreader/blob/master/gpsies3.py
 

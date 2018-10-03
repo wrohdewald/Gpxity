@@ -13,9 +13,6 @@ Subpackages
 
     gpxity.backends.test
 
-Submodules
-----------
-
 gpxity.backends.directory module
 --------------------------------
 
@@ -26,7 +23,7 @@ gpxity.backends.directory module
     :exclude-members: load_full, prefix, skip_test
 
 gpxity.backends.gpsies module
--------------------------------
+-----------------------------
 
 .. automodule:: gpxity.backends.gpsies
     :members:
@@ -42,10 +39,37 @@ gpxity.backends.mmt module
     :show-inheritance:
     :exclude-members: load_full, skip_test
 
+gpxity.backends.trackmmt module
+-------------------------------
+
+.. automodule:: gpxity.backends.trackmmt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: load_full, skip_test
+
 gpxity.backends.server_directory module
 ---------------------------------------
 
 .. automodule:: gpxity.backends.server_directory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: load_full, skip_test
+
+gpxity.backends.mailer module
+-----------------------------
+
+.. automodule:: gpxity.backends.mailer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: load_full, skip_test
+
+gpxity.backends.wptrackserver module
+------------------------------------
+
+.. automodule:: gpxity.backends.wptrackserver
     :members:
     :undoc-members:
     :show-inheritance:

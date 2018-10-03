@@ -6,9 +6,6 @@ gpxity.backends.test package
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
-
 gpxity.backends.test.basic module
 ---------------------------------
 
