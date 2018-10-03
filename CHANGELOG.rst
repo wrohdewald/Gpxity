@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.3.3 release 2018-08-xx
+1.3.3 release 2018-10-04
 ------------------------
 
   * new Backend WPTrackserver directly accessing its mysql database
@@ -15,9 +15,10 @@ Changelog
   * new: gpxdo fix --simplify
   * new: gpxdo fix --split
   * new: track.index(other)
-  * new: simplify keyword handling: eleminate gpxdo kw --remove 
+  * new: simplify keyword handling: eliminate gpxdo kw --remove
   * gpxdo kw is now gpxdo keywords
   * new: gpxdo ls --locate and class Locate
+  * make gpxity_server for lifetracking more stable
 
 1.3.2 release 2018-08-19
 ------------------------
