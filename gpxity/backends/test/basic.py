@@ -18,7 +18,11 @@ import tempfile
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
 import logging
-import MySQLdb
+try:
+    import MySQLdb
+except ImportError:
+    pass
+
 import _mysql_exceptions
 
 import gpxpy
