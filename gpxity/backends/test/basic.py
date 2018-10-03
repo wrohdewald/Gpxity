@@ -483,10 +483,12 @@ class BasicTest(unittest.TestCase):
             'docker', 'run', '--name', cls.mysql_docker_name, '--detach',
             '--env', 'MYSQL_ROOT_PASSWORD={}'.format(cls.test_passwd), 'mysql']
         with Popen(cmd, stdout=PIPE, stderr=PIPE) as _:
-            std_err = _.stderr.read()
+            std_err = _.stderr.read().strip().decode('utf8')
             if std_err:
                 logging.error(std_err)
-                raise Exception('Cannot run docker: {}'.format(std_err.decode().strip()))
+                if 'on network bridge: failed to add the host' in std_err:
+                    logging.error('did you reboot after kernel upgrade?')
+                raise Exception('Cannot run docker: {}'.format(std_err))
         if not cls.find_mysql_docker():
             raise Exception('Unknown problem while creating mysql docker')
         cls.create_db_for_wptrackserver()
