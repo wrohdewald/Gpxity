@@ -284,7 +284,11 @@ class MMTHandler(BaseHTTPRequestHandler):
             raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.server.life))
         self.server.life = Lifetrack(self.server.server_directory, self.server.mailer)
         if 'title' in parsed:
-            self.server.life.set_title(parsed['title'])
+            title = parsed['title']
+            if parsed.get('source') == 'OruxMaps':
+                # shorten monster title 2018-10-03 00:0020181003_0018
+                title = title[:16]
+            self.server.life.set_title(title)
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
         self.server.life.set_public(parsed['privacy'] == 'public')
