@@ -280,24 +280,22 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer
 
         """
-        if self.server.life:
-            raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.server.life))
-        self.server.life = Lifetrack(self.server.server_directory, self.server.mailer)
+        life = self.server.lifestart()
         if 'title' in parsed:
             title = parsed['title']
             if parsed.get('source') == 'OruxMaps':
                 # shorten monster title 2018-10-03 00:0020181003_0018
                 title = title[:16]
-            self.server.life.set_title(title)
+            life.set_title(title)
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
-        self.server.life.set_public(parsed['privacy'] == 'public')
+        life.set_public(parsed['privacy'] == 'public')
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
-        self.server.life.set_category(parsed['activity'].capitalize())
-        self.server.life.update(self.__points(parsed['points']))
+        life.set_category(parsed['activity'].capitalize())
+        life.update(self.__points(parsed['points']))
         return '<type>activity_started</type><activity_id>{}</activity_id>'.format(
-            self.server.life.id_in_server)
+            life.id_in_server)
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
@@ -360,6 +358,16 @@ class LifeServerMMT(HTTPServer):
             self.mailer = None
         self.life = None
 
+    def lifestart(self):
+        """Create the Lifetrack instance.
+
+        Returns: The new instance
+
+        """
+        if self.life:
+            raise Exception('Currently I can handle only one lifetracker, I already have {}'.format(self.life))
+        self.life = Lifetrack(self.server_directory, self.mailer)
+        return self.life
 
 class Main:  # pylint: disable=too-few-public-methods
 
