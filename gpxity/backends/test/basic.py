@@ -20,10 +20,10 @@ from subprocess import Popen, PIPE
 import logging
 try:
     import MySQLdb
+    import _mysql_exceptions
 except ImportError:
     pass
 
-import _mysql_exceptions
 
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
