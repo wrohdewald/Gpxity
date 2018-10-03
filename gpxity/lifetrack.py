@@ -99,12 +99,16 @@ class Lifetrack:
         target_backends: Those tracks will receive the lifetracking data.
         An arg None will be ignored.
 
+    Attributes:
+        done: Will be True after end() has been called.
+
     """
 
     def __init__(self, *target_backends):
         """See class docstring."""
         self.targets = [LifetrackTarget(x) for x in target_backends if x is not None]
         self.id_in_server = None
+        self.done = False
 
     def start(self, points, title=None, public=None, category=None):
         """Start lifetracking.
@@ -148,6 +152,7 @@ class Lifetrack:
         If the backend does not support lifetrack, this does nothing."""
         for _ in self.targets:
             _.end()
+        self.done = True
 
     def __str__(self):  # noqa
         return 'Lifetrack({})'.format(self.id_in_server)
