@@ -793,7 +793,7 @@ class Track:  # pylint: disable=too-many-public-methods
         Duplicate keywords are silently ignored.
         A keyword may not contain a comma.
         Keywords with a preceding '-' are removed, the others are added.
-            Raise an Exception if a keyword is both added and removed.
+        Raise an Exception if a keyword is both added and removed.
 
         Args:
             values: Either a single str with one or more keywords, separated by commas

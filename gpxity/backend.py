@@ -761,13 +761,13 @@ class Backend:
         """merge other backend or a single track into this one. Tracks within self are also merged.
 
         If two tracks have identical points, or-ify their other attributes.
+
         Args:
             other: The backend or a single track to be merged
             remove: If True, remove merged tracks
             dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching track, just copy other into this Backend
-            partial_tracks: If True, two tracks are mergeable if one of them contains
-                the other one.
+            partial_tracks: If True, two tracks are mergeable if one of them contains the other one.
 
         Returns:
             list(str) A list of messages for verbose output
