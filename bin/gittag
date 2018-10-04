@@ -1,0 +1,24 @@
+#!/bin/bash
+
+tag=$1
+
+# this
+# - writes tag into gpxity/version.h and doc/source/conf.py
+# - git tag $tag
+
+cat > gpxity/version.py <<!ENDE
+
+"""
+This file is created by bin/gittag
+"""
+
+VERSION = "$tag"
+COPYRIGHT = """
+Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
+See LICENSE for details.
+"""
+!ENDE
+
+git add gpxity/version.py
+git commit -m "release $tag"
+git tag $tag

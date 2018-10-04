@@ -11,6 +11,8 @@ See LICENSE for details.
 from setuptools import setup, find_packages
 
 
+from gpxity import version
+
 def readall(path) ->str:
     """explicitly close the file again.
 
@@ -21,22 +23,9 @@ def readall(path) ->str:
     with open(path) as in_file:
         return in_file.read()
 
-
-TEMPLATE = '\n'.join([
-    '"""',
-    'This file is created by setup.py, the version is the latest git tag.',
-    '"""',
-    '',
-    'VERSION = "{version}"',
-    'COPYRIGHT = """{}"""'.format(COPYRIGHT),
-    ''])
-
 setup(
     name='Gpxity',
-    use_scm_version={
-        'write_to': 'gpxity/version.py',
-        'write_to_template': TEMPLATE
-    },
+    version=version.VERSION,
     setup_requires=['setuptools_scm'],
     description='A uniform interface to GPX services like mapmytracks or gpsies',
     long_description=readall('README.rst') + '\n\n' + readall('CHANGELOG.rst'),
