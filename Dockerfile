@@ -8,7 +8,7 @@ COPY dockerbash /root/.bashrc
 ENV GPXITY_DISABLE_BACKENDS="Mailer"
 
 RUN pip install --upgrade pip
-RUN pip install pytest gpxity
+RUN pip install --index-url https://test.pypi.org/pypi/ --extra-index-url https://pypi.org/simple gpxity pytest
 
 COPY pytest.ini /usr/local/lib/python3.6/site-packages/gpxity
 

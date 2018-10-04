@@ -17,6 +17,16 @@ kill_containers() {
 	docker image rm gpxity
 }
 
+
+python3 setup.py clean --all
+
+rm -rf dist
+
+python3 setup.py sdist
+python3 setup.py bdist_wheel
+
+twine upload --repository testpypi dist/*
+
 kill_containers
 
 set -e
