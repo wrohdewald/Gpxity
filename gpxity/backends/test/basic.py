@@ -331,18 +331,18 @@ class BasicTest(unittest.TestCase):
     def lifetrackserver(directory, servername, port):
         """Start and ends a server for lifetrack testing."""
         exec_name = 'bin/gpxity_server'
+        logfile = os.path.join(directory, 'gpxity_server.log')
         if not os.path.exists(exec_name):
             exec_name = 'gpxity_server'
         cmdline = '{} --loglevel debug --servername {} --port {} --directory {}'.format(
             exec_name, servername, port, directory)
         if not Mailer.is_disabled():
             cmdline += ' --mailto {} --smtp-port 8025'.format(pwd.getpwuid(os.geteuid()).pw_name)
-        process = Popen(cmdline.split())
+        process = Popen(cmdline.split(), stderr=open(logfile, 'a'))
         try:
             time.sleep(1)  # give the server time to start
             yield
         finally:
-            logfile = os.path.join(directory, 'gpxity_server.log')
             if os.path.exists(logfile):
                 for _ in open(logfile):
                     logging.debug('SRV: %s', _.rstrip())
