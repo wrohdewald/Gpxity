@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.3.3.1 release 2018-10-04
+--------------------------
+
+  * all unittests can now be run in the test installation docker
+
 1.3.3 release 2018-10-04
 ------------------------
 
