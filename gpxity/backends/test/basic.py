@@ -330,8 +330,11 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def lifetrackserver(directory, servername, port):
         """Start and ends a server for lifetrack testing."""
-        cmdline = 'bin/gpxity_server --loglevel debug --servername {} --port {} --directory {}'.format(
-            servername, port, directory)
+        exec_name = 'bin/gpxity_server'
+        if not os.path.exists(exec_name):
+            exec_name = 'gpxity_server'
+        cmdline = '{} --loglevel debug --servername {} --port {} --directory {}'.format(
+            exec_name, servername, port, directory)
         if not Mailer.is_disabled():
             cmdline += ' --mailto {} --smtp-port 8025'.format(pwd.getpwuid(os.geteuid()).pw_name)
         process = Popen(cmdline.split())
