@@ -7,4 +7,6 @@ RUN pip install --index-url https://test.pypi.org/pypi/ --extra-index-url https:
 
 COPY pytest.ini /usr/local/lib/python3.6/site-packages/gpxity
 
+# comment the next line if you want to run the tests manually
+
 RUN cd /usr/local/lib/python3.6/site-packages/gpxity ; pytest -k 'not slow'
