@@ -11,4 +11,4 @@ RUN pip install pytest gpxity
 
 COPY pytest.ini /usr/local/lib/python3.6/site-packages/gpxity
 
-RUN cd /usr/local/lib/python3.6/site-packages/gpxity ; pytest
+RUN cd /usr/local/lib/python3.6/site-packages/gpxity ; pytest -k 'not slow'
