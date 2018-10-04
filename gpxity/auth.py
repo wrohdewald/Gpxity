@@ -6,6 +6,7 @@
 """This module defines :class:`~gpxity.Authenticate`."""
 
 import os
+import logging
 from configparser import ConfigParser
 
 __all__ = ['Authenticate']
@@ -79,14 +80,18 @@ class Authenticate:
         else:
             self.__section_name = '{}:{}'.format(backend.__class__.__name__, username)
             self.__path = os.path.expanduser(self.path)
-            with open(self.__path) as auth_file:
-                self.__config.read_string(auth_file.read())
-                if self.__section_name not in self.__config:
-                    if backend.needs_config:
-                        raise KeyError('Section [{}] not found in {}'.format(self.__section_name, self.__path))
-                    self.__config[self.__section_name] = {}
-                self.section = self.__config[self.__section_name]
-                self.section['username'] = username or ''
+            if os.path.exists(self.__path):
+                with open(self.__path) as auth_file:
+                    self.__config.read_string(auth_file.read())
+                    if self.__section_name not in self.__config:
+                        if backend.needs_config:
+                            raise KeyError('Section [{}] not found in {}'.format(self.__section_name, self.__path))
+                        self.__config[self.__section_name] = {}
+                    self.section = self.__config[self.__section_name]
+                    self.section['username'] = username or ''
+            else:
+                logging.info('%s not found', self.__path)
+                self.section = dict()
         if self.section.get('username', None) == 'wrong_user':
             raise KeyError
         if 'url' not in self.section:
