@@ -7,6 +7,7 @@ COPY dockerbash /root/.bashrc
 # good would be to use host port 25 but how can I make it available in the guest?
 ENV GPXITY_DISABLE_BACKENDS="Mailer"
 
+RUN pip install --upgrade pip
 RUN pip install pytest gpxity
 
 COPY pytest.ini /usr/local/lib/python3.6/site-packages/gpxity
