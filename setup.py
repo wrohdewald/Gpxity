@@ -11,7 +11,7 @@ See LICENSE for details.
 from setuptools import setup, find_packages
 
 
-from gpxity import version
+import gpxity.version
 
 def readall(path) ->str:
     """explicitly close the file again.
