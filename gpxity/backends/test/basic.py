@@ -353,7 +353,7 @@ class BasicTest(unittest.TestCase):
     def start_mailserver(self):
         """Start an smptd server for mail testing."""
         self.mailserver_process = Popen(
-            'aiosmtpd -u -n -d'.split(),
+            'aiosmtpd -u -n -d -l 127.0.0.1:8025'.split(),
             stdout=open('{}/smtpd_stdout'.format(Directory.prefix), 'w'),
             stderr=open('{}/smtpd_stderr'.format(Directory.prefix), 'w'))
         time.sleep(1)  # give the server time to start
