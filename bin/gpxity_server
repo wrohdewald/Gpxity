@@ -211,10 +211,10 @@ class MMTHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(bytes(xml.encode('utf-8')))
         except Exception as exc:
-            if isinstance(exc, smtplib.SMTPRecipientsRefused):
-                self.return_error(500, 'Mailer: Recipients refused: {}'.format(exc.recipients))
+            if isinstance(exc, smtplib.SMTPResponseException):
+                self.return_error(exc.smtp_code, exc.smtp_error)
             else:
-                self.return_error(500, 'Unknown error {}: {}'.format(type(exc), str(exc)))
+                self.return_error(500, exc)
 
     @staticmethod
     def xml_get_time(_) ->str:
@@ -387,7 +387,10 @@ class LifeServerMMT(HTTPServer):
                 'from': 'gpxity',
                 'port': options.smtp_port,
                 'Url': options.mailto}
-            self.mailer = Mailer(auth=auth)
+            timeout = None
+            if options.timeout:
+                timeout = int(options.timeout.split(',')[0].strip())
+            self.mailer = Mailer(auth=auth, timeout=timeout)
             self.mailer.min_interval = options.mail_interval
         else:
             self.mailer = None

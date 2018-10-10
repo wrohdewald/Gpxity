@@ -11,6 +11,8 @@
 import datetime
 from threading import Timer
 import smtplib
+import socket
+import logging
 from email.message import EmailMessage
 
 from .. import Backend
@@ -29,6 +31,7 @@ class MailQueue:
     def __init__(self, mailer):
         """See class docstring."""
         self.mailer = mailer
+        self.disabled = False
         self.tracks = dict()
         self.last_sent_time = datetime.datetime.now() - datetime.timedelta(days=5)
 
@@ -82,6 +85,9 @@ class MailQueue:
         """Actually send the mail if there are any points."""
         if not self.tracks:
             return
+        if self.disabled:
+            self.tracks = dict()
+            return
         section = self.mailer.config.section
         mail = EmailMessage()
         mail['subject'] = self.subject()
@@ -93,10 +99,22 @@ class MailQueue:
             if not key.endswith('.gpx'):
                 key += '.gpx'
             mail.add_attachment(track.to_xml(), filename=key)
-        with smtplib.SMTP(  # noqa
-                section.get('Smtp', 'localhost'),
-                port=int(section.get('port', '25'))) as smtp_server:
-            smtp_server.send_message(mail)
+        host = section.get('Smtp', 'localhost')
+        port = int(section.get('port', '25'))
+        try:
+            with smtplib.SMTP(  # noqa
+                    host,
+                    port=port,
+                    timeout=self.mailer.timeout) as smtp_server:
+                smtp_server.send_message(mail)
+        except socket.timeout:
+            logging.error('Mailer: Disabled because the smtp server %s:%d did not answer within %d seconds ',
+                          host, port, self.mailer.timeout)
+            self.disabled = True
+        except smtplib.SMTPRecipientsRefused as exc:
+            logging.error('Mailer: Disabled because some Recipients are refused: %s', exc.recipients)
+            self.disabled = True
+            raise
         self.last_sent_time = datetime.datetime.now()
         self.mailer.history.append('to {}: {}'.format(mail['to'], mail['subject']))
         self.tracks = dict()
