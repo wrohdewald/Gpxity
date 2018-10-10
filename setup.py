@@ -3,12 +3,12 @@
 
 """see https://setuptools.readthedocs.io/en/latest/setuptools.html."""
 
+
+from setuptools import setup, find_packages
 COPYRIGHT = """
 Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 See LICENSE for details.
 """
-
-from setuptools import setup, find_packages
 
 
 def readall(path) ->str:
@@ -20,6 +20,7 @@ def readall(path) ->str:
     """
     with open(path) as in_file:
         return in_file.read()
+
 
 version_data = readall('gpxity/version.py')
 version_line = [x for x in version_data.split('\n') if 'VERSION' in x][0].strip()
