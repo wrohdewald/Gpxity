@@ -185,7 +185,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 '%s POST from %s on port %s %s request=%s %s%s',
                 self.server.second(), self.client_address[0], self.server.server_port, self.path, parsed.get('request'),
                 ident, points)
-            if self.path.endswith('/api/') or self.path == '/' or self.path == '//':
+            if self.path.endswith('/api/'):
                 try:
                     request = parsed['request']
                 except KeyError:
@@ -204,6 +204,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                     xml = ''
                 xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
             else:
+                logging.debug('do_POST got path %s data %s', self.path, parsed)
                 xml = ''
             self.send_response(200, 'OK')
             self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
