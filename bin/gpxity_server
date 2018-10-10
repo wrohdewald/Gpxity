@@ -309,11 +309,11 @@ class MMTHandler(BaseHTTPRequestHandler):
         # and Oruxmaps does so too.
         category = parsed['activity'].capitalize()
         points = self.__points(parsed['points'])
-
-        life = Lifetrack(self.server.server_directory, self.server.mailer)
-        new_ident = life.start(points, title, public, category)
-        self.server.trackers[new_ident] = life
-        return '<type>activity_started</type><activity_id>{}</activity_id>'.format(new_ident)
+        if self.error_response is None:
+            life = Lifetrack(self.server.server_directory, self.server.mailer)
+            new_ident = life.start(points, title, public, category)
+            self.server.trackers[new_ident] = life
+            return '<type>activity_started</type><activity_id>{}</activity_id>'.format(new_ident)
 
     def use_tracker(self, parsed):
         """Find matching tracker. Fail if no tracker is running at all.
