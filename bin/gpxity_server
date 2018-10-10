@@ -259,11 +259,16 @@ class MMTHandler(BaseHTTPRequestHandler):
             self.return_error(401, 'Point element count {} is not a multiple of 4'.format(len(values)))
         result = list()
         for idx in range(0, len(values), 4):
+            try:
+                time = datetime.datetime.utcfromtimestamp(float(values[idx + 3]))
+            except ValueError:
+                self.return_error(400, 'Point has illegal time stamp {}'.format(values))
+                time=0
             point = GPXTrackPoint(
                 latitude=float(values[idx]),
                 longitude=float(values[idx + 1]),
                 elevation=float(values[idx + 2]),
-                time=datetime.datetime.utcfromtimestamp(float(values[idx + 3])))
+                time=time)
             result.append(point)
         return result
 
