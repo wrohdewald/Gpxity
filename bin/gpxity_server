@@ -108,21 +108,21 @@ class MMTHandler(BaseHTTPRequestHandler):
         """Override: redirect into logger."""
         self.server.logger.error(format % args)
 
-    def check_basic_auth_pw(self) ->bool:
-        """basic http authentication.
+    def check_basic_auth_pw(self):
+        """basic http authentication."""
+        if 'Authorization' not in self.headers:
+            self.send_header('WWW-Authenticate', 'Basic realm=\"Test\"')
+            self.return_error(401, 'Authorization failed')
+            raise Exception('Authorization required')
 
-        Returns:
-            True if authentication succeeded
-
-        """
         if self.users is None:
             self.load_users()
         for pair in self.users.items():
             expect = b'Basic ' + base64.b64encode(':'.join(pair).encode('utf-8'))
             expect = expect.decode('utf-8')
             if expect == self.headers['Authorization']:
-                return True
-        return False
+                return
+        raise Exception('wrong username or password')
 
     def load_users(self):
         """load legal user auth from serverdirectory/.users."""
@@ -213,6 +213,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         try:
             try:
                 parsed = self.parseRequest()
+                self.check_basic_auth_pw()
                 if self.path.endswith('/api/'):
                     try:
                         request = parsed['request']

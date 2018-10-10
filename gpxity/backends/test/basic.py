@@ -336,13 +336,19 @@ class BasicTest(unittest.TestCase):
             exec_name = 'gpxity_server'
         cmdline = '{} --loglevel debug --servername {} --port {} --directory {}'.format(
             exec_name, servername, port, directory)
+        user_filename = os.path.join(directory, '.users')
+        if not os.path.exists(user_filename):
+            with open(user_filename, 'w') as user_file:
+                user_file.write('gpxitytest:gpxitytestpw\n')
         if not Mailer.is_disabled():
             cmdline += ' --mailto {} --smtp-port 8025'.format(pwd.getpwuid(os.geteuid()).pw_name)
-        process = Popen(cmdline.split(), stderr=open(logfile, 'a'))
+        process = Popen(cmdline.split(), stdout=open(logfile, 'a'), stderr=open(logfile, 'a'))
         try:
             time.sleep(1)  # give the server time to start
             yield
         finally:
+            if os.path.exists(user_filename):
+                os.remove(user_filename)
             if os.path.exists(logfile):
                 for _ in open(logfile):
                     logging.debug('SRV: %s', _.rstrip())
