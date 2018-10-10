@@ -187,11 +187,11 @@ class MMTHandler(BaseHTTPRequestHandler):
                 try:
                     request = parsed['request']
                 except KeyError:
-                    self.return_error(401, 'No request given in {}'.format(parsed))
+                    self.return_error(400, 'No request given in {}'.format(parsed))
                 try:
                     method = getattr(self, 'xml_{}'.format(request))
                 except AttributeError:
-                    self.return_error(401, 'Unknown request {}'.format(parsed['request']))
+                    self.return_error(400, 'Unknown request {}'.format(parsed['request']))
                 try:
                     xml = method(parsed)
                 except Exception:
@@ -256,7 +256,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         values = raw.split()
         if len(values) % 4:
-            self.return_error(401, 'Point element count {} is not a multiple of 4'.format(len(values)))
+            self.return_error(400, 'Point element count {} is not a multiple of 4'.format(len(values)))
         result = list()
         for idx in range(0, len(values), 4):
             try:
@@ -332,11 +332,11 @@ class MMTHandler(BaseHTTPRequestHandler):
         updated = '<type>activity_updated</type>'
         tracker = self.use_tracker(parsed)
         if tracker is None:
-            self.return_error(401, 'activity_id {} is not known'.format(parsed['activity_id']))
+            self.return_error(400, 'activity_id {} is not known'.format(parsed['activity_id']))
             return updated
         tracker.update(self.__points(parsed['points']))
         if tracker.done:
-            self.return_error(401, 'update_activity: {} was already stopped'.format(tracker))
+            self.return_error(400, 'update_activity: {} was already stopped'.format(tracker))
             return updated
         return updated
 
@@ -352,7 +352,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             trackers = [x for x in self.server.trackers.values() if not x.done]
         for tracker in trackers:
             if tracker.done:
-                self.return_error(401, 'stop_activity has already been called for {}'.format(tracker))
+                self.return_error(400, 'stop_activity has already been called for {}'.format(tracker))
             else:
                 tracker.end()
         return '<type>activity_stopped</type>'
