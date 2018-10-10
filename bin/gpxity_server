@@ -444,18 +444,19 @@ class Main:  # pylint: disable=too-few-public-methods
 
     def __init__(self):
         """See class docstring."""
-        parser = argparse.ArgumentParser('gpxity_server')
+        epilog = """
+        The MMT server uses BASIC AUTH for login. Please define user:password in DIRECTORY/.users"""
+        parser = argparse.ArgumentParser('gpxity_server', epilog=epilog)
         parser.add_argument(
-            '--directory', required=True,
-            help='Lookup the name of the server track directory in .config/Gpxity/auth.cfg')
+            '--directory', required=True, help='the directory for the received tracks')
         parser.add_argument('--servername', help='the name of this server', required=True)
         parser.add_argument('--port', help='listen on PORT', type=int, required=True)
-        parser.add_argument('--smtp-port', help='PORT for mailer', type=int, default=25)
+        parser.add_argument('--smtp-port', help='PORT for mailer, default is 25', type=int, default=25)
         parser.add_argument('--mailto', help='mail new tracks to MAILTO', default=None)
         parser.add_argument('--mail-interval', help='only mail every X seconds, default is 1800', type=int, default=1800)
-        parser.add_argument('--loglevel', help='set the loglevel', choices=('debug', 'info', 'warning', 'error'), default='error')
+        parser.add_argument('--loglevel', help='set the loglevel, default is error', choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
-            Timeout: Either one value in seconds or two comma separated values: The first one is the connection
+            either one value in seconds or two comma separated values: The first one is the connection
             timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
 
         try:
