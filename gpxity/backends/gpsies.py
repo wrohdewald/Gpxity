@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.GPSIES` for https://www.gpsies.com.
+This implements :class:`gpxity.gpsies.GPSIES` for https://www.gpsies.com.
 
 so ginge das mit dem API-Key: https://github.com/telemaxx/gpsiesreader/blob/master/gpsies3.py
 
@@ -170,7 +170,7 @@ class GPSIES(Backend):
     Args:
         url (str): The Url of the server. Default is https://gpsies.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all tracks in the
+        cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all tracks in the
             user account.
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts

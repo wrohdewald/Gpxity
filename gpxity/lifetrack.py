@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Lifetrack`."""
+"""This module defines :class:`~gpxity.lifetrack.Lifetrack`."""
 
 # pylint: disable=protected-access
 

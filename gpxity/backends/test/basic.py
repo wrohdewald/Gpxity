@@ -119,7 +119,7 @@ class BasicTest(unittest.TestCase):
     def create_test_track(
             cls, count: int = 1, idx: int = 0, category: str = None, public: bool = False,
             start_time=None, end_time=None):
-        """create a :class:`~gpxity.Track`.
+        """create a :class:`~gpxity.track.Track`.
 
         It starts off with **test.gpx** and appends a
         last track point, it also changes the time stamp of the last point.
@@ -131,7 +131,7 @@ class BasicTest(unittest.TestCase):
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
             category: The wanted value for the track.
-                Default: if count == len(:attr:`Track.legal_categories <gpxity.Track.legal_categories>`),
+                Default: if count == len(:attr:`Track.legal_categories <gpxity.track.Track.legal_categories>`),
                 the default value will be legal_categories[idx].
                 Otherwise a random value will be applied.
             public: should the tracks be public or private?
@@ -139,7 +139,7 @@ class BasicTest(unittest.TestCase):
             end_time: explicit time for the last point. If None: See above.
 
         Returns:
-            (~gpxity.Track): A new track not bound to a backend
+            (~gpxity.track.Track): A new track not bound to a backend
 
         """
         gpx = cls._get_gpx_from_test_file('test')
@@ -276,7 +276,7 @@ class BasicTest(unittest.TestCase):
             public: bool = False):
         """set up an instance of a backend with count tracks.
 
-        If count == len(:attr:`Track.legal_categories <gpxity.Track.legal_categories>`),
+        If count == len(:attr:`Track.legal_categories <gpxity.track.Track.legal_categories>`),
         the list of tracks will always be identical. For an example
         see :meth:`TestBackends.test_all_category <gpxity.backends.test.test_backends.TestBackends.test_all_category>`.
 

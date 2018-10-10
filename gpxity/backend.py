@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Backend`."""
+"""This module defines :class:`~gpxity.backend.Backend`."""
 
 # pylint: disable=protected-access
 
@@ -35,8 +35,8 @@ class Backend:
     may be removed automatically by setting cleanup=True. Some concrete
     implementations may also remove the backend itself.
 
-    A Backend allows indexing by normal int index, by :class:`Track <gpxity.Track>`
-    and by :attr:`Track.id_in_backend <gpxity.Track.id_in_backend>`.
+    A Backend allows indexing by normal int index, by :class:`Track <gpxity.track.Track>`
+    and by :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>`.
     :literal:`if 'ident' in backend` is possible.
     len(backend) shows the number of tracks. Please note that Code
     like :literal:`if backend:` may not behave as expected. This will be False if the backend
@@ -429,10 +429,10 @@ class Backend:
         If the track does not pass the current match function, raise an exception.
 
         Args:
-            track (~gpxity.Track): The track we want to save in this backend.
+            track (~gpxity.track.Track): The track we want to save in this backend.
 
         Returns:
-            ~gpxity.Track: The saved track. If the original track lives in a different
+            ~gpxity.track.Track: The saved track. If the original track lives in a different
             backend, a new track living in this backend will be created
             and returned.
 
@@ -521,7 +521,7 @@ class Backend:
         Remove track. This can also be done for tracks not passing the current match function.
 
         Args:
-            value: If it is not an :class:`~gpxity.Track`, :meth:`remove` looks
+            value: If it is not an :class:`~gpxity.track.Track`, :meth:`remove` looks
                 it up by doing :literal:`self[value]`
 
         """
@@ -553,7 +553,7 @@ class Backend:
             points: If None, stop tracking. Otherwise, start tracking
                 and add points.
 
-        For details see :meth:`Track.track() <gpxity.Track.track>`.
+        For details see :meth:`Track.track() <gpxity.lifetrack.Lifetrack.start>`.
 
         """
         raise NotImplementedError()
@@ -566,7 +566,7 @@ class Backend:
             points: If None, stop tracking. Otherwise, start tracking
                 and add points.
 
-        For details see :meth:`Track.track() <gpxity.Track.track>`.
+        For details see :meth:`Track.track() <gpxity.lifetrack.Lifetrack.update>`.
 
         """
         raise NotImplementedError()
@@ -591,7 +591,7 @@ class Backend:
     def destroy(self):
         """If `cleanup` was set at init time, removes all tracks.
 
-        Some backends (example: :class:`Directory <gpxity.Directory.destroy>`)
+        Some backends (example: :class:`Directory <gpxity.directory.Directory.destroy>`)
 
         may also remove the account (or directory). See also :meth:`remove_all`."""
         if self._cleanup:

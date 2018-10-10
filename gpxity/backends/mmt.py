@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.MMT` for http://www.mapmytracks.com.
+This implements :class:`gpxity.mmt.MMT` for http://www.mapmytracks.com.
 
 There are some problems with the server running at mapmytracks.com:
     * it is not possible to change an existing track - if the track changes, the
@@ -186,14 +186,14 @@ class MMT(Backend):
 
     The track ident is the number given by MapMyTracks.
 
-    MMT knows tags. We map :attr:`Track.keywords <gpxity.Track.keywords>` to MMT tags. MMT will
+    MMT knows tags. We map :attr:`Track.keywords <gpxity.track.Track.keywords>` to MMT tags. MMT will
     change keywords: It converts the first character to upper case. See
-    :attr:`Track.keywords <gpxity.Track.keywords>` for how Gpxity handles this.
+    :attr:`Track.keywords <gpxity.track.Track.keywords>` for how Gpxity handles this.
 
     Args:
         url (str): The Url of the server. Default is http://mapmytracks.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.Backend.destroy` will remove all tracks in the
+        cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all tracks in the
             user account.
          timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts

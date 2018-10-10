@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.BackendDiff`."""
+"""This module defines :class:`~gpxity.diff.BackendDiff`."""
 
 # pylint: disable=protected-access
 

@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.WPTrackServer`.
+This implements :class:`gpxity.wptrackserver.WPTrackServer`.
 
 WPTrackserver talks directly to the WP mysql database holding the trackserver data.
 

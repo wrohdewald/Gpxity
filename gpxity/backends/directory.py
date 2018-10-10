@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This implements :class:`gpxity.Directory`."""
+"""This implements :class:`gpxity.directory.Directory`."""
 
 # pylint: disable=protected-access
 
@@ -87,7 +87,7 @@ class Directory(Backend):
 
     If :meth:`~gpxity.backend.Backend.save` is given a value for ident, this
     is used as id, the file name will be :literal:`id.gpx`.
-    Otherwise, this backend uses :attr:`Track.title <gpxity.Track.title>` for the id.
+    Otherwise, this backend uses :attr:`Track.title <gpxity.track.Track.title>` for the id.
     If a track has no title, it uses a random sequence of characters.
     Changing the title also changes the id.
 
@@ -268,7 +268,7 @@ class Directory(Backend):
 
     def destroy(self):
         """If `cleanup` was set at init time, removes all tracks.
-        If :attr:`~gpxity.Directory.url` was set at init time,
+        If :attr:`~gpxity.directory.Directory.url` was set at init time,
         also removes the directory."""
         super(Directory, self).destroy()
         if self._cleanup:

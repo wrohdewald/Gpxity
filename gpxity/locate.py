@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Locate`."""
+"""This module defines :class:`~gpxity.locate.Locate`."""
 
 import logging
 
@@ -16,7 +16,7 @@ __all__ = ['Locate']
 
 class Locate:
 
-    """Locates tracks.
+    """Locates tracks using https://github.com/DenisCarriere/geocoder#overview .
 
     Args:
         places: A list of places that the tracks should pass

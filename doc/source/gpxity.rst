@@ -36,3 +36,33 @@ gpxity.backend module
     :exclude-members: append, skip_test
 
 
+gpxity.locate module
+--------------------
+
+.. automodule:: gpxity.locate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: append, skip_test
+
+
+gpxity.lifetrack module
+-----------------------
+
+.. automodule:: gpxity.lifetrack
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: append, skip_test
+
+
+gpxity.diff module
+------------------
+
+.. automodule:: gpxity.diff
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: append, skip_test
+
+

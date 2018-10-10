@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This implements :class:`gpxity.ServerDirectory`."""
+"""This implements :class:`gpxity.server_directory.ServerDirectory`."""
 
 
 from .directory import Directory, Backup

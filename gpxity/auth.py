@@ -3,7 +3,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Authenticate`."""
+"""This module defines :class:`~gpxity.auth.Authenticate`."""
 
 import os
 import logging
@@ -25,7 +25,8 @@ class Authenticate:
        auth.cfg is not encrypted. Better not use this unless you know what you are doing!
 
     Args:
-        backend (Backend): The backend
+        backend (~gpxity.backend.Backend): The backend
+
         username (str): For the wanted account in the backend
 
     Attributes:

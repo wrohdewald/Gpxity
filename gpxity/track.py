@@ -4,7 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""This module defines :class:`~gpxity.Track`."""
+"""This module defines :class:`~gpxity.track.Track`."""
 
 # pylint: disable=protected-access
 
@@ -68,13 +68,13 @@ class Track:  # pylint: disable=too-many-public-methods
     All points are always rounded to  6 decimal digits when they are added to the
     track.
 
-    Args:
-        gpx (GPX): Initial content. To be used if you create a new Track from scratch without
-            loading it from some backend.
-
     The data will only be loaded from the backend when it is needed. Some backends
     might support loading some attributes separately, but for now, we always load
     everything as soon as anything is needed.
+
+    Args:
+        gpx (GPX): Initial content. To be used if you create a new Track from scratch without
+            loading it from some backend.
 
     Attributes:
         legal_categories (tuple(str)): The legal values for :attr:`~Track.category`. The first one is used
@@ -129,7 +129,7 @@ class Track:  # pylint: disable=too-many-public-methods
     def backend(self):
         """The backend this track lives in. If the track was constructed in memory, backend is None.
 
-        This is a read-only property. It is set with :meth:`Backend.add <gpxity.Backend.add>`.
+        This is a read-only property. It is set with :meth:`Backend.add <gpxity.backend.Backend.add>`.
 
         It is not possible to decouple a track from its backend, use :meth:`clone()`.
 
@@ -138,7 +138,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         return self.__backend
-        # :attr:`Track.id_in_backend <gpxity.Track.id_in_backend>`.
+        # :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>`.
 
     @property
     def id_in_backend(self) ->str:
@@ -241,7 +241,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """Create a new track with the same content but without backend.
 
         Returns:
-            ~gpxity.Track: the new track
+            ~gpxity.track.Track: the new track
 
         """
         self.__resolve_header_data()
@@ -717,12 +717,12 @@ class Track:  # pylint: disable=too-many-public-methods
             from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
             :attr:`Track.keywords` will never show those special values.
 
-            Some backends may change keywords. :class:`~gpxity.MMT` converts the
+            Some backends may change keywords. :class:`~gpxity.backends.mmt.MMT` converts the
             first character into upper case and will return it like that. Gpxity will not try to hide such
-            problems. So if you save a track in :class:`~gpxity.MMT`, its keywords
-            will change. But they will not change if you copy from :class:`~gpxity.MMT`
-            to :class:`~gpxity.Directory` - so if you copy from DirectoryA
-            to :class:`~gpxity.MMT` to DirectoryB, the keywords in
+            problems. So if you save a track in :class:`~gpxity.backends.mmt.MMT`, its keywords
+            will change. But they will not change if you copy from :class:`~gpxity.backends.mmt.MMT`
+            to :class:`~gpxity.backends.directory.Directory` - so if you copy from DirectoryA
+            to :class:`~gpxity.backends.mmt.MMT` to DirectoryB, the keywords in
             DirectoryA and DirectoryB will not be identical, for example "berlin" in DirectoryA but
             "Berlin" in DirectoryB.
 
@@ -1240,7 +1240,7 @@ class Track:  # pylint: disable=too-many-public-methods
         Combine description and keywords.
 
         Args:
-            other (:class:`~gpxity.Track`): The track to be merged
+            other (:class:`~gpxity.track.Track`): The track to be merged
             remove: After merging succeeded, remove other
             dry_run: if True, do not really apply the merge
             copy: This argument is ignored. It is only here to give Track.merge() and Backend.merge()
