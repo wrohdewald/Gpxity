@@ -707,7 +707,6 @@ class MMT(Backend):
             raise Exception('start: MMT only accepts one simultaneous lifetracker per username')
         MMT._current_lifetrack = track
         result = self.__post(
-            url='/',
             request='start_activity',
             title=track.title,
             privacy='public' if track.public else 'private',
@@ -733,7 +732,6 @@ class MMT(Backend):
         if MMT._current_lifetrack != track:
             raise Exception('update: MMT only accepts one simultaneous lifetracker per username')
         self.__post(
-            url='/',
             request='update_activity', activity_id=track.id_in_backend,
             points=self.__formatted_lifetrack_points(points),
             expect='activity_updated')
@@ -747,7 +745,7 @@ class MMT(Backend):
         """
         if MMT._current_lifetrack != track:
             raise Exception('end: MMT only accepts one simultaneous lifetracker per username')
-        self.__post(url='/', request='stop_activity')
+        self.__post(request='stop_activity')
         MMT._current_lifetrack = None
 
     def destroy(self):
