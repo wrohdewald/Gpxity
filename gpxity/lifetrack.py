@@ -96,15 +96,15 @@ class Lifetrack:
     """Life tracking. The data will be forwarded to all given backends.
 
     Args:
-        target_backends: Those tracks will receive the lifetracking data.
-        An arg None will be ignored.
+        target_backends (list): Those tracks will receive the lifetracking data.
+        None values will be ignored.
 
     Attributes:
         done: Will be True after end() has been called.
 
     """
 
-    def __init__(self, *target_backends):
+    def __init__(self, target_backends):
         """See class docstring."""
         self.targets = [LifetrackTarget(x) for x in target_backends if x is not None]
         self.id_in_server = None
