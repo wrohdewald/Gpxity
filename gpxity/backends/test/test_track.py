@@ -23,7 +23,7 @@ from unittest import skipIf
 
 from .basic import BasicTest, disabled
 from ... import Track, Backend
-from .. import Directory
+from .. import Directory, ServerDirectory, MMT
 from ...util import repr_timespan
 
 # pylint: disable=attribute-defined-outside-init
@@ -650,3 +650,79 @@ class TrackTests(BasicTest):
         self.assertEqual(
             str(context.exception),
             'Cannot merge {} with 27 points into {} with 27 points'.format(track2, track1))
+
+    def test_all_backend_classes(self):
+        """Test Backend.all_backend_classes."""
+        all_classes = [x.__name__ for x in Backend.all_backend_classes()]
+        self.assertEqual(
+            all_classes,
+            ['Directory', 'GPSIES', 'MMT', 'Mailer', 'ServerDirectory', 'TrackMMT', 'WPTrackserver'])
+
+    @skipIf(*disabled(Directory))
+    def test_parse_objectname_directory(self):
+        """Test Backend.parse_objectname for directory."""
+        prefix = Directory.prefix
+        subdir = os.path.join(prefix, 'subdir')
+        sub2 = os.path.join(subdir, 'sub2')
+        sub3 = os.path.join(subdir, 'sub3')
+        os.mkdir(subdir)
+        os.mkdir(sub2)
+        os.mkdir(sub3)
+        old_dir = os.getcwd()
+        try:
+            os.chdir(prefix)
+            cases = (('.', 'Directory', '.', None),
+                     ('subdir', 'Directory', 'subdir', None),
+                     ('directory:', 'Directory', '.', None),
+                     ('directory:.', 'Directory', '.', None),
+                     ('directory:subdir', 'Directory', 'subdir', None),
+                     ('abc', 'Directory', '.', 'abc'),
+                     ('subdir/abc', 'Directory', 'subdir', 'abc'),
+                     ('subdir/sub2', 'Directory', 'subdir/sub2', None),
+                     ('subdir/sub2/sub3/xy', 'Directory', 'subdir/sub2/sub3', 'xy'))
+            for string, *expect in cases:
+                cls, account, ident = Backend.parse_objectname(string)
+                self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
+        finally:
+            os.chdir(old_dir)
+            os.rmdir(sub3)
+            os.rmdir(sub2)
+            os.rmdir(subdir)
+
+    @skipIf(*disabled(ServerDirectory))
+    def test_parse_objectname_serverdirectory(self):
+        """Test Backend.parse_objectname for serverdirectory."""
+        prefix = Directory.prefix
+        subdir = os.path.join(prefix, 'subdir')
+        sub2 = os.path.join(subdir, 'sub2')
+        sub3 = os.path.join(subdir, 'sub3')
+        os.mkdir(subdir)
+        os.mkdir(sub2)
+        os.mkdir(sub3)
+        old_dir = os.getcwd()
+        try:
+            os.chdir(prefix)
+            cases = (('serverdirectory:.', 'ServerDirectory', '.', None),
+                     ('serverdirectory:', 'ServerDirectory', '.', None),
+                     ('serverdirectory:subdir', 'ServerDirectory', 'subdir', None),
+                     ('serverdirectory:abc', 'ServerDirectory', '.', 'abc'),
+                     ('serverdirectory:subdir/abc', 'ServerDirectory', 'subdir', 'abc'),
+                     ('serverdirectory:subdir/sub2', 'ServerDirectory', 'subdir/sub2', None),
+                     ('serverdirectory:subdir/sub2/sub3/xy', 'ServerDirectory', 'subdir/sub2/sub3', 'xy'))
+            for string, *expect in cases:
+                cls, account, ident = Backend.parse_objectname(string)
+                self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
+        finally:
+            os.chdir(old_dir)
+            os.rmdir(sub3)
+            os.rmdir(sub2)
+            os.rmdir(subdir)
+
+    @skipIf(*disabled(MMT))
+    def test_parse_objectname_mmt(self):
+        """Test Backend.parse_objectname for MMT."""
+        cases = (('mmt:testlogin', 'MMT', 'testlogin', None),
+                 ('mmt:testlogin/345', 'MMT', 'testlogin', '345'))
+        for string, *expect in cases:
+            cls, account, ident = Backend.parse_objectname(string)
+            self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))

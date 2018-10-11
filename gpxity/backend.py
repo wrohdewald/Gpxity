@@ -845,6 +845,8 @@ class Backend:
     def find_class(cls, name: str):
         """Find the Backend class name "name".
 
+        if "name" contains a ":", only the part before will be used.
+
         Args:
             name: May be anycase (upper,lower)
 
@@ -852,10 +854,12 @@ class Backend:
             the backend class or None
 
         """
+        if ':' in name:
+            name = name.split(':')[0]
         for _ in cls.all_backend_classes():
             if _.__name__.lower() == name.lower():
                 return _
-        return None
+        return cls.find_class('Directory')
 
     @classmethod
     def parse_objectname(cls, name):
@@ -865,35 +869,33 @@ class Backend:
             name: the full identifier for a Track
 
         Returns:
-            A tuple with class, account,track_id
+            A tuple with class, account, track_id
 
         """
         account = track_id = None
-        if ':' in name:
-            parts = name.split(':')
-            backend_class = cls.find_class(parts[0])
-            if backend_class:
-                rest = ':'.join(parts[1:])
-                if '/' in rest:
-                    if rest.count('/') > 1:
-                        raise Exception('wrong syntax in {}'.format(name))
-                    account, track_id = rest.split('/')
-                else:
-                    account = rest
-                if account is None:
-                    raise Exception('{} not found'.format(name))
-                return backend_class, account, track_id
+        backend_class = cls.find_class(name)
 
-        if os.path.isdir(name):
-            backend_class = cls.find_class('Directory')
-            account = name
+        if 'Directory' in backend_class.__name__:  # TODO: not nice
+            if not os.path.exists(name) and name.lower().startswith(backend_class.__name__.lower() + ':'):  # noqa
+                name = ':'.join(name.split(':')[1:])
+            if os.path.isdir(name):
+                account = name
+            else:
+                id_name = name
+                if id_name.endswith('.gpx'):
+                    id_name = id_name[:-4]
+                account = os.path.dirname(id_name) or '.'
+                track_id = os.path.basename(id_name) or None
         else:
-            id_name = name
-            if id_name.endswith('.gpx'):
-                id_name = id_name[:-4]
-            backend_class = cls.find_class('Directory')
-            account = os.path.dirname(id_name) or '.'
-            track_id = os.path.basename(id_name)
+            rest = ':'.join(name.split(':')[1:])
+            if '/' in rest:
+                if rest.count('/') > 1:
+                    raise Exception('wrong syntax in {}'.format(name))
+                account, track_id = rest.split('/')
+            else:
+                account = rest
+            if account is None:
+                raise Exception('{} not found'.format(name))
         return backend_class, account, track_id
 
     @classmethod
@@ -905,7 +907,7 @@ class Backend:
             needs: set(str) with needed supported actions
 
         Returns:
-            A list of all backend classes. Disabled backends are not
+            A sorted list of all backend classes. Disabled backends are not
             returned.
 
         """
