@@ -947,7 +947,8 @@ class Backend:
         """Instantiate a Backend out of its identifier.
 
         Args:
-            timeout: Needed for creating backends like MMT or GPSIES
+            timeout: Needed for creating backends like MMT or GPSIES.
+            See :attr:`Backend.timeout <gpxity.backend.Backend.timeout>`
 
         Returns:
             A backend. If it has already been instantiated, return the cached value.

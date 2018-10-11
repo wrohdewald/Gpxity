@@ -425,10 +425,7 @@ class LifeServerMMT(HTTPServer):
                 'from': 'gpxity',
                 'port': options.smtp_port,
                 'Url': options.mailto}
-            timeout = None
-            if options.timeout:
-                timeout = int(options.timeout.split(',')[0].strip())
-            self.mailer = Mailer(auth=auth, timeout=timeout)
+            self.mailer = Mailer(auth=auth, timeout=options.timeout)
             self.mailer.min_interval = options.mail_interval
         else:
             self.mailer = None
@@ -465,6 +462,8 @@ class Main:  # pylint: disable=too-few-public-methods
             pass
 
         options = parser.parse_args()
+        if options.timeout is not None:
+            options.timeout = [int(x.strip()) for x in options.timeout.split(',')]
 
         logger = logging.getLogger()
         logger.setLevel(options.loglevel.upper())
