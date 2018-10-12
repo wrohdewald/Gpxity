@@ -436,7 +436,6 @@ class LifeServerMMT(HTTPServer):
                 'port': options.smtp_port,
                 'Url': options.mailto}
             mailer = Mailer(auth=auth, timeout=options.timeout)
-            mailer.interval = options.mail_interval
             self.targets.append(mailer)
         self.trackers = dict()
         self.history = list()
@@ -467,7 +466,6 @@ class Main:  # pylint: disable=too-few-public-methods
         parser.add_argument('--port', help='listen on PORT', type=int, required=True)
         parser.add_argument('--smtp-port', help='PORT for mailer, default is 25', type=int, default=25)
         parser.add_argument('--mailto', help='mail new tracks to MAILTO', default=None)
-        parser.add_argument('--mail-interval', help='only mail every X seconds, default is 1800', type=int, default=1800)
         parser.add_argument('--loglevel', help='set the loglevel, default is error', choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
             either one value in seconds or two comma separated values: The first one is the connection
