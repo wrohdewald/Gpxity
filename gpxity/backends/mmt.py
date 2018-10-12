@@ -722,11 +722,11 @@ class MMT(Backend):
         return result
 
     def _lifetrack_update(self, track, points):
-        """Update a lifetrack with poings.
+        """Update a lifetrack with points.
 
         Args:
             track: The lifetrack
-            points: The new point
+            points: The new points
 
         """
         if MMT._current_lifetrack != track:
