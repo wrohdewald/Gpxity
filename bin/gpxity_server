@@ -419,11 +419,11 @@ class LifeServerMMT(HTTPServer):
 
     """
 
-    def __init__(self, options, logger):
+    def __init__(self, options):
         """See class docstring."""
         super(LifeServerMMT, self).__init__((options.servername, options.port), MMTHandler)
         self.gpxdo_options = options
-        self.logger = logger
+        self.logger = self.define_logger(options)
         # define the directory in auth.cfg, using the Url=value
         self.server_directory = ServerDirectory(url=options.directory)
         self.start_second = datetime.datetime.now().timestamp()
@@ -438,6 +438,15 @@ class LifeServerMMT(HTTPServer):
             self.mailer = None
         self.trackers = dict()
         self.history = list()
+
+    def define_logger(self, options):
+        result = logging.getLogger()
+        result.setLevel(options.loglevel.upper())
+        logfile = logging.FileHandler(os.path.join(self.targets[0].url,'gpxity_server.log'))
+        logfile.setLevel(logging.DEBUG)
+        result.addHandler(logfile)
+        logging.getLogger('urllib3').level = logging.ERROR
+        return result
 
     def second(self):
         return '{:10.4f}'.format(datetime.datetime.now().timestamp() - self.start_second)
@@ -472,13 +481,6 @@ class Main:  # pylint: disable=too-few-public-methods
         if options.timeout is not None:
             options.timeout = [int(x.strip()) for x in options.timeout.split(',')]
 
-        logger = logging.getLogger()
-        logger.setLevel(options.loglevel.upper())
-        logfile = logging.FileHandler(os.path.join(options.directory,'gpxity_server.log'))
-        logfile.setLevel(logging.DEBUG)
-        logger.addHandler(logfile)
-        logging.getLogger('urllib3').level = logging.ERROR
-
-        LifeServerMMT(options, logger).serve_forever()
+        LifeServerMMT(options).serve_forever()
 
 Main()
