@@ -87,9 +87,12 @@ class TrackingMessage:
         response = '{} {}'.format(*self.response) if self.response else ''
         ident = self.parsed.get('activity_id')
         request = self.parsed.get('request')
-        points = ' with {} points'.format(len(self.parsed['points'].split(' ')) // 4) if 'points' in self.parsed else ''
+        points = MMTHandler.parse_points(self.parsed['points'])
+        point_msg = ''
+        if points:
+            point_msg = ' with {} points: {}'.format(len(points), ','.join(str(round(x.elevation)) for x in points))
         return '{} {} from {} id={} request={} {} --> {}  {}'.format(
-            self.time, self.command, self.from_ip, ident, request, points, self.result, response).strip()
+            self.time, self.command, self.from_ip, ident, request, point_msg, self.result, response).strip()
 
 
 class MMTHandler(BaseHTTPRequestHandler):
@@ -285,7 +288,8 @@ class MMTHandler(BaseHTTPRequestHandler):
                         int(_.time.timestamp()), idx + 1))
         return '<tracks>{}</tracks>'.format(''.join(a_list))
 
-    def __points(self, raw):
+    @staticmethod
+    def parse_points(raw):
         """convert raw data back into list(GPXTrackPoint).
 
         Returns:
@@ -294,13 +298,13 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         values = raw.split()
         if len(values) % 4:
-            self.return_error(400, 'Point element count {} is not a multiple of 4'.format(len(values)))
+            raise Exception('Point element count {} is not a multiple of 4'.format(len(values)))
         result = list()
         for idx in range(0, len(values), 4):
             try:
                 time = datetime.datetime.utcfromtimestamp(float(values[idx + 3]))
             except ValueError:
-                self.return_error(400, 'Point has illegal time stamp {}'.format(values))
+                logging.error('Point has illegal time stamp {}'.format(values))
                 time=0
             point = GPXTrackPoint(
                 latitude=float(values[idx]),
@@ -344,7 +348,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
         category = parsed['activity'].capitalize()
-        points = self.__points(parsed['points'])
+        points = self.parse_points(parsed['points'])
         if self.error_response is None:
             life = Lifetrack([self.server.server_directory, self.server.mailer])
             new_ident = life.start(points, title, public, category)
@@ -372,7 +376,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         if tracker is None:
             self.return_error(400, 'activity_id {} is not known'.format(parsed['activity_id']))
             return updated
-        tracker.update(self.__points(parsed['points']))
+        tracker.update(self.parse_points(parsed['points']))
         if tracker.done:
             self.return_error(400, 'update_activity: {} was already stopped'.format(tracker))
             return updated
