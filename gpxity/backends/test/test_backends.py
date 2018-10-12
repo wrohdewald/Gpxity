@@ -592,21 +592,25 @@ class TestBackends(BasicTest):
                         backend2[0].keywords)
                     self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
-    @skipIf(*disabled(Directory))
     def test_legal_categories(self):
         """Check if our fixed list of categories still matches the online service."""
-        for cls in (MMT, GPSIES, TrackMMT):
-            if cls.is_disabled:
+
+        def check():
+            """check this backend."""
+            downloaded = backend._download_legal_categories()
+            self.assertEqual(sorted(backend.legal_categories), downloaded)
+
+        for cls in Backend.all_backend_classes(needs={'own_categories'}):
+            if cls is TrackMMT and Directory.is_disabled():
                 continue
-            with self.subTest(cls), self.temp_backend(Directory) as serverdirectory:
+            with self.subTest(cls):
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
-                        with self.lifetrackserver(serverdirectory.url):
-                            downloaded = backend._download_legal_categories()
-                            self.assertEqual(sorted(backend.legal_categories), downloaded)
+                        with self.temp_backend(Directory) as serverdirectory:
+                            with self.lifetrackserver(serverdirectory.url):
+                                check()
                     else:
-                        downloaded = backend._download_legal_categories()
-                        self.assertEqual(sorted(backend.legal_categories), downloaded)
+                        check()
 
     def test_long_description(self):
         """Test long descriptions."""
