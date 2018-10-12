@@ -138,13 +138,16 @@ class MMTHandler(BaseHTTPRequestHandler):
     def return_error(self, code, reason):
         """Answer the clint with an xml formatted error message."""
         self.error_response = (code, reason)
-        self.send_response(code, reason)
-        xml = '<type>error</type><reason>{}</reason>'.format(reason)
-        self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-        xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
-        self.send_header('Content-Length', len(xml))
-        self.end_headers()
-        self.wfile.write(bytes(xml.encode('utf-8')))
+        try:
+            self.send_response(code, reason)
+            xml = '<type>error</type><reason>{}</reason>'.format(reason)
+            self.send_header('Content-Type', 'text/xml; charset=UTF-8')
+            xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(xml)
+            self.send_header('Content-Length', len(xml))
+            self.end_headers()
+            self.wfile.write(bytes(xml.encode('utf-8')))
+        except Exception as exc:
+            logging.error('return_error failed: %s', exc)
 
     def parseRequest(self):  # noqa pylint: disable=invalid-name
         """Get interesting things.
