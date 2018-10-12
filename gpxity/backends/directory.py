@@ -161,17 +161,6 @@ class Directory(Backend):
             result = '.'
         return result
 
-    @property
-    def legal_categories(self):
-        """
-        A list with all legal categories.
-
-        Returns: list(str)
-            all legal values for category for this backend.
-
-        """
-        return Track.legal_categories
-
     def decode_category(self, value: str) ->str:
         """Not needed for directory, this is always the internal value.
 

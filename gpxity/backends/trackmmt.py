@@ -32,8 +32,6 @@ class TrackMMT(MMT):
 
     # pylint: disable=abstract-method
 
-    legal_categories = Track.legal_categories
-
     def _yield_tracks(self):
         """not implemented."""
         raise NotImplementedError()

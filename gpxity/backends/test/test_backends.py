@@ -30,10 +30,10 @@ class TestBackends(BasicTest):
         """Check values in supported for all backends."""
         expect_unsupported = dict()
         expect_unsupported[Directory] = {
-            'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
+            'own_categories', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_description', 'write_public', 'write_title'}
         expect_unsupported[ServerDirectory] = {
-            'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
+            'own_categories', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_title', 'write_description', 'write_public'}
         expect_unsupported[MMT] = set()
         expect_unsupported[GPSIES] = {
@@ -44,18 +44,20 @@ class TestBackends(BasicTest):
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
         expect_unsupported[Mailer] = {
-            'scan', 'remove', 'get_time',
+            'own_categories', 'scan', 'remove', 'get_time',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords', 'lifetrack'}
         expect_unsupported[WPTrackserver] = {
-            'get_time', 'lifetrack', 'lifetrack_end',
+            'get_time', 'lifetrack_end', 'own_categories',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
         for cls in Backend.all_backend_classes():
             with self.subTest(cls):
-                self.assertTrue(cls.supported & expect_unsupported[cls] == set())
-                self.assertEqual(sorted(cls.supported | expect_unsupported[cls]), sorted(cls.full_support))
+                self.assertTrue(cls.supported & expect_unsupported[cls] == set(),
+                    '{}: supported & unsupported: {}'.format(cls.__name__,
+                    cls.supported & expect_unsupported[cls]))
+                self.assertEqual(sorted(cls.supported | expect_unsupported[cls]),  sorted(cls.full_support))
 
     def test_all_backends(self):
         """Check if Backend.all_backend_classes works."""

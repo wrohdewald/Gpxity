@@ -99,6 +99,7 @@ class Backend:
 
     full_support = (
         'scan', 'remove', 'lifetrack', 'lifetrack_end', 'get_time', 'write', 'write_title', 'write_public',
+        'own_categories',
         'write_category', 'write_description', 'keywords', 'write_add_keywords', 'write_remove_keywords')
 
     _max_length = dict()
@@ -168,16 +169,7 @@ class Backend:
             self.config.username)
         return result
 
-    @property
-    def legal_categories(self):
-        """
-        A list with all legal categories.
-
-        Returns: list(str)
-            all legal values for this backend
-
-        """
-        raise NotImplementedError
+    legal_categories = Track.legal_categories
 
     @contextmanager
     def _decouple(self):
@@ -223,6 +215,8 @@ class Backend:
             'get_time': 'get_time'}
         cls.supported = set()
         cls.supported.add('keywords')  # default
+        if cls.legal_categories != Track.legal_categories:
+            cls.supported.add('own_categories')
         for name, method in getmembers(cls, isfunction):
             if name in support_mappings:
                 if cls._is_implemented(method):
