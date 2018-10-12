@@ -328,14 +328,14 @@ class BasicTest(unittest.TestCase):
 
     @staticmethod
     @contextmanager
-    def lifetrackserver(directory, servername, port):
+    def lifetrackserver(directory):
         """Start and ends a server for lifetrack testing."""
         exec_name = 'bin/gpxity_server'
         logfile = os.path.join(directory, 'gpxity_server.log')
         if not os.path.exists(exec_name):
             exec_name = 'gpxity_server'
-        cmdline = '{} --loglevel debug --servername {} --port {} {}'.format(
-            exec_name, servername, port, directory)
+        cmdline = '{} --loglevel debug --servername localhost --port 12398 {}'.format(
+            exec_name, directory)
         user_filename = os.path.join(directory, '.users')
         if not os.path.exists(user_filename):
             with open(user_filename, 'w') as user_file:

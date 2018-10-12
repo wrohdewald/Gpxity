@@ -431,7 +431,7 @@ class TestBackends(BasicTest):
                         new_id in target.backend  # pylint: disable=pointless-statement
 
         with self.temp_backend(Directory) as serverdirectory:
-            with self.lifetrackserver(servername='localhost', port=12398, directory=serverdirectory.url):
+            with self.lifetrackserver(serverdirectory.url):
                 with TrackMMT(auth='gpxitytest') as uplink:
                     if Mailer.is_disabled():
                         track(uplink)
@@ -601,8 +601,7 @@ class TestBackends(BasicTest):
             with self.subTest(cls), self.temp_backend(Directory) as serverdirectory:
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
-                        with self.lifetrackserver(
-                                servername='localhost', port=12398, directory=serverdirectory.url):
+                        with self.lifetrackserver(serverdirectory.url):
                             downloaded = backend._download_legal_categories()
                             self.assertEqual(sorted(backend.legal_categories), downloaded)
                     else:
