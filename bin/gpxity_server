@@ -160,7 +160,6 @@ class MMTHandler(BaseHTTPRequestHandler):
             data_length = int(self.headers['Content-Length'])
             data = self.rfile.read(data_length).decode('utf-8')
             parsed = parse_qs(data)
-            self.server.logger.debug('got %s', parsed)
             for key, value in parsed.items():
                 if len(value) != 1:
                     self.return_error(400, '{} must appear only once'.format(key))
