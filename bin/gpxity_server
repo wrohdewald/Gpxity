@@ -436,7 +436,7 @@ class LifeServerMMT(HTTPServer):
                 'port': options.smtp_port,
                 'Url': options.mailto}
             mailer = Mailer(auth=auth, timeout=options.timeout)
-            mailer.min_interval = options.mail_interval
+            mailer.interval = options.mail_interval
             self.targets.append(mailer)
         self.trackers = dict()
         self.history = list()

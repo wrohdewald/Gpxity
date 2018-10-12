@@ -131,7 +131,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     Attributes:
         subject_template: This builds the mail subject. {title} and {distance} will
             be replaced by their respective values. Other placeholders are not yet defined.
-        min_interval: seconds. Mails are not sent more often. Default is None. If None, never send until
+        interval: seconds. Mails are not sent more often. Default is None. If None, never send until
             Mailer.flush() is called. This is used for bundling several writes into one single mail:
             gpxdo merge --copy will send all tracks with one single mail.
             Lifetracking uses this to send mails with the current track only every X seconds, the
@@ -149,7 +149,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         super(Mailer, self).__init__(url, auth, cleanup, timeout)
         self.history = list()
         self.subject_template = '{title} {distance}'
-        self.min_interval = None
+        self.interval = None
         self.timer = None
         self.queue = MailQueue(self)
 
@@ -175,8 +175,8 @@ class Mailer(Backend):  # pylint: disable=abstract-method
             with track._decouple():
                 track.id_in_backend = new_ident
         self.queue.append(track)
-        if self.min_interval is not None:
-            if self.queue.last_sent_time + datetime.timedelta(seconds=self.min_interval) < datetime.datetime.now():
+        if self.interval is not None:
+            if self.queue.last_sent_time + datetime.timedelta(seconds=self.interval) < datetime.datetime.now():
                 self.queue.send()
             else:
                 self._start_timer()
@@ -200,7 +200,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         """Start the flush timer."""
         if self.timer is None:
             if interval is None:
-                interval = self.min_interval
+                interval = self.interval
             self.timer = Timer(interval, self.flush)
             self.timer.start()
 

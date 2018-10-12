@@ -435,7 +435,7 @@ class TestBackends(BasicTest):
                         track(uplink)
                     else:
                         with self.temp_backend(Mailer) as mailer:
-                            mailer.min_interval = 5
+                            mailer.interval = 5
                             track(uplink, mailer)
                             self.assertEqual(len(mailer.history), 3)
                             self.assertIn('Lifetracking starts', mailer.history[0])
