@@ -97,16 +97,16 @@ class Lifetrack:
 
     Args:
         target_backends (list): Those tracks will receive the lifetracking data.
-        None values will be ignored.
 
     Attributes:
         done: Will be True after end() has been called.
+        id_in_server (str): The id of the first target backend.
 
     """
 
     def __init__(self, target_backends):
         """See class docstring."""
-        self.targets = [LifetrackTarget(x) for x in target_backends if x is not None]
+        self.targets = [LifetrackTarget(x) for x in target_backends]
         self.id_in_server = None
         self.done = False
 

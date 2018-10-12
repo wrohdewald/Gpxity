@@ -49,7 +49,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track, ServerDirectory, Lifetrack, Mailer  # noqa pylint: disable=no-name-in-module
+from gpxity import Track, Authenticate, Backend, Lifetrack, Mailer  # noqa pylint: disable=no-name-in-module
 
 try:
     import argcomplete
@@ -130,7 +130,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     def load_users(self):
         """load legal user auth from serverdirectory/.users."""
         self.users = dict()
-        with open(os.path.join(self.server.server_directory.url, '.users')) as user_file:
+        with open(os.path.join(self.server.targets[0].url, '.users')) as user_file:
             for line in user_file:
                 user, password = line.strip().split(':')
                 self.users[user] = password
@@ -201,7 +201,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             parameters = self.path.split('?')[1]
             request = parse_qs(parameters)
             wanted_id = request['tid'][0]
-            xml = self.server.server_directory[wanted_id].to_xml()
+            xml = self.server.targets[0][wanted_id].to_xml()
         else:
             xml = ''
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
@@ -279,7 +279,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         a_list = list()
         if parsed['offset'] == '0':
-            for idx, _ in enumerate(self.server.server_directory):
+            for idx, _ in enumerate(self.server.targets[0]):
                 a_list.append(
                     '<track{}><id>{}</id>'
                     '<title><![CDATA[ {} ]]></title>'
@@ -325,10 +325,11 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         track = Track()
         track.parse(parsed['gpx_file'])
-        self.server.server_directory.add(track)
-        if self.server.mailer:
-            self.server.mailer.add(track)
-        return '<type>success</type><id>{}</id>'.format(track.id_in_backend)
+        self.targets[0].add(track)
+        new_ident = track.id_in_backend
+        for _ in self.targets[1:]:
+            _.add(track)
+        return '<type>success</type><id>{}</id>'.format(new_ident)
 
     def xml_start_activity(self, parsed) ->str:
         """start Lifetrack server.
@@ -352,7 +353,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         category = parsed['activity'].capitalize()
         points = self.parse_points(parsed['points'])
         if self.error_response is None:
-            life = Lifetrack([self.server.server_directory, self.server.mailer])
+            life = Lifetrack(self.server.targets)
             new_ident = life.start(points, title, public, category)
             self.server.trackers[new_ident] = life
             return '<type>activity_started</type><activity_id>{}</activity_id>'.format(new_ident)
@@ -421,20 +422,22 @@ class LifeServerMMT(HTTPServer):
     def __init__(self, options):
         """See class docstring."""
         super(LifeServerMMT, self).__init__((options.servername, options.port), MMTHandler)
-        self.gpxdo_options = options
+        first_target = options.target[0]
+        if not first_target.lower().startswith('serverdirectory:'):
+            first_target = 'serverdirectory:' + first_target
+        self.targets = [Backend.instantiate(first_target)]
+        Authenticate.path = self.targets[0].url + '/auth.cfg'
         self.logger = self.define_logger(options)
-        # define the directory in auth.cfg, using the Url=value
-        self.server_directory = ServerDirectory(url=options.directory)
+        self.targets.extend(Backend.instantiate(x, options.timeout) for x in options.target[1:])
         self.start_second = datetime.datetime.now().timestamp()
         if options.mailto:
             auth = {
                 'from': 'gpxity',
                 'port': options.smtp_port,
                 'Url': options.mailto}
-            self.mailer = Mailer(auth=auth, timeout=options.timeout)
-            self.mailer.min_interval = options.mail_interval
-        else:
-            self.mailer = None
+            mailer = Mailer(auth=auth, timeout=options.timeout)
+            mailer.min_interval = options.mail_interval
+            self.targets.append(mailer)
         self.trackers = dict()
         self.history = list()
 
@@ -457,10 +460,9 @@ class Main:  # pylint: disable=too-few-public-methods
     def __init__(self):
         """See class docstring."""
         epilog = """
-        The MMT server uses BASIC AUTH for login. Please define user:password in DIRECTORY/.users"""
+        The MMT server uses BASIC AUTH for login. Please define user:password in  the file .users in the first target.
+        Please define authorization for the other targets in the file auth.cfg in the first target."""
         parser = argparse.ArgumentParser('gpxity_server', epilog=epilog)
-        parser.add_argument(
-            '--directory', required=True, help='the directory for the received tracks')
         parser.add_argument('--servername', help='the name of this server', required=True)
         parser.add_argument('--port', help='listen on PORT', type=int, required=True)
         parser.add_argument('--smtp-port', help='PORT for mailer, default is 25', type=int, default=25)
@@ -470,6 +472,7 @@ class Main:  # pylint: disable=too-few-public-methods
         parser.add_argument('--timeout', help="""
             either one value in seconds or two comma separated values: The first one is the connection
             timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
+        parser.add_argument('target', help='backends who should receive the data. The first one must be a local directory', nargs='+')
 
         try:
             argcomplete.autocomplete(parser)

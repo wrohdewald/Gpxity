@@ -334,7 +334,7 @@ class BasicTest(unittest.TestCase):
         logfile = os.path.join(directory, 'gpxity_server.log')
         if not os.path.exists(exec_name):
             exec_name = 'gpxity_server'
-        cmdline = '{} --loglevel debug --servername {} --port {} --directory {}'.format(
+        cmdline = '{} --loglevel debug --servername {} --port {} {}'.format(
             exec_name, servername, port, directory)
         user_filename = os.path.join(directory, '.users')
         if not os.path.exists(user_filename):
