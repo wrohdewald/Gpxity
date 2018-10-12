@@ -599,12 +599,10 @@ class TestBackends(BasicTest):
             with self.subTest(cls), self.temp_backend(Directory) as serverdirectory:
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
-                        if not Mailer.is_disabled():
-                            # gpxity_server needs Mailer
-                            with self.lifetrackserver(
-                                    servername='localhost', port=12398, directory=serverdirectory.url):
-                                downloaded = backend._download_legal_categories()
-                                self.assertEqual(sorted(backend.legal_categories), downloaded)
+                        with self.lifetrackserver(
+                                servername='localhost', port=12398, directory=serverdirectory.url):
+                            downloaded = backend._download_legal_categories()
+                            self.assertEqual(sorted(backend.legal_categories), downloaded)
                     else:
                         downloaded = backend._download_legal_categories()
                         self.assertEqual(sorted(backend.legal_categories), downloaded)
