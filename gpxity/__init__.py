@@ -14,10 +14,11 @@ from .diff import *
 from .locate import *
 from .backends import *
 from .version import *
+from .auth import *
 
 __all__ = [
     'Track', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT',
-    'ServerDirectory', 'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION']
+    'Authenticate', 'ServerDirectory', 'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION']
 
 
 def prepare_backends():
