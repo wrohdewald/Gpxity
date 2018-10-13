@@ -173,7 +173,8 @@ class WPTrackserver(Backend):
         """Write all header fields. May set track.id_in_backend."""
         description = self._encode_description(track)
         title = track.title[:self._max_length['title']]
-        track_time = track.time or datetime.datetime(year=1970, month=1, day=1, hour=1)
+        # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
+        track_time = track.time or datetime.datetime(year=1970, month=1, day=3, hour=1)
         if track.id_in_backend is None:
             self._cursor.execute(
                 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s)',
