@@ -101,11 +101,14 @@ class MailQueue:
             mail.add_attachment(track.to_xml(), filename=key)
         host = section.get('Smtp', 'localhost')
         port = int(section.get('port', '25'))
+        timeout = self.mailer.timeout
+        if isinstance(timeout, (tuple, list)):
+            timeout = timeout[0]
         try:
             with smtplib.SMTP(  # noqa
                     host,
                     port=port,
-                    timeout=self.mailer.timeout) as smtp_server:
+                    timeout=timeout) as smtp_server:
                 smtp_server.send_message(mail)
         except socket.timeout:
             logging.error('Mailer: Disabled because the smtp server %s:%d did not answer within %d seconds ',
