@@ -72,6 +72,8 @@ class WPTrackserver(Backend):
 
     needs_config = False
 
+    ident_format = '{:06}'   # noqa format the id int to a string. We want the sort order to be correct.
+
     _keywords_marker = '\nKEYWORDS: '
 
     _max_length = {'title': 255, 'description': 255}
@@ -145,7 +147,7 @@ class WPTrackserver(Backend):
         self._cursor.execute(
             'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s', [self.user_id])
         for _ in self._cursor.fetchall():
-            track = self._found_track('{:06}'.format(_[0]))
+            track = self._found_track(self.ident_format.format(_[0]))
             self._enrich_with_headers(track, _)
             yield track
 
@@ -179,7 +181,7 @@ class WPTrackserver(Backend):
             self._cursor.execute(
                 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s)',
                 (self.user_id, title, track_time, description, track.distance(), ''))
-            track.id_in_backend = str(self._cursor.lastrowid)
+            track.id_in_backend = self.ident_format.format(self._cursor.lastrowid)
             self.logger.debug(
                 'new id %s: insert into wp_ts_tracks(user_id,name,created,comment,distance,source) '
                 'values(%s,%s,%s,%s,%s,%s)',
@@ -214,7 +216,7 @@ class WPTrackserver(Backend):
 
     def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation."""
-        self._cursor.execute('delete from wp_ts_locations where trip_id=%s', [ident])
+        self._cursor.execute('delete from wp_ts_locations where trip_id=%s', [int(ident)])
         cmd = 'delete from wp_ts_tracks where id=%s'
         self.logger.debug(cmd, ident)
         self._cursor.execute(cmd, [ident])
