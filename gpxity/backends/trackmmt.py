@@ -15,7 +15,6 @@ TrackMMT is used to test mmt_server.
 """
 
 from .mmt import MMT
-from ..track import Track
 
 __all__ = ['TrackMMT']
 
