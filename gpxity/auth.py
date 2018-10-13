@@ -27,7 +27,9 @@ class Authenticate:
     Args:
         backend (~gpxity.backend.Backend): The backend
 
-        username (str): For the wanted account in the backend
+        username (str): For the wanted account in the backend. You can also pass
+            dict(). In that case, the config file is not read at all, only this dict() will
+            be used.
 
     Attributes:
         path (str): The name for the auth file. Class variable, to be changed before
@@ -70,14 +72,13 @@ class Authenticate:
 
     def __init__(self, backend, url, username: str = None):
         """See class docstring."""
-
         self.__config = ConfigParser()
         if isinstance(username, dict):
             self.__section_name = '{}:from_dict'.format(backend.__class__.__name__)
             self.__config[self.__section_name] = {}
             self.section = self.__config[self.__section_name]
             for key, value in username.items():
-                self.section[key] = str(value)
+                self.section[key.lower()] = str(value)
         else:
             self.__section_name = '{}:{}'.format(backend.__class__.__name__, username)
             self.__path = os.path.expanduser(self.path)
@@ -111,4 +112,4 @@ class Authenticate:
         Returns: The value
 
         """
-        return self.section[key] if key in self.section else None
+        return self.section[key.lower()] if key.lower() in self.section else None
