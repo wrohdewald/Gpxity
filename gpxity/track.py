@@ -912,7 +912,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """
 
         if self.backend is None:
-            return 'unsaved: "{}" from {} id={}'.format(self.title or 'untitled', self.time, id(self))
+            return 'unsaved: "{}" time={} id={}'.format(self.title or 'untitled', self.time, id(self))
         ident = self.id_in_backend or 'unsaved'
         if str(self.backend) == '.':
             # current directory
