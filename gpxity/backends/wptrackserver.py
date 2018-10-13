@@ -79,12 +79,10 @@ class WPTrackserver(Backend):
     def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring. The url is host."""
         super(WPTrackserver, self).__init__(url, auth, cleanup, timeout)
-        self.logger.debug('new WPTrackserver:%s', id(self))
         try:
             user, database = self.config.mysql.split('@')
         except ValueError:
             raise Backend.BackendException('Url is illegal: {}'.format(self.url))
-        self.logger.debug('connecting to %s as %s with pw %s to db %s', self.url, user, self.config.password, database)
         try:
             self._db = MySQLdb.connect(
                 host=self.url, user=user, passwd=self.config.password, database=database,

@@ -484,7 +484,6 @@ class BasicTest(unittest.TestCase):
             cls.mysql_docker_name], stdout=PIPE).communicate()[0].decode().strip()
         if cls.mysql_ip_address == '':
             cls.mysql_ip_address = None
-        logging.debug('%s at ip %s', cls.mysql_docker_name, cls.mysql_ip_address)
         return bool(cls.mysql_ip_address)
 
     @classmethod
