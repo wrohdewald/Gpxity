@@ -62,7 +62,7 @@ class TestBackends(BasicTest):
     def test_all_backends(self):
         """Check if Backend.all_backend_classes works."""
         backends = Backend.all_backend_classes()
-        expected = [Directory, GPSIES, MMT, Mailer, ServerDirectory, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, Mailer, ServerDirectory, TrackMMT, WPTrackserver]
         expected = [x for x in expected if not x.is_disabled()]
         self.assertEqual(backends, expected)
 

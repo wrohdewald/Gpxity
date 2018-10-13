@@ -656,7 +656,7 @@ class TrackTests(BasicTest):
         all_classes = [x.__name__ for x in Backend.all_backend_classes()]
         self.assertEqual(
             all_classes,
-            ['Directory', 'GPSIES', 'MMT', 'Mailer', 'ServerDirectory', 'TrackMMT', 'WPTrackserver'])
+            ['Directory', 'GPSIES', 'Mailer', 'ServerDirectory', 'TrackMMT', 'WPTrackserver'])
 
     @skipIf(*disabled(Directory))
     def test_parse_objectname_directory(self):
