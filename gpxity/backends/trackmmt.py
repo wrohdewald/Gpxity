@@ -76,3 +76,6 @@ class TrackMMT(MMT):
 
         """
         return False
+
+    def destroy(self):
+        """Would need implementations for scan and remove."""
