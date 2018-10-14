@@ -182,7 +182,7 @@ class BasicTest(unittest.TestCase):
             A random datetime
 
         """
-        end = datetime.datetime.now()
+        end = datetime.datetime.now().replace(microsecond=0)
         start = end - datetime.timedelta(days=10)
         delta = end - start
         int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
