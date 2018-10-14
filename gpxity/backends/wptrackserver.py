@@ -239,3 +239,26 @@ class WPTrackserver(Backend):
         if not HAVE_MYSQL:
             return True
         return super(WPTrackserver, cls).is_disabled()
+
+    def _lifetrack_start(self, track, points) ->str:
+        """Start a new lifetrack with initial points.
+
+        Returns:
+            new_ident: New track id
+
+        """
+        with track._decouple():
+            track.add_points(points)
+        new_ident = self._write_all(track)
+        self.logger.error('%s: lifetracking started mit %s Punkten', self, len(points))
+        return new_ident
+
+    def _lifetrack_update(self, track, points):
+        """Update a lifetrack with points.
+
+        Args:
+            track: The lifetrack
+            points: The new points
+
+        """
+        self.__write_points(track, points)

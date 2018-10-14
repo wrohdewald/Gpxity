@@ -47,17 +47,20 @@ class TestBackends(BasicTest):
             'own_categories', 'scan', 'remove', 'get_time',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
-            'write_remove_keywords', 'lifetrack'}
+            'write_remove_keywords'}
         expect_unsupported[WPTrackserver] = {
             'get_time', 'lifetrack_end', 'own_categories',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
         for cls in Backend.all_backend_classes():
             with self.subTest(cls):
-                self.assertTrue(cls.supported & expect_unsupported[cls] == set(),
-                    '{}: supported & unsupported: {}'.format(cls.__name__,
-                    cls.supported & expect_unsupported[cls]))
-                self.assertEqual(sorted(cls.supported | expect_unsupported[cls]),  sorted(cls.full_support))
+                self.assertTrue(
+                    cls.supported & expect_unsupported[cls] == set(),
+                    '{}: supported & unsupported: {}'.format(
+                        cls.__name__, cls.supported & expect_unsupported[cls]))
+                self.assertEqual(
+                    sorted(cls.supported | expect_unsupported[cls]),
+                    sorted(cls.full_support))
 
     def test_all_backends(self):
         """Check if Backend.all_backend_classes works."""
@@ -410,39 +413,38 @@ class TestBackends(BasicTest):
                 life.start(self._random_points())
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
-    @skipIf(*disabled(Directory, TrackMMT))
+    @skipIf(*disabled(Directory))
     def test_lifetrack_local(self):
         """test life tracking against a local server."""
-        def track(*args):
-            life = Lifetrack(args)
+        def track():
+            life = Lifetrack([local_serverdirectory, uplink])
             points = self._random_points(100)
             life.start(points[:50])
             time.sleep(7)
             life.update(points[50:])
             life.end()
-            for target in life.targets:
-                track = target.track
-                new_id = track.id_in_backend
-                if 'scan' in target.backend.supported:
-                    self.assertIn(new_id, uplink)
-                    self.assertSameTracks(uplink, serverdirectory)
-                else:
-                    with self.assertRaises(NotImplementedError):
-                        new_id in target.backend  # pylint: disable=pointless-statement
 
-        with self.temp_backend(Directory) as serverdirectory:
-            with self.lifetrackserver(serverdirectory.url):
-                with TrackMMT(auth='gpxitytest') as uplink:
-                    if Mailer.is_disabled():
-                        track(uplink)
-                    else:
-                        with self.temp_backend(Mailer) as mailer:
-                            mailer.config.interval = 5
-                            track(uplink, mailer)
-                            self.assertEqual(len(mailer.history), 3)
-                            self.assertIn('Lifetracking starts', mailer.history[0])
-                            self.assertIn('Lifetracking continues', mailer.history[1])
-                            self.assertIn('Lifetracking ends', mailer.history[2])
+        for cls in Backend.all_backend_classes(needs={'lifetrack'}):
+            with self.subTest(cls):
+                with self.temp_backend(ServerDirectory) as local_serverdirectory:
+                    with self.temp_backend(ServerDirectory) as remote_serverdirectory:
+                        with self.lifetrackserver(remote_serverdirectory.url):
+                            with self.temp_backend(cls) as uplink:
+                                track()
+                                local_serverdirectory.scan()
+                                if cls is TrackMMT:
+                                    remote_serverdirectory.scan()
+                                    self.assertSameTracks(local_serverdirectory, remote_serverdirectory)
+                                elif cls is Mailer:
+                                    self.assertEqual(
+                                        len(uplink.history), 3,
+                                        'Mailer.history: {}'.format(uplink.history))
+                                    self.assertIn('Lifetracking starts', uplink.history[0])
+                                    self.assertIn('Lifetracking continues', uplink.history[1])
+                                    self.assertIn('Lifetracking ends', uplink.history[2])
+                                else:
+                                    uplink.scan()
+                                    self.assertSameTracks(local_serverdirectory, uplink)
 
     def test_backend_dirty(self):
         """Track._dirty."""

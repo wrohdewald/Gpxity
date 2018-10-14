@@ -38,6 +38,8 @@ class MailQueue:
     def append(self, track):
         """Append a track to the mailing queue."""
         self.tracks[track.id_in_backend] = track.clone()
+        if hasattr(track, 'mail_subject'):
+            self.tracks[track.id_in_backend].mail_subject = track.mail_subject
 
     def subject(self, track=None) ->str:
         """Build the mail subject.
@@ -53,8 +55,9 @@ class MailQueue:
             for _ in self.tracks.values():
                 track = _
         if track is not None:
+            subject = track.mail_subject if hasattr(track, 'mail_subject') else track.title
             return self.mailer.subject_template.format(
-                title=track.title, distance='{:8.3f}km'.format(track.distance()))
+                title=subject, distance='{:8.3f}km'.format(track.distance()))
         return '{} tracks'.format(len(self.tracks))
 
     def content(self) ->str:
@@ -210,8 +213,29 @@ class Mailer(Backend):  # pylint: disable=abstract-method
             self.timer = Timer(interval, self.flush)
             self.timer.start()
 
+    def _lifetrack_start(self, track, points) ->str:
+        """flush.
+
+        Returns: The new id_in_backend.
+
+        """
+        track.mail_subject = 'Lifetracking starts: {}'.format(track.title)
+        track.add_points(points)
+        new_ident = self._write_all(track)
+        self._append(track)
+        assert self._has_item(new_ident), '{} not in {}'.format(new_ident, self)
+        self.flush()
+        return new_ident
+
+    def _lifetrack_update(self, track, points):
+        """flush."""
+        track.mail_subject = 'Lifetracking continues: {}'.format(track.title)
+        track.add_points(points)
+        self._write_all(track)
+
     def _lifetrack_end(self, track):
         """flush."""
+        track.mail_subject = 'Lifetracking ends: {}'.format(track.title)
         self._write_all(track)
         self.flush()
 

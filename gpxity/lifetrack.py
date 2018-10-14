@@ -38,45 +38,30 @@ class LifetrackTarget:
                 raise Exception('Lifetrack needs initial points')
             else:
                 raise Exception('Lifetrack.update needs points')
-        if 'Lifetracking' in self.track.title:
-            with self.track._decouple():
-                self.track.title = ':'.join(self.track.title.split(':')[1:])
-        old_title = self.track.title
         new_ident = None
-        try:
-            if 'Lifetracking' not in self.track.title:
-                with self.track._decouple():
-                    self.track.title = (
-                        'Lifetracking continues:'
-                        if self.__started else 'Lifetracking starts:') + ' ' + self.track.title
-            if 'lifetrack' in self.backend.supported:
-                if not self.__started:
-                    new_ident = self.backend._lifetrack_start(self.track, self._prepare_points(points))
-                    with self.backend._decouple():
-                        self.track._set_backend(self.backend)
-                        self.track.id_in_backend = new_ident
-                else:
-                    self.backend._lifetrack_update(self.track, self._prepare_points(points))
+        if 'lifetrack' in self.backend.supported:
+            if not self.__started:
+                new_ident = self.backend._lifetrack_start(self.track, self._prepare_points(points))
+                with self.backend._decouple():
+                    self.track._set_backend(self.backend)
+                    self.track.id_in_backend = new_ident
             else:
-                self.track.add_points(points)
-                if not self.__started:
-                    self.track = self.backend.add(self.track)
-                    new_ident = self.track.id_in_backend
-                    assert new_ident
-                assert self.track.id_in_backend
-            return new_ident
-        finally:
-            with self.track._decouple():
-                self.track.title = old_title
-            self.__started = True
+                self.backend._lifetrack_update(self.track, self._prepare_points(points))
+        else:
+            self.track.add_points(points)
+            if not self.__started:
+                self.track = self.backend.add(self.track)
+                new_ident = self.track.id_in_backend
+                assert new_ident
+            assert self.track.id_in_backend
+        self.__started = True
+        return new_ident
 
     def end(self):
         """End lifetracking for a specific backend."""
         if not self.__started:
             raise Exception('Lifetrack not yet started')
         if 'lifetrack_end' in self.backend.supported:
-            with self.track._decouple():
-                self.track.title = 'Lifetracking ends: ' + self.track.title
             self.backend._lifetrack_end(self.track)
 
     def _prepare_points(self, points):
