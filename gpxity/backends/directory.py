@@ -17,7 +17,7 @@ from collections import defaultdict
 
 import gpxpy.gpxfield as mod_gpxfield
 
-from .. import Backend, Track
+from .. import Backend
 from ..util import remove_directory
 
 __all__ = ['Directory', 'Backup']
