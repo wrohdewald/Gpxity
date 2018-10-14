@@ -534,7 +534,7 @@ class Backend:
         """backend dependent implementation."""
         raise NotImplementedError()
 
-    def _lifetrack_start(self, track, points):
+    def _lifetrack_start(self, track, points) -> str:
         """Modelled after MapMyTracks. I hope this matches other services too.
 
         This will always produce a new track in the backend.supported
@@ -546,6 +546,8 @@ class Backend:
             track(Track): Holds initial data
             points: If None, stop tracking. Otherwise, start tracking
                 and add points.
+
+        Returns: The new id_in_backend
 
         For details see :meth:`Track.track() <gpxity.lifetrack.Lifetrack.start>`.
 
