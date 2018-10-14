@@ -37,6 +37,7 @@ from xml.etree import ElementTree
 import html
 from html.parser import HTMLParser
 import datetime
+import calendar
 from collections import defaultdict
 import requests
 
@@ -692,7 +693,7 @@ class MMT(Backend):
                 point.latitude,
                 point.longitude,
                 point.elevation if point.elevation is not None else 0,
-                point.time.timestamp()))
+                calendar.timegm(point.time.utctimetuple())))
         return ' '.join(_)
 
     def _lifetrack_start(self, track, points) ->str:
