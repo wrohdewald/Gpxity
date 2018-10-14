@@ -207,12 +207,15 @@ class WPTrackserver(Backend):
         """
         self._save_header(track)
         self._cursor.execute('delete from wp_ts_locations where trip_id=%s', [track.id_in_backend])
-        data = [(track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0, x.time)
-                for x in track.points()]  # noqa
+        self.__write_points(track, track.points())
+        return track.id_in_backend
+
+    def __write_points(self, track, points):
+        """save points in the track."""
+        data = [(track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0, x.time) for x in points]
         self._cursor.executemany(
             'insert into wp_ts_locations(trip_id, latitude, longitude, altitude, occurred, comment, speed, heading)'
             ' values(%s, %s, %s, %s, %s,"",0.0, 0.0)', data)
-        return track.id_in_backend
 
     def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation."""
