@@ -352,7 +352,7 @@ class Backend:
         with self._decouple():
             result._set_backend(self)
             result.id_in_backend = ident
-        self.__append(result)
+        self._append(result)
         return result
 
     def _yield_tracks(self):
@@ -445,7 +445,7 @@ class Backend:
             with self._decouple():
                 new_track._set_backend(self)
                 self._write_all(new_track)
-            self.__append(new_track)
+            self._append(new_track)
             track._clear_dirty()
             return new_track
         except Exception:
@@ -655,7 +655,7 @@ class Backend:
             the length"""
         return len(self.__tracks)
 
-    def __append(self, track):
+    def _append(self, track):
         """Append a track to the cached list."""
         self._current_track = track
         if track.id_in_backend is not None and not isinstance(track.id_in_backend, str):
