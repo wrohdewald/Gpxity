@@ -357,6 +357,7 @@ class BasicTest(unittest.TestCase):
                 logging.debug('SRV: Directory exists but not gpxity_server.log')
             else:
                 logging.debug('SRV: Directory %s does not exist', directory)
+            Directory(directory).remove_all()
             process.kill()
 
     def start_mailserver(self):
