@@ -346,7 +346,7 @@ class TestBackends(BasicTest):
                         with Directory(cleanup=True) as copy:
                             for _ in copy.merge(backend2):
                                 self.logger.debug(_)
-                            self.assertSameTracks(local, copy)
+                            self.assertSameTracks(local, copy, with_last_time=cls is not GPSIES)
 
     @skipIf(*disabled(Directory))
     def test_merge_backends(self):

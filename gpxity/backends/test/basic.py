@@ -232,11 +232,12 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
-    def assertSameTracks(self, backend1, backend2, msg=None, with_category=True):  # noqa pylint: disable=invalid-name
+    def assertSameTracks(self, backend1, backend2, msg=None, with_category=True, with_last_time=None):  # noqa pylint: disable=invalid-name
         """both backends must hold identical tracks."""
         self.maxDiff = None  # pylint: disable=invalid-name
-        if backend1 != backend2:
+        if with_last_time is None:
             with_last_time = not (isinstance(backend1, GPSIES) or isinstance(backend2, GPSIES))
+        if backend1 != backend2:
             keys1 = sorted(x.key(with_category, with_last_time) for x in backend1)
             keys2 = sorted(x.key(with_category, with_last_time) for x in backend2)
             self.assertEqual(keys1, keys2, msg)
