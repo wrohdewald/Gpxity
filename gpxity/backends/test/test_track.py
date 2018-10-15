@@ -23,7 +23,7 @@ from unittest import skipIf
 
 from .basic import BasicTest, disabled
 from ... import Track, Backend
-from .. import Directory, ServerDirectory, MMT
+from .. import Directory, ServerDirectory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from ...util import repr_timespan
 
 # pylint: disable=attribute-defined-outside-init
@@ -654,9 +654,9 @@ class TrackTests(BasicTest):
     def test_all_backend_classes(self):
         """Test Backend.all_backend_classes."""
         all_classes = [x.__name__ for x in Backend.all_backend_classes()]
-        self.assertEqual(
-            all_classes,
-            ['Directory', 'GPSIES', 'Mailer', 'ServerDirectory', 'TrackMMT', 'WPTrackserver'])
+        expected = [Directory, GPSIES, Mailer, ServerDirectory, TrackMMT, WPTrackserver]
+        expected = [x.__name__ for x in expected if not x.is_disabled()]
+        self.assertEqual(all_classes, expected)
 
     @skipIf(*disabled(Directory))
     def test_parse_objectname_directory(self):
