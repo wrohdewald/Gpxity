@@ -49,7 +49,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track, Authenticate, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
+from gpxity import Track, MMT, Authenticate, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
 
 try:
     import argcomplete
@@ -181,7 +181,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     @staticmethod
     def answer_with_categories():
         """Return all categories."""
-        all_cat = Track.legal_categories
+        all_cat = MMT.legal_categories
         return ''.join('<li><input name="add-activity-x">&nbsp;{}</li>'.format(x) for x in all_cat)
 
     def cookies(self):

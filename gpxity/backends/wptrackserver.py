@@ -25,8 +25,8 @@ import datetime
 
 from gpxpy import gpx as mod_gpx
 
+from ..track import Track
 from ..backend import Backend
-from .mmt import MMT
 
 try:
     import MySQLdb
@@ -68,7 +68,7 @@ class WPTrackserver(Backend):
 
     # pylint: disable=abstract-method
 
-    legal_categories = MMT.legal_categories
+    legal_categories = Track.legal_categories
 
     needs_config = False
 
