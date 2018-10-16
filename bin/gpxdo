@@ -81,7 +81,7 @@ class LsField:
     # pylint: disable=too-few-public-methods
 
     separator = '  '  # separator between fields
-    max_display_width = 30  # where to break long strings into continuation lines
+    max_display_width = 40  # where to break long strings into continuation lines
 
     def __init__(self, is_visible, header, value_function, field_fmt=None, type_=None):
         self.is_visible = is_visible
