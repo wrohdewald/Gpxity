@@ -184,11 +184,6 @@ class MMTHandler(BaseHTTPRequestHandler):
         all_cat = MMT.legal_categories
         return ''.join('<li><input name="add-activity-x">&nbsp;{}</li>'.format(x) for x in all_cat)
 
-    def cookies(self):
-        """send cookies."""
-        if hasattr(self, 'uniqueid'):
-            self.send_header('Set-Cookie', 'exp_uniqueid={}'.format(self.uniqueid))
-
     def do_GET(self):  # noqa pylint: disable=invalid-name
         """Override standard."""
         self.server.logger.info('%s GET %s %s %s', self.server.second(), self.client_address[0], self.server.server_port, self.path)
@@ -210,7 +205,6 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/xml; charset=UTF-8')
         self.server.logger.info('%s  returning %s', self.server.second(), xml)
         self.send_header('Content-Length', len(xml))
-        self.cookies()
         self.end_headers()
         self.wfile.write(bytes(xml.encode('utf-8')))
 
@@ -247,7 +241,6 @@ class MMTHandler(BaseHTTPRequestHandler):
                 self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
                 self.send_header('Content-Type', 'text/xml; charset=UTF-8')
                 self.send_header('Content-Length', len(xml))
-                self.cookies()
                 self.end_headers()
                 self.wfile.write(bytes(xml.encode('utf-8')))
             except Exception as exc:
