@@ -12,7 +12,7 @@ import logging
 from math import isclose
 
 __all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_track', 'collect_tracks',
-           'positions_equal']
+           'positions_equal', 'pairs']
 
 
 class Duration:
@@ -114,3 +114,13 @@ def positions_equal(pos1, pos2, digits=4):
     """
     _ = 1 / 10 ** digits
     return isclose(pos1.longitude, pos2.longitude, rel_tol=_) and isclose(pos1.latitude, pos2.latitude, rel_tol=_)
+
+
+def pairs(seq):
+    """Return a list of all adjacent elements."""
+    # pylint: disable=stop-iteration-return
+    iterable = iter(seq)
+    prev = next(iterable)
+    for _ in iterable:
+        yield prev, _
+        prev = _

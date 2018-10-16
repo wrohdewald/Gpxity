@@ -42,7 +42,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 from gpxity import Track, Directory, Backend, BackendDiff, Locate
-from gpxity.util import uniq, collect_tracks
+from gpxity.util import uniq, collect_tracks, pairs
 
 def __last_month_day(date):
     """Change to the last day of month"""
@@ -509,7 +509,7 @@ class Utility:
 
         if self.options.warnings:
             time_sorted = sorted(all_tracks, key=lambda x: x['time'])
-            for span1, span2 in self.pairs(time_sorted):
+            for span1, span2 in pairs(time_sorted):
                 if span1['time'] and span1['duration'] and span2['time']:
                     if span2['time'] < span1['time'] + span1['duration']:
                         row = FreeTextRow('{} and {} have overlapping times'.format(
@@ -521,16 +521,6 @@ class Utility:
 
         for line in all_lines:
             line.print_row()
-
-    @staticmethod
-    def pairs(seq):
-        """Returns a list of all adjacent elements"""
-        # pylint: disable=stop-iteration-return
-        iterable = iter(seq)
-        prev = next(iterable)
-        for _ in iterable:
-            yield prev, _
-            prev = _
 
     def fix(self):
         """fix tracks"""
