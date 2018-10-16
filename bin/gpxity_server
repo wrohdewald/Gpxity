@@ -167,6 +167,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 if len(value) != 1:
                     self.return_error(400, '{} must appear only once'.format(key))
                 parsed[key] = parsed[key][0]
+            self._fix_headers(parsed)
             return parsed
         return None
 
@@ -327,6 +328,17 @@ class MMTHandler(BaseHTTPRequestHandler):
             _.add(track)
         return '<type>success</type><id>{}</id>'.format(new_ident)
 
+    def _fix_headers(self, parsed):
+        """Fix some not so nice things in headers."""
+        if 'privicity' in parsed:
+            parsed['privacy'] = parsed['privicity']
+            del parsed['privicity']
+        if parsed.get('request') == 'start_activity' and 'title' not in parsed:
+            parsed['title'] = ''
+            if parsed.get('source') == 'OruxMaps':
+                # shorten monster title 2018-10-03 00:0020181003_0018
+                parsed['title'] = parsed['title'][:16]
+
     def xml_start_activity(self, parsed) ->str:
         """start Lifetrack server.
 
@@ -334,19 +346,11 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer
 
         """
-        if 'title' in parsed:
-            title = parsed['title']
-            if parsed.get('source') == 'OruxMaps':
-                # shorten monster title 2018-10-03 00:0020181003_0018
-                title = title[:16]
-        else:
-            title = None
-        if 'privicity' in parsed:
-            parsed['privacy'] = parsed['privicity']
-        public=parsed['privacy'] == 'public'
+        title = parsed.get('title', '')
+        public = parsed.get('privacy', 'private') == 'public'
         # the MMT API example uses cycling instead of Cycling,
         # and Oruxmaps does so too.
-        category = parsed['activity'].capitalize()
+        category = parsed.get('activity', MMT.legal_categories[0]).capitalize()
         points = self.parse_points(parsed['points'])
         if self.error_response is None:
             life = Lifetrack(self.server.targets)
