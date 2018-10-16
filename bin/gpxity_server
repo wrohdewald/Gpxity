@@ -101,7 +101,6 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     users = None
     login_user = None
-    uniqueid = 123
 
     def log_info(self, format, *args):  # pylint: disable=redefined-builtin
         """Override: Redirect into logger."""
@@ -164,9 +163,6 @@ class MMTHandler(BaseHTTPRequestHandler):
                 if len(value) != 1:
                     self.return_error(400, '{} must appear only once'.format(key))
                 parsed[key] = parsed[key][0]
-            if 'unique_token' not in parsed:
-                logging.info('got no unique token, using %s',  self.client_address[0])
-                parsed['unique_token'] = self.client_address[0]
             return parsed
         return None
 
