@@ -551,6 +551,21 @@ class Utility:
         for _ in result_lines:
             logging.error(_)
 
+    def dump(self):
+        """Dump data."""
+        result_lines = []
+        for _ in self.source_tracks:
+            result_lines.append('------- {} -------'.format(_))
+            if self.options.points:
+                for p0, p1 in pairs(_.points()):
+                    result_lines.append(
+                        '{} -- {}: time={} distance={} speed={}'.format(
+                            p0, p1, p1.time - p0.time, p1.distance_3d(p0), p1.speed_between(p0)))
+
+        for _ in result_lines:
+            logging.error(_)
+
+
     def keyword(self):
         """add/remove a list of keywords"""
         for _ in self.source_tracks:
@@ -932,6 +947,15 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             arg_name='keywords', arg_help='keywords separated by commas')
         keyword_parser.add_argument('--dry-run', help='only show what would be done',
                                     action='store_true', default=False)
+
+        dump_parser = self.subparsers.add_parser(
+            'dump', help="""Show specific GPX values""",
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        dump_parser.set_defaults(func=self.dump)
+        dump_parser.add_argument('--points', help='List detailled info about points',
+            action='store_true', default=False)
+        self.add_multi_source(dump_parser)
 
         self.define_attr_parser(
             'title', helptext='set the title', func=self.title,
