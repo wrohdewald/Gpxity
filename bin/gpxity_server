@@ -78,19 +78,23 @@ class TrackingMessage:
         self.parsed = parsed
         self.result = result
         self.response = response
-        if response:
-            logging.error('E %s', self)
+
+    def log(self, prefix=''):
+        """Log the message"""
+        if self.response:
+            logging.error('E %s%s', prefix, self)
         else:
-            logging.info('I %s', self)
+            logging.info('I %s%s', prefix, self)
 
     def __str__(self):
         response = '{} {}'.format(*self.response) if self.response else ''
         ident = self.parsed.get('activity_id')
         request = self.parsed.get('request')
-        points = MMTHandler.parse_points(self.parsed['points'])
         point_msg = ''
-        if points:
-            point_msg = ' with {} points: {}'.format(len(points), ','.join(str(round(x.elevation)) for x in points))
+        if 'points' in self.parsed:
+            points = MMTHandler.parse_points(self.parsed['points'])
+            if points:
+                point_msg = ' with {} points: {}'.format(len(points), ','.join(str(round(x.elevation)) for x in points))
         return '{} {} from {} id={} request={} {} --> {}  {}'.format(
             self.time, self.command, self.from_ip, ident, request, point_msg, self.result, response).strip()
 
