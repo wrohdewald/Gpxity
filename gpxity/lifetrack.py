@@ -83,20 +83,34 @@ class Lifetrack:
     Args:
         sender_ip: The IP of the client.
         target_backends (list): Those tracks will receive the lifetracking data.
+        ids (list(str)): If given, use as id_in_backend. One for every backend.
+            May be list(str) or str
 
     Attributes:
         done: Will be True after end() has been called.
-        id_in_server (str): The id of the first target backend.
+        ids (str): The ids of all backends joined by '----'.
 
     """
 
-    def __init__(self, sender_ip, target_backends):
+    def __init__(self, sender_ip, target_backends, ids=None):
         """See class docstring."""
         assert sender_ip is not None
         self.sender_ip = sender_ip
         self.targets = [LifetrackTarget(x) for x in target_backends]
-        self.id_in_server = None
+        if isinstance(ids, list):
+            ids = '----'.join(ids)
+        if ids:
+            for target, use_id in zip(self.targets, ids.split('----')):
+                target.track.id_in_backend = use_id
         self.done = False
+
+    def formatted_ids(self) ->str:
+        """One string holding all backend ids.
+
+        Returns: that string.
+
+        """
+        return '----'.join(x.track.id_in_backend for x in self.targets)
 
     def start(self, points, title=None, public=None, category=None):
         """Start lifetracking.
@@ -117,7 +131,7 @@ class Lifetrack:
                 _.track.public = public
                 _.track.category = category
         self.update(points)
-        return self.id_in_server
+        return self.formatted_ids()
 
     def update(self, points):
         """Start or update lifetrack.
@@ -129,10 +143,7 @@ class Lifetrack:
 
         """
         for _ in self.targets:
-            id_in_server = _.update(points)
-            assert _.track.id_in_backend, '{} in {} got no id_in_backend'.format(_.track, _.backend)
-            if self.id_in_server is None:
-                self.id_in_server = id_in_server
+            _.update(points)
 
     def end(self):
         """End lifetrack.
@@ -143,4 +154,7 @@ class Lifetrack:
         self.done = True
 
     def __str__(self):  # noqa
-        return 'Lifetrack({})'.format(self.id_in_server)
+        return 'Lifetrack({}{})'.format(self.formatted_ids(), ' done' if self.done else '')
+
+    def __repr__(self):  # noqa
+        return str(self)
