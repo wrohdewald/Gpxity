@@ -352,7 +352,8 @@ class BasicTest(unittest.TestCase):
                 os.remove(user_filename)
             if os.path.exists(logfile):
                 for _ in open(logfile):
-                    logging.debug('SRV: %s', _.rstrip())
+                    if 'INFO' not in _ and 'HTTP/1.1' not in _:
+                        logging.debug('SRV: %s', _.rstrip())
                 os.remove(logfile)
             elif os.path.exists(directory):
                 logging.debug('SRV: Directory exists but not gpxity_server.log')

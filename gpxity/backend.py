@@ -662,11 +662,18 @@ class Backend:
         self._current_track = track
         if track.id_in_backend is not None and not isinstance(track.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(track))
+        tracks_with_this_id = [x for x in self.__tracks if x.id_in_backend == track.id_in_backend]
+        if tracks_with_this_id:
+            assert len(tracks_with_this_id) == 1
+            track_with_this_id = tracks_with_this_id[0]
+            if track_with_this_id.backend is None:
+                # we actually replace the unsaved track with the new one
+                del self.__tracks[track_with_this_id]
         if track.id_in_backend is not None and any(x.id_in_backend == track.id_in_backend for x in self.__tracks):
             # cannot do "in self" because we are not decoupled, so that would call _scan()
             raise ValueError(
-                'Backend.append(track): its id_in_backend {} is already in list: Track={}, list={}'.format(
-                    track.id_in_backend, self[track.id_in_backend], self.__tracks))
+                'Backend.append(track {}): its id_in_backend {} is already in list: Track={}, list={}'.format(
+                    str(track), track.id_in_backend, self[track.id_in_backend], self.__tracks))
         self.matches(track, 'append')
         self.__tracks.append(track)
 

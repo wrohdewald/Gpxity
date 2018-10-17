@@ -6,7 +6,6 @@
 
 """This implements :class:`gpxity.server_directory.ServerDirectory`."""
 
-
 from .directory import Directory, Backup
 
 __all__ = ['ServerDirectory']

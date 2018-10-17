@@ -176,7 +176,11 @@ class WPTrackserver(Backend):
         track.add_points([self.__point(x) for x in self._cursor.fetchall()])
 
     def _save_header(self, track):
-        """Write all header fields. May set track.id_in_backend."""
+        """Write all header fields. May set track.id_in_backend.
+
+        Returns: The new id_in_backend.
+
+        """
         description = self._encode_description(track)
         title = track.title[:self._max_length['title']]
         # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
@@ -186,18 +190,11 @@ class WPTrackserver(Backend):
                 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s)',
                 (self.user_id, title, track_time, description, track.distance(), ''))
             track.id_in_backend = self.ident_format.format(self._cursor.lastrowid)
-            self.logger.debug(
-                'new id %s: insert into wp_ts_tracks(user_id,name,created,comment,distance,source) '
-                'values(%s,%s,%s,%s,%s,%s)',
-                track.id_in_backend, self.user_id, title, track_time, description, track.distance(), '')
         else:
             self._cursor.execute(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
                 (title, track_time, description, track.distance(), track.id_in_backend))
-            self.logger.debug(
-                'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
-                title, track_time, description, track.distance(), track.id_in_backend)
-            self.logger.debug('save_header: rewrite %s', track.id_in_backend)
+        return track.id_in_backend
 
     def _write_all(self, track) ->str:
         """save full gpx track.
@@ -209,10 +206,10 @@ class WPTrackserver(Backend):
             the new track.id_in_backend
 
         """
-        self._save_header(track)
-        self._cursor.execute('delete from wp_ts_locations where trip_id=%s', [track.id_in_backend])
+        result = self._save_header(track)
+        self._cursor.execute('delete from wp_ts_locations where trip_id=%s', [result])
         self.__write_points(track, track.points())
-        return track.id_in_backend
+        return result
 
     def __write_points(self, track, points):
         """save points in the track."""

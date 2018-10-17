@@ -82,6 +82,7 @@ class Authenticate:
         else:
             self.__section_name = '{}:{}'.format(backend.__class__.__name__, username)
             self.__path = os.path.expanduser(self.path)
+            logging.info('Using auth data from %s', self.__path)
             if os.path.exists(self.__path):
                 with open(self.__path) as auth_file:
                     self.__config.read_string(auth_file.read())

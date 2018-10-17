@@ -23,7 +23,7 @@ class LifetrackTarget:
         """See class docstring."""
         self.backend = backend
         self.track = Track()
-        self.__started = False
+        self.started = False
 
     def update(self, points) ->str:
         """Update lifetrack into a specific track.
@@ -32,15 +32,14 @@ class LifetrackTarget:
             the new id_in_backend
 
         """
-
         if not points:
-            if not self.__started:
+            if not self.started:
                 raise Exception('Lifetrack needs initial points')
             else:
                 raise Exception('Lifetrack.update needs points')
         new_ident = None
         if 'lifetrack' in self.backend.supported:
-            if not self.__started:
+            if not self.started:
                 new_ident = self.backend._lifetrack_start(self.track, self._prepare_points(points))
                 with self.backend._decouple():
                     self.track._set_backend(self.backend)
@@ -49,17 +48,17 @@ class LifetrackTarget:
                 self.backend._lifetrack_update(self.track, self._prepare_points(points))
         else:
             self.track.add_points(points)
-            if not self.__started:
+            if not self.started:
                 self.track = self.backend.add(self.track)
                 new_ident = self.track.id_in_backend
                 assert new_ident
             assert self.track.id_in_backend
-        self.__started = True
+        self.started = True
         return new_ident
 
     def end(self):
         """End lifetracking for a specific backend."""
-        if not self.__started:
+        if not self.started:
             raise Exception('Lifetrack not yet started')
         if 'lifetrack_end' in self.backend.supported:
             self.backend._lifetrack_end(self.track)
@@ -67,7 +66,7 @@ class LifetrackTarget:
     def _prepare_points(self, points):
         """Round points.
 
-        Returns:
+        Returns (list):
             The rounded points
 
         """
@@ -107,10 +106,13 @@ class Lifetrack:
     def formatted_ids(self) ->str:
         """One string holding all backend ids.
 
-        Returns: that string.
+        Returns: that string or None.
 
         """
-        return '----'.join(x.track.id_in_backend for x in self.targets)
+        try:
+            return '----'.join(x.track.id_in_backend for x in self.targets)
+        except TypeError:
+            return None
 
     def start(self, points, title=None, public=None, category=None):
         """Start lifetracking.
@@ -130,6 +132,7 @@ class Lifetrack:
                 _.track.title = title
                 _.track.public = public
                 _.track.category = category
+                _.started = _.track.id_in_backend is not None
         self.update(points)
         return self.formatted_ids()
 
