@@ -24,9 +24,11 @@ last part of the strings will be thrown away silently when writing into the data
 import datetime
 
 from gpxpy import gpx as mod_gpx
+from gpxpy.geo import length as gpx_length
 
 from ..track import Track
 from ..backend import Backend
+from ..util import add_speed, utc_to_local_delta
 
 try:
     import MySQLdb
@@ -97,6 +99,7 @@ class WPTrackserver(Backend):
         if row is None:
             raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.config.username))
         self.user_id = row[0]
+        self._lifetrack_points = list()
 
     def _encode_description(self, track):
         """Encode keywords in description.
@@ -159,10 +162,11 @@ class WPTrackserver(Backend):
             The point
 
         """
+        time_delta = utc_to_local_delta()  # WPTrackserver wants local time
         return mod_gpx.GPXTrackPoint(
             latitude=float(row[0]),
             longitude=float(row[1]),
-            time=row[2])
+            time=row[2] - time_delta)
 
     def _read_all(self, track) ->None:
         """Read the full track."""
@@ -212,10 +216,18 @@ class WPTrackserver(Backend):
 
     def __write_points(self, track, points):
         """save points in the track."""
-        data = [(track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0, x.time) for x in points]
+        points = list(points)
+        time_delta = utc_to_local_delta()  # WPTrackserver wants local time
+        data = [(
+            track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
+            x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0) for x in points]
         self._cursor.executemany(
-            'insert into wp_ts_locations(trip_id, latitude, longitude, altitude, occurred, comment, speed, heading)'
-            ' values(%s, %s, %s, %s, %s,"",0.0, 0.0)', data)
+            'insert into wp_ts_locations(trip_id, latitude, longitude, altitude, occurred, speed, comment, heading)'
+            ' values(%s, %s, %s, %s, %s, %s, "", 0.0)', data)
+        adding_distance = gpx_length(points)
+        cmd = 'update wp_ts_tracks set distance=distance+%s where id=%s'
+        args = [adding_distance, track.id_in_backend]
+        self._cursor.execute(cmd, args)
 
     def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation."""
@@ -247,10 +259,12 @@ class WPTrackserver(Backend):
             new_ident: New track id
 
         """
+        assert isinstance(points, list)
+        self._lifetrack_points = points[:]
         with track._decouple():
             track.add_points(points)
         new_ident = self._write_all(track)
-        self.logger.error('%s: lifetracking started mit %s Punkten', self, len(points))
+        self.logger.info('%s: lifetracking started with %s new points', self, len(points))
         return new_ident
 
     def _lifetrack_update(self, track, points):
@@ -261,4 +275,6 @@ class WPTrackserver(Backend):
             points: The new points
 
         """
+        self._lifetrack_points.extend(points)
+        add_speed(self._lifetrack_points, window=10)
         self.__write_points(track, points)
