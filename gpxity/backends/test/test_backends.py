@@ -408,7 +408,7 @@ class TestBackends(BasicTest):
         """test life tracking against a free account on mapmytracks.com."""
         with MMT(auth='gpxitytest') as uplink:
             self.assertTrue(uplink.is_free_account)
-            life = Lifetrack([uplink])
+            life = Lifetrack('127.0.0.1', [uplink])
             with self.assertRaises(Exception) as context:
                 life.start(self._random_points())
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
@@ -417,7 +417,7 @@ class TestBackends(BasicTest):
     def test_lifetrack_local(self):
         """test life tracking against a local server."""
         def track():
-            life = Lifetrack([local_serverdirectory, uplink])
+            life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
             points = self._random_points(100)
             life.start(points[:50])
             time.sleep(7)

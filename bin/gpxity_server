@@ -353,7 +353,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         category = parsed.get('activity', MMT.legal_categories[0]).capitalize()
         points = self.parse_points(parsed['points'])
         if self.error_response is None:
-            life = Lifetrack(self.server.targets)
+            life = Lifetrack(self.client_address[0], self.server.targets)
             new_ident = life.start(points, title, public, category)
             self.server.trackers[new_ident] = life
             return '<type>activity_started</type><activity_id>{}</activity_id>'.format(new_ident)

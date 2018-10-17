@@ -81,6 +81,7 @@ class Lifetrack:
     """Life tracking. The data will be forwarded to all given backends.
 
     Args:
+        sender_ip: The IP of the client.
         target_backends (list): Those tracks will receive the lifetracking data.
 
     Attributes:
@@ -89,8 +90,10 @@ class Lifetrack:
 
     """
 
-    def __init__(self, target_backends):
+    def __init__(self, sender_ip, target_backends):
         """See class docstring."""
+        assert sender_ip is not None
+        self.sender_ip = sender_ip
         self.targets = [LifetrackTarget(x) for x in target_backends]
         self.id_in_server = None
         self.done = False

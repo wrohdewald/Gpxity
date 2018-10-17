@@ -62,7 +62,7 @@ class Main:
             backend = Backend.instantiate(self.options.backend)
             assert isinstance(backend, Backend)
             try:
-                life = Lifetrack([backend])
+                life = Lifetrack('127.0.0.1', [backend])
                 all_points = list(source.points())
                 life.start(all_points[:5])
                 for point in all_points[5:]:
