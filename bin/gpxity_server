@@ -339,6 +339,15 @@ class MMTHandler(BaseHTTPRequestHandler):
                 # shorten monster title 2018-10-03 00:0020181003_0018
                 parsed['title'] = parsed['title'][:16]
 
+    def use_tracker(self, parsed):
+        """Find matching tracker. Fail if no tracker is running at all.
+
+        Returns: the wanted tracker or None.
+
+        """
+        if 'activity_id' in parsed:
+            return self.server.trackers.get(parsed['activity_id'])
+
     def xml_start_activity(self, parsed) ->str:
         """start Lifetrack server.
 
@@ -357,15 +366,6 @@ class MMTHandler(BaseHTTPRequestHandler):
             new_ident = life.start(points, title, public, category)
             self.server.trackers[new_ident] = life
             return '<type>activity_started</type><activity_id>{}</activity_id>'.format(new_ident)
-
-    def use_tracker(self, parsed):
-        """Find matching tracker. Fail if no tracker is running at all.
-
-        Returns: the wanted tracker or None.
-
-        """
-        if 'activity_id' in parsed:
-            return self.server.trackers.get(parsed['activity_id'])
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
