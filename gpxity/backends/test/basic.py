@@ -310,6 +310,7 @@ class BasicTest(unittest.TestCase):
         elif cls_ is Mailer:
             auth = {
                 'Username': username,
+                'interval': 2,
                 'port': 8025,
                 'url': pwd.getpwuid(os.geteuid()).pw_name}
         else:
