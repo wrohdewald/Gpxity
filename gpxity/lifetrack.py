@@ -66,13 +66,13 @@ class LifetrackTarget:
             self.backend._lifetrack_end(self.track)
 
     def _prepare_points(self, points):
-        """Round points.
+        """Round points and remove those within fences.
 
         Returns (list):
-            The rounded points
+            The prepared points
 
         """
-        result = list(points)[:]
+        result = [x for x in points if self.backend.fences.outside(x)]
         self.track._round_points(result)
         return result
 

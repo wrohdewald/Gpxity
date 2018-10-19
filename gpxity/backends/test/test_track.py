@@ -19,10 +19,11 @@ import io
 import filecmp
 import tempfile
 import datetime
+import random
 from unittest import skipIf
 
 from .basic import BasicTest, disabled
-from ... import Track, Backend
+from ... import Track, Backend, Fences
 from .. import Directory, ServerDirectory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from ...util import repr_timespan
 
@@ -726,3 +727,25 @@ class TrackTests(BasicTest):
         for string, *expect in cases:
             cls, account, ident = Backend.parse_objectname(string)
             self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
+
+    def test_fences(self):
+        """Test fences."""
+
+        # TODO: check auth.cfg parsing
+
+        for illegal in (
+                '', 'a/b', '5.4.3/3.0/10', '5.4.3/3/10', '5/6/7/8'
+        ):
+            with self.assertRaises(Exception, msg='fence "{}" is illegal'.format(illegal)):
+                Fences(illegal)
+        points = set(self._random_points())
+        fences = Fences(" ".join("{}/{}/{}".format(
+            x.latitude, x.longitude, 500) for x in random.sample(points, 3)))
+        inside = {x for x in points if not fences.outside(x)}
+        outside = {x for x in points if fences.outside(x)}
+        self.assertEqual(inside | outside, points)
+        self.assertEqual(len(inside & outside), 0)
+        for point in inside:
+            self.assertFalse(fences.outside(point))
+        for point in outside:
+            self.assertTrue(fences.outside(point))

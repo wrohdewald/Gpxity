@@ -26,7 +26,7 @@ import logging
 
 from gpxpy import gpx as mod_gpx
 from gpxpy import parse as gpxpy_parse
-from gpxpy.geo import length as gpx_length
+from gpxpy.geo import length as gpx_length, Location
 from gpxpy.geo import simplify_polyline
 
 from .util import repr_timespan, uniq, positions_equal
@@ -36,8 +36,51 @@ GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
 GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 
+# see https://github.com/tkrajina/gpxpy/issues/150
+Location.__hash__ = lambda x: int(x.latitude * 1000) + int(x.longitude * 1000) + int(x.elevation * 10)  # noqa
 
-__all__ = ['Track']
+
+__all__ = ['Track', 'Fences']
+
+
+class Fences:  # pylint: disable=too-few-public-methods
+
+    """
+    Defines circles.
+
+    Args:
+        config_str: The string from auth.cfg
+
+    Attributes:
+        center (GPXTrackPoint): The center
+        radius (meter): The radius in meters
+
+    """
+
+    def __init__(self, config_str: str):
+        """init."""
+        self.circles = list()
+        if config_str is not None:
+            for fence in config_str.split(' '):
+                parts = fence.split('/')
+                if len(parts) != 3:
+                    raise Exception('fence needs 3 parts')
+                try:
+                    parts = [x.strip() for x in parts]
+                    center = Location(float(parts[0]), float(parts[1]))
+                    radius = float(parts[2])
+                except Exception:
+                    raise Exception('Fence definition is wrong: {}'.format(fence))
+                circle = (center, radius)
+                self.circles.append(circle)
+
+    def outside(self, point) ->bool:
+        """Determine if point is outside of all fences.
+
+        Returns: True or False.
+
+        """
+        return all(point.distance_2d(x[0]) > x[1] for x in self.circles)
 
 
 @total_ordering
@@ -120,6 +163,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self.__cached_distance = None
         self._similarity_others = weakref.WeakValueDictionary()
         self._similarities = dict()
+        self.__without_fences = None  # used by context manager "fenced()"
         if gpx:
             self._decode_keywords(self.__gpx.keywords)
             self._round_points(self.points())
@@ -222,6 +266,9 @@ class Track:  # pylint: disable=too-many-public-methods
             del self._header_data[value]
         if not self.__is_decoupled:
             if value == 'gpx':
+                if self.__without_fences is not None:
+                    raise Exception(
+                        '{}: You may not modify gpx while being in the context manager "fenced()"'.format(self))
                 self._uncache_gpx()
             self.__dirty.append(value)
             if not self._batch_changes:
@@ -356,6 +403,25 @@ class Track:  # pylint: disable=too-many-public-methods
             self._load_full()
             self.__gpx.description = value
             self._dirty = 'description'
+
+    @contextmanager
+    def fenced(self, fences):
+        """Suppress points in fences."""
+        if self.__without_fences is not None:
+            raise Exception('fenced() is already active')
+        self.__without_fences = self.__gpx
+        try:
+            if fences:
+                for track in self.__gpx.tracks:
+                    for segment in track.segments:
+                        segment.points = [x for x in segment.points if fences.outside(x)]
+                self.__gpx.waypoints = [x for x in self.gpx.waypoints if fences.outside(x)]
+            self._uncache_gpx()
+            yield
+        finally:
+            self.__gpx = self.__without_fences
+            self._uncache_gpx()
+            self.__without_fences = None
 
     @contextmanager
     def _decouple(self):

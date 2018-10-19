@@ -129,6 +129,8 @@ def add_speed(points, window: int = 2):
         window: The number of last points to consider.
 
     """
+    if not points:
+        return
     points[0].gpxity_speed = 0.0
     start_idx = 0
     for _, point in enumerate(reversed(points)):  # noqa

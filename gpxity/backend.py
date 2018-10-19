@@ -17,7 +17,7 @@ import logging
 import importlib
 
 from .auth import Authenticate
-from .track import Track
+from .track import Track, Fences
 from .util import collect_tracks
 
 __all__ = ['Backend']
@@ -75,8 +75,14 @@ class Backend:
             Directory(url='/').
         timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
-        config: A Section with all entries in auth.cfg for this backend
+        fences: The fences as found in config. You can programmatically change them but they will
+            never be applied to already existing data.
         needs_config: If True, the Backend class expects data in auth.cfg
+        config: A Section with all entries in auth.cfg for this backend
+        config.fences: The backend will never write points within fences.
+            You can define any number of fences separated by spaces. Every fence is a circle.
+            It has the form Lat/Long/meter.
+            Lat and Long are the center position in decimal degrees, meter is the radius.
 
 
     """
@@ -129,6 +135,7 @@ class Backend:
         self.__match = None
         self.logger = logging.getLogger(str(self))
         self.timeout = timeout
+        self.fences = Fences(self.config.fences)
 
     @property
     def url(self):
@@ -446,7 +453,8 @@ class Backend:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         self.matches(track, 'add')
         if track.backend is not self and track.backend is not None:
-            new_track = track.clone()
+            with track.fenced(self.fences):
+                new_track = track.clone()
         else:
             if any(x is track for x in self.__tracks):
                 raise ValueError('Already in list: Track {} with id={}'.format(track, id(track)))
@@ -495,7 +503,8 @@ class Backend:
 
         self.matches(track, '_rewrite')
         if needs_full_save:
-            new_id = self._write_all(track)
+            with track.fenced(self.fences):
+                new_id = self._write_all(track)
             track.id_in_backend = new_id
         else:
             for change in changes:

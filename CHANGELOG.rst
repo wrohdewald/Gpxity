@@ -1,12 +1,13 @@
 Changelog
 =========
 
-1.3.4 release 2018-10-
+1.4.0
 ------------------------
 
   * many improvements to gpxity_server and backends with lifetracking capability
   * fixes for WPTrackserver (wants local time and speed per position and distance per track)
   * new: gpxdo dump --points
+  * new: Backend.fences
 
 1.3.3.2 release 2018-10-04
 --------------------------
