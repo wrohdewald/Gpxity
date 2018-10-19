@@ -38,18 +38,20 @@ class LifetrackTarget:
             else:
                 raise Exception('Lifetrack.update needs points')
         new_ident = None
+        points = self._prepare_points(points)
         if 'lifetrack' in self.backend.supported:
             if not self.started:
-                new_ident = self.backend._lifetrack_start(self.track, self._prepare_points(points))
+                new_ident = self.backend._lifetrack_start(self.track, points)
                 with self.backend._decouple():
                     self.track._set_backend(self.backend)
                     self.track.id_in_backend = new_ident
             else:
-                self.backend._lifetrack_update(self.track, self._prepare_points(points))
+                self.backend._lifetrack_update(self.track, points)
         else:
             self.track.add_points(points)
             if not self.started:
-                self.track = self.backend.add(self.track)
+                if self.track.id_in_backend not in self.backend:
+                    self.track = self.backend.add(self.track)
                 new_ident = self.track.id_in_backend
                 assert new_ident
             assert self.track.id_in_backend
@@ -129,6 +131,7 @@ class Lifetrack:
 
         for _ in self.targets:
             with _.track._decouple():
+                # decouple because the _life* methods will put data into the backend
                 _.track.title = title
                 _.track.public = public
                 _.track.category = category
