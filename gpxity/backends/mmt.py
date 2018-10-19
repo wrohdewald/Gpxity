@@ -509,11 +509,11 @@ class MMT(Backend):
             if values != tags:
                 raise self.BackendException(
                     '{}: _write_add_keywords({}): MMT does not like some of your keywords: mmt tags={}'.format(
-                        self._current_track, ','.join(values), ','.join(tags)))
+                        track, ','.join(values), ','.join(tags)))
             if len(ids) != len(values):
                 raise self.BackendException(
                     '{}: _write_add_keywords({}): MMT does not like some of your keywords: mmt ids={}'.format(
-                        self._current_track, ','.join(values), ','.join(ids)))
+                        track, ','.join(values), ','.join(ids)))
         for tag, id_ in zip(values, ids):
             self._found_tag_id(tag, id_)
 
@@ -546,7 +546,7 @@ class MMT(Backend):
             self._check_tag_ids()
             if tag not in self.__tag_ids:
                 raise self.BackendException(
-                    '{}: Cannot remove tag {}, MMT does not have an id'.format(self._current_track, tag))
+                    '{}: Cannot remove tag {}, MMT does not have an id'.format(track, tag))
         if tag in self.__tag_ids:
             self.__post(
                 with_session=True, url='handler/delete-tag.php',
@@ -655,7 +655,6 @@ class MMT(Backend):
             The new id_in_backend
 
         """
-        self._current_track = track
         if not track.gpx.get_track_points_no():
             raise self.BackendException('MMT does not accept a track without trackpoints:{}'.format(track))
         response = self.__post(

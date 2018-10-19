@@ -290,7 +290,7 @@ class GPSIES(Backend):
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
         return self._session[ident]
 
-    def __post(self, action: str, data, files=None):
+    def __post(self, action: str, data, files=None, track=None):
         """common code for a POST within the session.
 
         Returns:
@@ -302,7 +302,7 @@ class GPSIES(Backend):
         if data.get('fileDescription'):
             data['fileDescription'] = '<p>{}</p>'.format(data['fileDescription'])
         response = self.session.post('{}/{}.do'.format(self.url, action), data=data, files=files, timeout=self.timeout)
-        self._check_response(response)
+        self._check_response(response, track)
         return response
 
     def decode_category(self, value: str) ->str:
@@ -351,7 +351,6 @@ class GPSIES(Backend):
 
     def _edit(self, track):
         """edit directly on gpsies."""
-        self._current_track = track
         assert track.id_in_backend
         data = {
             'edit': '',
@@ -369,7 +368,7 @@ class GPSIES(Backend):
         copy.id_in_backend = track.id_in_backend
         ctr = 0
         while True:
-            self.__post('editTrack', data)
+            self.__post('editTrack', data, track=track)
             self._read_all(copy)
             if track.description != copy.description:
                 msg = 'description: {} -> {}'.format(copy.description, track.description)
@@ -421,18 +420,16 @@ class GPSIES(Backend):
 
     def _read_category(self, track):
         """I found no way to download all attributes in one go."""
-        self._current_track = track
         data = {'fileId': track.id_in_backend}
-        response = self.__post('editTrack', data)
+        response = self.__post('editTrack', data, track=track)
         page_parser = ParseGPIESEditPage()
         page_parser.feed(response.text)
         track.category = self.decode_category(page_parser.category)
 
     def _read_all(self, track):
         """get the entire track. For gpies, we only need the gpx file."""
-        self._current_track = track
         data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
-        response = self.__post('download', data=data)
+        response = self.__post('download', data=data, track=track)
         track.parse(response.text)
         # in Track, the results of a full load override _header_data
         if 'public' in track._header_data:
@@ -442,15 +439,16 @@ class GPSIES(Backend):
             track.public = _
         self._read_category(track)
 
-    def _check_response(self, response):
+    def _check_response(self, response, track=None):
         """are there error messages?."""
+        trk_str = '{}: '.format(track) if track is not None else ''
         if response.status_code != 200:
             raise self.BackendException(response.text)
         if 'alert-danger' in response.text:
             _ = response.text.split('alert-danger">')[1].split('</div>')[0].strip()
             if '<li>' in _:
                 _ = _.split('<li>')[1].split('</li>')[0]
-            raise self.BackendException('{}: {}'.format(self._current_track, _))
+            raise self.BackendException(trk_str + _)
         if 'alert-warning' in response.text:
             _ = response.text.split('alert-warning">')[1].split('<')[0].strip()
             ignore_messages = (
@@ -459,7 +457,7 @@ class GPSIES(Backend):
                 'GPSies is my hobby website and is funded by advertising'
             )
             if not any(x in _ for x in ignore_messages):
-                self.logger.warning('%s: %s', self._current_track, _)
+                self.logger.warning(trk_str + _)
 
     def _remove_ident(self, ident: str):
         """remove on the server."""
@@ -480,7 +478,6 @@ class GPSIES(Backend):
             The new id_in_backend
 
         """
-        self._current_track = track
         files = {'formFile': (
             '{}.gpx'.format(self._html_encode(track.title)), track.to_xml(), 'application/gpx+xml')}
         data = {
@@ -491,10 +488,10 @@ class GPSIES(Backend):
             'trackSimplification': '0',
             'trackTypes': self.encode_category(track.category),
             'uploadButton': ''}
-        response = self.__post('upload', files=files, data=data)
+        response = self.__post('upload', files=files, data=data, track=track)
         if 'Created' not in response.text:
             # not created
-            raise self.BackendException('{}: {}'.format(self._current_track, response.text))
+            raise self.BackendException('{}: {}'.format(track, response.text))
         new_ident = None
         for line in response.text.split('\n'):
             if 'fileId=' in line:

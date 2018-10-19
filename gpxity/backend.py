@@ -129,7 +129,6 @@ class Backend:
         self.__match = None
         self.logger = logging.getLogger(str(self))
         self.timeout = timeout
-        self._current_track = None
 
     @property
     def url(self):
@@ -433,7 +432,6 @@ class Backend:
         """
         if self._decoupled:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
-        self._current_track = track
         self.matches(track, 'add')
         if track.backend is not self and track.backend is not None:
             new_track = track.clone()
@@ -476,7 +474,6 @@ class Backend:
         Used only by Track when things change.
 
         """
-        self._current_track = track
         assert track.backend is self
         assert self._has_item(track.id_in_backend), '{}: its id_in_backend {} is not in {}'.format(
             track, track.id_in_backend, ' / '.join(str(x) for x in self))
@@ -520,7 +517,6 @@ class Backend:
 
         """
         track = value if hasattr(value, 'id_in_backend') else self[value]
-        self._current_track = track
         if track.id_in_backend:
             self._remove_ident(track.id_in_backend)
         with self._decouple():
@@ -659,7 +655,6 @@ class Backend:
 
     def _append(self, track):
         """Append a track to the cached list."""
-        self._current_track = track
         if track.id_in_backend is not None and not isinstance(track.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(track))
         tracks_with_this_id = [x for x in self.__tracks if x.id_in_backend == track.id_in_backend]
