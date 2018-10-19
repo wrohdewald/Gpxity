@@ -98,7 +98,7 @@ class Backend:
     needs_config = True
 
     full_support = (
-        'scan', 'remove', 'lifetrack', 'lifetrack_end', 'get_time', 'write', 'write_title', 'write_public',
+        'scan', 'remove', 'lifetrack', 'lifetrack_end', 'write', 'write_title', 'write_public',
         'own_categories',
         'write_category', 'write_description', 'keywords', 'write_add_keywords', 'write_remove_keywords')
 
@@ -210,8 +210,7 @@ class Backend:
             '_lifetrack_start': 'lifetrack',
             '_remove_ident': 'remove',
             '_write_all': 'write',
-            '_yield_tracks': 'scan',
-            'get_time': 'get_time'}
+            '_yield_tracks': 'scan'}
         cls.supported = set()
         cls.supported.add('keywords')  # default
         if cls.legal_categories != Track.legal_categories:
@@ -249,13 +248,21 @@ class Backend:
             self.__match = old_match
             raise
 
-    def decode_category(self, value: str) ->str:
-        """Translate the value from the backend into internal one."""
-        raise NotImplementedError
+    def decode_category(self, value: str) ->str:  # pylint: disable=no-self-use
+        """Translate the value from the backend into internal one.
 
-    def encode_category(self, value: str) ->str:
-        """Translate internal value into the backend specific value."""
-        raise NotImplementedError
+        Returns: The decoded value.
+
+        """
+        return value
+
+    def encode_category(self, value: str) ->str:  # pylint: disable=no-self-use
+        """Translate internal value into the backend specific value.
+
+        Returns: The encoded value.
+
+        """
+        return value
 
     @staticmethod
     def _encode_keyword(value: str) ->str:
@@ -289,10 +296,15 @@ class Backend:
             track.description = value
         return value
 
-    def get_time(self) ->datetime.datetime:
+    def get_time(self) ->datetime.datetime:  # pylint: disable=no-self-use
         """get time from the server where backend is located as a Linux timestamp.
-        A backend implementation does not have to support this."""
-        raise NotImplementedError()
+
+        A backend implementation does not have to support this.
+
+        Returns: datetime.datetime
+
+        """
+        return datetime.datetime.now()
 
     def _change_id(self, track, new_ident: str):
         """Change the id in the backend."""

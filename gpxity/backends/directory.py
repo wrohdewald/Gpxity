@@ -161,24 +161,6 @@ class Directory(Backend):
             result = '.'
         return result
 
-    def decode_category(self, value: str) ->str:
-        """Not needed for directory, this is always the internal value.
-
-        Returns:
-            the decoded category
-
-        """
-        return value
-
-    def encode_category(self, value: str) ->str:
-        """Not needed for directory, this is always the internal value.
-
-        Returns:
-            the encoded category
-
-        """
-        return value
-
     def _load_symlinks(self, directory=None):
         """scan the subdirectories with the symlinks.
 
@@ -334,15 +316,6 @@ class Directory(Backend):
             track = self._found_track(_)
             self._enrich_with_headers(track)
             yield track
-
-    def get_time(self) ->datetime.datetime:
-        """get server time as a Linux timestamp.
-
-        Returns:
-            The server time
-
-        """
-        return datetime.datetime.now()
 
     def _read_all(self, track):
         """fill the track with all its data from source."""

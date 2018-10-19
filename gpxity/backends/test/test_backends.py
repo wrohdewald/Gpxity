@@ -37,19 +37,19 @@ class TestBackends(BasicTest):
             'write_category', 'write_title', 'write_description', 'write_public'}
         expect_unsupported[MMT] = set()
         expect_unsupported[GPSIES] = {
-            'get_time', 'lifetrack', 'lifetrack_end', 'keywords', 'write_add_keywords', 'write_remove_keywords'}
+            'lifetrack', 'lifetrack_end', 'keywords', 'write_add_keywords', 'write_remove_keywords'}
         expect_unsupported[TrackMMT] = {
             'scan', 'remove',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
         expect_unsupported[Mailer] = {
-            'own_categories', 'scan', 'remove', 'get_time',
+            'own_categories', 'scan', 'remove',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
         expect_unsupported[WPTrackserver] = {
-            'get_time', 'lifetrack_end', 'own_categories',
+            'lifetrack_end', 'own_categories',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
         for cls in Backend.all_backend_classes():
@@ -172,7 +172,7 @@ class TestBackends(BasicTest):
 
     def test_z9_create_backend(self):
         """Test creation of a backend."""
-        for cls in Backend.all_backend_classes(needs={'remove', 'get_time'}):
+        for cls in Backend.all_backend_classes(needs={'remove'}):
             with self.subTest(cls):
                 with self.temp_backend(cls, count=3) as backend:
                     self.assertEqual(len(backend), 3)
