@@ -222,16 +222,20 @@ class Track:  # pylint: disable=too-many-public-methods
             del self._header_data[value]
         if not self.__is_decoupled:
             if value == 'gpx':
-                self.__cached_distance = None
-                for other in self._similarity_others.values():
-                    del other._similarity_others[id(self)]
-                    # TODO: unittest where other does not exist anymore
-                    del other._similarities[id(self)]
-                self._similarity_others = weakref.WeakValueDictionary()
-                self._similarities = dict()
+                self._uncache_gpx()
             self.__dirty.append(value)
             if not self._batch_changes:
                 self._rewrite()
+
+    def _uncache_gpx(self):
+        """gpx has changed: clear caches."""
+        self.__cached_distance = None
+        for other in self._similarity_others.values():
+            del other._similarity_others[id(self)]
+            # TODO: unittest where other does not exist anymore
+            del other._similarities[id(self)]
+        self._similarity_others = weakref.WeakValueDictionary()
+        self._similarities = dict()
 
     def _clear_dirty(self):
         """To be used by the backend when saving."""
