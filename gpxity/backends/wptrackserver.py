@@ -257,11 +257,9 @@ class WPTrackserver(Backend):
 
         """
         assert isinstance(points, list)
-        self._lifetrack_points = points[:]
-        with track._decouple():
-            track.add_points(points)
-        new_ident = self._write_all(track)
+        new_ident = self._save_header(track)
         self.logger.info('%s: lifetracking started with %s new points', self, len(points))
+        self._lifetrack_update(track, points)
         return new_ident
 
     def _lifetrack_update(self, track, points):
