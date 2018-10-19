@@ -19,10 +19,11 @@ class LifetrackTarget:
 
     """A single target of a lifetracking instance."""
 
-    def __init__(self, backend):
+    def __init__(self, backend, use_id=None):
         """See class docstring."""
         self.backend = backend
         self.track = Track()
+        self.track.id_in_backend = use_id
         self.started = False
 
     def update(self, points) ->str:
@@ -96,13 +97,12 @@ class Lifetrack:
     def __init__(self, sender_ip, target_backends, ids=None):
         """See class docstring."""
         assert sender_ip is not None
+        if ids is None:
+            ids = [None] * len(target_backends)
+        elif isinstance(ids, str):
+            ids = ids.split('----')
         self.sender_ip = sender_ip
-        self.targets = [LifetrackTarget(x) for x in target_backends]
-        if isinstance(ids, list):
-            ids = '----'.join(ids)
-        if ids:
-            for target, use_id in zip(self.targets, ids.split('----')):
-                target.track.id_in_backend = use_id
+        self.targets = [LifetrackTarget(target, use_id) for target, use_id in zip(target_backends, ids)]
         self.done = False
 
     def formatted_ids(self) ->str:
