@@ -270,6 +270,14 @@ class WPTrackserver(Backend):
             points: The new points
 
         """
+        if not self._lifetrack_points:
+            with track._decouple():
+                self._read_all(track)
+                self._lifetrack_points.extend(track.points())
         self._lifetrack_points.extend(points)
         add_speed(self._lifetrack_points, window=10)
+        distance = gpx_length(list(self._lifetrack_points))
+        self._cursor.execute(
+            'update wp_ts_tracks set distance=%s where id=%s',
+            (distance, track.id_in_backend))
         self.__write_points(track, points)
