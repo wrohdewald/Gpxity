@@ -31,7 +31,7 @@ class TrackMMT(MMT):
 
     # pylint: disable=abstract-method
 
-    def _yield_tracks(self):
+    def _load_track_headers(self):
         """not implemented."""
         raise NotImplementedError()
 

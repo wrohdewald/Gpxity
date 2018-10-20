@@ -308,14 +308,13 @@ class Directory(Backend):
                 if _ is not None:
                     track._header_data['time'] = mod_gpxfield.parse_time(_)
 
-    def _yield_tracks(self):
+    def _load_track_headers(self):
         """get all tracks for this user."""
         self._symlinks = defaultdict(list)
         self._load_symlinks()
         for _ in self._list_gpx():
             track = self._found_track(_)
             self._enrich_with_headers(track)
-            yield track
 
     def _read_all(self, track):
         """fill the track with all its data from source."""

@@ -145,14 +145,13 @@ class WPTrackserver(Backend):
         self._decode_description(track, row[3])
         track._header_data['distance'] = row[4] / 1000.0
 
-    def _yield_tracks(self):
+    def _load_track_headers(self):
         """."""
         self._cursor.execute(
             'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s', [self.user_id])
         for _ in self._cursor.fetchall():
             track = self._found_track(self.ident_format.format(_[0]))
             self._enrich_with_headers(track, _)
-            yield track
 
     @staticmethod
     def __point(row):

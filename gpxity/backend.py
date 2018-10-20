@@ -215,9 +215,9 @@ class Backend:
             # Backend.supported.
             '_lifetrack_end': 'lifetrack_end',
             '_lifetrack_start': 'lifetrack',
+            '_load_track_headers': 'scan',
             '_remove_ident': 'remove',
-            '_write_all': 'write',
-            '_yield_tracks': 'scan'}
+            '_write_all': 'write'}
         cls.supported = set()
         cls.supported.add('keywords')  # default
         if cls.legal_categories != Track.legal_categories:
@@ -348,12 +348,11 @@ class Backend:
             match_function = self.__match
             self.__match = None
             try:
-                # _yield_tracks should return ALL tracks, match will be
+                # _load_track_headers loads ALL tracks, match will be
                 # applied in a second loop. This way the Backend implementations
                 # do not have to worry about the match code.
                 with self._decouple():
-                    for _ in self._yield_tracks():
-                        self.logger.debug('found %s', repr(_))
+                    self._load_track_headers()
             finally:
                 self.__match = match_function
             if self.__match is not None:
@@ -373,13 +372,10 @@ class Backend:
         self._append(result)
         return result
 
-    def _yield_tracks(self):
-        """A generator for all tracks. It yields the next found and appends it to tracks.
+    def _load_track_headers(self):
+        """Load all track headers and append them to the backend.
 
         The tracks will not be loaded if possible.
-
-        Yields:
-            the next track
 
         """
         raise NotImplementedError()

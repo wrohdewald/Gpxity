@@ -389,7 +389,7 @@ class GPSIES(Backend):
                     'GPSIES: _edit fails to change track {}: {}'.format(track, msg))
             time.sleep(2)
 
-    def _yield_tracks(self):
+    def _load_track_headers(self):
         """get all tracks for this user."""
 
         data = {'username': self.config.username}
@@ -416,7 +416,6 @@ class GPSIES(Backend):
             track._header_data['public'] = raw_data.public
             if str(self) not in self._session:  # anonymous, no login
                 track.public = True
-            yield track
 
     def _read_category(self, track):
         """I found no way to download all attributes in one go."""

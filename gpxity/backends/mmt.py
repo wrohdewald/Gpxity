@@ -561,7 +561,7 @@ class MMT(Backend):
         """
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
-    def _yield_tracks(self):
+    def _load_track_headers(self):
         """get all tracks for this user."""
 
         while True:
@@ -580,7 +580,6 @@ class MMT(Backend):
                 track._header_data['category'] = self.decode_category(raw_data.category)
                 track._header_data['time'] = raw_data.time
                 track._header_data['distance'] = raw_data.distance
-                yield track
             assert self.real_len() > old_len
 
     def _scan_track_page(self, track):
