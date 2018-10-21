@@ -27,7 +27,7 @@ class TestBackends(BasicTest):
 
     """Are the :literal:`supported_` attributes set correctly?."""
 
-    def test_supported(self):
+    def xtest_supported(self):
         """Check values in supported for all backends."""
         expect_unsupported = dict()
         expect_unsupported[Directory] = {
@@ -63,14 +63,14 @@ class TestBackends(BasicTest):
                     sorted(cls.supported | expect_unsupported[cls]),
                     sorted(cls.full_support))
 
-    def test_all_backends(self):
+    def xtest_all_backends(self):
         """Check if Backend.all_backend_classes works."""
         backends = Backend.all_backend_classes()
         expected = [Directory, GPSIES, Mailer, ServerDirectory, TrackMMT, WPTrackserver]
         expected = [x for x in expected if not x.is_disabled()]
         self.assertEqual(backends, expected)
 
-    def test_save_empty(self):
+    def xtest_save_empty(self):
         """Save empty track."""
         for cls in Backend.all_backend_classes(needs={'write'}):
             with self.subTest(cls):
@@ -84,7 +84,7 @@ class TestBackends(BasicTest):
                         self.assertIsNotNone(backend.add(track))
 
     @skipIf(*disabled(Directory))
-    def test_directory_backend(self):
+    def xtest_directory_backend(self):
         """Manipulate backend."""
         track = self.create_test_track()
         with Directory(cleanup=True) as directory1:
@@ -99,7 +99,7 @@ class TestBackends(BasicTest):
                 directory2.scan()
                 self.assertEqual(len(directory2), 1)
 
-    def test_slow_duplicate_tracks(self):
+    def xtest_slow_duplicate_tracks(self):
         """What happens if we save the same track twice?."""
         for cls in Backend.all_backend_classes(needs={'remove', 'write'}):
             with self.subTest(cls):
@@ -119,14 +119,14 @@ class TestBackends(BasicTest):
                         backend.add(track.clone())
                         self.assertEqual(len(backend), 2)
 
-    def test_open_wrong_username(self):
+    def xtest_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
         for cls in Backend.all_backend_classes(exclude=[Directory, ServerDirectory]):
             with self.subTest(cls):
                 with self.assertRaises(KeyError):
                     self.setup_backend(cls, username='wrong_user')
 
-    def test_open_wrong_password(self):
+    def xtest_open_wrong_password(self):
         """Open backends with wrong password."""
         for cls in Backend.all_backend_classes(needs={'scan'}):
             with self.subTest(cls):
@@ -135,7 +135,7 @@ class TestBackends(BasicTest):
                         self.setup_backend(cls, username='wrong_password')
 
     @skipIf(*disabled(Directory))
-    def test_match(self):
+    def xtest_match(self):
         """test backend match function.
 
         Returns:
@@ -171,7 +171,7 @@ class TestBackends(BasicTest):
                 self.assertEqual(len(backend), 1)
                 self.assertEqual(orig_time + delta, backend[0].time)
 
-    def test_z9_create_backend(self):
+    def xtest_z9_create_backend(self):
         """Test creation of a backend."""
         for cls in Backend.all_backend_classes(needs={'remove'}):
             with self.subTest(cls):
@@ -184,7 +184,7 @@ class TestBackends(BasicTest):
                     self.assertTrue(1 < total_seconds < 8, 'Time difference should be {}, is {}-{}={}'.format(
                         2, second_time, first_time, second_time - first_time))
 
-    def test_slow_write_remoteattr(self):
+    def xtest_slow_write_remoteattr(self):
         """If we change title, description, public, category in track, is the backend updated?."""
         for cls in Backend.all_backend_classes(needs={'remove', }):
             with self.subTest(cls):
@@ -225,7 +225,7 @@ class TestBackends(BasicTest):
                 track2 = backend2[0]
                 self.assertEqualTracks(track, track2, with_category=True)
 
-    def test_z2_keywords(self):
+    def xtest_z2_keywords(self):
         """save and load keywords.
 
         For now, all test keywords start with uppercase, avoiding MMT problems
@@ -281,7 +281,7 @@ class TestBackends(BasicTest):
                     backend.scan()
                     self.assertEqual(backend[0].keywords, list())
 
-    def test_z_unicode(self):
+    def xtest_z_unicode(self):
         """Can we up- and download unicode characters in all text attributes?."""
         tstdescr = 'DESCRIPTION with ' + self.unicode_string1 + ' and ' + self.unicode_string2
         for cls in Backend.all_backend_classes(needs={'remove'}):
@@ -306,7 +306,7 @@ class TestBackends(BasicTest):
                     self.assertEqual(backend2[0].description, tstdescr)
                     backend2.destroy()
 
-    def test_change_points(self):
+    def xtest_change_points(self):
         """Can we change the points of a track?.
 
         For MMT this means re-uploading and removing the previous instance, so this
@@ -314,13 +314,13 @@ class TestBackends(BasicTest):
         is not always as trivial as it should be."""
 
     @skipIf(*disabled(MMT))
-    def test_slow_download_many(self):
+    def xtest_slow_download_many(self):
         """Download many tracks."""
         many = 150
         backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
         self.assertEqual(len(backend), many)
 
-    def test_duplicate_title(self):
+    def xtest_duplicate_title(self):
         """two tracks having the same title."""
         for cls in Backend.all_backend_classes(needs={'remove'}):
             with self.subTest(cls):
@@ -329,7 +329,7 @@ class TestBackends(BasicTest):
                     backend[1].title = 'TITLE'
 
     @skipIf(*disabled(Directory))
-    def test_private(self):
+    def xtest_private(self):
         """Up- and download private tracks."""
         with self.temp_backend(Directory, count=5, category='Cycling') as local:
             track = Track(gpx=self._get_gpx_from_test_file('test2'))
@@ -350,7 +350,7 @@ class TestBackends(BasicTest):
                             self.assertSameTracks(local, copy, with_last_time=cls is not GPSIES)
 
     @skipIf(*disabled(Directory))
-    def test_merge_backends(self):
+    def xtest_merge_backends(self):
         """merge backends."""
         def dump(msg):
             for line in msg:
@@ -395,7 +395,7 @@ class TestBackends(BasicTest):
                     self.assertEqual(len(sink), org_source_len + org_sink_len)
 
     @skipIf(*disabled(Directory))
-    def test_scan(self):
+    def xtest_scan(self):
         """some tests about Backend.scan()."""
         with self.temp_backend(Directory, count=5) as source:
             backend2 = source.clone()
@@ -405,7 +405,7 @@ class TestBackends(BasicTest):
             source.scan()  # because it cannot know backend2 added something
 
     @skipIf(*disabled(MMT))
-    def test_lifetrack_mmt(self):
+    def xtest_lifetrack_mmt(self):
         """test life tracking against a free account on mapmytracks.com."""
         with MMT(auth='gpxitytest') as uplink:
             self.assertTrue(uplink.is_free_account)
@@ -415,7 +415,7 @@ class TestBackends(BasicTest):
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
     @skipIf(*disabled(Directory))
-    def test_lifetrack_local(self):
+    def xtest_lifetrack_local(self):
         """test life tracking against a local server."""
         def track():
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
@@ -447,7 +447,7 @@ class TestBackends(BasicTest):
                                     uplink.scan()
                                     self.assertSameTracks(local_serverdirectory, uplink)
 
-    def test_backend_dirty(self):
+    def xtest_backend_dirty(self):
         """Track._dirty."""
         for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
             with self.subTest(cls):
@@ -482,13 +482,13 @@ class TestBackends(BasicTest):
                     backend4 = backend.clone()
                     self.assertEqual(backend4[0].title, 'new 3')
 
-    def test_directory_dirty(self):
+    def xtest_directory_dirty(self):
         """test gpx._dirty where id_in_backend is not the default.
 
         Currently track._dirty = 'gpx' changes the file name which is wrong."""
 
     @skipIf(*disabled(Directory))
-    def test_directory(self):
+    def xtest_directory(self):
         """directory creation/deletion."""
 
         dir_a = Directory(cleanup=True)
@@ -513,7 +513,7 @@ class TestBackends(BasicTest):
         dir_c.destroy()
 
     @skipIf(*disabled(MMT))
-    def test_mmt_empty(self):
+    def xtest_mmt_empty(self):
         """MMT refuses upload without a specific error message if there is no track point."""
         track = self.create_test_track()
         del track.gpx.tracks[0]
@@ -521,7 +521,7 @@ class TestBackends(BasicTest):
             with self.assertRaises(mmt.BackendException):
                 mmt.add(track)
 
-    def test_setters(self):
+    def xtest_setters(self):
         """For all Track attributes with setters, test if we can change them without changing something else."""
         for cls in Backend.all_backend_classes(needs={'write', 'scan'}):
             with self.subTest(cls):
@@ -546,7 +546,7 @@ class TestBackends(BasicTest):
                                 self.assertEqual(getattr(backend2[0], key), default_value)
                         self.assertEqual(getattr(backend2[0], main), test_values[main][1])
 
-    def test_keywords(self) ->None:
+    def xtest_keywords(self) ->None:
         """Test arbitrary keyword changes.
 
         Returns:
@@ -595,7 +595,7 @@ class TestBackends(BasicTest):
                         backend2[0].keywords)
                     self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
-    def test_legal_categories(self):
+    def xtest_legal_categories(self):
         """Check if our fixed list of categories still matches the online service."""
 
         def check():
@@ -618,7 +618,7 @@ class TestBackends(BasicTest):
     def test_long_description(self):
         """Test long descriptions."""
         unlimited_length = 50000  # use this if the backend sets no limit
-        for cls in Backend.all_backend_classes(needs={'scan'}):
+        for cls in (GPSIES, ): #]Backend.all_backend_classes(needs={'scan'}):
             with self.subTest(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     track = backend[0]
@@ -638,7 +638,7 @@ class TestBackends(BasicTest):
 
     def test_no_auth(self):
         """Some backends must fail if given no login data."""
-        for cls in Backend.all_backend_classes(needs={'scan'}):
+        for cls in (GPSIES, ): #Backend.all_backend_classes(needs={'scan'}):
             if not cls.needs_config:
                 continue
             for _ in ({'username': 'gpxitytest', 'password': ''}, {'username': ''}, {}, {'password': 'test'}):
