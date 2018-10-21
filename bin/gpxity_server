@@ -30,7 +30,6 @@ import argparse
 import logging
 import logging.handlers
 import traceback
-import smtplib
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
@@ -118,8 +117,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         """basic http authentication."""
         if 'Authorization' not in self.headers:
             self.send_header('WWW-Authenticate', 'Basic realm=\"Test\"')
-            self.return_error(401, 'Authorization failed')
-            raise Exception('Authorization required')
+            self.return_error(401, 'Authorization required')
 
         if self.users is None:
             self.load_users()
@@ -128,7 +126,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             expect = expect.decode('utf-8')
             if expect == self.headers['Authorization']:
                 return
-        raise Exception('wrong username or password')
+        self.return_error(401, 'Authorization failed')
 
     def load_users(self):
         """load legal user auth from serverdirectory/.users."""
@@ -215,41 +213,39 @@ class MMTHandler(BaseHTTPRequestHandler):
         answer = ''
         message = None
         try:
-            try:
+            if True:
                 parsed = self.parseRequest()
                 message = TrackingMessage('POST', self.client_address[0], parsed, answer, self.error_response)
                 self.check_basic_auth_pw()
-                if self.path == '/':
-                    try:
-                        request = parsed['request']
-                    except KeyError:
-                        self.return_error(400, 'No request given in {}'.format(parsed))
-                        return
-                    try:
-                        method = getattr(self, 'xml_{}'.format(request))
-                    except AttributeError:
-                        self.return_error(400, 'Unknown request {}'.format(parsed['request']))
-                        return
-                    try:
-                        answer = method(parsed) or ''
-                    except Exception:
-                        self.server.logger.debug(traceback.format_exc())
-                        raise
-                    xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(answer)
-                else:
-                    logging.error('do_POST got path %s data %s', self.path, parsed)
-                    xml = ''
+                if self.error_response:
+                    return
+                if self.path != '/':
+                    self.return_error(400, 'Url %s: Path must be empty', self.path)
+                    return
+                request = parsed.get('request')
+                if not request:
+                    self.return_error(400, 'No request given in {}'.format(parsed))
+                    return
+                try:
+                    method = getattr(self, 'xml_{}'.format(request))
+                except AttributeError:
+                    self.return_error(400, 'Unknown request {}'.format(request))
+                    return
+                try:
+                    answer = method(parsed) or ''
+                except Exception as exc:
+                    self.return_error(400, '{}: {}'.format(request, exc))
+                    self.server.logger.debug(traceback.format_exc())
+                    return
+                xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(answer)
                 self.send_response(200, 'OK')
                 self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
                 self.send_header('Content-Type', 'text/xml; charset=UTF-8')
                 self.send_header('Content-Length', len(xml))
                 self.end_headers()
                 self.wfile.write(bytes(xml.encode('utf-8')))
-            except Exception as exc:
-                if isinstance(exc, smtplib.SMTPResponseException):
-                    self.return_error(exc.smtp_code, exc.smtp_error)
-                else:
-                    self.return_error(500, exc)
+            else:
+                logging.debug('got error_response: %s', str(self.error_response))
         finally:
             try:
                 if message is None:
