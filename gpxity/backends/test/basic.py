@@ -28,8 +28,7 @@ except ImportError:
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
-from ... import Track
-from ...auth import Authenticate
+from ... import Track, Backend, Authenticate
 from .. import Mailer, WPTrackserver, Directory, GPSIES
 
 # pylint: disable=attribute-defined-outside-init,protected-access
@@ -72,6 +71,7 @@ class BasicTest(unittest.TestCase):
         self.unicode_string2 = 'something japanese:の諸問題'
         Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '_'  # noqa
         path = tempfile.mkdtemp(prefix=Directory.prefix)
+        Backend._session.clear()
 
         if not os.path.exists(path):
             os.mkdir(path)
