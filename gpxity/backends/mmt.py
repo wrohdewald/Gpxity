@@ -374,9 +374,7 @@ class MMT(Backend):
             the result
 
         """
-        if url is None:
-            url = 'api/'
-        full_url = self.url + '/' + url
+        full_url = self.url + '/' + (url if url else '')
         headers = {'DNT': '1'}  # do not track
         if not self.config.username or not self.config.password:
             raise self.BackendException('{}: Needs authentication data'.format(self.url))

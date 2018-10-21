@@ -219,7 +219,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 parsed = self.parseRequest()
                 message = TrackingMessage('POST', self.client_address[0], parsed, answer, self.error_response)
                 self.check_basic_auth_pw()
-                if self.path.endswith('/api/'):
+                if self.path == '/':
                     try:
                         request = parsed['request']
                     except KeyError:
