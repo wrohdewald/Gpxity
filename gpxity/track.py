@@ -535,10 +535,10 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         if points:
-            self.__add_points(points)
+            self._add_points(points)
             self._dirty = 'gpx'
 
-    def __add_points(self, points):
+    def _add_points(self, points):
         """Just add without setting dirty."""
         if points:
             if self.__gpx.tracks:

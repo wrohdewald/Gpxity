@@ -42,6 +42,9 @@ class LifetrackTarget:
         points = self._prepare_points(points)
         if 'lifetrack' in self.backend.supported:
             if not self.started:
+                self.track._add_points(points[:1])  # for track.time
+                # TODO: use in_memory for self.track and add all points,
+                # do not use wptrackserver._lifetrack_points
                 new_ident = self.backend._lifetrack_start(self.track, points)
                 with self.backend._decouple():
                     self.track._set_backend(self.backend)
