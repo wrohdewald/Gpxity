@@ -1,6 +1,20 @@
-gpxity package
-==============
 
+gpxdo
+=====
+
+.. argparse::
+    :filename: ../bin/gpxdo
+    :func: parser_for_sphinx
+
+gpxity_server
+=============
+
+.. argparse::
+    :filename: ../bin/gpxity_server
+    :func: create_parser
+
+Library
+=======
 
 Subpackages
 -----------
@@ -9,8 +23,8 @@ Subpackages
 
     gpxity.backends
 
-gpxity.track module
--------------------
+Track
+-----
 
 .. automodule:: gpxity.track
     :members:
@@ -18,16 +32,16 @@ gpxity.track module
     :show-inheritance:
     :exclude-members: loading, is_loading, legal_categories, append, skip_test
 
-gpxity.auth module
-------------------
+Authenticate
+------------
 
 .. automodule:: gpxity.auth
     :members:
     :undoc-members:
     :show-inheritance:
 
-gpxity.backend module
----------------------
+Backend
+-------
 
 .. automodule:: gpxity.backend
     :members:
@@ -36,8 +50,8 @@ gpxity.backend module
     :exclude-members: append, skip_test
 
 
-gpxity.locate module
---------------------
+Locate
+------
 
 .. automodule:: gpxity.locate
     :members:
@@ -46,8 +60,8 @@ gpxity.locate module
     :exclude-members: append, skip_test
 
 
-gpxity.lifetrack module
------------------------
+Lifetrack
+---------
 
 .. automodule:: gpxity.lifetrack
     :members:
@@ -56,8 +70,8 @@ gpxity.lifetrack module
     :exclude-members: append, skip_test
 
 
-gpxity.diff module
-------------------
+Diff
+----
 
 .. automodule:: gpxity.diff
     :members:

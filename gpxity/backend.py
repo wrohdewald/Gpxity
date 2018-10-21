@@ -965,7 +965,7 @@ class Backend:
 
         Args:
             timeout: Needed for creating backends like MMT or GPSIES.
-            See :attr:`Backend.timeout <gpxity.backend.Backend.timeout>`
+                See :attr:`Backend.timeout <gpxity.backend.Backend.timeout>`
 
         Returns:
             A backend. If it has already been instantiated, return the cached value.

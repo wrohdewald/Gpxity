@@ -310,7 +310,16 @@ class Utility:
         self.options = None
         self.subparsers = None
         logging.basicConfig(format='%(message)s', stream=sys.stdout)
-        self.parse_commandline()
+        self.parser = self.create_parser()
+        try:
+            argcomplete.autocomplete(self.parser)
+        except NameError:
+            pass
+
+        if len(sys.argv) < 2:
+            return
+
+        self.apply_parser(self.parser)
         if self.exit_code:
             return
         logging.getLogger().setLevel(self.options.loglevel.upper())
@@ -778,7 +787,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         self.add_multi_source(result)
         return result
 
-    def parse_commandline(self):
+    def create_parser(self):
         """into self.options"""
         # pylint: disable=too-many-statements, too-many-branches
         self.range_parser = self.build_range_parser()
@@ -974,16 +983,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             'public', helptext='set the status to public', func=self.set_public)
         self.define_attr_parser(
             'private', helptext='set the status to private', func=self.set_private)
+        return parser
 
-        try:
-            argcomplete.autocomplete(parser)
-        except NameError:
-            pass
-
-        if len(sys.argv) < 2:
-            parser.print_usage()
-            sys.exit(2)
-
+    def apply_parser(self, parser):
         self.options = parser.parse_args()
 
         if self.options.timeout is not None:
@@ -1051,5 +1053,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         if self.options.loglevel == 'none':
             self.options.loglevel = 'error'
 
+def parser_for_sphinx():
+    """Used by sphinx."""
+    return Utility().parser
 
-sys.exit(Utility().exit_code)
+if __name__ == '__main__':
+    sys.exit(Utility().exit_code)

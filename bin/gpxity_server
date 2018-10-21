@@ -502,12 +502,7 @@ class LifeServerMMT(HTTPServer):
     def second(self):
         return '{:10.4f}'.format(datetime.datetime.now().timestamp() - self.start_second)
 
-class Main:  # pylint: disable=too-few-public-methods
-
-    """main."""
-
-    def __init__(self):
-        """See class docstring."""
+def create_parser():
         epilog = """
         The MMT server uses BASIC AUTH for login. Please define user:password in  the file .users in the first target.
         Please define authorization for the other targets in the file auth.cfg in the first target."""
@@ -520,6 +515,15 @@ class Main:  # pylint: disable=too-few-public-methods
             either one value in seconds or two comma separated values: The first one is the connection
             timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
         parser.add_argument('target', help='backends who should receive the data. The first one must be a local directory', nargs='+')
+        return parser
+
+class Main:  # pylint: disable=too-few-public-methods
+
+    """main."""
+
+    def __init__(self):
+        """See class docstring."""
+        parser = create_parser()
 
         try:
             argcomplete.autocomplete(parser)
@@ -532,4 +536,5 @@ class Main:  # pylint: disable=too-few-public-methods
 
         LifeServerMMT(options).serve_forever()
 
-Main()
+if __name__ == '__main__':
+    Main()
