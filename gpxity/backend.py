@@ -39,7 +39,7 @@ class Backend:
     and by :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>`.
     :literal:`if 'ident' in backend` is possible.
     len(backend) shows the number of tracks. Please note that Code
-    like :literal:`if backend:` may not behave as expected. This will be False if the backend jjjj
+    like :literal:`if backend:` may not behave as expected. This will be False if the backend
     has no track. If that is not what you want, consider :literal:`if backend is not None`
 
     The backend will automatically synchronize. So something like :literal:`len(Backend())` will work.

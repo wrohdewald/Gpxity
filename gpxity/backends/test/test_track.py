@@ -35,7 +35,7 @@ class TrackTests(BasicTest):
     """track tests."""
 
     @skipIf(*disabled(Directory))
-    def xtest_init(self):
+    def test_init(self):
         """test initialisation."""
         track = Track()
         self.assertFalse(track.public)
@@ -61,7 +61,7 @@ class TrackTests(BasicTest):
             os.rmdir(test_url)
 
     @skipIf(*disabled(Directory))
-    def xtest_track_list(self):
+    def test_track_list(self):
         """test list of tracks."""
         with Directory(cleanup=True) as directory:
             self.assertEqual(len(directory), 0)
@@ -72,7 +72,7 @@ class TrackTests(BasicTest):
             track1.description = 'x'
             self.assertIsNotNone(track1.id_in_backend)
 
-    def xtest_clone(self):
+    def test_clone(self):
         """True if the clone is identical."""
         track1 = self.create_test_track()
         track2 = track1.clone()
@@ -97,7 +97,7 @@ class TrackTests(BasicTest):
         track2.gpx.tracks.clear()
         self.assertEqualTracks(track1, track2)
 
-    def xtest_no_category(self):
+    def test_no_category(self):
         """category must return default value if not present in gpx.keywords."""
         category_default = Track.legal_categories[0]
         track = Track()
@@ -111,7 +111,7 @@ class TrackTests(BasicTest):
             track.change_keywords('Category:illegal value')
         self.assertEqual(track.category, category_default)
 
-    def xtest_duplicate_category(self):
+    def test_duplicate_category(self):
         """try to add two categories to Track."""
         category_other = Track.legal_categories[5]
         track = Track()
@@ -119,7 +119,7 @@ class TrackTests(BasicTest):
         with self.assertRaises(Exception):
             track.change_keywords('Category:{}'.format(category_other))
 
-    def xtest_remove_category(self):
+    def test_remove_category(self):
         """remove category from Track."""
         category_default = Track.legal_categories[0]
         category_other = Track.legal_categories[5]
@@ -129,12 +129,12 @@ class TrackTests(BasicTest):
         track.category = None
         self.assertEqual(track.category, category_default)
 
-    def xtest_no_public(self):
+    def test_no_public(self):
         """public must return False if not present in gpx.keywords."""
         track = Track()
         self.assertFalse(track.public)
 
-    def xtest_duplicate_public(self):
+    def test_duplicate_public(self):
         """try to set public via its property and additionally with change_keywords."""
         track = Track()
         track.public = True
@@ -142,7 +142,7 @@ class TrackTests(BasicTest):
         with self.assertRaises(Exception):
             track.change_keywords('Status:public')
 
-    def xtest_remove_public(self):
+    def test_remove_public(self):
         """remove and add public from Track using remove_keywords and change_keywords."""
         track = Track()
         track.public = True
@@ -153,13 +153,13 @@ class TrackTests(BasicTest):
             track.change_keywords('Status:public')
         self.assertTrue(track.public)
 
-    def xtest_last_time(self):
+    def test_last_time(self):
         """Track.last_time."""
         track = self.create_test_track()
         gpx_last_time = track.gpx.tracks[-1].segments[-1].points[-1].time
         self.assertEqual(track.last_time, gpx_last_time)
 
-    def xtest_one_line_per_trkpt(self):
+    def test_one_line_per_trkpt(self):
         """One line per trackpoint."""
         track = self.create_test_track()
         xml = track.to_xml()
@@ -173,7 +173,7 @@ class TrackTests(BasicTest):
         self.assertEqual(len(end_lines), have_points)
         self.assertEqual(start_lines, end_lines)
 
-    def xtest_parse(self):
+    def test_parse(self):
         """check for Track parsing xml correctly."""
         track = self.create_test_track()
         track.keywords = ['Here are some keywords']
@@ -188,7 +188,7 @@ class TrackTests(BasicTest):
         track2.parse(io.StringIO(xml))
         self.assertEqualTracks(track, track2)
 
-    def xtest_combine(self):
+    def test_combine(self):
         """combine values in track with newly parsed."""
         # first, does it overwrite?
         track = self.create_test_track()
@@ -237,7 +237,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track2.description, 'Description2')
 
     @skipIf(*disabled(Directory))
-    def xtest_save_dir(self):
+    def test_save_dir(self):
         """Correct files?."""
         with Directory(cleanup=True) as directory:
             os.chmod(directory.url, 0o555)
@@ -255,7 +255,7 @@ class TrackTests(BasicTest):
             self.assertIsNotNone(track.backend)
 
     @skipIf(*disabled(Directory))
-    def xtest_save(self):
+    def test_save(self):
         """save locally."""
         with Directory(cleanup=True) as directory:
             dir2 = directory.clone()
@@ -304,7 +304,7 @@ class TrackTests(BasicTest):
             finally:
                 dir2.destroy()
 
-    def xtest_add_points(self):
+    def test_add_points(self):
         """test Track.add_points."""
         point_count = 11
         track = Track()
@@ -316,7 +316,7 @@ class TrackTests(BasicTest):
         track.add_points(points[:-1])
         self.assertEqual(track.gpx.get_track_points_no(), point_count * 2 - 1)
 
-    def xtest_points_equal(self):
+    def test_points_equal(self):
         """test Track.points_equal."""
         for _ in range(100):
             points = self._random_points(count=7)
@@ -364,7 +364,7 @@ class TrackTests(BasicTest):
             self.assertTrue(track1.points_equal(track2))
 
     @skipIf(*disabled(Directory))
-    def xtest_repr(self):
+    def test_repr(self):
         """test __str__."""
         track = Track()
         self.assertNotIn('id:', str(track))
@@ -389,7 +389,7 @@ class TrackTests(BasicTest):
             self.assertEqual(clone[0].gpx.get_track_points_no(), 15)
             self.assertIn(' 15 points', repr(clone[0]))
 
-    def xtest_angle(self):
+    def test_angle(self):
         """test Track.angle."""
         track1 = Track()
         track1.add_points(list())
@@ -416,7 +416,7 @@ class TrackTests(BasicTest):
                 point.longitude = first_point.longitude
         self.assertEqual(track1.angle(), 0)
 
-    def xtest_key(self):
+    def test_key(self):
         """Track.key()."""
         title = 'This is a niße title'
         description = title + ' NOT - it is the description'
@@ -439,7 +439,7 @@ class TrackTests(BasicTest):
         self.assertIn('points:{}'.format(track.gpx.get_track_points_no()), key)
 
     @skipIf(*disabled(Directory))
-    def xtest_symlinks(self):
+    def test_symlinks(self):
         """Directory symlinks."""
         with Directory(cleanup=True) as directory:
             source = os.path.join(directory.url, 'deadlink')
@@ -453,7 +453,7 @@ class TrackTests(BasicTest):
             self.assertFalse(os.path.exists(source))
 
     @skipIf(*disabled(Directory))
-    def xtest_fs_encoding(self):
+    def test_fs_encoding(self):
         """fs_encoding."""
         with self.temp_backend(Directory) as directory:
             track = Track()
@@ -483,7 +483,7 @@ class TrackTests(BasicTest):
         finally:
             sys.getfilesystemencoding = prev_encoding
 
-    def xtest_local_keywords(self):
+    def test_local_keywords(self):
         """Some keyword tests. More see in test_backends."""
         # Category: and Status: are special
         gpx = self._get_gpx_from_test_file('test')
@@ -509,7 +509,7 @@ class TrackTests(BasicTest):
         track.change_keywords('Bye,Sam')
         self.assertEqual(track.keywords, ['Bye', 'Dolly', 'Hello', 'Sam'])
 
-    def xtest_keyword_args(self):
+    def test_keyword_args(self):
         """'Track.keywords' must accept any variant of iterable."""
         track = Track()
         test_tracks = list(sorted(['a', self.unicode_string2]))
@@ -523,7 +523,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track.keywords, test_tracks)
 
     @skipIf(*disabled(Directory))
-    def xtest_id(self):
+    def test_id(self):
         """id_in_backend must be str."""
         with Directory(cleanup=True) as directory:
             track = Track()
@@ -538,7 +538,7 @@ class TrackTests(BasicTest):
             self.assertEqual(len(directory), 2)
 
     @skipIf(*disabled(Directory))
-    def xtest_in(self):
+    def test_in(self):
         """x in backend."""
         with Directory(cleanup=True) as directory:
             track = Track()
@@ -551,7 +551,7 @@ class TrackTests(BasicTest):
             self.assertNotIn(track.id_in_backend, directory)
 
     @skipIf(*disabled(Directory))
-    def xtest_getitem(self):
+    def test_getitem(self):
         """backend[idx]."""
         with Directory(cleanup=True) as directory:
             directory.scan(now=True)
@@ -564,7 +564,7 @@ class TrackTests(BasicTest):
             with self.assertRaises(IndexError):
                 directory[0]  # pylint: disable=pointless-statement
 
-    def xtest_adjust_time(self):
+    def test_adjust_time(self):
         """adjust_time()."""
         track = self.create_test_track()
         first_wp_time = track.gpx.waypoints[0].time
@@ -574,7 +574,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track.gpx.waypoints[0].time, first_wp_time + seconds10)
         self.assertEqual(next(track.points()).time, first_trkpt_time + seconds10)
 
-    def xtest_overlapping_times(self):
+    def test_overlapping_times(self):
         """Track.overlapping_times(tracks)."""
         now = datetime.datetime.now()
         track1 = self.create_test_track(start_time=now)
@@ -590,7 +590,7 @@ class TrackTests(BasicTest):
         self.assertEqual(list(Track.overlapping_times(group1 + group2)), list([group1]))
 
     @skipIf(*disabled(Directory))
-    def xtest_header_changes(self):
+    def test_header_changes(self):
         """Only change things in _header_data. Assert that the full gpx is loaded before saving."""
         with self.temp_backend(Directory, count=1) as backend:
             backend2 = backend.clone()
@@ -606,7 +606,7 @@ class TrackTests(BasicTest):
             self.assertTrackFileContains(backend2[0], '<trk>')
 
     @skipIf(*disabled(Directory))
-    def xtest_remove_track(self):
+    def test_remove_track(self):
         """If a backend has several identical tracks, make sure we remove the right one."""
         with self.temp_backend(Directory, count=1) as backend:
             track = backend[0]
@@ -616,7 +616,7 @@ class TrackTests(BasicTest):
             backend.remove(track2)
             self.assertEqual(backend[0].id_in_backend, track_id)
 
-    def xtest_header_data(self):
+    def test_header_data(self):
         """Test usage of Track._header_data."""
         track = Track()
         gpx_track = self.create_test_track()
@@ -626,7 +626,7 @@ class TrackTests(BasicTest):
         self.assertNotIn('distance', track._header_data)
         self.assertEqual(track.distance(), gpx_track.distance())
 
-    def xtest_merge_partial_tracks(self):
+    def test_merge_partial_tracks(self):
         """Test Track.merge(partial_tracks=True)."""
 
         track1 = self.create_test_track()
@@ -652,7 +652,7 @@ class TrackTests(BasicTest):
             str(context.exception),
             'Cannot merge {} with 27 points into {} with 27 points'.format(track2, track1))
 
-    def xtest_all_backend_classes(self):
+    def test_all_backend_classes(self):
         """Test Backend.all_backend_classes."""
         all_classes = [x.__name__ for x in Backend.all_backend_classes()]
         expected = [Directory, GPSIES, Mailer, ServerDirectory, TrackMMT, WPTrackserver]
@@ -660,7 +660,7 @@ class TrackTests(BasicTest):
         self.assertEqual(all_classes, expected)
 
     @skipIf(*disabled(Directory))
-    def xtest_parse_objectname_directory(self):
+    def test_parse_objectname_directory(self):
         """Test Backend.parse_objectname for directory."""
         prefix = Directory.prefix
         subdir = os.path.join(prefix, 'subdir')
@@ -691,7 +691,7 @@ class TrackTests(BasicTest):
             os.rmdir(subdir)
 
     @skipIf(*disabled(ServerDirectory))
-    def xtest_parse_objectname_serverdirectory(self):
+    def test_parse_objectname_serverdirectory(self):
         """Test Backend.parse_objectname for serverdirectory."""
         prefix = Directory.prefix
         subdir = os.path.join(prefix, 'subdir')
@@ -720,7 +720,7 @@ class TrackTests(BasicTest):
             os.rmdir(subdir)
 
     @skipIf(*disabled(MMT))
-    def xtest_parse_objectname_mmt(self):
+    def test_parse_objectname_mmt(self):
         """Test Backend.parse_objectname for MMT."""
         cases = (('mmt:testlogin', 'MMT', 'testlogin', None),
                  ('mmt:testlogin/345', 'MMT', 'testlogin', '345'))
@@ -728,7 +728,7 @@ class TrackTests(BasicTest):
             cls, account, ident = Backend.parse_objectname(string)
             self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
 
-    def xtest_fences(self):
+    def test_fences(self):
         """Test fences."""
 
         # TODO: check auth.cfg parsing

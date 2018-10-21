@@ -9,4 +9,4 @@ COPY pytest.ini /usr/local/lib/python3.6/site-packages/gpxity
 
 # comment the next line if you want to run the tests manually
 
-# RUN cd /usr/local/lib/python3.6/site-packages/gpxity ; pytest -k test_no_auth
+RUN cd /usr/local/lib/python3.6/site-packages/gpxity ; pytest -k 'not slow'
