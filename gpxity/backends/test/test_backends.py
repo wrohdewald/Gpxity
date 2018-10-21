@@ -642,8 +642,9 @@ class TestBackends(BasicTest):
             if not cls.needs_config:
                 continue
             for _ in ({'username': 'gpxitytest', 'password': ''}, {'username': ''}, {}, {'password': 'test'}):
+                logging.error('nuw testing backend %s with username=%s', cls, _)
                 with self.assertRaises(Backend.BackendException) as context:
                     with self.temp_backend(cls, username=_):
-                        logging.debug('nuw testing backend %s with username=%s', self.temp_backend, _)
+                        logging.error('nuw testing backend %s with username=%s', self.temp_backend, _)
                         pass
                 self.assertEqual(str(context.exception), '{}: Needs authentication data'.format(cls.default_url))

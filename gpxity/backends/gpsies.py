@@ -443,6 +443,7 @@ class GPSIES(Backend):
         trk_str = '{}: '.format(track) if track is not None else ''
         if response.status_code != 200:
             raise self.BackendException(response.text)
+        self.logger.error('response.text:%s', response.text)
         if 'alert-danger' in response.text:
             _ = response.text.split('alert-danger">')[1].split('</div>')[0].strip()
             if '<li>' in _:
