@@ -343,16 +343,17 @@ class Backend:
                 for track in unsaved:
                     self.matches(track, 'scan')
             self.__tracks = unsaved
-            match_function = self.__match
-            self.__match = None
-            try:
-                # _load_track_headers loads ALL tracks, match will be
-                # applied in a second loop. This way the Backend implementations
-                # do not have to worry about the match code.
-                with self._decouple():
-                    self._load_track_headers()
-            finally:
-                self.__match = match_function
+            if 'scan' in self.supported:
+                match_function = self.__match
+                self.__match = None
+                try:
+                    # _load_track_headers loads ALL tracks, match will be
+                    # applied in a second loop. This way the Backend implementations
+                    # do not have to worry about the match code.
+                    with self._decouple():
+                        self._load_track_headers()
+                finally:
+                    self.__match = match_function
             if self.__match is not None:
                 self.__tracks = [x for x in self.__tracks if self.matches(x)]
 
