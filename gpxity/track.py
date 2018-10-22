@@ -264,12 +264,13 @@ class Track:  # pylint: disable=too-many-public-methods
             raise Exception('_dirty only receives str')
         if value in self._header_data:
             del self._header_data[value]
+        if value == 'gpx':
+            self._uncache_gpx()
         if not self.__is_decoupled:
             if value == 'gpx':
                 if self.__without_fences is not None:
                     raise Exception(
                         '{}: You may not modify gpx while being in the context manager "fenced()"'.format(self))
-                self._uncache_gpx()
             self.__dirty.append(value)
             if not self._batch_changes:
                 self._rewrite()
