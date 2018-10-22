@@ -399,7 +399,6 @@ class Directory(Backend):
         self.logger.debug('renamed %s to %s', track.id_in_backend, unique_id)
         os.rename(self.gpx_path(track.id_in_backend), self.gpx_path(unique_id))
         track.id_in_backend = unique_id
-        assert any(x is track for x in self._Backend__tracks)
         self._make_symlinks(track)
 
     def _write_all(self, track) ->str:
