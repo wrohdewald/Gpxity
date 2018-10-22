@@ -404,7 +404,7 @@ class TestBackends(BasicTest):
             source.scan()  # because it cannot know backend2 added something
 
     @skipIf(*disabled(MMT))
-    def test_lifetrack_mmt(self):
+    def test_mmt_free_lifetrack(self):
         """test life tracking against a free account on mapmytracks.com."""
         with MMT(auth='gpxitytest') as uplink:
             self.assertTrue(uplink.is_free_account)
@@ -414,7 +414,7 @@ class TestBackends(BasicTest):
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
     @skipIf(*disabled(Directory))
-    def test_lifetrack_local(self):
+    def test_lifetrack(self):
         """test life tracking against a local server."""
         def track():
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
