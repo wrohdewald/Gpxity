@@ -30,14 +30,14 @@ class TestBackends(BasicTest):
         """Check values in supported for all backends."""
         expect_unsupported = dict()
         expect_unsupported[Directory] = {
-            'own_categories', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
+            'own_categories', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_description', 'write_public', 'write_title'}
         expect_unsupported[ServerDirectory] = {
-            'own_categories', 'lifetrack', 'lifetrack_end', 'write_add_keywords', 'write_remove_keywords',
+            'own_categories', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_title', 'write_description', 'write_public'}
         expect_unsupported[MMT] = set()
         expect_unsupported[GPSIES] = {
-            'lifetrack', 'lifetrack_end', 'keywords', 'write_add_keywords', 'write_remove_keywords'}
+            'keywords', 'write_add_keywords', 'write_remove_keywords'}
         expect_unsupported[TrackMMT] = {
             'scan', 'remove',
             'write_title', 'write_description', 'write_public',
@@ -49,7 +49,7 @@ class TestBackends(BasicTest):
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
         expect_unsupported[WPTrackserver] = {
-            'lifetrack_end', 'own_categories',
+            'own_categories',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
         for cls in Backend.all_backend_classes():
@@ -424,7 +424,7 @@ class TestBackends(BasicTest):
             life.update(points[50:])
             life.end()
 
-        for cls in Backend.all_backend_classes(needs={'lifetrack'}):
+        for cls in Backend.all_backend_classes():
             with self.subTest(cls):
                 with self.temp_backend(ServerDirectory) as local_serverdirectory:
                     with self.temp_backend(ServerDirectory) as remote_serverdirectory:

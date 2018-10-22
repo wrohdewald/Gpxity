@@ -220,7 +220,6 @@ class Mailer(Backend):  # pylint: disable=abstract-method
 
         """
         track.mail_subject = 'Lifetracking starts: {}'.format(track.title)
-        track.add_points(points)
         new_ident = self._write_all(track)
         self._append(track)
         assert self._has_item(new_ident), '{} not in {}'.format(new_ident, self)
@@ -230,11 +229,11 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     def _lifetrack_update(self, track, points):
         """flush."""
         track.mail_subject = 'Lifetracking continues: {}'.format(track.title)
-        track.add_points(points)
         self._write_all(track)
 
     def _lifetrack_end(self, track):
         """flush."""
+        self.logger.debug('ich bin Mailer._lifetrack_end')
         track.mail_subject = 'Lifetracking ends: {}'.format(track.title)
         self._write_all(track)
         self.flush()

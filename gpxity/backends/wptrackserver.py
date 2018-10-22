@@ -99,7 +99,6 @@ class WPTrackserver(Backend):
         if row is None:
             raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.config.username))
         self.user_id = row[0]
-        self._lifetrack_points = list()
 
     def _encode_description(self, track):
         """Encode keywords in description.
@@ -203,7 +202,8 @@ class WPTrackserver(Backend):
                 track.id_in_backend = self.ident_format.format(self._cursor.lastrowid)
             else:
                 self._cursor.execute(
-                    'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s,%s)',
+                    'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) '
+                    ' values(%s,%s,%s,%s,%s,%s,%s)',
                     (track.id_in_backend, self.user_id, title, track_time, description, track.distance(), ''))
                 self.logger.error('wptrackserver wrote missing header with id=%s', track.id_in_backend)
         else:
@@ -272,9 +272,7 @@ class WPTrackserver(Backend):
             new_ident: New track id
 
         """
-        assert isinstance(points, list)
         new_ident = self._save_header(track)
-        self.logger.info('%s: lifetracking started with %s new points', self, len(points))
         self._lifetrack_update(track, points)
         return new_ident
 
@@ -286,14 +284,9 @@ class WPTrackserver(Backend):
             points: The new points
 
         """
-        if not self._lifetrack_points:
-            with track._decouple():
-                self._read_all(track)
-                self._lifetrack_points.extend(track.points())
-        self._lifetrack_points.extend(points)
-        add_speed(self._lifetrack_points, window=10)
-        distance = gpx_length(list(self._lifetrack_points))
+        points = list(points)
+        add_speed(list(track.points()), window=10)
         self._cursor.execute(
             'update wp_ts_tracks set distance=%s where id=%s',
-            (distance, track.id_in_backend))
+            (track.distance() * 1000, track.id_in_backend))
         self.__write_points(track, points)

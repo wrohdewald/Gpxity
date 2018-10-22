@@ -22,15 +22,22 @@ class LifetrackTarget:
     def __init__(self, backend, use_id=None):
         """See class docstring."""
         self.backend = backend
-        self.track = Track()
-        self.track.id_in_backend = use_id
+        if use_id in backend:
+            existing_track = backend[use_id]
+            self.track = existing_track.clone()
+            self.track.id_in_backend = use_id
+        else:
+            self.track = Track()
+            self.track.id_in_backend = use_id
         self.started = False
+        assert self.track.backend is None, 'TrackerTarget.track {} has backend {}'.format(
+            self.track, self.track.backend)
 
     def update(self, points) ->str:
         """Update lifetrack into a specific track.
 
         Returns:
-            the new id_in_backend
+            the new id_in_backend if not yet started else None
 
         """
         if not points:
@@ -40,34 +47,23 @@ class LifetrackTarget:
                 raise Exception('Lifetrack.update needs points')
         new_ident = None
         points = self._prepare_points(points)
-        if 'lifetrack' in self.backend.supported:
-            if not self.started:
-                self.track._add_points(points[:1])  # for track.time
-                # TODO: use in_memory for self.track and add all points,
-                # do not use wptrackserver._lifetrack_points
-                new_ident = self.backend._lifetrack_start(self.track, points)
-                with self.backend._decouple():
-                    self.track._set_backend(self.backend)
-                    self.track.id_in_backend = new_ident
-            else:
-                self.backend._lifetrack_update(self.track, points)
+        self.track.add_points(points)
+        if not self.started:
+            new_ident = self.backend._lifetrack_start(self.track, points)
+            self.track.id_in_backend = new_ident
+            self.started = True
         else:
-            self.track.add_points(points)
-            if not self.started:
-                if self.track.id_in_backend not in self.backend:
-                    self.track = self.backend.add(self.track)
-                new_ident = self.track.id_in_backend
-                assert new_ident
-            assert self.track.id_in_backend
-        self.started = True
+            self.backend._lifetrack_update(self.track, points)
+        assert self.track.id_in_backend
+        assert self.track.backend is None, 'LifetrackTarget.track {} has backend {}'.format(
+            self.track, self.track.backend)
         return new_ident
 
     def end(self):
         """End lifetracking for a specific backend."""
         if not self.started:
             raise Exception('Lifetrack not yet started')
-        if 'lifetrack_end' in self.backend.supported:
-            self.backend._lifetrack_end(self.track)
+        self.backend._lifetrack_end(self.track)
 
     def _prepare_points(self, points):
         """Round points and remove those within fences.

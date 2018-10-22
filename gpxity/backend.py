@@ -104,7 +104,7 @@ class Backend:
     needs_config = True
 
     full_support = (
-        'scan', 'remove', 'lifetrack', 'lifetrack_end', 'write', 'write_title', 'write_public',
+        'scan', 'remove', 'write', 'write_title', 'write_public',
         'own_categories',
         'write_category', 'write_description', 'keywords', 'write_add_keywords', 'write_remove_keywords')
 
@@ -213,8 +213,6 @@ class Backend:
         support_mappings = {
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
-            '_lifetrack_end': 'lifetrack_end',
-            '_lifetrack_start': 'lifetrack',
             '_load_track_headers': 'scan',
             '_remove_ident': 'remove',
             '_write_all': 'write'}
@@ -547,25 +545,27 @@ class Backend:
         """backend dependent implementation."""
         raise NotImplementedError()
 
-    def _lifetrack_start(self, track, points) -> str:
+    def _lifetrack_start(self, track, points) -> str:  # pylint: disable=unused-argument
         """Modelled after MapMyTracks. I hope this matches other services too.
 
-        This will always produce a new track in the backend.supported
+        This will always produce a new track in the backend.
 
-        If the backend does not support lifetrack, just add the points
-        to the track.
+        Default is to just add the points to the track.
 
         Args:
-            track(Track): Holds initial data
-            points: If None, stop tracking. Otherwise, start tracking
-                and add points.
+            track(Track): Holds initial data and points already added.
+                keep in mind that this process might restart which should
+                be invisible to the target.
+            points: Initial points
 
         Returns: The new id_in_backend
 
         For details see :meth:`Track.track() <gpxity.lifetrack.Lifetrack.start>`.
 
         """
-        raise NotImplementedError()
+        if track.id_in_backend not in self:
+            track.id_in_backend = self.add(track.clone()).id_in_backend
+        return track.id_in_backend
 
     def _lifetrack_update(self, track, points):
         """If the backend does not support lifetrack, just add the points to the track.
@@ -578,11 +578,10 @@ class Backend:
         For details see :meth:`Track.track() <gpxity.lifetrack.Lifetrack.update>`.
 
         """
-        raise NotImplementedError()
+        self[track.id_in_backend].add_points(points)
 
     def _lifetrack_end(self, track):
-        """If the backend does not support lifetrack, do nothing."""
-        raise NotImplementedError()
+        """Default: Nothing needs to be done."""
 
     def remove_all(self):
         """Remove all tracks we know about.
