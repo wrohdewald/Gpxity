@@ -1,0 +1,12 @@
+# .readthedocs.yml
+
+# see https://docs.readthedocs.io/en/latest/yaml-config.html
+
+build:
+  image: latest
+
+python:
+  version: 3.5
+  setup_py_install: true
+  extra_requirements: 
+      - doc
