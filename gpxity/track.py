@@ -982,13 +982,10 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
 
-        if self.backend is None:
-            return 'unsaved: "{}" time={} id={}'.format(self.title or 'untitled', self.time, id(self))
-        ident = self.id_in_backend or 'unsaved'
-        if str(self.backend) == '.':
-            # current directory
-            return ident
-        return '{}/{}'.format(self.backend, ident)
+        return '{}{} "{}" time={} id={}'.format(
+            'unsaved ' if self.backend is None else '',
+            'id={}'.format(self.id_in_backend) or '',
+            self.title or 'untitled', self.time, id(self))
 
     def key(self, with_category: bool = True, with_last_time: bool = True) ->str:
         """For speed optimized equality checks, not granted to be exact, but sufficiently safe IMHO.

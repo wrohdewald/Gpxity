@@ -195,6 +195,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             # the client wants to find out legal categories
             xml = self.answer_with_categories()
         elif self.path.startswith('//assets/php/gpx.php'):
+            # the client wants the entire track
             parameters = self.path.split('?')[1]
             request = parse_qs(parameters)
             wanted_id = request['tid'][0]
