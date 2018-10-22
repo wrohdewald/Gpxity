@@ -174,6 +174,17 @@ class WPTrackserver(Backend):
             'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [track.id_in_backend])
         track.add_points([self.__point(x) for x in self._cursor.fetchall()])
 
+    def __needs_insert(self, ident) -> bool:
+        """Check if the header exists in the track table.
+
+        Returns: True or False.
+
+        """
+        if ident is None:
+            return True
+        self._cursor.execute('select 1 from wp_ts_tracks where id=%s', (ident, ))
+        return len(self._cursor.fetchall()) == 0
+
     def _save_header(self, track):
         """Write all header fields. May set track.id_in_backend.
 
@@ -184,11 +195,17 @@ class WPTrackserver(Backend):
         title = track.title[:self._max_length['title']]
         # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
         track_time = track.time or datetime.datetime(year=1970, month=1, day=3, hour=1)
-        if track.id_in_backend is None:
-            self._cursor.execute(
-                'insert into wp_ts_tracks(user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s)',
-                (self.user_id, title, track_time, description, track.distance(), ''))
-            track.id_in_backend = self.ident_format.format(self._cursor.lastrowid)
+        if self.__needs_insert(track.id_in_backend):
+            if track.id_in_backend is None:
+                self._cursor.execute(
+                    'insert into wp_ts_tracks(user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s)',
+                    (self.user_id, title, track_time, description, track.distance(), ''))
+                track.id_in_backend = self.ident_format.format(self._cursor.lastrowid)
+            else:
+                self._cursor.execute(
+                    'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s,%s)',
+                    (track.id_in_backend, self.user_id, title, track_time, description, track.distance(), ''))
+                self.logger.error('wptrackserver wrote missing header with id=%s', track.id_in_backend)
         else:
             self._cursor.execute(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
