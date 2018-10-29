@@ -342,8 +342,6 @@ class BasicTest(unittest.TestCase):
         if not os.path.exists(user_filename):
             with open(user_filename, 'w') as user_file:
                 user_file.write('gpxitytest:gpxitytestpw\n')
-        if not Mailer.is_disabled():
-            cmdline += ' --smtp-port 8025'
         process = Popen(cmdline.split(), stdout=open(logfile, 'a'), stderr=open(logfile, 'a'))
         try:
             time.sleep(1)  # give the server time to start

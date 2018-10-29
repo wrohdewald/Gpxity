@@ -506,7 +506,6 @@ def create_parser():
         parser = argparse.ArgumentParser('gpxity_server', epilog=epilog)
         parser.add_argument('--servername', help='the name of this server', required=True)
         parser.add_argument('--port', help='listen on PORT', type=int, required=True)
-        parser.add_argument('--smtp-port', help='PORT for mailer, default is 25', type=int, default=25)
         parser.add_argument('--loglevel', help='set the loglevel, default is error', choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
             either one value in seconds or two comma separated values: The first one is the connection
