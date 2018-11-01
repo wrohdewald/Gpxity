@@ -24,7 +24,6 @@ last part of the strings will be thrown away silently when writing into the data
 import datetime
 
 from gpxpy import gpx as mod_gpx
-from gpxpy.geo import length as gpx_length
 
 from ..track import Track
 from ..backend import Backend
@@ -237,10 +236,6 @@ class WPTrackserver(Backend):
         self._cursor.executemany(
             'insert into wp_ts_locations(trip_id, latitude, longitude, altitude, occurred, speed, comment, heading)'
             ' values(%s, %s, %s, %s, %s, %s, "", 0.0)', data)
-        adding_distance = gpx_length(points)
-        cmd = 'update wp_ts_tracks set distance=distance+%s where id=%s'
-        args = [adding_distance, track.id_in_backend]
-        self._cursor.execute(cmd, args)
 
     def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation."""
@@ -286,7 +281,7 @@ class WPTrackserver(Backend):
         """
         points = list(points)
         add_speed(list(track.points()), window=10)
-        self._cursor.execute(
-            'update wp_ts_tracks set distance=%s where id=%s',
-            (track.distance() * 1000, track.id_in_backend))
+        cmd = 'update wp_ts_tracks set distance=%s where id=%s'
+        args = (track.distance() * 1000, track.id_in_backend)
+        self._cursor.execute(cmd, args)
         self.__write_points(track, points)
