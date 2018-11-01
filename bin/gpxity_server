@@ -30,6 +30,7 @@ import argparse
 import logging
 import logging.handlers
 import traceback
+import ssl
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
@@ -475,7 +476,11 @@ class LifeServerMMT(HTTPServer):
 
     def __init__(self, options):
         """See class docstring."""
-        super(LifeServerMMT, self).__init__((options.servername, options.port), MMTHandler)
+        offer_https = options.certfile and options.keyfile
+        port = options.port or (443 if offer_https else 80)
+        super(LifeServerMMT, self).__init__((options.servername, port), MMTHandler)
+        if offer_https:
+            self.socket = ssl.wrap_socket (self.socket, certfile=options.certfile, keyfile=options.keyfile,  server_side=True)
         first_target = options.target[0]
         if not first_target.lower().startswith('serverdirectory:'):
             first_target = 'serverdirectory:' + first_target
@@ -505,7 +510,9 @@ def create_parser():
         Please define authorization for the other targets in the file auth.cfg in the first target."""
         parser = argparse.ArgumentParser('gpxity_server', epilog=epilog)
         parser.add_argument('--servername', help='the name of this server', required=True)
-        parser.add_argument('--port', help='listen on PORT', type=int, required=True)
+        parser.add_argument('--certfile', help='if certfile and keyfile are given: offer https')
+        parser.add_argument('--keyfile', help='if certfile and keyfile are given, offer https')
+        parser.add_argument('--port', help='listen on PORT. Default is 80 for http and 443 for https', type=int)
         parser.add_argument('--loglevel', help='set the loglevel, default is error', choices=('debug', 'info', 'warning', 'error'), default='error')
         parser.add_argument('--timeout', help="""
             either one value in seconds or two comma separated values: The first one is the connection

@@ -5,6 +5,7 @@ Changelog
 ------------------------
 
   * Lifetrack fixes
+  * gpxity_server now supports https
 
 1.4.0 release 2018-10-21
 ------------------------
