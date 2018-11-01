@@ -186,7 +186,7 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):  # noqa pylint: disable=invalid-name
         """Override standard."""
-        self.server.logger.info('%s GET %s %s %s', self.server.second(), self.client_address[0], self.server.server_port, self.path)
+        self.server.logger.info('%s GET %s %s %s', self.server.second(), self.client_ip(), self.server.server_port, self.path)
         self.parseRequest()  # side effect: may output debug info
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
@@ -209,6 +209,15 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(bytes(xml.encode('utf-8')))
 
+    def client_ip(self):
+        """Get the IP of the client.
+
+        Returns:
+            The IP
+
+        """
+        return self.client_address[0]
+
     def do_POST(self):  # noqa pylint: disable=invalid-name
         """override standard."""
         self.error_response = None
@@ -217,7 +226,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         try:
             if True:
                 parsed = self.parseRequest()
-                message = TrackingMessage('POST', self.client_address[0], parsed, answer, self.error_response)
+                message = TrackingMessage('POST', self.client_ip(), parsed, answer, self.error_response)
                 self.check_basic_auth_pw()
                 if self.error_response:
                     return
@@ -251,7 +260,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         finally:
             try:
                 if message is None:
-                    message = TrackingMessage('POST', self.client_address[0], parsed, answer, self.error_response)
+                    message = TrackingMessage('POST', self.client_ip(), parsed, answer, self.error_response)
                 else:
                     message.result = answer
                     message.response = self.error_response
@@ -349,9 +358,9 @@ class MMTHandler(BaseHTTPRequestHandler):
         Returns: The new object
 
         """
-        result = Lifetrack(self.client_address[0], self.server.targets, ids=parsed.get('activity_id'))
+        result = Lifetrack(self.client_ip(), self.server.targets, ids=parsed.get('activity_id'))
         if result is not None:
-            sender_ip = self.client_address[0]
+            sender_ip = self.client_ip()
             trackers = self.server.trackers
             same_ip_done_trackers = [x for x in trackers.values() if x.sender_ip == result.sender_ip and x.done]
             for _ in same_ip_done_trackers:
@@ -368,7 +377,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         Returns: the wanted tracker or None.
 
         """
-        sender_ip = self.client_address[0]
+        sender_ip = self.client_ip()
         trackers = self.server.trackers
         request = parsed['request']
         if request == 'start_activity':
