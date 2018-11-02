@@ -216,7 +216,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             The IP
 
         """
-        return self.client_address[0]
+        return self.headers.get('X-Forwarded-For', self.client_address[0])
 
     def do_POST(self):  # noqa pylint: disable=invalid-name
         """override standard."""
