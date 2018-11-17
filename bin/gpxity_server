@@ -513,7 +513,7 @@ class LifeServerMMT(HTTPServer):
         logfile = logging.FileHandler(os.path.join(self.targets[0].url,'gpxity_server.log'))
         logfile.setLevel(logging.DEBUG)
         result.addHandler(logfile)
-        logging.getLogger('urllib3').level = logging.FATAL
+        logging.getLogger('urllib3').level = logging.DEBUG
         return result
 
     def second(self):
