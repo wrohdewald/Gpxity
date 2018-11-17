@@ -223,6 +223,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.error_response = None
         answer = ''
         message = None
+        got_post_time = datetime.datetime.now()
         try:
             if True:
                 parsed = self.parseRequest()
@@ -268,6 +269,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 self.server.history.append(message)
             except Exception as exc:
                 logging.error(exc)
+            logging.debug('POST turnaround time: %s',  datetime.datetime.now() - got_post_time)
 
     @staticmethod
     def xml_get_time(_) ->str:
