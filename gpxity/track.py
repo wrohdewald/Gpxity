@@ -1032,14 +1032,14 @@ class Track:  # pylint: disable=too-many-public-methods
         """For me, the earth is flat.
 
         Returns:
-            the distance in km, rounded to m
+            the distance in km, rounded to m. 0.0 if not computable.  # TODO: needs unittest
 
         """
         if 'distance' in self._header_data:
             return self._header_data['distance']
         if self.__cached_distance is None:
             self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
-        return self.__cached_distance
+        return self.__cached_distance or 0.0
 
     def angle(self) ->float:
         """For me, the earth is flat.
