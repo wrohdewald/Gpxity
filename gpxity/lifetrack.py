@@ -49,10 +49,11 @@ class LifetrackTarget:
         points = self._prepare_points(points)
         self.track.add_points(points)
         if not self.started:
+            # TODO: a unittest where points are empty here because of fences
             new_ident = self.backend._lifetrack_start(self.track, points)
             self.track.id_in_backend = new_ident
             self.started = True
-        else:
+        elif points:
             self.backend._lifetrack_update(self.track, points)
         assert self.track.id_in_backend
         assert self.track.backend is None, 'LifetrackTarget.track {} has backend {}'.format(
@@ -73,6 +74,8 @@ class LifetrackTarget:
 
         """
         result = [x for x in points if self.backend.fences.outside(x)]
+        if len(result) < len(points):
+            self.backend.logger.debug("Fences removed %d out of %d points", len(points) - len(result), len(points))
         self.track._round_points(result)
         return result
 

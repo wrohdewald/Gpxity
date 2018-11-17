@@ -186,6 +186,7 @@ class WPTrackserver(Backend):
     def _save_header(self, track):
         """Write all header fields. May set track.id_in_backend.
 
+        Be aware that the track may still have 0 points (all fenced away).
         Returns: The new id_in_backend.
 
         """
