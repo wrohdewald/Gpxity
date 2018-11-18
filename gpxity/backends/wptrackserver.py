@@ -92,9 +92,9 @@ class WPTrackserver(Backend):
                 autocommit=True, charset='utf8')
         except _mysql_exceptions.OperationalError as exc:
             raise Backend.BackendException(exc)
-        self._cursor = self._db.cursor()
-        self._cursor.execute('select id from wp_users where user_login=%s', [self.config.username])
-        row = self._cursor.fetchone()
+        cursor = self._db.cursor()
+        cursor.execute('select id from wp_users where user_login=%s', [self.config.username])
+        row = cursor.fetchone()
         if row is None:
             raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.config.username))
         self.user_id = row[0]
@@ -145,9 +145,10 @@ class WPTrackserver(Backend):
 
     def _load_track_headers(self):
         """."""
-        self._cursor.execute(
+        cursor = self._db.cursor()
+        cursor.execute(
             'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s', [self.user_id])
-        for _ in self._cursor.fetchall():
+        for _ in cursor.fetchall():
             track = self._found_track(self.ident_format.format(_[0]))
             self._enrich_with_headers(track, _)
 
@@ -168,11 +169,13 @@ class WPTrackserver(Backend):
     def _read_all(self, track) ->None:
         """Read the full track."""
         assert track.id_in_backend
-        self._cursor.execute(
+        cursor = self._db.cursor()
+        cursor.execute(
             'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [track.id_in_backend])
-        track.add_points([self.__point(x) for x in self._cursor.fetchall()])
+        track.add_points([self.__point(x) for x in cursor.fetchall()])
 
-    def __needs_insert(self, ident) -> bool:
+    @staticmethod
+    def __needs_insert(cursor, ident) -> bool:
         """Check if the header exists in the track table.
 
         Returns: True or False.
@@ -180,8 +183,8 @@ class WPTrackserver(Backend):
         """
         if ident is None:
             return True
-        self._cursor.execute('select 1 from wp_ts_tracks where id=%s', (ident, ))
-        return len(self._cursor.fetchall()) == 0
+        cursor.execute('select 1 from wp_ts_tracks where id=%s', (ident, ))
+        return len(cursor.fetchall()) == 0
 
     def _save_header(self, track):
         """Write all header fields. May set track.id_in_backend.
@@ -194,23 +197,24 @@ class WPTrackserver(Backend):
         title = track.title[:self._max_length['title']]
         # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
         track_time = track.time or datetime.datetime(year=1970, month=1, day=3, hour=1)
-        if self.__needs_insert(track.id_in_backend):
+        cursor = self._db.cursor()
+        if self.__needs_insert(cursor, track.id_in_backend):
             if track.id_in_backend is None:
                 cmd = 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source)' \
                     ' values(%s,%s,%s,%s,%s,%s)'
                 args = (self.user_id, title, track_time, description, track.distance(), '')
                 self.logger.debug(cmd, *args)
                 # TODO: try .. except. Server goes away if track.distance() is None
-                self._cursor.execute(cmd, args)
-                track.id_in_backend = self.ident_format.format(self._cursor.lastrowid)
+                cursor.execute(cmd, args)
+                track.id_in_backend = self.ident_format.format(cursor.lastrowid)
             else:
-                self._cursor.execute(
+                cursor.execute(
                     'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) '
                     ' values(%s,%s,%s,%s,%s,%s,%s)',
                     (track.id_in_backend, self.user_id, title, track_time, description, track.distance(), ''))
                 self.logger.error('wptrackserver wrote missing header with id=%s', track.id_in_backend)
         else:
-            self._cursor.execute(
+            cursor.execute(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
                 (title, track_time, description, track.distance(), track.id_in_backend))
         return track.id_in_backend
@@ -226,7 +230,8 @@ class WPTrackserver(Backend):
 
         """
         result = self._save_header(track)
-        self._cursor.execute('delete from wp_ts_locations where trip_id=%s', [result])
+        cursor = self._db.cursor()
+        cursor.execute('delete from wp_ts_locations where trip_id=%s', [result])
         self.__write_points(track, track.points())
         return result
 
@@ -238,16 +243,18 @@ class WPTrackserver(Backend):
             track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
             x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0) for x in points]
         self.logger.debug("_write_points writing %s points: %s", len(points), data)
-        self._cursor.executemany(
+        cursor = self._db.cursor()
+        cursor.executemany(
             'insert into wp_ts_locations(trip_id, latitude, longitude, altitude, occurred, speed, comment, heading)'
             ' values(%s, %s, %s, %s, %s, %s, "", 0.0)', data)
 
     def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation."""
-        self._cursor.execute('delete from wp_ts_locations where trip_id=%s', [int(ident)])
+        cursor = self._db.cursor()
+        cursor.execute('delete from wp_ts_locations where trip_id=%s', [int(ident)])
         cmd = 'delete from wp_ts_tracks where id=%s'
         self.logger.debug(cmd, ident)
-        self._cursor.execute(cmd, [ident])
+        cursor.execute(cmd, [ident])
 
     @classmethod
     def is_disabled(cls) ->bool:
@@ -288,6 +295,7 @@ class WPTrackserver(Backend):
         add_speed(list(track.points()), window=10)
         cmd = 'update wp_ts_tracks set distance=%s where id=%s'
         args = (track.distance() * 1000, track.id_in_backend)
-        self.logger.debug(cmd,  *args)
-        self._cursor.execute(cmd, args)
+        self.logger.debug(cmd, *args)
+        cursor = self._db.cursor()
+        cursor.execute(cmd, args)
         self.__write_points(track, points)
