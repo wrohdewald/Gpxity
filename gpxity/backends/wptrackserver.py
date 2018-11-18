@@ -196,9 +196,12 @@ class WPTrackserver(Backend):
         track_time = track.time or datetime.datetime(year=1970, month=1, day=3, hour=1)
         if self.__needs_insert(track.id_in_backend):
             if track.id_in_backend is None:
-                self._cursor.execute(
-                    'insert into wp_ts_tracks(user_id,name,created,comment,distance,source) values(%s,%s,%s,%s,%s,%s)',
-                    (self.user_id, title, track_time, description, track.distance(), ''))
+                cmd = 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source)' \
+                    ' values(%s,%s,%s,%s,%s,%s)'
+                args = (self.user_id, title, track_time, description, track.distance(), '')
+                self.logger.debug(cmd, *args)
+                # TODO: try .. except. Server goes away if track.distance() is None
+                self._cursor.execute(cmd, args)
                 track.id_in_backend = self.ident_format.format(self._cursor.lastrowid)
             else:
                 self._cursor.execute(
@@ -234,6 +237,7 @@ class WPTrackserver(Backend):
         data = [(
             track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
             x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0) for x in points]
+        self.logger.debug("_write_points writing %s points: %s", len(points), data)
         self._cursor.executemany(
             'insert into wp_ts_locations(trip_id, latitude, longitude, altitude, occurred, speed, comment, heading)'
             ' values(%s, %s, %s, %s, %s, %s, "", 0.0)', data)
@@ -284,5 +288,6 @@ class WPTrackserver(Backend):
         add_speed(list(track.points()), window=10)
         cmd = 'update wp_ts_tracks set distance=%s where id=%s'
         args = (track.distance() * 1000, track.id_in_backend)
+        self.logger.debug(cmd,  *args)
         self._cursor.execute(cmd, args)
         self.__write_points(track, points)
