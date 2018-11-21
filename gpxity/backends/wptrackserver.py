@@ -45,12 +45,12 @@ class WPTrackserver(Backend):
 
     See https://www.grendelman.net/wp/trackserver-wordpress-plugin/
 
-    The section in  auth.cfg could look like
+    The section in  auth.cfg could look like::
 
-    [wptrackserver:username]
-    Url = hostname
-    Mysql =user@db_name
-    Password = mysql_password
+        [wptrackserver:username]
+        Url = hostname
+        Mysql =user@db_name
+        Password = mysql_password
 
     username is the wordpress user name.
 
