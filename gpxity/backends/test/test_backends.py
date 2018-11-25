@@ -447,38 +447,38 @@ class TestBackends(BasicTest):
                                     self.assertSameTracks(local_serverdirectory, uplink)
 
     def test_backend_dirty(self):
-        """Track._dirty."""
+        """track1._dirty."""
         for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
             with self.subTest(cls):
-                with self.temp_backend(cls, count=1) as backend:
-                    track = backend[0]
+                with self.temp_backend(cls, count=1) as backend1:
+                    track1 = backend1[0]
                     with self.assertRaises(Exception):
-                        track._dirty = False
-                    self.assertFalse(track._dirty)
+                        track1._dirty = False
+                    self.assertFalse(track1._dirty)
                     # version 1.1 should perhaps be a test on its own, see Track.to_xml()
-                    track.category = 'Driving'
-                    track._dirty = 'gpx'
-                    self.assertFalse(track._dirty)
-                    backend2 = backend.clone()
+                    track1.category = 'Driving'
+                    track1._dirty = 'gpx'
+                    self.assertFalse(track1._dirty)
+                    backend2 = backend1.clone()
                     self.assertEqual(backend2[0].category, 'Driving')
                     b2track = backend2[0]
                     self.assertEqual(b2track.category, 'Driving')
                     b2track.title = 'another new title'
                     self.assertEqual(b2track.category, 'Driving')
                     self.assertEqual(backend2[0].category, 'Driving')
-                    track.title = 'new title'
-                    self.assertEqual(track.category, 'Driving')
-                    backend3 = backend.clone()
+                    track1.title = 'new title'
+                    self.assertEqual(track1.category, 'Driving')
+                    backend3 = backend1.clone()
                     self.assertEqual(backend3[0].category, 'Driving')
-                    self.assertFalse(track._dirty)
-                    with track.batch_changes():
-                        track.title = 'new 2'
-                        self.assertEqual(track._dirty, ['title'])
-                    self.assertFalse(track._dirty)
-                    with track.batch_changes():
-                        track.title = 'new 3'
-                        track.keywords = ['Something', 'something xlse']
-                    backend4 = backend.clone()
+                    self.assertFalse(track1._dirty)
+                    with track1.batch_changes():
+                        track1.title = 'new 2'
+                        self.assertEqual(track1._dirty, ['title'])
+                    self.assertFalse(track1._dirty)
+                    with track1.batch_changes():
+                        track1.title = 'new 3'
+                        track1.keywords = ['Something', 'something xlse']
+                    backend4 = backend1.clone()
                     self.assertEqual(backend4[0].title, 'new 3')
 
     def test_directory_dirty(self):
