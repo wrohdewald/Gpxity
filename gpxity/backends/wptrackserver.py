@@ -82,6 +82,16 @@ class WPTrackserver(Backend):
     def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring. The url is host."""
         super(WPTrackserver, self).__init__(url, auth, cleanup, timeout)
+        self._db = None
+        self.__connect_mysql()
+        cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.config.username])
+        row = cursor.fetchone()
+        if row is None:
+            raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.config.username))
+        self.user_id = row[0]
+
+    def __connect_mysql(self):
+        """Connect to the Mysql server."""
         try:
             user, database = self.config.mysql.split('@')
         except ValueError:
@@ -92,12 +102,7 @@ class WPTrackserver(Backend):
                 autocommit=True, charset='utf8')
         except _mysql_exceptions.OperationalError as exc:
             raise Backend.BackendException(exc)
-        cursor = self._db.cursor()
-        cursor.execute('select id from wp_users where user_login=%s', [self.config.username])
-        row = cursor.fetchone()
-        if row is None:
-            raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.config.username))
-        self.user_id = row[0]
+
 
     def _encode_description(self, track):
         """Encode keywords in description.
@@ -145,9 +150,9 @@ class WPTrackserver(Backend):
 
     def _load_track_headers(self):
         """."""
-        cursor = self._db.cursor()
-        cursor.execute(
-            'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s', [self.user_id])
+        cmd = 'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s'
+        args = (self.user_id, )
+        cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
             track = self._found_track(self.ident_format.format(_[0]))
             self._enrich_with_headers(track, _)
@@ -169,8 +174,7 @@ class WPTrackserver(Backend):
     def _read_all(self, track) ->None:
         """Read the full track."""
         assert track.id_in_backend
-        cursor = self._db.cursor()
-        cursor.execute(
+        cursor = self.__exec_mysql(
             'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [track.id_in_backend])
         track.add_points([self.__point(x) for x in cursor.fetchall()])
 
@@ -203,18 +207,16 @@ class WPTrackserver(Backend):
                 cmd = 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source)' \
                     ' values(%s,%s,%s,%s,%s,%s)'
                 args = (self.user_id, title, track_time, description, track.distance(), '')
-                self.logger.debug(cmd, *args)
-                # TODO: try .. except. Server goes away if track.distance() is None
-                cursor.execute(cmd, args)
+                cursor = self.__exec_mysql(cmd, args)
                 track.id_in_backend = self.ident_format.format(cursor.lastrowid)
             else:
-                cursor.execute(
+                self.__exec_mysql(
                     'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) '
                     ' values(%s,%s,%s,%s,%s,%s,%s)',
                     (track.id_in_backend, self.user_id, title, track_time, description, track.distance(), ''))
                 self.logger.error('wptrackserver wrote missing header with id=%s', track.id_in_backend)
         else:
-            cursor.execute(
+            self.__exec_mysql(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
                 (title, track_time, description, track.distance(), track.id_in_backend))
         return track.id_in_backend
@@ -230,8 +232,7 @@ class WPTrackserver(Backend):
 
         """
         result = self._save_header(track)
-        cursor = self._db.cursor()
-        cursor.execute('delete from wp_ts_locations where trip_id=%s', [result])
+        self.__exec_mysql('delete from wp_ts_locations where trip_id=%s', [int(result)])
         self.__write_points(track, track.points())
         return result
 
@@ -239,22 +240,20 @@ class WPTrackserver(Backend):
         """save points in the track."""
         points = list(points)
         time_delta = utc_to_local_delta()  # WPTrackserver wants local time
-        data = [(
+        cmd = 'insert into wp_ts_locations(trip_id, latitude, longitude, altitude,' \
+            ' occurred, speed, comment, heading)' \
+            ' values(%s, %s, %s, %s, %s, %s, "", 0.0)'
+        args = [(
             track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
             x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0) for x in points]
-        self.logger.debug("_write_points writing %s points: %s", len(points), data)
-        cursor = self._db.cursor()
-        cursor.executemany(
-            'insert into wp_ts_locations(trip_id, latitude, longitude, altitude, occurred, speed, comment, heading)'
-            ' values(%s, %s, %s, %s, %s, %s, "", 0.0)', data)
+        self.__exec_mysql(cmd, args, many=True)
 
     def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation."""
-        cursor = self._db.cursor()
-        cursor.execute('delete from wp_ts_locations where trip_id=%s', [int(ident)])
+        cmd = 'delete from wp_ts_locations where trip_id=%s'
+        self.__exec_mysql(cmd, [int(ident)])
         cmd = 'delete from wp_ts_tracks where id=%s'
-        self.logger.debug(cmd, ident)
-        cursor.execute(cmd, [ident])
+        self.__exec_mysql(cmd, [int(ident)])
 
     @classmethod
     def is_disabled(cls) ->bool:
@@ -295,7 +294,30 @@ class WPTrackserver(Backend):
         add_speed(list(track.points()), window=10)
         cmd = 'update wp_ts_tracks set distance=%s where id=%s'
         args = (track.distance() * 1000, track.id_in_backend)
-        self.logger.debug(cmd, *args)
-        cursor = self._db.cursor()
-        cursor.execute(cmd, args)
+        self.__exec_mysql(cmd, args)
         self.__write_points(track, points)
+
+    def __exec_mysql(self, cmd, args, many=False):
+        """Wrapper.
+
+        Returns:
+            cursor
+
+        """
+        if many:
+            # only log the first one
+            if args:
+                self.logger.debug(cmd, *args[0])
+            else:
+                self.logger.debug("mysql exececutemany without any args: %s", cmd)
+        else:
+            self.logger.debug(cmd, *args)
+        cursor = self._db.cursor()
+        execute = cursor.executemany if many else cursor.execute
+        try:
+            execute(cmd, args)
+        except _mysql_exceptions.OperationalError as exception:
+            self.logger.error("MySQL Error: %s", exception)
+            self.__connect_mysql()
+            execute(cmd, args)
+        return cursor
