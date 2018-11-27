@@ -92,9 +92,12 @@ class TrackingMessage:
         request = self.parsed.get('request')
         point_msg = ''
         if 'points' in self.parsed:
-            points = MMTHandler.parse_points(self.parsed['points'])
-            if points:
-                point_msg = ' with {} points: {}'.format(len(points), ','.join(str(round(x.elevation)) for x in points))
+            try:
+                points = MMTHandler.parse_points(self.parsed['points'])
+                if points:
+                    point_msg = ' with {} points: {}'.format(len(points), ','.join(str(round(x.elevation)) for x in points))
+            except Exception as exc:
+                point_msg = '{}: {}'.format(exc, self.parsed['points'])
         return '{} {} from {} id={} request={} {} --> {}  {}'.format(
             self.time, self.command, self.from_ip, ident, request, point_msg, self.result, response).strip()
 
@@ -419,7 +422,12 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         if self.error_response is None:
             tracker = self.find_tracker(parsed)
-            points = self.parse_points(parsed['points'])
+            try:
+                points = self.parse_points(parsed['points'])
+            except Exception as exc:
+                self.return_error(400, str(exc))
+                return
+
             if tracker is None:
                 tracker = self._new_Tracker(parsed)
                 title = parsed.get('title', '')
