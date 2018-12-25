@@ -376,6 +376,7 @@ class MMT(Backend):
         """
         full_url = self.url + '/' + (url if url else 'api/')
         headers = {'DNT': '1'}  # do not track
+        headers['User-Agent'] = 'Gpxity' # see https://github.com/MapMyTracks/api/issues/26
         if not self.config.username or not self.config.password:
             raise self.BackendException('{}: Needs authentication data'.format(self.url))
         if data:
