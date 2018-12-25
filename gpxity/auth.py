@@ -45,6 +45,7 @@ class Authenticate:
       * [ClassName.username]
 
     A section can define
+      * Username overrides username (the wanted account in the backend, see above)
       * Password
       * Url
       * Mysql, used by WPTrackserver
@@ -91,7 +92,8 @@ class Authenticate:
                             raise KeyError('Section [{}] not found in {}'.format(self.__section_name, self.__path))
                         self.__config[self.__section_name] = {}
                     self.section = self.__config[self.__section_name]
-                    self.section['username'] = username or ''
+                    if 'Username' not in self.section:
+                        self.section['username'] = username or ''
             else:
                 logging.info('%s not found', self.__path)
                 self.section = dict()
