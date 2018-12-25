@@ -754,13 +754,3 @@ class MMT(Backend):
         ident = str(self)
         if ident in self._session:
             self._session[ident].close()
-
-    @classmethod
-    def is_disabled(cls) ->bool:
-        """For now, it is disabled. Access stopped working.
-
-        Returns:
-            True if disabled
-
-        """
-        return cls.__name__ == 'MMT' or super(MMT, cls).is_disabled()
