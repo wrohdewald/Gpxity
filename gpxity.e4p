@@ -23,6 +23,7 @@
     <Source>gpxity/backends/gpsies.py</Source>
     <Source>gpxity/backends/mailer.py</Source>
     <Source>gpxity/backends/mmt.py</Source>
+    <Source>gpxity/backends/openrunner.py</Source>
     <Source>gpxity/backends/server_directory.py</Source>
     <Source>gpxity/backends/test/__init__.py</Source>
     <Source>gpxity/backends/test/basic.py</Source>

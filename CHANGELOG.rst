@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.5.0 release 2018-12-xx
+------------------------
+
+  * new backend for Openrunner
+
 1.4.1 release 2018-10-22
 ------------------------
 

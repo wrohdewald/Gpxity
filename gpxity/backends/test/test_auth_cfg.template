@@ -32,3 +32,9 @@ Password = XXX
 
 [WPTrackserver:wrong_password]
 Password = wrong
+
+[Openrunner:wrong_password]
+Password = wrong
+
+[Openrunner:gpxitytest]
+Password = XXX

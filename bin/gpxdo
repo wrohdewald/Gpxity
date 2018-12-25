@@ -765,6 +765,7 @@ Available backends are:
 
   - mmt       MapMytracks
   - gpsies    gpsies.com
+  - openrunner openrunner.com
   - mailer    mails tracks
 
 The file $HOME/.config/Gpxity/auth.cfg

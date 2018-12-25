@@ -30,6 +30,14 @@ gpxity.backends.gpsies module
     :undoc-members:
     :show-inheritance:
 
+gpxity.backends.openrunner module
+---------------------------------
+
+.. automodule:: gpxity.backends.openrunner
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 gpxity.backends.mmt module
 --------------------------
 

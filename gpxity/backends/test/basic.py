@@ -29,7 +29,7 @@ import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
 from ... import Track, Backend, Authenticate
-from .. import Mailer, WPTrackserver, Directory, GPSIES
+from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner
 
 # pylint: disable=attribute-defined-outside-init,protected-access
 
@@ -235,7 +235,9 @@ class BasicTest(unittest.TestCase):
         """both backends must hold identical tracks."""
         self.maxDiff = None  # pylint: disable=invalid-name
         if with_last_time is None:
-            with_last_time = not (isinstance(backend1, GPSIES) or isinstance(backend2, GPSIES))
+            with_last_time = not (
+                isinstance(backend1, (Openrunner, GPSIES)) or
+                isinstance(backend2, (Openrunner, GPSIES)))
         if backend1 != backend2:
             precision = min(backend1.point_precision, backend2.point_precision)
             keys1 = sorted(x.key(with_category, with_last_time, precision=precision) for x in backend1)
@@ -252,8 +254,11 @@ class BasicTest(unittest.TestCase):
 
         # GPSIES: when uploading tracks. GPSIES sometimes assigns new times to all points,
         # starting at 2010-01-01 00:00. Until I find the reason, ignore point times for comparison.
-        with_last_time = not (isinstance(track1.backend, GPSIES) or isinstance(track2.backend, GPSIES))
-
+        # Openrunner always does.
+        no_time_backend = (GPSIES, Openrunner)
+        with_last_time = not (
+            isinstance(track1.backend, no_time_backend)
+            or isinstance(track2.backend, no_time_backend))
         precision = Backend.point_precision
         if track1.backend and track1.backend.point_precision < precision:
             precision = track1.backend.precision

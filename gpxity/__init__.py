@@ -17,7 +17,7 @@ from .version import *
 from .auth import *
 
 __all__ = [
-    'Track', 'Fences', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT',
+    'Track', 'Fences', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'Openrunner',
     'Authenticate', 'ServerDirectory', 'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION']
 
 

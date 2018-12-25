@@ -22,13 +22,17 @@ import datetime
 import random
 from unittest import skipIf
 
+from gpxpy import gpx as mod_gpx
+
 from .basic import BasicTest, disabled
 from ... import Track, Backend, Fences
 from .. import Directory, ServerDirectory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
-from ...util import repr_timespan
+from .. import Openrunner, Encoding
+from ...util import repr_timespan, positions_equal
 
 # pylint: disable=attribute-defined-outside-init
 
+GPXTrackPoint = mod_gpx.GPXTrackPoint
 
 class TrackTests(BasicTest):
 
@@ -656,7 +660,7 @@ class TrackTests(BasicTest):
     def test_all_backend_classes(self):
         """Test Backend.all_backend_classes."""
         all_classes = [x.__name__ for x in Backend.all_backend_classes()]
-        expected = [Directory, GPSIES, Mailer, ServerDirectory, MMT, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, Mailer, MMT, Openrunner, ServerDirectory, TrackMMT, WPTrackserver]
         expected = [x.__name__ for x in expected if not x.is_disabled()]
         self.assertEqual(all_classes, expected)
 
@@ -750,3 +754,18 @@ class TrackTests(BasicTest):
             self.assertFalse(fences.outside(point))
         for point in outside:
             self.assertTrue(fences.outside(point))
+
+    def test_openrunner_point_encoding(self):
+        """Test Openrunner encoding/decoding of points."""
+        for track, result in [
+                ([(50.0, 7.0), (60.0, 8.0)], True),
+                ([(-50.1, -7.2), (0.1, 8.4)], True),
+                ([(-50.12, -7.23), (0.12, 8.45)], True),
+                ([(-50.124, -7.234), (0.125, 8.458)], True),
+                ([(-50.1041, -7.2354), (0.1325, 8.7458)], True),
+                ([(-50.10341, -7.23554), (0.13325, 8.7458)], True),
+                ([(-50.109341, -7.203554), (0.133425, 8.74258)], False),
+            ]:
+            points = [GPXTrackPoint(latitude=lat, longitude=lon) for lat, lon in track]
+            enc_dec = Encoding.decode_points(Encoding.encode_points(points))
+            self.assertEqual(result, all(positions_equal(*x, digits=10) for x in zip(points, enc_dec)), track)

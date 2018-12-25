@@ -16,7 +16,7 @@ import tempfile
 from unittest import skipIf
 
 from .basic import BasicTest, disabled
-from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer, WPTrackserver
+from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer, WPTrackserver, Openrunner
 from ... import Track, Lifetrack, Backend
 
 # pylint: disable=attribute-defined-outside-init
@@ -48,6 +48,10 @@ class TestBackends(BasicTest):
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
+        expect_unsupported[Openrunner] = {
+            'write_title', 'write_description', 'write_public',
+            'write_category', 'write_add_keywords',
+            'write_remove_keywords'}
         expect_unsupported[WPTrackserver] = {
             'own_categories',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
@@ -65,7 +69,7 @@ class TestBackends(BasicTest):
     def test_all_backends(self):
         """Check if Backend.all_backend_classes works."""
         backends = Backend.all_backend_classes()
-        expected = [Directory, GPSIES, Mailer, ServerDirectory, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, MMT, Mailer, Openrunner, ServerDirectory, TrackMMT, WPTrackserver]
         expected = [x for x in expected if not x.is_disabled()]
         self.assertEqual(backends, expected)
 
@@ -75,7 +79,7 @@ class TestBackends(BasicTest):
             with self.tst_backend(cls):
                 with self.temp_backend(cls) as backend:
                     track = Track()
-                    if cls in (MMT, TrackMMT, GPSIES):
+                    if cls in (MMT, TrackMMT, GPSIES, Openrunner):
                         with self.assertRaises(cls.BackendException):
                             backend.add(track)
                     else:
@@ -197,7 +201,11 @@ class TestBackends(BasicTest):
                     first_description = track.description
                     first_category = track.category
                     self.assertEqual(first_category, test_category)
-                    self.assertFalse(track.public)
+                    if cls is Openrunner:
+                        # the test account does not allow private tracks
+                        self.assertTrue(track.public)
+                    else:
+                        self.assertFalse(track.public)
                     track.public = True
                     self.assertTrue(track.public)
                     track.title = 'A new title'
@@ -208,7 +216,9 @@ class TestBackends(BasicTest):
                     backend2 = backend.clone()
                     track2 = backend2[0]
                     self.assertEqualTracks(track, track2, with_category=False)
-                    self.assertNotEqual(first_public, track2.public)
+                    if cls is not Openrunner:
+                        # see above
+                        self.assertNotEqual(first_public, track2.public)
                     self.assertNotEqual(first_title, track2.title)
                     self.assertNotEqual(first_description, track2.description)
                     self.assertNotEqual(first_category, track2.category)
@@ -342,6 +352,9 @@ class TestBackends(BasicTest):
             local.add(track)
             self.assertEqual(len(local), 1)
             for cls in Backend.all_backend_classes(needs={'remove'}):
+                if cls is Openrunner:
+                    # The test account does not allow private
+                    continue
                 with self.tst_backend(cls):
                     with self.temp_backend(cls) as backend:
                         backend.merge(local)
@@ -425,6 +438,10 @@ class TestBackends(BasicTest):
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
             points = self._random_points(100)
             life.start(points[:50], category=uplink.decode_category(uplink.supported_categories[0]))
+            if isinstance(uplink, Openrunner):
+                local_serverdirectory.scan()
+                local_serverdirectory[0].public = True
+                uplink.public = True
             time.sleep(7)
             life.update(points[50:])
             life.end()
