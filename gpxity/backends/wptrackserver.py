@@ -246,7 +246,8 @@ class WPTrackserver(Backend):
         args = [(
             track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
             x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0) for x in points]
-        self.__exec_mysql(cmd, args, many=True)
+        if args:
+            self.__exec_mysql(cmd, args, many=True)
 
     def _remove_ident(self, ident: str) ->None:
         """backend dependent implementation."""
@@ -301,15 +302,12 @@ class WPTrackserver(Backend):
         """Wrapper.
 
         Returns:
-            cursor
+            cursor or None if done nothing
 
         """
         if many:
             # only log the first one
-            if args:
-                self.logger.debug(cmd, *args[0])
-            else:
-                self.logger.debug("mysql exececutemany without any args: %s", cmd)
+            self.logger.debug("executemany, first one: " + cmd, *args[0])
         else:
             self.logger.debug(cmd, *args)
         cursor = self._db.cursor()
