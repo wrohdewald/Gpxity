@@ -392,6 +392,8 @@ class MMT(Backend):
             the result
 
         """
+        # pylint: disable=too-many-branches
+
         full_url = self.url + '/' + (url if url else 'api/')
         headers = {'DNT': '1'}  # do not track
         headers['User-Agent'] = 'Gpxity' # see https://github.com/MapMyTracks/api/issues/26
@@ -426,8 +428,12 @@ class MMT(Backend):
                 raise self.BackendException('POST {} has parse error: {}'.format(data, response.text))
             result_type = result.find('type')
             if result_type is not None and result_type.text == 'error':
-                reason = result.find('reason').text if result.find('reason') else 'no reason given'
-                raise self.BackendException('{}: {}'.format(data, reason))
+                _ = result.find('reason')
+                if _ is not None:
+                    reason = _.text
+                else:
+                    reason = 'no reason given'
+                raise self.BackendException('{}: {}'.format(reason, data))
         return result
 
     @classmethod
