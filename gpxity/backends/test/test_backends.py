@@ -98,7 +98,7 @@ class TestBackends(BasicTest):
                 directory2.scan()
                 self.assertEqual(len(directory2), 1)
 
-    def test_slow_duplicate_tracks(self):
+    def test_duplicate_tracks(self):
         """What happens if we save the same track twice?."""
         for cls in Backend.all_backend_classes(needs={'remove', 'write'}):
             with self.tst_backend(cls):
@@ -184,7 +184,7 @@ class TestBackends(BasicTest):
                         self.assertTrue(1 < total_seconds < 8, 'Time difference should be {}, is {}-{}={}'.format(
                             2, second_time, first_time, second_time - first_time))
 
-    def test_slow_write_remoteattr(self):
+    def test_write_remoteattr(self):
         """If we change title, description, public, category in track, is the backend updated?."""
         for cls in Backend.all_backend_classes(needs={'remove', }):
             with self.tst_backend(cls):
@@ -313,8 +313,8 @@ class TestBackends(BasicTest):
 
         is not always as trivial as it should be."""
 
-    @skipIf(*disabled(MMT))
-    def test_slow_download_many(self):
+    @skipIf(True, "enable manully if needed")
+    def test_download_many_from_mmt(self):
         """Download many tracks."""
         many = 150
         backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
@@ -530,21 +530,21 @@ class TestBackends(BasicTest):
                     backend2 = backend.clone()
                     self.assertEqualTracks(track, backend2[0], with_category=False)
                     test_values = {
-                        'title': ('default title', 'Täst Titel'),
-                        'description': ('default description', 'Täst description'),
+                        'title': ('first title', 'Täst Titel'),
+                        'description': ('first description', 'Täst description'),
                         'category': ('Driving', 'Rowing'), 'public': (True, False)}
                     if cls is not GPSIES:
                         test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
-                    for main in test_values:
-                        for key, (default_value, _) in test_values.items():
-                            if key != main:
-                                setattr(track, key, default_value)
-                        setattr(track, main, test_values[main][1])
-                        backend2.scan()
-                        for key, (default_value, _) in test_values.items():
-                            if key != main:
-                                self.assertEqual(getattr(backend2[0], key), default_value)
-                        self.assertEqual(getattr(backend2[0], main), test_values[main][1])
+                    prev_track = track.clone()
+                    for val_idx in (0, 1):
+                        for key, values in test_values.items():
+                            value = values[val_idx]
+                            self.logger.debug('  %s: %s->%s', key, getattr(track, key), value)
+                            setattr(track, key, value)
+                            setattr(prev_track, key, value)
+                            self.assertEqualTracks(prev_track, track)
+                            backend2.scan()
+                            self.assertEqualTracks(prev_track, backend2[0])
 
     def test_keywords(self) ->None:
         """Test arbitrary keyword changes.
