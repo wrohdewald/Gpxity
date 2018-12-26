@@ -339,9 +339,9 @@ class MMTHandler(BaseHTTPRequestHandler):
         """
         track = Track()
         track.parse(parsed['gpx_file'])
-        self.targets[0].add(track)
+        self.server.targets[0].add(track)  # TODO this was self.targets and no unittest triggered
         new_ident = track.id_in_backend
-        for _ in self.targets[1:]:
+        for _ in self.server.targets[1:]:
             _.add(track)
         return '<type>success</type><id>{}</id>'.format(new_ident)
 
