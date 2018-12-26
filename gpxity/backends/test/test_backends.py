@@ -594,6 +594,7 @@ class TestBackends(BasicTest):
                         backend2[0].keywords)
                     self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
+    @skipIf(*disabled(ServerDirectory))
     def test_legal_categories(self):
         """Check if our fixed list of categories still matches the online service."""
 
