@@ -561,7 +561,7 @@ class TestBackends(BasicTest):
                     keywords = {
                         backend._encode_keyword(x)
                         for x in self._random_keywords(count=50)}
-                    for _ in range(20):
+                    for _ in range(2 if cls.test_is_expensive else 20):
                         self.assertEqual(backend._get_current_keywords(track), track.keywords)
                         add_keywords = set(random.sample(keywords, random.randint(0, 10)))
                         remove_keywords = set(random.sample(keywords, random.randint(0, 10)))
@@ -579,7 +579,7 @@ class TestBackends(BasicTest):
                         self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
                     with track.batch_changes():
                         # WPTrackserver has limited field lengths
-                        loops, kwcount = (5, 5) if cls is WPTrackserver else (50, 10)
+                        loops, kwcount = (5, 5) if cls is WPTrackserver or cls.test_is_expensive else (50, 10)
                         for _ in range(loops):
                             add_keywords = set(random.sample(keywords, random.randint(0, kwcount)))
                             remove_keywords = set(random.sample(keywords, random.randint(0, kwcount))) & add_keywords

@@ -29,6 +29,8 @@ class TrackMMT(MMT):
 
     """
 
+    test_is_expensive = False
+
     # pylint: disable=abstract-method
 
     def _load_track_headers(self):

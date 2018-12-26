@@ -118,6 +118,8 @@ class Directory(Backend):
 
     prefix = 'gpxity.'
 
+    test_is_expensive = False
+
     needs_config = False
 
     def __init__(self, url=None, auth=None, cleanup=False, timeout=None):

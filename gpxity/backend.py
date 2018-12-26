@@ -83,6 +83,8 @@ class Backend:
             You can define any number of fences separated by spaces. Every fence is a circle.
             It has the form Lat/Long/meter.
             Lat and Long are the center position in decimal degrees, meter is the radius.
+        test_is_expensive: For internal use. If True, the self tests will reduce test cases and try to
+            avoid too much usage of the backend.
 
 
     """
@@ -102,6 +104,8 @@ class Backend:
     default_url = None  # Override in the backends
 
     needs_config = True
+
+    test_is_expensive = True
 
     full_support = (
         'scan', 'remove', 'write', 'write_title', 'write_public',

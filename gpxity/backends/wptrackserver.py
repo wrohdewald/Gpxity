@@ -71,6 +71,8 @@ class WPTrackserver(Backend):
 
     legal_categories = Track.legal_categories
 
+    test_is_expensive = False
+
     needs_config = False
 
     ident_format = '{:06}'   # noqa format the id int to a string. We want the sort order to be correct.
