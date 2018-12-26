@@ -90,7 +90,7 @@ class BasicTest(unittest.TestCase):
         logging.shutdown()
 
     @contextmanager
-    def subTest(self, name, **params):  # noqa pylint: disable=arguments-differ
+    def tst_backend(self, name, **params):  # noqa pylint: disable=arguments-differ
         """With pytest, subTest does not do much. At least print the name."""
         if not isinstance(name, str):
             name = name.__name__

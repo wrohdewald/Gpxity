@@ -53,7 +53,7 @@ class TestBackends(BasicTest):
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
         for cls in Backend.all_backend_classes():
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 self.assertTrue(
                     cls.supported & expect_unsupported[cls] == set(),
                     '{}: supported & unsupported: {}'.format(
@@ -72,7 +72,7 @@ class TestBackends(BasicTest):
     def test_save_empty(self):
         """Save empty track."""
         for cls in Backend.all_backend_classes(needs={'write'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 can_remove = 'remove' in cls.supported
                 with self.temp_backend(cls, cleanup=can_remove, clear_first=can_remove) as backend:
                     track = Track()
@@ -101,7 +101,7 @@ class TestBackends(BasicTest):
     def test_slow_duplicate_tracks(self):
         """What happens if we save the same track twice?."""
         for cls in Backend.all_backend_classes(needs={'remove', 'write'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls) as backend:
                     track = self.create_test_track()
                     backend.add(track)
@@ -121,14 +121,14 @@ class TestBackends(BasicTest):
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
         for cls in Backend.all_backend_classes(exclude=[Directory, ServerDirectory]):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.assertRaises(KeyError):
                     self.setup_backend(cls, username='wrong_user')
 
     def test_open_wrong_password(self):
         """Open backends with wrong password."""
         for cls in Backend.all_backend_classes(needs={'scan'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 if not issubclass(cls, Directory):
                     with self.assertRaises(cls.BackendException):
                         self.setup_backend(cls, username='wrong_password')
@@ -151,7 +151,7 @@ class TestBackends(BasicTest):
                 return 'time {} is before {}'.format(track.time, '2016-09-05')
             return None
         cls = Directory
-        with self.subTest(cls):
+        with self.tst_backend(cls):
             with self.temp_backend(cls, count=3) as backend:
                 for idx, _ in enumerate(backend):
                     _.adjust_time(datetime.timedelta(hours=idx))
@@ -173,7 +173,7 @@ class TestBackends(BasicTest):
     def test_z9_create_backend(self):
         """Test creation of a backend."""
         for cls in Backend.all_backend_classes(needs={'remove'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=3) as backend:
                     self.assertEqual(len(backend), 3)
                     first_time = backend.get_time()
@@ -186,7 +186,7 @@ class TestBackends(BasicTest):
     def test_slow_write_remoteattr(self):
         """If we change title, description, public, category in track, is the backend updated?."""
         for cls in Backend.all_backend_classes(needs={'remove', }):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1, category='Horse riding') as backend:
                     track = backend[0]
                     first_public = track.public
@@ -245,7 +245,7 @@ class TestBackends(BasicTest):
             return '-' + value
 
         for cls in Backend.all_backend_classes(needs={'write', 'scan', 'keywords'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 is_mmt = cls.__name__ == 'MMT'
                 with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt) as backend:
                     if not backend:
@@ -284,7 +284,7 @@ class TestBackends(BasicTest):
         """Can we up- and download unicode characters in all text attributes?."""
         tstdescr = 'DESCRIPTION with ' + self.unicode_string1 + ' and ' + self.unicode_string2
         for cls in Backend.all_backend_classes(needs={'remove'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     backend2 = backend.clone()
                     track = backend[0]
@@ -322,7 +322,7 @@ class TestBackends(BasicTest):
     def test_duplicate_title(self):
         """two tracks having the same title."""
         for cls in Backend.all_backend_classes(needs={'remove'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=2) as backend:
                     backend[0].title = 'TITLE'
                     backend[1].title = 'TITLE'
@@ -337,7 +337,7 @@ class TestBackends(BasicTest):
             self.assertFalse(track.public)
             local.add(track)
             for cls in Backend.all_backend_classes(needs={'remove'}):
-                with self.subTest(cls):
+                with self.tst_backend(cls):
                     with self.temp_backend(cls) as backend:
                         backend.merge(local)
                         for _ in backend:
@@ -425,7 +425,7 @@ class TestBackends(BasicTest):
             life.end()
 
         for cls in Backend.all_backend_classes():
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(ServerDirectory) as local_serverdirectory:
                     with self.temp_backend(ServerDirectory) as remote_serverdirectory:
                         with self.lifetrackserver(remote_serverdirectory.url):
@@ -449,7 +449,7 @@ class TestBackends(BasicTest):
     def test_backend_dirty(self):
         """track1._dirty."""
         for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend1:
                     track1 = backend1[0]
                     with self.assertRaises(Exception):
@@ -523,7 +523,7 @@ class TestBackends(BasicTest):
     def test_setters(self):
         """For all Track attributes with setters, test if we can change them without changing something else."""
         for cls in Backend.all_backend_classes(needs={'write', 'scan'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     track = backend[0]
                     backend2 = backend.clone()
@@ -553,7 +553,7 @@ class TestBackends(BasicTest):
 
         """
         for cls in Backend.all_backend_classes(needs={'scan', 'keywords'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     backend2 = backend.clone()
                     track = backend[0]
@@ -606,7 +606,7 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes(needs={'own_categories'}):
             if cls is TrackMMT and Directory.is_disabled():
                 continue
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
                         with self.temp_backend(Directory) as serverdirectory:
@@ -619,7 +619,7 @@ class TestBackends(BasicTest):
         """Test long descriptions."""
         unlimited_length = 50000  # use this if the backend sets no limit
         for cls in Backend.all_backend_classes(needs={'scan'}):
-            with self.subTest(cls):
+            with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     track = backend[0]
                     max_length = backend._max_length.get('description') or unlimited_length
