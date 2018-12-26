@@ -36,11 +36,11 @@ from .. import Mailer, WPTrackserver, Directory, GPSIES
 __all__ = ['BasicTest']
 
 
-def disabled(*args) ->bool:
+def disabled(*args) ->tuple():
     """True if any of the backends is disabled.
 
     Returns:
-        True or False
+        True or False and reason
 
     """
     reason = list()
