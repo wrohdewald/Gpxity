@@ -227,7 +227,7 @@ class MMT(Backend):
         'Train': 'Miscellaneous',
     }
 
-    default_url = 'http://www.mapmytracks.com'
+    default_url = 'https://www.mapmytracks.com'
 
     # MMT only accepts one simultaneous lifetracker per login. We make sure
     # that at least this process does not try to run several at once.
