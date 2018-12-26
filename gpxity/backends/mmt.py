@@ -334,7 +334,7 @@ class MMT(Backend):
     def _parse_homepage(self):
         """Get some interesting values from the home page."""
         response = self.__get(with_session=True, url=self.url)
-        self.__is_free_account = 'href="/plus">Upgrade to PLUS' in response.text
+        self.__is_free_account = 'Get PLUS' in response.text
         page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
         self.__mid = page_parser.result['mid']
