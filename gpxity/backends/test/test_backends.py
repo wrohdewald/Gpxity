@@ -173,15 +173,16 @@ class TestBackends(BasicTest):
     def test_z9_create_backend(self):
         """Test creation of a backend."""
         for cls in Backend.all_backend_classes(needs={'remove'}):
-            with self.tst_backend(cls):
-                with self.temp_backend(cls, count=3) as backend:
-                    self.assertEqual(len(backend), 3)
-                    first_time = backend.get_time()
-                    time.sleep(2)
-                    second_time = backend.get_time()
-                    total_seconds = (second_time - first_time).total_seconds()
-                    self.assertTrue(1 < total_seconds < 8, 'Time difference should be {}, is {}-{}={}'.format(
-                        2, second_time, first_time, second_time - first_time))
+            if not cls.test_is_expensive:
+                with self.tst_backend(cls):
+                    with self.temp_backend(cls, count=3) as backend:
+                        self.assertEqual(len(backend), 3)
+                        first_time = backend.get_time()
+                        time.sleep(2)
+                        second_time = backend.get_time()
+                        total_seconds = (second_time - first_time).total_seconds()
+                        self.assertTrue(1 < total_seconds < 8, 'Time difference should be {}, is {}-{}={}'.format(
+                            2, second_time, first_time, second_time - first_time))
 
     def test_slow_write_remoteattr(self):
         """If we change title, description, public, category in track, is the backend updated?."""
