@@ -256,7 +256,7 @@ class MMT(Backend):
             all legal values for category.
 
         """
-        response = requests.get(self.url + '/explore/wall', timeout=self.timeout)
+        response = self.__get(url=self.url + '/explore/wall')
         category_parser = ParseMMTCategories()
         category_parser.feed(response.text)
         return sorted(category_parser.result)
@@ -275,8 +275,9 @@ class MMT(Backend):
             # I have no idea what ACT=9 does but it seems to be needed
             payload = {'username': self.config.username, 'password': self.config.password, 'ACT': '9'}
             login_url = '{}/login'.format(self.https_url)
+            headers = {'User-Agent': 'Gpxity'} # see https://github.com/MapMyTracks/api/issues/26
             response = self._session[ident].post(
-                login_url, data=payload, timeout=self.timeout)
+                login_url, data=payload, headers=headers, timeout=self.timeout)
             if 'You are now logged in.' not in response.text:
                 raise self.BackendException('Login as {} / {} failed, I got {}'.format(
                     self.config.username, self.config.password, response.text))
@@ -331,7 +332,7 @@ class MMT(Backend):
 
     def _parse_homepage(self):
         """Get some interesting values from the home page."""
-        response = self.session.get(self.url)
+        response = self.__get(with_session=True, url=self.url)
         self.__is_free_account = 'href="/plus">Upgrade to PLUS' in response.text
         page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
@@ -358,6 +359,23 @@ class MMT(Backend):
         """We just learned about a new tag id. They never change for a given string."""
         self.__tag_ids[tag] = id_
         self._check_tag_ids()
+
+    def __get(self, with_session: bool = False, url: str = None, headers=None):
+        """Helper for the real function with some error handling.
+
+        Sets User-Agent.
+        """
+        if headers is None:
+            headers = dict()
+        headers['User-Agent'] = 'Gpxity'
+        self.logger.debug('MMT.__get: url=%s', url)
+        if with_session:
+            response = self.session.get(url, headers=headers, timeout=self.timeout)
+            self.logger.debug('MMT.__get with_session')
+        else:
+            response = requests.get(url, headers=headers, timeout=self.timeout)
+            self.logger.debug('MMT.__get without session')
+        return response
 
     def __post(  # noqa
             self, with_session: bool = False, url: str = None, data: str = None, expect: str = None, **kwargs) ->str:
@@ -585,8 +603,7 @@ class MMT(Backend):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
-        response = self.session.get('{}/explore/activity/{}'.format(
-            self.url, track.id_in_backend))
+        response = self.__get(with_session=True, url='{}/explore/activity/{}'.format(self.url, track.id_in_backend))
         page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
         return page_parser.result
@@ -629,7 +646,7 @@ class MMT(Backend):
         if session is None:
             # https access not implemented for TrackMMT
             return
-        response = session.get('{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
+        response = self.__get(with_session=True, url='{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
             self.url, track.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
         # some tracks download only a few points if mid/uid are not given, but I
         # have not been able to write a unittest triggering that ...
