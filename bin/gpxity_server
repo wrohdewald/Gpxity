@@ -234,7 +234,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 if self.error_response:
                     return
                 if self.path != '/':
-                    self.return_error(400, 'Url %s: Path must be empty', self.path)
+                    self.return_error(400, 'Url {}: Path must be empty'.format(self.path))
                     return
                 request = parsed.get('request')
                 if not request:
