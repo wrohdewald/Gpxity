@@ -413,7 +413,7 @@ class TestBackends(BasicTest):
                 life.start(self._random_points())
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
-    @skipIf(*disabled(Directory))
+    @skipIf(*disabled(Directory, ServerDirectory))
     def test_lifetrack(self):
         """test life tracking against a local server."""
         def track():
