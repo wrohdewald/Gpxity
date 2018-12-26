@@ -22,7 +22,6 @@ import random
 try:
     import argcomplete
     # pylint: disable=unused-import
-    from argcomplete import ChoicesCompleter  # noqa
 except ImportError:
     pass
 

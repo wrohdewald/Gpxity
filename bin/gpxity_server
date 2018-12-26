@@ -54,7 +54,6 @@ from gpxity import Track, MMT, Authenticate, Backend, Lifetrack  # noqa pylint: 
 try:
     import argcomplete
     # pylint: disable=unused-import
-    from argcomplete import ChoicesCompleter  # noqa
 except ImportError:
     pass
 
