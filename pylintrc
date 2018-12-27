@@ -50,7 +50,7 @@ load-plugins=
 #enable-msg=
 
 # Disable the message(s) with the given id(s).
-disable=I0011,I0013 # no info about locally disabled warnings
+disable=I0011,I0013,R0401 # no info about locally disabled warnings
 
 
 [REPORTS]
