@@ -555,7 +555,7 @@ class TestBackends(BasicTest):
             None
 
         """
-        for cls in Backend.all_backend_classes(needs={'scan', 'keywords'}):
+        for cls in Backend.all_backend_classes(needs={'scan', 'keywords', 'write'}):
             with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     backend2 = backend.clone()
@@ -621,7 +621,7 @@ class TestBackends(BasicTest):
     def test_long_description(self):
         """Test long descriptions."""
         unlimited_length = 50000  # use this if the backend sets no limit
-        for cls in Backend.all_backend_classes(needs={'scan'}):
+        for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
             with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     track = backend[0]
