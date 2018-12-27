@@ -128,6 +128,8 @@ class TestBackends(BasicTest):
     def test_open_wrong_password(self):
         """Open backends with wrong password."""
         for cls in Backend.all_backend_classes(needs={'scan'}):
+            if not cls.needs_config:
+                continue
             with self.tst_backend(cls):
                 if not issubclass(cls, Directory):
                     with self.assertRaises(cls.BackendException):
