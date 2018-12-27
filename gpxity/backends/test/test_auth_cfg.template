@@ -1,8 +1,12 @@
+# Copy this to test_auth.cfg and run pytest in the project home directory.
+# Openrunner: Use any mail address as login name but define gpxitytest as public identifier.
+# The public identifier can be used for login.
+
 [MMT:gpxitytest]
-Password = 3t~S}L#[_2{<rnJ
+Password = XXX
 
 [MMT:gpxstoragemany]
-Password = 945eUGzHo4JUFPoR
+Password = XXX
 
 [MMT:wrong_password]
 Password = wrong
@@ -14,7 +18,7 @@ Password = wrong
 Password = wrong
 
 [GPSIES:gpxitytest]
-Password = B96nxDC3D99EhihfeC
+Password = XXX
 
 [Mailer:gpxitytest]
 Url = backup@rohdewald.de
@@ -23,8 +27,8 @@ Url = backup@rohdewald.de
 Url = /tmp/serverdirectory_test
 
 [TrackMMT:gpxitytest]
-Url = http://localhost:12398
-Password = gpxitytestpw
+Url = http://localhost:[port]
+Password = XXX
 
 [WPTrackserver:wrong_password]
 Password = wrong
