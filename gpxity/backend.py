@@ -85,7 +85,9 @@ class Backend:
             Lat and Long are the center position in decimal degrees, meter is the radius.
         test_is_expensive: For internal use. If True, the self tests will reduce test cases and try to
             avoid too much usage of the backend.
-
+        max_field_sizes: Some backends have a limited size for some attributes like keywords. This
+            is only an approximative guess. The backend will not protect you from overriding it
+            but the unittests will try to stay within those limits.
 
     """
 
@@ -106,6 +108,8 @@ class Backend:
     needs_config = True
 
     test_is_expensive = True
+
+    max_field_sizes = {}
 
     full_support = (
         'scan', 'remove', 'write', 'write_title', 'write_public',

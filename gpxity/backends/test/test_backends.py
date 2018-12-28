@@ -555,21 +555,31 @@ class TestBackends(BasicTest):
             None
 
         """
+        def testcases(cls):
+            """Prepare test cases for this backend."""
+            keywords = {
+                backend._encode_keyword(x)
+                for x in self._random_keywords(count=50)}
+            repeats = 2 if cls.test_is_expensive else 20
+            max_size = cls.max_field_sizes.get('keywords', 10000)
+            for _ in range(repeats):
+                while True:
+                    add_keywords = set(random.sample(keywords, random.randint(0, 10)))
+                    remove_keywords = set(random.sample(keywords, random.randint(0, 10)))
+                    if not add_keywords & remove_keywords:
+                        continue
+                    expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
+                    if len(', '.join(expected_keywords)) < max_size:
+                        break
+                yield add_keywords, remove_keywords, expected_keywords
+
         for cls in Backend.all_backend_classes(needs={'scan', 'keywords', 'write'}):
             with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend:
                     backend2 = backend.clone()
                     track = backend[0]
-                    keywords = {
-                        backend._encode_keyword(x)
-                        for x in self._random_keywords(count=50)}
-                    for _ in range(2 if cls.test_is_expensive else 20):
+                    for add_keywords, remove_keywords, expected_keywords in testcases(cls):
                         self.assertEqual(backend._get_current_keywords(track), track.keywords)
-                        add_keywords = set(random.sample(keywords, random.randint(0, 10)))
-                        remove_keywords = set(random.sample(keywords, random.randint(0, 10)))
-                        if not add_keywords & remove_keywords:
-                            continue
-                        expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
                         track.change_keywords(list(add_keywords) * 2)
                         self.assertEqual(
                             backend._get_current_keywords(track),
@@ -580,26 +590,10 @@ class TestBackends(BasicTest):
                         backend2.scan()
                         self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
                     with track.batch_changes():
-                        loops, kwcount = (50, 10)
-                        if cls.test_is_expensive:
-                            loops = 5
-                        if cls in (WPTrackserver,):
-                            # they have limited field lengths
-                            kwcount = 30
-                        expected_keywords = set()  # the loop might never execute
-                        for _ in range(loops):
-                            while True:
-                                add_keywords = set(random.sample(keywords, random.randint(0, kwcount)))
-                                remove_keywords = set(random.sample(
-                                    keywords, random.randint(0, kwcount))) & add_keywords
-                                if not add_keywords & remove_keywords:
-                                    continue
-                                expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
-                                if len(expected_keywords) < kwcount:
-                                    break
+                        for add_keywords, remove_keywords, expected_keywords in testcases(cls):
                             track.change_keywords(add_keywords)
                             track.change_keywords('-' + x for x in remove_keywords)
-                            self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
+                    self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
                     backend2.scan()
                     self.assertEqual(
                         backend2._get_current_keywords(backend2[0]),
