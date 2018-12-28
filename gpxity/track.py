@@ -1001,7 +1001,7 @@ class Track:  # pylint: disable=too-many-public-methods
             return ident
         return '{}/{}'.format(self.backend, ident)
 
-    def key(self, with_category: bool = True, with_last_time: bool = True) ->str:
+    def key(self, with_category: bool = True, with_last_time: bool = True, precision=None) ->str:
         """For speed optimized equality checks, not granted to be exact, but sufficiently safe IMHO.
 
         Args:
@@ -1010,6 +1010,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 and information can get lost while copying between different
                 backends
             with_last_time: If False, do not use self.last_time.
+            precision: For latitude/longitude. After comma digits. Default is as defined by backend or 6.
 
         Returns:
             a string with selected attributes in printable form.
@@ -1020,7 +1021,7 @@ class Track:  # pylint: disable=too-many-public-methods
             self.title, self.description,
             ','.join(self.keywords), self.category if with_category else '',
             self.public, self.last_time if with_last_time else '',
-            self.angle(), self.gpx.get_track_points_no())
+            self.angle(precision), self.gpx.get_track_points_no())
 
     def __eq__(self, other) ->bool:
         """equal.
@@ -1055,8 +1056,11 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
         return self.__cached_distance or 0.0
 
-    def angle(self) ->float:
+    def angle(self, precision=None) ->float:
         """For me, the earth is flat.
+
+        Args:
+            precision: After comma digits. Default is as defined by backend or 6.
 
         Returns:
             the angle in degrees 0..360 between start and end.
@@ -1068,8 +1072,13 @@ class Track:  # pylint: disable=too-many-public-methods
         except StopIteration:
             return 0
         last_point = self.last_point()
-        delta_lat = round(first_point.latitude, 6) - round(last_point.latitude, 6)
-        delta_long = round(first_point.longitude, 6) - round(last_point.longitude, 6)
+        if precision is None:
+            if self.backend is None:
+                precision = 6
+            else:
+                precision = self.backend.point_precision
+        delta_lat = round(first_point.latitude, precision) - round(last_point.latitude, precision)
+        delta_long = round(first_point.longitude, precision) - round(last_point.longitude, precision)
         norm_lat = delta_lat / 90.0
         norm_long = delta_long / 180.0
         try:

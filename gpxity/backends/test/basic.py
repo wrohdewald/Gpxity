@@ -236,8 +236,9 @@ class BasicTest(unittest.TestCase):
         if with_last_time is None:
             with_last_time = not (isinstance(backend1, GPSIES) or isinstance(backend2, GPSIES))
         if backend1 != backend2:
-            keys1 = sorted(x.key(with_category, with_last_time) for x in backend1)
-            keys2 = sorted(x.key(with_category, with_last_time) for x in backend2)
+            precision = min(backend1.point_precision, backend2.point_precision)
+            keys1 = sorted(x.key(with_category, with_last_time, precision=precision) for x in backend1)
+            keys2 = sorted(x.key(with_category, with_last_time, precision=precision) for x in backend2)
             self.assertEqual(keys1, keys2, msg)
 
     def assertEqualTracks(self, track1, track2, msg=None, xml: bool = False, with_category: bool = True):  # noqa pylint: disable=invalid-name
@@ -252,7 +253,14 @@ class BasicTest(unittest.TestCase):
         # starting at 2010-01-01 00:00. Until I find the reason, ignore point times for comparison.
         with_last_time = not (isinstance(track1.backend, GPSIES) or isinstance(track2.backend, GPSIES))
 
-        self.assertEqual(track1.key(with_category, with_last_time), track2.key(with_category, with_last_time), msg)
+        precision = Backend.point_precision
+        if track1.backend and track1.backend.point_precision < precision:
+            precision = track1.backend.precision
+        if track2.backend and track2.backend.point_precision < precision:
+            precision = track2.backend.precision
+        self.assertEqual(
+            track1.key(with_category, with_last_time, precision=precision),
+            track2.key(with_category, with_last_time, precision=precision), msg)
         self.assertTrue(track1.points_equal(track2), msg)
         if xml:
             self.assertEqual(track1.gpx.to_xml(), track2.gpx.to_xml(), msg)

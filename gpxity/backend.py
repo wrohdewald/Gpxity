@@ -88,6 +88,8 @@ class Backend:
         max_field_sizes: Some backends have a limited size for some attributes like keywords. This
             is only an approximative guess. The backend will not protect you from overriding it
             but the unittests will try to stay within those limits.
+        point_precision: The precision supported by this backend. We are never more precise than 6.
+            That is the digits after the decimal separator.
 
     """
 
@@ -117,6 +119,8 @@ class Backend:
         'write_category', 'write_description', 'keywords', 'write_add_keywords', 'write_remove_keywords')
 
     _max_length = dict()
+
+    point_precision = 5
 
     # It is important that we have only one global session
     # because gpsies.com seems to have several servers and their
