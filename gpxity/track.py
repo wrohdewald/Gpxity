@@ -904,10 +904,10 @@ class Track:  # pylint: disable=too-many-public-methods
         if not dry_run and self.__gpx.keywords != new_kw_list:
             self.__gpx.keywords = new_kw_list
             with self.batch_changes():
-                if add:
-                    self._dirty = 'add_keywords:{}'.format(', '.join(add))
                 if remove:
                     self._dirty = 'remove_keywords:{}'.format(', '.join(remove))
+                if add:
+                    self._dirty = 'add_keywords:{}'.format(', '.join(add))
         assert sorted(new) == self.keywords, (
             'change_keywords failed. Expected: {}, got: {}'.format(sorted(new), self.keywords))
         return sorted(new)
