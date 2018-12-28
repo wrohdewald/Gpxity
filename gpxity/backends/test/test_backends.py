@@ -580,14 +580,23 @@ class TestBackends(BasicTest):
                         backend2.scan()
                         self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
                     with track.batch_changes():
-                        # WPTrackserver has limited field lengths
-                        loops, kwcount = (5, 5) if cls is WPTrackserver or cls.test_is_expensive else (50, 10)
+                        loops, kwcount = (50, 10)
+                        if cls.test_is_expensive:
+                            loops = 5
+                        if cls in (WPTrackserver,):
+                            # they have limited field lengths
+                            kwcount = 30
+                        expected_keywords = set()  # the loop might never execute
                         for _ in range(loops):
-                            add_keywords = set(random.sample(keywords, random.randint(0, kwcount)))
-                            remove_keywords = set(random.sample(keywords, random.randint(0, kwcount))) & add_keywords
-                            if not add_keywords & remove_keywords:
-                                continue
-                            expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
+                            while True:
+                                add_keywords = set(random.sample(keywords, random.randint(0, kwcount)))
+                                remove_keywords = set(random.sample(
+                                    keywords, random.randint(0, kwcount))) & add_keywords
+                                if not add_keywords & remove_keywords:
+                                    continue
+                                expected_keywords = (set(track.keywords) | add_keywords) - remove_keywords
+                                if len(expected_keywords) < kwcount:
+                                    break
                             track.change_keywords(add_keywords)
                             track.change_keywords('-' + x for x in remove_keywords)
                             self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
