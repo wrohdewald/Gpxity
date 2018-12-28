@@ -555,8 +555,10 @@ class Track:  # pylint: disable=too-many-public-methods
 
     def _decode_keywords(self, data, into_header_data: bool = False):  # noqa
         """'self.keywords' is 1:1 as parsed from xml.
-
         Here we extract our special keywords Category: and Status:
+
+        # TODO: why is this not backend specific? Some backends have
+        # their own fields for this
 
         Args:
             into_header_data: if False, set the real track fields.
