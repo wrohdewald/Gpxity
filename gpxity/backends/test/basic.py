@@ -279,7 +279,7 @@ class BasicTest(unittest.TestCase):
 
     def setup_backend(  # pylint: disable=too-many-arguments
             self, cls_, username: str = None, url: str = None, count: int = 0,
-            cleanup: bool = True, clear_first: bool = True, category: str = None,
+            cleanup: bool = None, clear_first: bool = None, category: str = None,
             public: bool = None):
         """set up an instance of a backend with count tracks.
 
@@ -293,8 +293,8 @@ class BasicTest(unittest.TestCase):
                 Special case WPTrackserver: pass the IP address of the mysql test server
             url: for the backend
             count: how many random tracks should be inserted?
-            cleanup: If True, remove all tracks when done. Passed to the backend.
-            clear_first: if True, first remove all existing tracks
+            cleanup: If True, remove all tracks when done. Passed to the backend. None: do if the backend supports it.
+            clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
             public: should the tracks be public or private? If None, use Backend default.
 
         Returns:
@@ -306,6 +306,10 @@ class BasicTest(unittest.TestCase):
             username = 'gpxitytest'
         if public is None:
             public = cls_._default_public
+        if cleanup is None:
+            cleanup = 'remove' in cls_.supported
+        if clear_first is None:
+            clear_first = 'remove' in cls_.supported
 
         if cls_ is WPTrackserver:
             self.create_temp_mysqld()
@@ -393,7 +397,7 @@ class BasicTest(unittest.TestCase):
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
-                     cleanup=True, clear_first=True, category=None,
+                     cleanup=None, clear_first=None, category=None,
                      public: bool = None, username=None):
         """Just like setup_backend but usable as a context manager. which will call destroy() when done."""
         tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public)

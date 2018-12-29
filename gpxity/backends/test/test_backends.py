@@ -73,8 +73,7 @@ class TestBackends(BasicTest):
         """Save empty track."""
         for cls in Backend.all_backend_classes(needs={'write'}):
             with self.tst_backend(cls):
-                can_remove = 'remove' in cls.supported
-                with self.temp_backend(cls, cleanup=can_remove, clear_first=can_remove) as backend:
+                with self.temp_backend(cls) as backend:
                     track = Track()
                     if cls in (MMT, TrackMMT, GPSIES):
                         with self.assertRaises(cls.BackendException):
@@ -520,7 +519,7 @@ class TestBackends(BasicTest):
         """MMT refuses upload without a specific error message if there is no track point."""
         track = self.create_test_track()
         del track.gpx.tracks[0]
-        with MMT(auth='gpxitytest', cleanup=True) as mmt:
+        with MMT(auth='gpxitytest') as mmt:
             with self.assertRaises(mmt.BackendException):
                 mmt.add(track)
 
