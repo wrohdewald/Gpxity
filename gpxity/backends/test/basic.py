@@ -98,8 +98,8 @@ class BasicTest(unittest.TestCase):
         yield super(BasicTest, self).subTest(' ' + backend_cls.__name__)
 
     @staticmethod
-    def _get_gpx_from_test_file(name: str):
-        """get data from a predefined gpx file.
+    def _get_track_from_test_file(name: str, backend_cls=None):
+        """get data from a predefined gpx file with a random category supported by the backend.
 
         name is without .gpx
 
@@ -111,7 +111,10 @@ class BasicTest(unittest.TestCase):
         if not os.path.exists(gpx_test_file):
             raise Exception('MMTTests needs a GPX file named {}.gpx for testing in {}'.format(
                 name, os.getcwd()))
-        return gpxpy.parse(io.StringIO(get_data(__package__, '{}.gpx'.format(name)).decode('utf-8')))
+        result = Track(gpx=gpxpy.parse(io.StringIO(get_data(__package__, '{}.gpx'.format(name)).decode('utf-8'))))
+        if backend_cls:
+            result.category = backend_cls.decode_category(random.choice(backend_cls.supported_categories))
+        return result
 
     @classmethod
     def create_test_track(
@@ -140,29 +143,27 @@ class BasicTest(unittest.TestCase):
             (~gpxity.track.Track): A new track not bound to a backend
 
         """
-        gpx = cls._get_gpx_from_test_file('test')
+        result = cls._get_track_from_test_file('test')
         if start_time is not None:
-            _ = start_time - gpx.tracks[0].segments[0].points[0].time
-            gpx.adjust_time(_)
-        last_points = gpx.tracks[-1].segments[-1].points
+            result.adjust_time(start_time - result.time)
+        last_point = result.last_point()
         if end_time is None:
-            end_time = last_points[-1].time + datetime.timedelta(hours=10, seconds=idx)
+            end_time = result.last_time + datetime.timedelta(hours=10, seconds=idx)
         new_point = GPXTrackPoint(
-            latitude=last_points[-1].latitude, longitude=last_points[-1].longitude + 0.001, time=end_time)
+            latitude=last_point.latitude, longitude=last_point.longitude + 0.001, time=end_time)
         _ = gpxpy.geo.LocationDelta(distance=1000, angle=360 * idx / count)
         new_point.move(_)
-        last_points.append(new_point)
+        result.add_points([new_point])
 
         # now set all times such that they are in order with this track and do not overlap
         # with other test tracks
-        _ = gpx.tracks[0].segments[0].points[0].time
+        _ = result.time
         duration = new_point.time - _ + datetime.timedelta(seconds=10)
-        for point in gpx.walk(only_points=True):
+        for point in result.gpx.walk(only_points=True):
             point.time += duration * idx
 
-        result = Track(gpx=gpx)
         result.title = 'Random GPX # {}'.format(idx)
-        result.description = 'Description to {}'.format(gpx.name)
+        result.description = 'Description to {}'.format(result.title)
         if category:
             result.category = category
         elif count == len(Track.categories):
@@ -295,6 +296,10 @@ class BasicTest(unittest.TestCase):
             count: how many random tracks should be inserted?
             cleanup: If True, remove all tracks when done. Passed to the backend. None: do if the backend supports it.
             clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
+            category: The wanted category, one out of Track.categories. But this is a problem because we do the same
+                call for all backend classes and they support different categories. So: If category is int, this is an
+                index into cls_.supported_categories which will be decoded into Track.categories
+
             public: should the tracks be public or private? If None, use Backend default.
 
         Returns:
@@ -310,6 +315,8 @@ class BasicTest(unittest.TestCase):
             cleanup = 'remove' in cls_.supported
         if clear_first is None:
             clear_first = 'remove' in cls_.supported
+        if isinstance(category, int):
+            category = cls_.decode_category(cls_.supported_categories[category])
 
         if cls_ is WPTrackserver:
             self.create_temp_mysqld()

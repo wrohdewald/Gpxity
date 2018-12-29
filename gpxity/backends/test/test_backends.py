@@ -189,20 +189,21 @@ class TestBackends(BasicTest):
         """If we change title, description, public, category in track, is the backend updated?."""
         for cls in Backend.all_backend_classes(needs={'remove', }):
             with self.tst_backend(cls):
-                with self.temp_backend(cls, count=1, category='Horse riding') as backend:
+                test_category = cls.decode_category(cls.supported_categories[5])
+                with self.temp_backend(cls, count=1, category=test_category) as backend:
                     track = backend[0]
                     first_public = track.public
                     first_title = track.title
                     first_description = track.description
                     first_category = track.category
-                    self.assertEqual(first_category, 'Horse riding')
+                    self.assertEqual(first_category, test_category)
                     self.assertFalse(track.public)
                     track.public = True
                     self.assertTrue(track.public)
                     track.title = 'A new title'
                     self.assertEqual(track.title, 'A new title')
                     track.description = 'A new description'
-                    track.category = 'Cycling'
+                    track.category = cls.decode_category(cls.supported_categories[6])
                     # make sure there is no cache in the way
                     backend2 = backend.clone()
                     track2 = backend2[0]
@@ -216,11 +217,11 @@ class TestBackends(BasicTest):
         """We have this bug only sometimes: title, category or time will be wrong in track2.
         Workaround is in GPSIES._edit."""
         for _ in range(20):
-            with self.temp_backend(GPSIES, count=1, category='Horse riding') as backend:
+            with self.temp_backend(GPSIES, count=1, category=GPSIES.supported_categories[3]) as backend:
                 track = backend[0]
                 track.title = 'A new title'
                 track.description = 'A new description'
-                track.category = 'Cycling'
+                track.category = backend.decode_category(backend.supported_categories[8])
                 # make sure there is no cache in the way
                 backend2 = backend.clone()
                 track2 = backend2[0]
@@ -332,12 +333,14 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(Directory))
     def test_private(self):
         """Up- and download private tracks."""
-        with self.temp_backend(Directory, count=5, category='Cycling') as local:
-            track = Track(gpx=self._get_gpx_from_test_file('test2'))
+        with self.temp_backend(Directory) as local:
+            # TODO: make cls outer loop and count for expensive cls
+            track = self._get_track_from_test_file('test2')
             self.assertTrue(track.public)  # as defined in test2.gpx keywords
             track.public = False
             self.assertFalse(track.public)
             local.add(track)
+            self.assertEqual(len(local), 1)
             for cls in Backend.all_backend_classes(needs={'remove'}):
                 with self.tst_backend(cls):
                     with self.temp_backend(cls) as backend:
@@ -348,7 +351,7 @@ class TestBackends(BasicTest):
                         with Directory(cleanup=True) as copy:
                             for _ in copy.merge(backend2):
                                 self.logger.debug(_)
-                            self.assertSameTracks(local, copy, with_last_time=cls is not GPSIES)
+                            self.assertSameTracks(local, copy, with_last_time=cls is not GPSIES, with_category=False)
 
     @skipIf(*disabled(Directory))
     def test_merge_backends(self):
@@ -421,7 +424,7 @@ class TestBackends(BasicTest):
         def track():
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
             points = self._random_points(100)
-            life.start(points[:50])
+            life.start(points[:50], category=uplink.decode_category(uplink.supported_categories[0]))
             time.sleep(7)
             life.update(points[50:])
             life.end()
@@ -534,7 +537,11 @@ class TestBackends(BasicTest):
                     test_values = {
                         'title': ('first title', 'Täst Titel'),
                         'description': ('first description', 'Täst description'),
-                        'category': ('Hiking', 'Rowing'), 'public': (True, False)}
+                        'category': (
+                            cls.decode_category(cls.supported_categories[4]),
+                            cls.decode_category(cls.supported_categories[2])),
+                        'public': (True, False)
+                    }
                     if cls is not GPSIES:
                         test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
                     prev_track = track.clone()
@@ -653,10 +660,31 @@ class TestBackends(BasicTest):
                         pass
                 self.assertEqual(str(context.exception), '{} needs a username'.format(cls.default_url), _)
 
+    def test_can_encode_all_categories(self):
+        """Check if we can encode all internal categories to a given backend value for all backends."""
+        for cls in Backend.all_backend_classes(needs={'own_categories'}):
+            with self.tst_backend(cls):
+                for category in Track.categories:
+                    cls.encode_category(category)
+
+    def test_can_decode_all_categories(self):
+        """Check if we can decode all backend categories."""
+        for cls in Backend.all_backend_classes(needs={'own_categories'}):
+            with self.tst_backend(cls):
+                for category in cls.supported_categories:
+                    cls.decode_category(category)
+
     def test_category_map(self):
-        """Check if moving a Track between local and remote conserves activity info."""
-        with Directory() as local_directory:
-            for cls in Backend.all_backend_classes(needs={'own_categories'}):
-                with self.tst_backend(cls):
-                    with self.temp_backend(cls) as backend:
-            for category in cls.legal_
+        """Check if all backends can losslessly encode/decode all supported_categories.
+
+        This is done locally assuming that Backend.supported_categories is correct.
+        test_legal_categories() tests Backend.supported_categories for correctness.
+        """
+        for cls in Backend.all_backend_classes(needs={'own_categories'}):
+            with self.tst_backend(cls):
+                for category in cls.supported_categories:
+                    internal = cls.decode_category(category)
+                    back = cls.encode_category(internal)
+                    self.assertEqual(
+                        category, back,
+                        '{}: {} -> {} -> {}'.format(cls.__name__, category, internal, back))

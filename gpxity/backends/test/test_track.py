@@ -190,6 +190,7 @@ class TrackTests(BasicTest):
 
     def test_combine(self):
         """combine values in track with newly parsed."""
+        # Here, category is always from the domain Track.category, no backend involved.
         # first, does it overwrite?
         track = self.create_test_track()
         xml = track.to_xml()
@@ -486,7 +487,7 @@ class TrackTests(BasicTest):
     def test_local_keywords(self):
         """Some keyword tests. More see in test_backends."""
         # Category: and Status: are special
-        gpx = self._get_gpx_from_test_file('test')
+        gpx = self._get_track_from_test_file('test').gpx
         gpx.keywords = 'Category:Cycling, Status:public'
         track = Track(gpx=gpx)
         self.assertEqual(track.keywords, list())
@@ -602,7 +603,7 @@ class TrackTests(BasicTest):
             self.assertTrackFileContains(backend2[0], '<trk>')
         with self.temp_backend(Directory, count=1) as backend:
             backend2 = Directory(url=backend.url)
-            backend2[0].category = 'Mountain biking'
+            backend2[0].category = backend2.supported_categories[2]
             self.assertTrackFileContains(backend2[0], '<trk>')
 
     @skipIf(*disabled(Directory))

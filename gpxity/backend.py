@@ -111,6 +111,9 @@ class Backend:
 
     max_field_sizes = {}
 
+    _category_decoding = dict()
+    _category_encoding = dict()
+
     full_support = (
         'scan', 'remove', 'write', 'write_title', 'write_public',
         'own_categories',
@@ -276,22 +279,39 @@ class Backend:
             raise
 
     @classmethod
-    def decode_category(cls, value: str) ->str:  # pylint: disable=no-self-use
+    def decode_category(cls, value: str) ->str:
         """Translate the value from the backend into one out of Track.categories.
 
-        Returns: The decoded value.
+        Returns:
+            The decoded name
 
         """
-        return value
+        if value in Track.categories:
+            return value
+        if value.capitalize() in Track.categories:
+            return value.capitalize()
+        if value not in cls._category_decoding:
+            raise cls.BackendException('{} gave us an unknown track type "{}"'.format(cls.__name__, value))
+        return cls._category_decoding[value]
 
     @classmethod
-    def encode_category(cls, value: str) ->str:  # pylint: disable=no-self-use
+    def encode_category(cls, value: str) ->str:
         """Translate internal value (out of Track.categories) into the backend specific value.
 
-        Returns: The encoded value.
-
+        Returns:
+            The encoded name
         """
-        return value
+        if value in cls.supported_categories:
+            return value
+        if value.lower() in cls.supported_categories:
+            return value.lower()
+        if value in cls._category_encoding:
+            return cls._category_encoding[value]
+        for key, target in cls._category_decoding.items():
+            if value.lower() == target.lower():
+                return key
+        raise cls.BackendException('{} has no equivalent for "{}"'.format(cls.__name__, value))
+
 
     @staticmethod
     def _encode_keyword(value: str) ->str:

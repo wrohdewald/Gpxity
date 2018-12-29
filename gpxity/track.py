@@ -121,11 +121,11 @@ class Track:  # pylint: disable=too-many-public-methods
 
     Attributes:
         categories (tuple(str)): The legal values for :attr:`~Track.category`. The first one is used
-            as default value. This is a mostly a superset of the values for the different backends.
+            as default value. This is a superset of the values for the different backends.
             Every backend maps from its internal values into those when reading and maps them
             back when writing. Since not all backends support all values defined here and since
             some backends may define more values than we know, information may get lost when
-            converting, even if you copy a track between two backends of the same type.
+            converting.
 
     """
 
@@ -135,16 +135,21 @@ class Track:  # pylint: disable=too-many-public-methods
         """Is raised if  Track.merge() fails."""
 
     categories = (
-        # values from MMT
-        'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
+        'Cycling', 'Cycling - Road', 'Cycling - Gravel', 'Cycling - MTB', 'Cycling - Indoor', 'Cycling - Hand',
+        'Cycling - Touring', 'Cycling - Foot',
+        'Running', 'Running - Trail', 'Running - Urban Trail',
+        'Sailing', 'Walking', 'Hiking',
         'Swimming', 'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
-        'Skiing', 'Cross country skiing', 'Canoeing', 'Kayaking', 'Sea kayaking', 'Stand up paddle boarding',
+        'Skiing', 'Skiing - Touring', 'Skiing - Backcountry', 'Skiing - Nordic', 'Skiing - Alpine', 'Skiing - Roller',
+        'Canoeing', 'Kayaking', 'Sea kayaking', 'Stand up paddle boarding',
         'Rowing', 'Windsurfing', 'Kiteboarding', 'Orienteering', 'Mountaineering', 'Skating',
         'Skateboarding', 'Horse riding', 'Hang gliding', 'Gliding', 'Flying', 'Snowboarding',
         'Paragliding', 'Hot air ballooning', 'Nordic walking', 'Snowshoeing', 'Jet skiing', 'Powerboating',
-        # values from GPSIES
-        'Pedelec', 'Crossskating', 'Handcycle', 'Motorhome', 'Cabriolet', 'Coach',
-        'Pack animal trekking', 'Train',
+        'Swimrun',
+        'Pedelec', 'Crossskating', 'Motorhome', 'Cabriolet', 'Coach',
+        'Pack animal trekking', 'Train', 'Wheelchair', 'Sightseeing', 'Geocaching', 'Longboard',
+        'River navigation',
+        'Skating - Inline',
         'Miscellaneous')
 
     def __init__(self, gpx=None):
@@ -951,7 +956,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 result.append('Speed {:.3f} is out of expected range 3..60'.format(self.speed()))
             if not 10 <= self.moving_speed() <= 50:
                 result.append('Moving speed {:.3f} is out of expected range 10..50'.format(self.moving_speed()))
-        if self.category == 'Mountain biking':
+        if self.category == 'Cycling - MTB':
             if not 3 <= self.speed() <= 50:
                 result.append('Speed {:.3f} is out of expected range 3..50'.format(self.speed()))
             if not 10 <= self.moving_speed() <= 40:

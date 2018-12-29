@@ -20,7 +20,7 @@ from collections import defaultdict
 
 import requests
 
-from .. import Backend, Track
+from .. import Backend
 
 __all__ = ['GPSIES']
 
@@ -193,27 +193,32 @@ class GPSIES(Backend):
         'boating': 'Rowing',
         'car': 'Driving',
         'climbing': 'Mountaineering',
-        'geocaching': 'Miscellaneous',
         'jogging': 'Running',
         'motocross': 'Enduro',
         'motorbiking': 'Motorcycling',
         'motorboat': 'Powerboating',
-        'mountainbiking': 'Mountain biking',
+        'mountainbiking': 'Cycling - MTB',
         'packAnimalTrekking': 'Pack animal trekking',
-        'racingbike': 'Cycling',
+        'racingbike': 'Cycling - Road',
         'riding': 'Horse riding',
-        'sightseeing': 'Miscellaneous',
-        'skiingAlpine': 'Skiing',
-        'skiingNordic': 'Cross country skiing',
-        'skiingRandonnee': 'Skiing',
+        'skiingAlpine': 'Skiing - Alpine',
+        'skiingNordic': 'Skiing - Nordic',
+        'skiingRandonnee': 'Skiing - Touring',
         'snowshoe': 'Snowshoeing',
         'trekking': 'Hiking',
-        'wintersports': 'Miscellaneous',
+        'wintersports': 'Wintersports',
+        'handcycle': 'Cycling - Hand',
     }
 
     _category_encoding = {
         'Cross country skiing': 'skiingNordic',
-        'Cycling': 'biking',
+        'Cycling - Hand': 'handcycle',
+        'Cycling - Road': 'racingbike',
+        'Cycling - Gravel': 'biking',
+        'Cycling - Touring': 'biking',
+        'Cycling - Foot': 'biking',
+        'Running - Trail': 'jogging',
+        'Running - Urban Trail': 'jogging',
         'Driving': 'car',
         'Enduro': 'motocross',
         'Gliding': 'flying',
@@ -221,13 +226,12 @@ class GPSIES(Backend):
         'Hiking': 'trekking',
         'Horse riding': 'riding',
         'Hot air ballooning': 'flying',
-        'Indoor cycling': 'biking',
+        'Indoor cycling': 'Cycling - Indoor',
         'Jet skiing': 'motorboat',
         'Kayaking': 'boating',
         'Kiteboarding': 'sailing',
         'Motor racing': 'motorbiking',
         'Motorcycling': 'motorbiking',
-        'Mountain biking': 'mountainbiking',
         'Mountaineering': 'climbing',
         'Nordic walking': 'walking',
         'Off road driving': 'car',
@@ -239,11 +243,21 @@ class GPSIES(Backend):
         'Running': 'jogging',
         'Sea kayaking': 'boating',
         'Skateboarding': 'skating',
-        'Skiing': 'skiingAlpine',
+        'Skating - Inline': 'skating',
+        'Skiing': 'wintersports',
+        'Skiing - Alpine': 'skiingAlpine',
+        'Skiing - Touring': 'skiingRandonnee',
+        'Skiing - Backcountry': 'skiingRandonnee',
         'Snowboarding': 'wintersports',
         'Snowshoeing': 'snowshoe',
         'Stand up paddle boarding': 'boating',
         'Windsurfing': 'sailing',
+        'Wintersports': 'wintersports',
+        'Skiing - Roller': 'miscellaneous',
+        'Swimrun': 'miscellaneous',
+        'Wheelchair': 'miscellaneous',
+        'Longboard': 'miscellaneous',
+        'River navigation': 'miscellaneous',
     }
 
     default_url = 'https://www.gpsies.com'
@@ -304,36 +318,6 @@ class GPSIES(Backend):
         response = self.session.post('{}/{}.do'.format(self.url, action), data=data, files=files, timeout=self.timeout)
         self._check_response(response, track)
         return response
-
-    @classmethod
-    def decode_category(cls, value: str) ->str:
-        """Translate the value from Gpsies into internal one.
-
-        Returns:
-            The decoded name
-
-        """
-        if value.capitalize() in Track.categories:
-            return value.capitalize()
-        if value not in cls._category_decoding:
-            raise cls.BackendException('Gpsies gave us an unknown track type {}'.format(value))
-        return cls._category_decoding[value]
-
-    @classmethod
-    def encode_category(cls, value: str) ->str:
-        """Translate internal value into Gpsies value.
-
-        Returns:
-            The encoded name
-
-        """
-        if value in cls.supported_categories:
-            return value
-        if value.lower() in cls.supported_categories:
-            return value.lower()
-        if value not in cls._category_encoding:
-            raise cls.BackendException('Gpsies has no equivalent for {}'.format(value))
-        return cls._category_encoding[value]
 
     def _write_category(self, track):
         """change category on gpsies."""

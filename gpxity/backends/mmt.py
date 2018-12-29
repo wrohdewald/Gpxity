@@ -41,7 +41,7 @@ import calendar
 from collections import defaultdict
 import requests
 
-from .. import Backend, Track
+from .. import Backend
 from ..version import VERSION
 
 
@@ -215,8 +215,34 @@ class MMT(Backend):
         'Hot air ballooning', 'Nordic walking', 'Miscellaneous', 'Skateboarding',
         'Snowshoeing', 'Jet skiing', 'Powerboating', 'Wheelchair', 'Indoor cycling')
 
+    _category_decoding = {
+        'SUP boarding': 'Stand up paddle boarding',
+        'Mountain biking': 'Cycling - MTB',
+        'Cross country skiing': 'Skiing - Touring',
+        'Hand cycling': 'Cycling - Hand',
+        'Indoor cycling': 'Cycling - Indoor',
+    }
+
     _category_encoding = {
+        'Cycling - Road': 'Cycling',
+        'Cycling - Gravel': 'Cycling',
+        'Cycling - Touring': 'Cycling',
+        'Cycling - Foot': 'Cycling',
+        'Cycling - Hand': 'Hand cycling',
         'Cabriolet': 'Driving',
+        'Skiing - Backcountry': 'Cross country skiing',
+        'Skiing - Nordic': 'Cross country skiing',
+        'Skiing - Alpine': 'Skiing',
+        'Skiing - Roller': 'Skiing',
+        'Swimrun': 'Miscellaneous',
+        'Running - Trail': 'Miscellaneous',
+        'Running - Urban Trail': 'Miscellaneous',
+        'Sightseeing': 'Miscellaneous',
+        'Geocaching': 'Miscellaneous',
+        'Longboard': 'Miscellaneous',
+        'River navigation': 'Miscellaneous',
+        'Skating - Inline': 'Skating',
+
         'Coach': 'Miscellaneous',
         'Crossskating': 'Skating',
         'Handcycle': 'Cycling',
@@ -285,34 +311,6 @@ class MMT(Backend):
                 cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
         return self._session[ident]
-
-    @classmethod
-    def decode_category(cls, value: str) ->str:
-        """Translate the value from MMT into internal one.
-
-        Since gpxity once decided to use MMT definitions for tracks, this should mostly be 1:1 here.
-
-        Returns:
-            the decoded value
-
-        """
-        if value not in Track.categories:
-            raise cls.BackendException('MMT gave us an unknown category={}'.format(value))
-        return value
-
-    @classmethod
-    def encode_category(cls, value: str) ->str:
-        """Translate internal value into MMT value.
-
-        Returns:
-            the translated value
-
-        """
-        if value in cls.supported_categories:
-            return value
-        if value not in cls._category_encoding:
-            raise cls.BackendException('MMT has no equivalent for {}'.format(value))
-        return cls._category_encoding[value]
 
     @property
     def mid(self):
