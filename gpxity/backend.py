@@ -120,6 +120,8 @@ class Backend:
 
     _max_length = dict()
 
+    _default_public = False
+
     point_precision = 5
 
     # It is important that we have only one global session

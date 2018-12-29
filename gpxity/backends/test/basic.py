@@ -280,7 +280,7 @@ class BasicTest(unittest.TestCase):
     def setup_backend(  # pylint: disable=too-many-arguments
             self, cls_, username: str = None, url: str = None, count: int = 0,
             cleanup: bool = True, clear_first: bool = True, category: str = None,
-            public: bool = False):
+            public: bool = None):
         """set up an instance of a backend with count tracks.
 
         If count == len(:attr:`Track.legal_categories <gpxity.track.Track.legal_categories>`),
@@ -295,7 +295,7 @@ class BasicTest(unittest.TestCase):
             count: how many random tracks should be inserted?
             cleanup: If True, remove all tracks when done. Passed to the backend.
             clear_first: if True, first remove all existing tracks
-            public: should the tracks be public or private?
+            public: should the tracks be public or private? If None, use Backend default.
 
         Returns:
             the prepared Backend
@@ -304,6 +304,8 @@ class BasicTest(unittest.TestCase):
 
         if username is None:
             username = 'gpxitytest'
+        if public is None:
+            public = cls_._default_public
 
         if cls_ is WPTrackserver:
             self.create_temp_mysqld()
@@ -392,7 +394,7 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
                      cleanup=True, clear_first=True, category=None,
-                     public: bool = False, username=None):
+                     public: bool = None, username=None):
         """Just like setup_backend but usable as a context manager. which will call destroy() when done."""
         tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public)
         try:
