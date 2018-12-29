@@ -451,6 +451,7 @@ class TestBackends(BasicTest):
 
     def test_backend_dirty(self):
         """track1._dirty."""
+        test_category = 'Hiking' # Use something supported by ALL backends
         for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
             with self.tst_backend(cls):
                 with self.temp_backend(cls, count=1) as backend1:
@@ -459,20 +460,20 @@ class TestBackends(BasicTest):
                         track1._dirty = False
                     self.assertFalse(track1._dirty)
                     # version 1.1 should perhaps be a test on its own, see Track.to_xml()
-                    track1.category = 'Driving'
+                    track1.category = test_category
                     track1._dirty = 'gpx'
                     self.assertFalse(track1._dirty)
                     backend2 = backend1.clone()
-                    self.assertEqual(backend2[0].category, 'Driving')
+                    self.assertEqual(backend2[0].category, test_category)
                     b2track = backend2[0]
-                    self.assertEqual(b2track.category, 'Driving')
+                    self.assertEqual(b2track.category, test_category)
                     b2track.title = 'another new title'
-                    self.assertEqual(b2track.category, 'Driving')
-                    self.assertEqual(backend2[0].category, 'Driving')
+                    self.assertEqual(b2track.category, test_category)
+                    self.assertEqual(backend2[0].category, test_category)
                     track1.title = 'new title'
-                    self.assertEqual(track1.category, 'Driving')
+                    self.assertEqual(track1.category, test_category)
                     backend3 = backend1.clone()
-                    self.assertEqual(backend3[0].category, 'Driving')
+                    self.assertEqual(backend3[0].category, test_category)
                     self.assertFalse(track1._dirty)
                     with track1.batch_changes():
                         track1.title = 'new 2'
@@ -534,7 +535,7 @@ class TestBackends(BasicTest):
                     test_values = {
                         'title': ('first title', 'Täst Titel'),
                         'description': ('first description', 'Täst description'),
-                        'category': ('Driving', 'Rowing'), 'public': (True, False)}
+                        'category': ('Hiking', 'Rowing'), 'public': (True, False)}
                     if cls is not GPSIES:
                         test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
                     prev_track = track.clone()
