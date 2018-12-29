@@ -652,3 +652,11 @@ class TestBackends(BasicTest):
                     with self.temp_backend(cls, username=_):
                         pass
                 self.assertEqual(str(context.exception), '{} needs a username'.format(cls.default_url), _)
+
+    def test_category_map(self):
+        """Check if moving a Track between local and remote conserves activity info."""
+        with Directory() as local_directory:
+            for cls in Backend.all_backend_classes(needs={'own_categories'}):
+                with self.tst_backend(cls):
+                    with self.temp_backend(cls) as backend:
+            for category in cls.legal_
