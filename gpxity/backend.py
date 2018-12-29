@@ -276,7 +276,7 @@ class Backend:
             raise
 
     def decode_category(self, value: str) ->str:  # pylint: disable=no-self-use
-        """Translate the value from the backend into internal one.
+        """Translate the value from the backend into one out of Track.categories.
 
         Returns: The decoded value.
 
@@ -284,7 +284,7 @@ class Backend:
         return value
 
     def encode_category(self, value: str) ->str:  # pylint: disable=no-self-use
-        """Translate internal value into the backend specific value.
+        """Translate internal value (out of Track.categories) into the backend specific value.
 
         Returns: The encoded value.
 
