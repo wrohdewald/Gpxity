@@ -171,6 +171,16 @@ class Backend:
             return False
         return self.url == self.default_url
 
+    def _get_author(self):
+        """Get the username for the account.
+
+        Raise BackendException if no username is given.
+        """
+        author = self.config.section.get('Username')
+        if not author:
+            raise Backend.BackendException('{} needs a username'.format(self.url))
+        return author
+
     def __str__(self) ->str:
         """A unique identifier for every physical backend.
 

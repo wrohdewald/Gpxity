@@ -587,15 +587,10 @@ class MMT(Backend):
 
     def _load_track_headers(self):
         """get all tracks for this user."""
-
-        author = self.config.section.get('Username')
-        if not author:
-            raise self.BackendException('{} needs a username'.format(self.url))
-
         while True:
             old_len = self.real_len()
             response = self.__post(
-                request='get_activities', author=self.config.username,
+                request='get_activities', author=self._get_author(),
                 offset=old_len)
             chunk = response.find('activities')
             if not chunk:
