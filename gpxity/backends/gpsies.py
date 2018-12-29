@@ -305,7 +305,8 @@ class GPSIES(Backend):
         self._check_response(response, track)
         return response
 
-    def decode_category(self, value: str) ->str:
+    @classmethod
+    def decode_category(cls, value: str) ->str:
         """Translate the value from Gpsies into internal one.
 
         Returns:
@@ -314,24 +315,25 @@ class GPSIES(Backend):
         """
         if value.capitalize() in Track.categories:
             return value.capitalize()
-        if value not in self._category_decoding:
-            raise self.BackendException('Gpsies gave us an unknown track type {}'.format(value))
-        return self._category_decoding[value]
+        if value not in cls._category_decoding:
+            raise cls.BackendException('Gpsies gave us an unknown track type {}'.format(value))
+        return cls._category_decoding[value]
 
-    def encode_category(self, value: str) ->str:
+    @classmethod
+    def encode_category(cls, value: str) ->str:
         """Translate internal value into Gpsies value.
 
         Returns:
             The encoded name
 
         """
-        if value in self.supported_categories:
+        if value in cls.supported_categories:
             return value
-        if value.lower() in self.supported_categories:
+        if value.lower() in cls.supported_categories:
             return value.lower()
-        if value not in self._category_encoding:
-            raise self.BackendException('Gpsies has no equivalent for {}'.format(value))
-        return self._category_encoding[value]
+        if value not in cls._category_encoding:
+            raise cls.BackendException('Gpsies has no equivalent for {}'.format(value))
+        return cls._category_encoding[value]
 
     def _write_category(self, track):
         """change category on gpsies."""

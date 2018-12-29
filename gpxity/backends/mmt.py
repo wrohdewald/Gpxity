@@ -286,7 +286,8 @@ class MMT(Backend):
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
         return self._session[ident]
 
-    def decode_category(self, value: str) ->str:
+    @classmethod
+    def decode_category(cls, value: str) ->str:
         """Translate the value from MMT into internal one.
 
         Since gpxity once decided to use MMT definitions for tracks, this should mostly be 1:1 here.
@@ -296,21 +297,22 @@ class MMT(Backend):
 
         """
         if value not in Track.categories:
-            raise self.BackendException('MMT gave us an unknown category={}'.format(value))
+            raise cls.BackendException('MMT gave us an unknown category={}'.format(value))
         return value
 
-    def encode_category(self, value: str) ->str:
+    @classmethod
+    def encode_category(cls, value: str) ->str:
         """Translate internal value into MMT value.
 
         Returns:
             the translated value
 
         """
-        if value in self.supported_categories:
+        if value in cls.supported_categories:
             return value
-        if value not in self._category_encoding:
-            raise self.BackendException('MMT has no equivalent for {}'.format(value))
-        return self._category_encoding[value]
+        if value not in cls._category_encoding:
+            raise cls.BackendException('MMT has no equivalent for {}'.format(value))
+        return cls._category_encoding[value]
 
     @property
     def mid(self):
