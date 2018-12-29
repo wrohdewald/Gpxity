@@ -235,7 +235,6 @@ class Mailer(Backend):  # pylint: disable=abstract-method
 
     def _lifetrack_end(self, track):
         """flush."""
-        self.logger.debug('ich bin Mailer._lifetrack_end')
         track.mail_subject = 'Lifetracking ends: {}'.format(track.title)
         self._write_all(track)
         self.flush()
