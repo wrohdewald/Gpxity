@@ -129,8 +129,8 @@ class BasicTest(unittest.TestCase):
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
             category: The wanted value for the track.
-                Default: if count == len(:attr:`Track.legal_categories <gpxity.track.Track.legal_categories>`),
-                the default value will be legal_categories[idx].
+                Default: if count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
+                the default value will be categories[idx].
                 Otherwise a random value will be applied.
             public: should the tracks be public or private?
             start_time: If given, assign it to the first point and adjust all following times
@@ -165,10 +165,10 @@ class BasicTest(unittest.TestCase):
         result.description = 'Description to {}'.format(gpx.name)
         if category:
             result.category = category
-        elif count == len(Track.legal_categories):
-            result.category = Track.legal_categories[idx]
+        elif count == len(Track.categories):
+            result.category = Track.categories[idx]
         else:
-            result.category = random.choice(Track.legal_categories)
+            result.category = random.choice(Track.categories)
         result.public = public
         return result
 
@@ -283,7 +283,7 @@ class BasicTest(unittest.TestCase):
             public: bool = None):
         """set up an instance of a backend with count tracks.
 
-        If count == len(:attr:`Track.legal_categories <gpxity.track.Track.legal_categories>`),
+        If count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
         the list of tracks will always be identical. For an example
         see :meth:`TestBackends.test_all_category <gpxity.backends.test.test_backends.TestBackends.test_all_category>`.
 

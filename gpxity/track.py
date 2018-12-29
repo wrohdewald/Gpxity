@@ -120,7 +120,7 @@ class Track:  # pylint: disable=too-many-public-methods
             loading it from some backend.
 
     Attributes:
-        legal_categories (tuple(str)): The legal values for :attr:`~Track.category`. The first one is used
+        categories (tuple(str)): The legal values for :attr:`~Track.category`. The first one is used
             as default value. This is a mostly a superset of the values for the different backends.
             Every backend maps from its internal values into those when reading and maps them
             back when writing. Since not all backends support all values defined here and since
@@ -134,7 +134,7 @@ class Track:  # pylint: disable=too-many-public-methods
     class CannotMerge(Exception):
         """Is raised if  Track.merge() fails."""
 
-    legal_categories = (
+    categories = (
         # values from MMT
         'Cycling', 'Running', 'Mountain biking', 'Indoor cycling', 'Sailing', 'Walking', 'Hiking',
         'Swimming', 'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
@@ -151,7 +151,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """See class docstring."""
         self.__dirty = list()
         self._batch_changes = False
-        self.__category = self.legal_categories[0]
+        self.__category = self.categories[0]
         self.__public = False
         self._ids = list()
         self.__id_in_backend = None
@@ -482,7 +482,7 @@ class Track:  # pylint: disable=too-many-public-methods
         the value used by the backend. This happens when reading from
         or writing to the backend.
         Returns:
-            The current value or the default value (see :attr:`legal_categories`)
+            The current value or the default value (see :attr:`categories`)
 
         """
         if not self._loaded and 'category' in self._header_data:
@@ -494,9 +494,9 @@ class Track:  # pylint: disable=too-many-public-methods
     def category(self, value: str):
         """see getter."""
         if value is None:
-            value = self.legal_categories[0]
+            value = self.categories[0]
         if value != self.__category:
-            if value not in self.legal_categories:
+            if value not in self.categories:
                 raise Exception('Category {} is not known'.format(value))
             self._load_full()
             self.__category = value

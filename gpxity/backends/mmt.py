@@ -295,7 +295,7 @@ class MMT(Backend):
             the decoded value
 
         """
-        if value not in Track.legal_categories:
+        if value not in Track.categories:
             raise self.BackendException('MMT gave us an unknown category={}'.format(value))
         return value
 

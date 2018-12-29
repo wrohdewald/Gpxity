@@ -312,7 +312,7 @@ class GPSIES(Backend):
             The decoded name
 
         """
-        if value.capitalize() in Track.legal_categories:
+        if value.capitalize() in Track.categories:
             return value.capitalize()
         if value not in self._category_decoding:
             raise self.BackendException('Gpsies gave us an unknown track type {}'.format(value))

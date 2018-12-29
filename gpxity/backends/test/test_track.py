@@ -99,7 +99,7 @@ class TrackTests(BasicTest):
 
     def test_no_category(self):
         """category must return default value if not present in gpx.keywords."""
-        category_default = Track.legal_categories[0]
+        category_default = Track.categories[0]
         track = Track()
         self.assertEqual(track.category, category_default)
         track.category = None
@@ -113,7 +113,7 @@ class TrackTests(BasicTest):
 
     def test_duplicate_category(self):
         """try to add two categories to Track."""
-        category_other = Track.legal_categories[5]
+        category_other = Track.categories[5]
         track = Track()
         track.category = category_other
         with self.assertRaises(Exception):
@@ -121,8 +121,8 @@ class TrackTests(BasicTest):
 
     def test_remove_category(self):
         """remove category from Track."""
-        category_default = Track.legal_categories[0]
-        category_other = Track.legal_categories[5]
+        category_default = Track.categories[0]
+        category_other = Track.categories[5]
         track = Track()
         track.category = category_other
         self.assertEqual(track.category, category_other)
@@ -214,7 +214,7 @@ class TrackTests(BasicTest):
         xml = track2.to_xml()
         self.assertIn('Status:public', xml)
         track2 = Track()
-        track2.category = Track.legal_categories[3]
+        track2.category = Track.categories[3]
         track2.public = False
         track2.parse(xml)
         self.assertTrue(track2.public)
@@ -420,7 +420,7 @@ class TrackTests(BasicTest):
         """Track.key()."""
         title = 'This is a niße title'
         description = title + ' NOT - it is the description'
-        category = Track.legal_categories[3]
+        category = Track.categories[3]
         public = True
         points = self._random_points(10)
         track = Track()
