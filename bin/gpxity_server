@@ -183,7 +183,7 @@ class MMTHandler(BaseHTTPRequestHandler):
     @staticmethod
     def answer_with_categories():
         """Return all categories."""
-        all_cat = MMT.legal_categories
+        all_cat = MMT.supported_categories
         return ''.join('<li><input name="add-activity-x">&nbsp;{}</li>'.format(x) for x in all_cat)
 
     def do_GET(self):  # noqa pylint: disable=invalid-name
@@ -434,7 +434,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                 public = parsed.get('privacy', 'private') == 'public'
                 # the MMT API example uses cycling instead of Cycling,
                 # and Oruxmaps does so too.
-                category = parsed.get('activity', MMT.legal_categories[0]).capitalize()
+                category = parsed.get('activity', MMT.supported_categories[0]).capitalize()
                 tracker.start(points, title, public, category)
                 self.server.trackers[tracker.formatted_ids()] = tracker
             else:

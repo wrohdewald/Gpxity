@@ -181,7 +181,7 @@ class GPSIES(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    legal_categories = (
+    supported_categories = (
         'biking', 'trekking', 'walking', 'jogging', 'climbing', 'racingbike', 'mountainbiking',
         'pedelec', 'skating', 'crossskating', 'handcycle', 'motorbiking', 'motocross', 'motorhome',
         'cabriolet', 'car', 'riding', 'coach', 'packAnimalTrekking', 'swimming', 'canoeing', 'sailing',
@@ -325,9 +325,9 @@ class GPSIES(Backend):
             The encoded name
 
         """
-        if value in self.legal_categories:
+        if value in self.supported_categories:
             return value
-        if value.lower() in self.legal_categories:
+        if value.lower() in self.supported_categories:
             return value.lower()
         if value not in self._category_encoding:
             raise self.BackendException('Gpsies has no equivalent for {}'.format(value))

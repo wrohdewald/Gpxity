@@ -205,7 +205,7 @@ class MMT(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    legal_categories = (
+    supported_categories = (
         'Cycling', 'Running', 'Mountain biking', 'Sailing', 'Walking', 'Hiking',
         'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
         'Skiing', 'Cross country skiing', 'Canoeing', 'Kayaking', 'Sea kayaking',
@@ -306,7 +306,7 @@ class MMT(Backend):
             the translated value
 
         """
-        if value in self.legal_categories:
+        if value in self.supported_categories:
             return value
         if value not in self._category_encoding:
             raise self.BackendException('MMT has no equivalent for {}'.format(value))

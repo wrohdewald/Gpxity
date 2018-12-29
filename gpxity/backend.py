@@ -197,7 +197,7 @@ class Backend:
             self.config.username)
         return result
 
-    legal_categories = Track.legal_categories
+    supported_categories = Track.legal_categories
 
     @contextmanager
     def _decouple(self):
@@ -240,7 +240,7 @@ class Backend:
             '_write_all': 'write'}
         cls.supported = set()
         cls.supported.add('keywords')  # default
-        if cls.legal_categories != Track.legal_categories:
+        if cls.supported_categories != Track.legal_categories:
             cls.supported.add('own_categories')
         for name, method in getmembers(cls, isfunction):
             if name in support_mappings:

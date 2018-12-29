@@ -607,7 +607,7 @@ class TestBackends(BasicTest):
         def check():
             """check this backend."""
             downloaded = backend._download_legal_categories()
-            self.assertEqual(sorted(backend.legal_categories), downloaded)
+            self.assertEqual(sorted(backend.supported_categories), downloaded)
 
         for cls in Backend.all_backend_classes(needs={'own_categories'}):
             if cls is TrackMMT and Directory.is_disabled():
