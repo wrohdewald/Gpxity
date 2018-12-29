@@ -195,14 +195,14 @@ class LsRow(dict):
     def _break_long_fields(self):
         """Break long fields into continuation lines."""
         fields = LsRow.visible_fields()
-        for idx, field in enumerate(fields):
+        for field in fields:
             _ = field.format_raw(self[field.head_ident])
             wrapped = textwrap.wrap(_, LsField.max_display_width)
             if len(wrapped) > 1:
                 assert field.type_ == str
                 self[field.head_ident] = wrapped.pop(0)
                 self.continuations.extend([''] * (len(wrapped) - len(self.continuations)))
-                for cont_idx,  value in enumerate(wrapped):
+                for cont_idx, value in enumerate(wrapped):
                     self.continuations[cont_idx] = self.continuations[cont_idx].ljust(field.x_position) + value
 
     def print_row(self):
@@ -304,7 +304,7 @@ class Utility:
     """this is where the work is done"""
 
     def __init__(self):
-        # pylint: disable=too-many-branches,too-many-nested-blocks
+        # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
         self.exit_code = 0
         self.options = None
         self.subparsers = None
@@ -337,7 +337,7 @@ class Utility:
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
                         self.destination = sources[-1]
-                        if self.options.func == self.merge and not self.options.remove:
+                        if self.options.func == self.merge and not self.options.remove:  # pylint: disable=comparison-with-callable
                             msg = 'CAUTION: merging something with itself does nothing. Did you forget --remove?'
                             if len(self.options.source) == 1:
                                 self.exit_code = 2
@@ -552,7 +552,9 @@ class Utility:
                 point_count = _.gpx.get_track_points_no()
                 _.gpx.simplify(self.options.simplify)
                 if _.gpx.get_track_points_no() != point_count:
-                    logging.info('{}: reduced points from {} to {}'.format(_, point_count, _.gpx.get_track_points_no()))
+                    logging.info(
+                        '%s: reduced points from %s to %s',
+                        _, point_count, _.gpx.get_track_points_no())
                     _.rewrite()
             if self.options.split:
                 _.split()
@@ -565,10 +567,11 @@ class Utility:
         for _ in self.source_tracks:
             result_lines.append('------- {} -------'.format(_))
             if self.options.points:
-                for p0, p1 in pairs(_.points()):
+                for point0, point1 in pairs(_.points()):
                     result_lines.append(
                         '{} -- {}: time={} distance={} speed={}'.format(
-                            p0, p1, p1.time - p0.time, p1.distance_3d(p0), p1.speed_between(p0)))
+                            point0, point1, point1.time - point0.time,
+                            point1.distance_3d(point0), point1.spointeed_between(point0)))
 
         for _ in result_lines:
             logging.error(_)
@@ -603,7 +606,7 @@ class Utility:
         """Sets the status."""
         for _ in self.source_tracks:
             _.public = value
-            logging.info('set status %s for %s','public' if value else 'private', _)
+            logging.info('set status %s for %s', 'public' if value else 'private', _)
 
     def set_private(self):
         """Sets the status."""
@@ -627,8 +630,9 @@ class Utility:
             msg = list()
             for _ in self.source_tracks:
                 try:
-                    msg.extend(self.destination.merge(_, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
-                    partial_tracks=self.options.partial_tracks))
+                    msg.extend(self.destination.merge(
+                        _, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
+                        partial_tracks=self.options.partial_tracks))
                 except Track.CannotMerge as exc:
                     msg.append(str(exc))
         if not self.options.dry_run:
@@ -730,7 +734,9 @@ class Utility:
     def build_common_parser():
         """Returns a subparser for common arguments"""
         result = argparse.ArgumentParser(add_help=False)
-        result.add_argument('--loglevel', help='set the loglevel', choices=('none','debug', 'info', 'warning', 'error'), default='none')
+        result.add_argument(
+            '--loglevel', help='set the loglevel',
+            choices=('none', 'debug', 'info', 'warning', 'error'), default='none')
         result.add_argument('--timeout', help="""
             Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
             the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
@@ -801,11 +807,13 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             'ls', help='list tracks', parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
-        ls_parser.add_argument('--sort',
-                               help="""sort by one ore more columns, separated by commas (no spaces allowed)""",
-                               choices = ('identifier', 'title', 'category', 'time', 'distance',
-                               'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity'),
-                               default='identifier')
+        ls_parser.add_argument(
+            '--sort',
+            help="""sort by one ore more columns, separated by commas (no spaces allowed)""",
+            choices=(
+                'identifier', 'title', 'category', 'time', 'distance',
+                'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity'),
+            default='identifier')
         ls_parser.add_argument('--total',
                                help="""Show a total line""",
                                action='store_true', default=False)
@@ -843,14 +851,17 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         ls_parser.add_argument('--warnings', help='show warnings',
                                action='store_true', default=False)
-        ls_parser.add_argument('--location-provider', help="data provider",
+        ls_parser.add_argument(
+            '--location-provider', help="data provider",
             choices=geocoder.api.options.keys(), default='osm')
         ls_parser.add_argument(
             '--locate', action='append',
-            help="""the name of a place. --location can be repeated. Find tracks touching all locations, order by best match""")
+            help='the name of a place. --location can be repeated. '
+            'Find tracks touching all locations, order by best match')
         ls_parser.add_argument(
             '--max-away', type=float, default=100,
-            help="""to be used with --locate: show only tracks which are not more than MAX_AWAY kilometers farther away from given places.
+            help="""to be used with --locate: show only tracks which are not more than MAX_AWAY
+                kilometers farther away from given places.
                 The distance to all places is added to one value and the compared with MAX_AWAY.
                 Default is 100km.""")
         self.add_multi_source(ls_parser)
@@ -862,8 +873,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         cp_parser.set_defaults(func=self.copy)
-        cp_parser.add_argument('--dry-run', help='only show what would change',
-                                  action='store_true', default=False)
+        cp_parser.add_argument(
+            '--dry-run', help='only show what would change',
+            action='store_true', default=False)
         self.add_multi_source(cp_parser)
         self.add_destination(cp_parser)
 
@@ -879,7 +891,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         merge_parser.add_argument('--remove', help='remove merged tracks',
                                   action='store_true', default=False)
         merge_parser.add_argument('--partial-tracks',
-                                   help='merges two tracks if one is part of the other',
+                                  help='merges two tracks if one is part of the other',
                                   action='store_true', default=False)
         merge_parser.add_argument(
             '--copy', help='If the target is a backend, do not look for similar track. '
@@ -962,7 +974,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             parents=[self.common_parser, self.range_parser],
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         dump_parser.set_defaults(func=self.dump)
-        dump_parser.add_argument('--points', help='List detailled info about points',
+        dump_parser.add_argument(
+            '--points', help='List detailled info about points',
             action='store_true', default=False)
         self.add_multi_source(dump_parser)
 
@@ -986,6 +999,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         return parser
 
     def apply_parser(self, parser):
+        """Prepare parsed options for usage."""
+        # pylint: disable=too-many-branches,too-many-statements
         self.options = parser.parse_args()
 
         if self.options.timeout is not None:
@@ -994,7 +1009,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             else:
                 self.options.timeout = float(self.options.timeout)
 
-        if self.options.func == self.list_them:
+        if self.options.func == self.list_them:  # pylint: disable=comparison-with-callable
             if self.options.long or self.options.all:
                 self.options.title = True
                 self.options.time = True
@@ -1018,13 +1033,13 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                 logging.error('gpxdo: --location implies an order, do not use --sort')
                 self.exit_code = 2
                 return
-        elif self.options.func == self.merge:
+        elif self.options.func == self.merge:  # pylint: disable=comparison-with-callable
             if not self.options.source:
                 self.options.source = [self.options.destination]
-        elif self.options.func == self.fix:
+        elif self.options.func == self.fix:  # pylint: disable=comparison-with-callable
             exclusive = ('id_from_title', 'title_from_id', 'id_from_backend')
             if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
-                logging.error('gpxdo: only one out of {} is allowed'.format(', '.join(exclusive).replace('_', '-')))
+                logging.error('gpxdo: only one out of %s is allowed', ', '.join(exclusive).replace('_', '-'))
                 self.exit_code = 2
                 return
         if self.options.only_keywords:
