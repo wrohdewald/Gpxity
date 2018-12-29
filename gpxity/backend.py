@@ -103,8 +103,6 @@ class Backend:
 
     supported = set()
 
-    _legal_categories = None  # Override in the backends
-
     default_url = None  # Override in the backends
 
     needs_config = True
