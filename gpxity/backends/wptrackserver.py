@@ -25,7 +25,6 @@ import datetime
 
 from gpxpy import gpx as mod_gpx
 
-from ..track import Track
 from ..backend import Backend
 from ..util import add_speed, utc_to_local_delta
 
@@ -68,8 +67,6 @@ class WPTrackserver(Backend):
     """
 
     # pylint: disable=abstract-method
-
-    legal_categories = Track.legal_categories
 
     test_is_expensive = False
 
