@@ -391,9 +391,10 @@ class GPSIES(Backend):
 
     def _load_track_headers(self):
         """get all tracks for this user."""
-
-        data = {'username': self.config.username}
-        response = self.__post('trackList', data=data)
+        author = self.config.section.get('Username')
+        if not author:
+            raise self.BackendException('{} needs a username'.format(self.url))
+        response = self.__post('trackList', data={'username': author})
         page_parser = ParseGPSIESList()
         page_parser.feed(response.text)
         hrefs = []
