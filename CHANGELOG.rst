@@ -5,6 +5,7 @@ Changelog
 ------------------------
 
   * new backend for Openrunner
+  * gpxdo --similar now supports a list of tracks
 
 1.4.1 release 2018-10-22
 ------------------------

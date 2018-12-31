@@ -328,7 +328,7 @@ class Utility:
         self.destination = None
         try:
             if hasattr(self.options, 'similar') and self.options.similar:
-                self.similar_to = Backend.instantiate(self.options.similar)
+                self.similar_to = [Backend.instantiate(x) for x in self.options.similar.split(',')]
             if self.options.source:
                 for _ in self.options.source:
                     if _.endswith('/') and _ != '/':
@@ -706,7 +706,7 @@ class Utility:
             return '{} is different from {}'.format(','.join(self.options.only_category), ','.join(track.category))
         if self.similar_to and track.similarity(self.similar_to) < 0.5:
             return 'Similarity {:1.2f} with {} is too small'.format(
-                track.similarity(self.similar_to), self.similar_to.id_in_backend)
+                track.similarity(self.similar_to), ','.join(x.id_in_backend for x in self.similar_to))
         return None
 
     @staticmethod
@@ -727,7 +727,12 @@ class Utility:
         result.add_argument('--max-speed', help='Limit tracks by maximal speed', type=int, default=None)
         result.add_argument('--only-keywords', help='Limit tracks by keywords', default=None)
         result.add_argument('--only-category', help='Limit tracks by category', default=None, choices=Track.categories)
-        result.add_argument('--similar', help='Limit tracks by similarity to track SIMILAR', default=None)
+        result.add_argument(
+            '--similar',
+            help='Limit tracks by similarity to one of tracks SIMILAR. '
+            'SIMILAR is a list of tracks separated with a comma and no space. '
+            'This will only work for track identifiers without comma.',
+            default=None)
         return result
 
     @staticmethod

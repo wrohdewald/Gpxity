@@ -1507,7 +1507,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self.__gpx.tracks[0].segments.append(segment)
         self._dirty = 'gpx'
 
-    def similarity(self, other):
+    def __similarity_to(self, other):
         """Return a float 0..1: 1 is identity."""
 
         def simple(track):
@@ -1530,6 +1530,15 @@ class Track:  # pylint: disable=too-many-public-methods
             other._similarity_others[id(self)] = self
             other._similarities[id(self)] = result
         return self._similarities[id(other)]
+
+    def similarity(self, others):
+        """Return a float 0..1: 1 is identity.
+
+        The highest value for others is returned."""
+
+        if isinstance(others, Track):
+            others = [others]
+        return max(self.__similarity_to(x) for x in others)
 
     def time_offset(self, other):
         """If time and last_time have the same offset between both tracks, return that time difference.
