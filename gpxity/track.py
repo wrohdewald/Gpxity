@@ -141,7 +141,7 @@ class Track:  # pylint: disable=too-many-public-methods
         'Cycling', 'Cycling - Road', 'Cycling - Gravel', 'Cycling - MTB', 'Cycling - Indoor', 'Cycling - Hand',
         'Cycling - Touring', 'Cycling - Foot',
         'Running', 'Running - Trail', 'Running - Urban Trail',
-        'Sailing', 'Walking', 'Hiking',
+        'Sailing', 'Walking', 'Hiking', 'Hiking - Speed',
         'Swimming', 'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
         'Skiing', 'Skiing - Touring', 'Skiing - Backcountry', 'Skiing - Nordic', 'Skiing - Alpine', 'Skiing - Roller',
         'Canoeing', 'Kayaking', 'Sea kayaking', 'Stand up paddle boarding',

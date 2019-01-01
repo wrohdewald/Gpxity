@@ -185,8 +185,8 @@ class GPSIES(Backend):
         'biking', 'trekking', 'walking', 'jogging', 'climbing', 'racingbike', 'mountainbiking',
         'pedelec', 'skating', 'crossskating', 'handcycle', 'motorbiking', 'motocross', 'motorhome',
         'cabriolet', 'car', 'riding', 'coach', 'packAnimalTrekking', 'swimming', 'canoeing', 'sailing',
-        'boating', 'motorboat', 'skiingNordic', 'skiingAlpine', 'skiingRandonnee', 'snowshoe',
-        'wintersports', 'flying', 'train', 'sightseeing', 'geocaching', 'miscellaneous')
+        'boating', 'motorboat', 'skiingNordic', 'skiingAlpine', 'skiingRandonnee', 'snowshoe', 'trailrunning',
+        'speedhiking', 'wintersports', 'flying', 'train', 'sightseeing', 'geocaching', 'miscellaneous')
 
     _category_decoding = {
         'biking': 'Cycling',
@@ -208,6 +208,8 @@ class GPSIES(Backend):
         'trekking': 'Hiking',
         'wintersports': 'Wintersports',
         'handcycle': 'Cycling - Hand',
+        'speedhiking': 'Hiking - Speed',
+        'trailrunning': 'Running - Trail',
     }
 
     _category_encoding = {
@@ -217,7 +219,7 @@ class GPSIES(Backend):
         'Cycling - Gravel': 'biking',
         'Cycling - Touring': 'biking',
         'Cycling - Foot': 'biking',
-        'Running - Trail': 'jogging',
+        'Cycling - Indoor': 'biking',
         'Running - Urban Trail': 'jogging',
         'Driving': 'car',
         'Enduro': 'motocross',

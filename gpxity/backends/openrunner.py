@@ -377,7 +377,7 @@ class Openrunner(Backend):
         'Skiing - Alpine': 'Autre',
         'Sailing': 'Autre',
         'Skating - Inline': 'Rollerblading',
-
+        'Hiking - Speed': 'Hiking',
         'Miscellaneous': 'Autre',
         'Pack animal trekking': 'Horse riding',
         'Coach': 'Autre',

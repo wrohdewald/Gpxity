@@ -242,7 +242,7 @@ class MMT(Backend):
         'Longboard': 'Miscellaneous',
         'River navigation': 'Miscellaneous',
         'Skating - Inline': 'Skating',
-
+        'Hiking - Speed': 'Hiking',
         'Coach': 'Miscellaneous',
         'Crossskating': 'Skating',
         'Handcycle': 'Cycling',
