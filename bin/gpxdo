@@ -399,6 +399,11 @@ class Utility:
                 _.remove()
                 logging.info('removed %s', _)
 
+    def split(self):
+        """Split tracks."""
+        for _ in self.source_tracks:
+            _.split()
+
     def list_them(self):
         """list tracks"""
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -556,8 +561,6 @@ class Utility:
                         '%s: reduced points from %s to %s',
                         _, point_count, _.gpx.get_track_points_no())
                     _.rewrite()
-            if self.options.split:
-                _.split()
         for _ in result_lines:
             logging.error(_)
 
@@ -922,6 +925,13 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         self.add_multi_source(rm_parser)
 
+        split_parser = self.subparsers.add_parser(
+            'split', help='split tracks: create a single Track for every track/segment',
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        split_parser.set_defaults(func=self.split)
+        self.add_multi_source(split_parser)
+
         diff_parser = self.subparsers.add_parser(
             'diff', help="""
             compare tracks between source and destination""",
@@ -960,8 +970,6 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             '--simplify',
             help='Reduce track points. The new track may move MAX meters away from the original',
             metavar='MAX', type=int, default=None)
-        fix_parser.add_argument('--split', help='create a single Track for every track/segment',
-                                action='store_true', default=False)
         fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
         self.add_multi_source(fix_parser)
 
