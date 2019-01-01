@@ -778,11 +778,8 @@ class Track:  # pylint: disable=too-many-public-methods
         Returns:
 
             The last time we received so far. If none, return None."""
-        self._load_full()
-        try:
-            return self.__gpx.tracks[-1].segments[-1].points[-1].time
-        except IndexError:
-            pass
+        _ = self.last_point()
+        return _.time if _ else None
 
     @property
     def keywords(self):
@@ -1133,9 +1130,12 @@ class Track:  # pylint: disable=too-many-public-methods
         return sum((x.points for x in self.segments()), [])
 
     def last_point(self):
-        """Return the last point of the track."""
+        """Return the last point of the track. None if none."""
         # TODO: unittest for track without __gpx or without points
-        return self.__gpx.tracks[-1].segments[-1].points[-1]
+        try:
+            return self.gpx.tracks[-1].segments[-1].points[-1]
+        except IndexError:
+            return None
 
     def adjust_time(self, delta):
         """Add a timedelta to all times.
