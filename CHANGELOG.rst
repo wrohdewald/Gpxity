@@ -8,6 +8,8 @@ Changelog
   * gpxdo --similar now supports a list of tracks
   * new: gpxdo --join
   * Track.merge (and gpxdo merge) now also merge waypoints
+  * Up/Download for the same backend class is now lossless for category
+  * adapted MMT backend to server changes
 
 1.4.1 release 2018-10-22
 ------------------------
