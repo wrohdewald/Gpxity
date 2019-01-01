@@ -1332,6 +1332,29 @@ class Track:  # pylint: disable=too-many-public-methods
                 other, other.gpx.get_track_points_no(),
                 self, self.gpx.get_track_points_no()))
 
+    def __merge_tracks(self, other, dry_run, shorter_at):
+        """Merge tracks from other."""
+        msg = []
+        if other.gpx.get_track_points_no() > self.gpx.get_track_points_no():
+            if not dry_run:
+                self.gpx.tracks = deepcopy(other.gpx.tracks)
+                self.rewrite()
+            msg.append('{} got entire gpx.tracks from {}'.format(self, other))
+        changed_point_times = 0
+        self_points = self.point_list()[shorter_at:]
+        for self_point, other_point in zip(self_points, other.points()):
+            # TODO: unittest with shorter track
+            if not self_point.time:
+                if not dry_run:
+                    self_point.time = other_point.time
+                changed_point_times += 1
+        if changed_point_times:
+            if not dry_run:
+                self.rewrite()
+            msg.append('Copied times for {} out of {} points'.format(
+                changed_point_times, self.gpx.get_track_points_no()))
+        return msg
+
     def merge(  # noqa pylint: disable=unused-argument
             self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
             partial_tracks: bool = False) ->list:
@@ -1362,25 +1385,8 @@ class Track:  # pylint: disable=too-many-public-methods
         if shorter_at is None:
             raise Track.CannotMerge(_)
         with self.batch_changes():
-            if other.gpx.get_track_points_no() > self.gpx.get_track_points_no():
-                if not dry_run:
-                    self.gpx.tracks = deepcopy(other.gpx.tracks)
-                    self.rewrite()
-                msg.append('{} got entire gpx.tracks from {}'.format(self, other))
+            msg.extend(self.__merge_tracks(other, dry_run, shorter_at))
             msg.extend(self.__merge_metadata(other, dry_run))
-            changed_point_times = 0
-            self_points = self.point_list()[shorter_at:]
-            for self_point, other_point in zip(self_points, other.points()):
-                # TODO: unittest with shorter track
-                if not self_point.time:
-                    if not dry_run:
-                        self_point.time = other_point.time
-                    changed_point_times += 1
-            if changed_point_times:
-                if not dry_run:
-                    self.rewrite()
-                msg.append('Copied times for {} out of {} points'.format(
-                    changed_point_times, self.gpx.get_track_points_no()))
         if msg:
             msg = ['     ' + x for x in msg]
             msg.insert(0, 'merge{} {!r}'.format(' and remove' if remove else '', other))
