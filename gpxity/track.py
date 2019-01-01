@@ -88,7 +88,11 @@ class Track:  # pylint: disable=too-many-public-methods
 
     """Represents a track.
 
-    An track is essentially a GPX file. If a backend supports attributes not directly
+    A Track is essentially a GPX file.  A GPX file may contain multiple tracks but whenever
+    this documentation says track or Track it does not refer to one of possibly multiple entities in
+    the GPX file. It refers to this class Track.
+
+    If a backend supports attributes not directly
     supported by the GPX format like the MapMyTracks track type, they will
     transparently be encodeded in existing GPX fields like keywords, see :attr:`keywords`.
 
@@ -101,19 +105,18 @@ class Track:  # pylint: disable=too-many-public-methods
     However you can use the context manager :meth:`batch_changes`. This holds back updating the backend until
     leaving the context.
 
-    If you manipulate the gpx directly, this goes unnoticed. Use :meth:`rewrite` when done.
+    If you manipulate the gpx directly, this goes unnoticed to the updating mechanism. Use :meth:`rewrite` when done.
 
     Not all backends support everything, you could get the exception NotImplementedError.
 
-    Some backends are able to change only one attribute with little time overhead, others always have
-    to rewrite the entire track.
-
-    All points are always rounded to  6 decimal digits when they are added to the
-    track.
+    All points are always rounded to 6 decimal digits when they are added to the track.
+    However some backends may support less than 6 decimals. You can query Backend.point_precision.
 
     The data will only be loaded from the backend when it is needed. Some backends
-    might support loading some attributes separately, but for now, we always load
-    everything as soon as anything is needed.
+    might support loading some attributes separately but we do not make use of that.
+    However backends have two ways of loading data: Either load a list of Tracks or load all information
+    about a specific track. Often loading the list of tracks gives us some attributes for free, so listing
+    those tracks may be much faster if you do not want everything listed.
 
     Args:
         gpx (GPX): Initial content. To be used if you create a new Track from scratch without

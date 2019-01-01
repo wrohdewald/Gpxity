@@ -1005,14 +1005,14 @@ class Backend:
 
     @classmethod
     def instantiate(cls, name, timeout=None):
-        """Instantiate a Backend out of its identifier.
+        """Instantiate a Backend or a Track out of its identifier.
 
         Args:
             timeout: Needed for creating backends like MMT or GPSIES.
                 See :attr:`Backend.timeout <gpxity.backend.Backend.timeout>`
 
         Returns:
-            A backend. If it has already been instantiated, return the cached value.
+            A Track or a Backend. If the Backend has already been instantiated, return the cached value.
 
         """
         # pylint: disable=too-many-branches
