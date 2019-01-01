@@ -245,7 +245,8 @@ class Track:  # pylint: disable=too-many-public-methods
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`."""
-        self._load_full()
+        if not self._loaded:
+            raise Exception('Track.rewrite: The track must already be loaded fully')
         self._dirty = 'gpx'
 
     @property
