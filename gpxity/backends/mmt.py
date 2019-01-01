@@ -724,7 +724,8 @@ class MMT(Backend):
 
         """
         if self.is_free_account:
-            raise Exception('Your free MMT account does not allow lifetracking')
+            self.logger.info('Your free MMT account does not allow lifetracking, I will send the entire track')
+            return super(MMT, self)._lifetrack_start(track, points)
         if MMT._current_lifetrack is not None:
             raise Exception('start: MMT only accepts one simultaneous lifetracker per username')
         MMT._current_lifetrack = track
@@ -751,6 +752,9 @@ class MMT(Backend):
             points: The new points
 
         """
+        if self.is_free_account:
+            super(MMT, self)._lifetrack_update(track, points)
+            return
         if MMT._current_lifetrack != track:
             raise Exception('update: MMT only accepts one simultaneous lifetracker per username')
         self.__post(
@@ -765,10 +769,13 @@ class MMT(Backend):
             track: The lifetrack
 
         """
-        if MMT._current_lifetrack != track:
-            raise Exception('end: MMT only accepts one simultaneous lifetracker per username')
-        self.__post(request='stop_activity')
-        MMT._current_lifetrack = None
+        if self.is_free_account:
+            super(MMT, self)._lifetrack_end(track)
+        else:
+            if MMT._current_lifetrack != track:
+                raise Exception('end: MMT only accepts one simultaneous lifetracker per username')
+            self.__post(request='stop_activity')
+            MMT._current_lifetrack = None
 
     def destroy(self):
         """also close session."""
