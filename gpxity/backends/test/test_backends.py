@@ -559,7 +559,7 @@ class TestBackends(BasicTest):
                             cls.decode_category(cls.supported_categories[2])),
                         'public': (True, False)
                     }
-                    if cls is not GPSIES:
+                    if 'keywords' in cls.supported:
                         test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
                     prev_track = track.clone()
                     for val_idx in (0, 1):
