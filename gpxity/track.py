@@ -1332,6 +1332,25 @@ class Track:  # pylint: disable=too-many-public-methods
                 other, other.gpx.get_track_points_no(),
                 self, self.gpx.get_track_points_no()))
 
+    def __merge_waypoints(self, other, dry_run):
+        """Merge waypoints from other with differing positions."""
+        # TODO: unittest
+        def have(wpt):
+            """True if we already have this waypoint."""
+            return (wpt.latitude, wpt.longitude) in [(x.latitude, x.longitude) for x in new_wpts]
+        merged_count = 0
+        new_wpts = self.gpx.waypoints[:]
+        for other_wpt in other.gpx.waypoints:
+            if not have(other_wpt):
+                new_wpts.append(other_wpt)
+                if not dry_run:
+                    self.gpx.waypoints.append(other_wpt)
+                    self.rewrite()
+                merged_count += 1
+        if merged_count > 0:
+            return ['{} got {} waypoints from {}'.format(self, merged_count, other)]
+        return []
+
     def __merge_tracks(self, other, dry_run, shorter_at):
         """Merge tracks from other."""
         msg = []
@@ -1358,13 +1377,17 @@ class Track:  # pylint: disable=too-many-public-methods
     def merge(  # noqa pylint: disable=unused-argument
             self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
             partial_tracks: bool = False) ->list:
-        """Merge other track into this one. The track points must be identical.
+        """Merge other track into this one.
+
+        Either the track points must be identical or the other track
+        may only contain waypoints.
 
         If merging is not possible, raise Track.CannotMerge.
 
         If either is public, the result is public.
         If self.title seems like a default and other.title does not, use other.title
         Combine description and keywords.
+        Merge waypoints as defined by _merge_waypoints().
 
         Args:
             other (:class:`~gpxity.track.Track`): The track to be merged
@@ -1386,6 +1409,7 @@ class Track:  # pylint: disable=too-many-public-methods
             raise Track.CannotMerge(_)
         with self.batch_changes():
             msg.extend(self.__merge_tracks(other, dry_run, shorter_at))
+            msg.extend(self.__merge_waypoints(other, dry_run))
             msg.extend(self.__merge_metadata(other, dry_run))
         if msg:
             msg = ['     ' + x for x in msg]
