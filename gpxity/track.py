@@ -1310,6 +1310,10 @@ class Track:  # pylint: disable=too-many-public-methods
         if str(self) == str(other):
             return None, 'Cannot merge identical tracks {}'.format(self)
 
+        if (other.gpx.get_track_points_no()) == 0 and other.gpx.waypoints:
+            # mergable
+            return 0, None
+
         if partial_tracks:
             other_in_self = self.index(other)
             if other_in_self is not None:

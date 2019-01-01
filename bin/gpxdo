@@ -404,6 +404,18 @@ class Utility:
         for _ in self.source_tracks:
             _.split()
 
+    def join(self):
+        """Join tracks."""
+        new_track = self.destination.add(self.source_tracks[0].clone())
+        new_track.gpx.tracks[0].name = new_track.title
+        for _ in self.source_tracks[1:]:
+            _.gpx.tracks[0].name = _.title
+            new_track.gpx.tracks.extend(_.gpx.tracks)
+        if self.options.title:
+            new_track.title = self.options.title
+            new_track.id_in_backend = new_track.title
+        new_track.rewrite()
+
     def list_them(self):
         """list tracks"""
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -931,6 +943,15 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         split_parser.set_defaults(func=self.split)
         self.add_multi_source(split_parser)
+
+        join_parser = self.subparsers.add_parser(
+            'join', help='join tracks into one single track',
+            parents=[self.common_parser, self.range_parser],
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        join_parser.set_defaults(func=self.join)
+        join_parser.add_argument('--title', help='Title and id for the new track', default=None)
+        self.add_multi_source(join_parser)
+        self.add_destination(join_parser)
 
         diff_parser = self.subparsers.add_parser(
             'diff', help="""
