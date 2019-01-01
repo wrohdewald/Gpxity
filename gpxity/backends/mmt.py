@@ -69,7 +69,7 @@ class ParseMMTCategories(HTMLParser):  # pylint: disable=abstract-method
         """See class docstring."""
         super(ParseMMTCategories, self).__init__()
         self.seeing_category = False
-        self.result = ['Cycling']  # The default value
+        self.result = list()
 
     def handle_starttag(self, tag, attrs):
         """starttag from the parser."""

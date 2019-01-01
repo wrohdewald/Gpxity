@@ -497,13 +497,19 @@ class Track:  # pylint: disable=too-many-public-methods
         if not self._loaded and 'category' in self._header_data:
             return self._header_data['category']
         self._load_full()
-        return self.__category
+        return self.__category or self.__default_category()
+
+    def __default_category(self):
+        """The default for either an unsaved track or for the corresponding backend."""
+        if self.backend is None:
+            return self.categories[0]
+        return self.backend.decode_category(self.backend.supported_categories[0])
 
     @category.setter
     def category(self, value: str):
         """see getter."""
         if value is None:
-            value = self.categories[0]
+            value = self.__default_category()
         if value != self.__category:
             if value not in self.categories:
                 raise Exception('Category {} is not known'.format(value))

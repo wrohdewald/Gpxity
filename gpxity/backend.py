@@ -90,6 +90,7 @@ class Backend:
             but the unittests will try to stay within those limits.
         point_precision: The precision supported by this backend. We are never more precise than 6.
             That is the digits after the decimal separator.
+        supported_categories: The categories supported by this backend. The first one is used as default.
 
     """
 

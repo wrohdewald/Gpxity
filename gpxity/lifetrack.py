@@ -128,8 +128,6 @@ class Lifetrack:
             title = str(datetime.datetime.now())[:16]
         if public is None:
             public = False
-        if category is None:
-            category = self.targets[0].backend.supported_categories[0]
 
         for _ in self.targets:
             with _.track._decouple():
