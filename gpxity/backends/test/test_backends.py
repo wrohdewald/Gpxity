@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
+# Copyright (c) 2019 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
 """implements :class:`gpxity.backends.test.test_backends.TestBackends` for all backends."""

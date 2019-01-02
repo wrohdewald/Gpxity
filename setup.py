@@ -6,7 +6,7 @@
 
 from setuptools import setup, find_packages
 COPYRIGHT = """
-Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
+Copyright (c) 2019 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 See LICENSE for details.
 """
 

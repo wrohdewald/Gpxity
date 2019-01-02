@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
+# Copyright (c) 2019 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
 """This module defines :class:`~gpxity.auth.Authenticate`."""
