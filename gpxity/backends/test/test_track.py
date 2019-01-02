@@ -27,7 +27,7 @@ from gpxpy import gpx as mod_gpx
 from .basic import BasicTest, disabled
 from ... import Track, Backend, Fences
 from .. import Directory, ServerDirectory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
-from .. import Openrunner, Encoding
+from .. import Openrunner
 from ...util import repr_timespan, positions_equal
 
 # pylint: disable=attribute-defined-outside-init
@@ -768,5 +768,5 @@ class TrackTests(BasicTest):
                 ([(-50.109341, -7.203554), (0.133425, 8.74258)], False),
         ]:
             points = [GPXTrackPoint(latitude=lat, longitude=lon) for lat, lon in track]
-            enc_dec = Encoding.decode_points(Encoding.encode_points(points))
+            enc_dec = Openrunner._decode_points(Openrunner._encode_points(points))
             self.assertEqual(result, all(positions_equal(*x, digits=10) for x in zip(points, enc_dec)), track)  # noqa

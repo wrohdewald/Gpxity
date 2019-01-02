@@ -30,92 +30,7 @@ if False:  # pylint: disable=using-constant-test
         import httplib as http_client
     http_client.HTTPConnection.debuglevel = 1
 
-__all__ = ['Openrunner', 'Encoding']
-
-
-class Encoding:
-
-    """Openrunner transfers point data in a compressed format."""
-
-    @staticmethod
-    def encode_number(nbr) -> str:
-        """Encode a single unsigned number.
-
-        Returns: the encoded string
-
-        """
-        result = ''
-        while nbr >= 32:
-            result += chr(95 + (nbr & 31))
-            nbr >>= 5
-        result += chr(63 + nbr)
-        return result
-
-    @staticmethod
-    def encode_signed_number(nbr) ->str:
-        """Encode a single signed number.
-
-        Returns: The encoded string
-
-        """
-        tmp = nbr << 1
-        if nbr < 0:
-            tmp = ~tmp
-        return Encoding.encode_number(tmp)
-
-    @staticmethod
-    def encode_points(points) ->str:
-        """Encode a list of points.
-
-        Returns: the encoded string
-
-        """
-        result = ''
-        prev_lat = 0
-        prev_lon = 0
-        for point in points:
-            lat = round(point.latitude * 100000)
-            lon = round(point.longitude * 100000)
-            delta_lat = lat - prev_lat
-            delta_lon = lon - prev_lon
-            prev_lat = lat
-            prev_lon = lon
-            result += Encoding.encode_signed_number(delta_lat)
-            result += Encoding.encode_signed_number(delta_lon)
-        return result
-
-    @staticmethod
-    def decode_points(input_str) ->list:
-        """Decode str into a list of points.
-
-        Returns: list(GPXTrackPoint)
-
-        """
-        def decode_number():
-            """Decode a single number."""
-            nonlocal input_str
-            result = 0
-            shift = 0
-            while True:
-                ord_value = ord(input_str[0]) - 63
-                result |= (31 & ord_value) << shift
-                input_str = input_str[1:]
-                if ord_value < 32:
-                    break
-                shift += 5
-            if 1 & result:
-                return ~(result >> 1)
-            return result >> 1
-
-        def blow_up(nbr):
-            return round(0.00001 * nbr, 5)
-        result = list()
-        latitude = longitude = 0
-        while input_str:
-            latitude += decode_number()
-            longitude += decode_number()
-            result.append(GPXTrackPoint(latitude=blow_up(latitude), longitude=blow_up(longitude)))
-        return result
+__all__ = ['Openrunner']
 
 
 class OpenrunnerRawTrack:
@@ -469,6 +384,86 @@ class Openrunner(Backend):
 
     default_url = 'https://www.openrunner.com'
 
+    @staticmethod
+    def __encode_number(nbr) -> str:
+        """Encode a single unsigned number.
+
+        Returns: the encoded string
+
+        """
+        result = ''
+        while nbr >= 32:
+            result += chr(95 + (nbr & 31))
+            nbr >>= 5
+        result += chr(63 + nbr)
+        return result
+
+    @classmethod
+    def __encode_signed_number(cls, nbr) ->str:
+        """Encode a single signed number.
+
+        Returns: The encoded string
+
+        """
+        tmp = nbr << 1
+        if nbr < 0:
+            tmp = ~tmp
+        return cls.__encode_number(tmp)
+
+    @classmethod
+    def _encode_points(cls, points) ->str:
+        """Encode a list of points.
+
+        Returns: the encoded string
+
+        """
+        result = ''
+        prev_lat = 0
+        prev_lon = 0
+        for point in points:
+            lat = round(point.latitude * 100000)
+            lon = round(point.longitude * 100000)
+            delta_lat = lat - prev_lat
+            delta_lon = lon - prev_lon
+            prev_lat = lat
+            prev_lon = lon
+            result += cls.__encode_signed_number(delta_lat)
+            result += cls.__encode_signed_number(delta_lon)
+        return result
+
+    @staticmethod
+    def _decode_points(input_str) ->list:
+        """Decode str into a list of points.
+
+        Returns: list(GPXTrackPoint)
+
+        """
+        def decode_number():
+            """Decode a single number."""
+            nonlocal input_str
+            result = 0
+            shift = 0
+            while True:
+                ord_value = ord(input_str[0]) - 63
+                result |= (31 & ord_value) << shift
+                input_str = input_str[1:]
+                if ord_value < 32:
+                    break
+                shift += 5
+            if 1 & result:
+                return ~(result >> 1)
+            return result >> 1
+
+        def blow_up(nbr):
+            return round(0.00001 * nbr, 5)
+        result = list()
+        latitude = longitude = 0
+        while input_str:
+            latitude += decode_number()
+            longitude += decode_number()
+            result.append(GPXTrackPoint(latitude=blow_up(latitude), longitude=blow_up(longitude)))
+        return result
+
     def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
         """See class docstring."""
         if url is None:
@@ -629,7 +624,7 @@ class Openrunner(Backend):
         """Get the entire track."""
         response = self.__get(action='route/{}'.format(track.id_in_backend))
         route = response.json()['route']
-        points = Encoding.decode_points(route['shape']['full_encoded'])
+        points = self._decode_points(route['shape']['full_encoded'])
         track.add_points(points)
         track.title = route['name']
         track.description = route['description']
@@ -665,7 +660,7 @@ class Openrunner(Backend):
         data = {
             'route[activity]': self._legal_categories_numbers[self.encode_category(track.category)],
             'route[description]': track.description,
-            'route[elevation][sampleEncoded]': Encoding.encode_points(points),
+            'route[elevation][sampleEncoded]': self._encode_points(points),
             'route[elevation][sampleIntervalInMeter]': track.distance() / len(points),
             'route[end][lat]': points[-1].latitude,
             'route[end][lng]': points[-1].longitude,
@@ -677,8 +672,8 @@ class Openrunner(Backend):
             'route[name]': track.title,
             'route[official]': 0,
             'route[shape][pointShapeEncoded]': '',
-            'route[shape][pointShapeReducedEncoded]': Encoding.encode_points(points[:20]),
-            'route[shape][pointWaypointEncoded]': Encoding.encode_points(points),
+            'route[shape][pointShapeReducedEncoded]': self._encode_points(points[:20]),
+            'route[shape][pointWaypointEncoded]': self._encode_points(points),
             'route[shape][pointWaypointType]': 'A' * len(points),
             'route[shape][showMilestone]': 1,
             'route[shape][strokeColor]': "#b71c0c",
