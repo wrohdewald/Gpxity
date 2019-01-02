@@ -18,7 +18,7 @@ test "$currentdir" != Gpxity && (
 #
 #sphinx-apidoc -M -f -o source  ../gpxity
 
-cd doc
+cd doc/source
 
 make clean
 make html

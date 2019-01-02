@@ -3,14 +3,14 @@ gpxdo
 =====
 
 .. argparse::
-    :filename: ../bin/gpxdo
+    :filename: ../../bin/gpxdo
     :func: parser_for_sphinx
 
 gpxity_server
 =============
 
 .. argparse::
-    :filename: ../bin/gpxity_server
+    :filename: ../../bin/gpxity_server
     :func: create_parser
 
 Library
