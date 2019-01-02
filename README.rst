@@ -11,6 +11,7 @@ The library currently implements those backends:
   * :class:`~gpxity.backends.directory.Directory`: Directory for .gpx files on an accessible file system
   * :class:`~gpxity.backends.server_directory.ServerDirectory`: Directory suited for server implementations
   * :class:`~gpxity.backends.gpsies.GPSIES`: For tracks on https://gpsies.com
+  * :class:`~gpxity.backends.openrunner.Openrunner`: For tracks on https://openrunner.com
   * :class:`~gpxity.backends.mmt.MMT`: For tracks on http://mapmytracks.com
   * :class:`~gpxity.backends.trackmmt.TrackMMT`: For tracks on a very simple server emulating a
     few MMT commands (just what oruxmaps uses for uploading)
