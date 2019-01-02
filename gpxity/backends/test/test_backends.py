@@ -559,6 +559,9 @@ class TestBackends(BasicTest):
                         'public': (True, False),
                         'title': ('first title', 'Täst Titel'),
                     }
+                    if cls is Openrunner:
+                        # free account does not support private tracks
+                        del test_values['public']
                     if 'keywords' in cls.supported:
                         test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
                     prev_track = track.clone()
