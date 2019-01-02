@@ -302,7 +302,7 @@ class BasicTest(unittest.TestCase):
             clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
             category: The wanted category, one out of Track.categories. But this is a problem because we do the same
                 call for all backend classes and they support different categories. So: If category is int, this is an
-                index into cls_.supported_categories which will be decoded into Track.categories
+                index into Backend.supported_categories which will be decoded into Track.categories
 
             public: should the tracks be public or private? If None, use Backend default.
 
