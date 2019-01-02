@@ -1106,5 +1106,6 @@ def parser_for_sphinx():
     """Used by sphinx."""
     return Utility().parser
 
+print('argv:', sys.argv)
 if __name__ == '__main__':
     sys.exit(Utility().exit_code)
