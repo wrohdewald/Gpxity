@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.5.1 release 2019-01-02
+------------------------
+
+  * fix documentation at readthedocs.io
+
 1.5.0 release 2019-01-02
 ------------------------
 
