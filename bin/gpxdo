@@ -303,13 +303,15 @@ class HeaderRow(LsRow):
 class Utility:
     """this is where the work is done"""
 
-    def __init__(self):
+    def __init__(self, sphinx=False):
         # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
         self.exit_code = 0
         self.options = None
         self.subparsers = None
         logging.basicConfig(format='%(message)s', stream=sys.stdout)
         self.parser = self.create_parser()
+        if sphinx:
+            return
         try:
             argcomplete.autocomplete(self.parser)
         except NameError:
@@ -1104,8 +1106,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
 def parser_for_sphinx():
     """Used by sphinx."""
-    return Utility().parser
+    return Utility(sphinx=True).parser
 
-print('argv:', sys.argv)
 if __name__ == '__main__':
     sys.exit(Utility().exit_code)
