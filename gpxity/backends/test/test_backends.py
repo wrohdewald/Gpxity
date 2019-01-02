@@ -470,9 +470,9 @@ class TestBackends(BasicTest):
 
     def test_backend_dirty(self):
         """track1._dirty."""
-        test_category = 'Hiking' # Use something supported by ALL backends
         for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
             with self.tst_backend(cls):
+                test_category = cls.decode_category(cls.supported_categories[1])
                 with self.temp_backend(cls, count=1) as backend1:
                     track1 = backend1[0]
                     with self.assertRaises(Exception):
@@ -552,12 +552,12 @@ class TestBackends(BasicTest):
                     backend2 = backend.clone()
                     self.assertEqualTracks(track, backend2[0], with_category=False)
                     test_values = {
-                        'title': ('first title', 'Täst Titel'),
-                        'description': ('first description', 'Täst description'),
                         'category': (
                             cls.decode_category(cls.supported_categories[4]),
                             cls.decode_category(cls.supported_categories[2])),
-                        'public': (True, False)
+                        'description': ('first description', 'Täst description'),
+                        'public': (True, False),
+                        'title': ('first title', 'Täst Titel'),
                     }
                     if 'keywords' in cls.supported:
                         test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
@@ -614,7 +614,7 @@ class TestBackends(BasicTest):
                         backend2.scan()
                         self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
                     with track.batch_changes():
-                        for add_keywords, remove_keywords, expected_keywords in testcases(cls):
+                        for add_keywords, remove_keywords, expected_keywords in testcases(cls):  # noqa
                             track.change_keywords(add_keywords)
                             track.change_keywords('-' + x for x in remove_keywords)
                     self.assertEqual(sorted(expected_keywords), sorted(track.keywords))
@@ -696,6 +696,7 @@ class TestBackends(BasicTest):
 
         This is done locally assuming that Backend.supported_categories is correct.
         test_legal_categories() tests Backend.supported_categories for correctness.
+
         """
         for cls in Backend.all_backend_classes(needs={'own_categories'}):
             with self.tst_backend(cls):

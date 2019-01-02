@@ -94,8 +94,9 @@ class TrackingMessage:
             try:
                 points = MMTHandler.parse_points(self.parsed['points'])
                 if points:
-                    point_msg = ' with {} points: {}'.format(len(points), ','.join(str(round(x.elevation)) for x in points))
-            except Exception as exc:
+                    point_msg = ' with {} points: {}'.format(
+                        len(points), ','.join(str(round(x.elevation)) for x in points))
+            except BaseException as exc:
                 point_msg = '{}: {}'.format(exc, self.parsed['points'])
         return '{} {} from {} id={} request={} {} --> {}  {}'.format(
             self.time, self.command, self.from_ip, ident, request, point_msg, self.result, response).strip()
@@ -141,7 +142,7 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def return_error(self, code, reason):
         """Answer the clint with an xml formatted error message."""
-        self.error_response = (code, reason)
+        self.error_response = (code, reason)  # pylint: disable=attribute-defined-outside-init
         try:
             self.send_response(code, reason)
             xml = '<type>error</type><reason>{}</reason>'.format(reason)
@@ -150,7 +151,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', len(xml))
             self.end_headers()
             self.wfile.write(bytes(xml.encode('utf-8')))
-        except Exception as exc:
+        except BaseException as exc:
             logging.error('return_error failed: %s', exc)
 
     def parseRequest(self):  # noqa pylint: disable=invalid-name
@@ -188,7 +189,8 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):  # noqa pylint: disable=invalid-name
         """Override standard."""
-        self.server.logger.info('%s GET %s %s %s', self.server.second(), self.client_ip(), self.server.server_port, self.path)
+        self.server.logger.info(
+            '%s GET %s %s %s', self.server.second(), self.client_ip(), self.server.server_port, self.path)
         self.parseRequest()  # side effect: may output debug info
         self.send_response(200, 'OK')
         self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
@@ -222,44 +224,41 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):  # noqa pylint: disable=invalid-name
         """override standard."""
-        self.error_response = None
+        self.error_response = None  # pylint: disable=attribute-defined-outside-init
         answer = ''
         message = None
         got_post_time = datetime.datetime.now()
         try:
-            if True:
-                parsed = self.parseRequest()
-                message = TrackingMessage('POST', self.client_ip(), parsed, answer, self.error_response)
-                self.check_basic_auth_pw()
-                if self.error_response:
-                    return
-                if self.path != '/api/':
-                    self.return_error(400, 'Url {}: POST api: Path must be /api/'.format(self.path))
-                    return
-                request = parsed.get('request')
-                if not request:
-                    self.return_error(400, 'No request given in {}'.format(parsed))
-                    return
-                try:
-                    method = getattr(self, 'xml_{}'.format(request))
-                except AttributeError:
-                    self.return_error(400, 'Unknown request {}'.format(request))
-                    return
-                try:
-                    answer = method(parsed) or ''
-                except Exception as exc:
-                    self.return_error(400, '{}: {}'.format(request, exc))
-                    self.server.logger.debug(traceback.format_exc())
-                    return
-                xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(answer)
-                self.send_response(200, 'OK')
-                self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
-                self.send_header('Content-Type', 'text/xml; charset=UTF-8')
-                self.send_header('Content-Length', len(xml))
-                self.end_headers()
-                self.wfile.write(bytes(xml.encode('utf-8')))
-            else:
-                logging.debug('got error_response: %s', str(self.error_response))
+            parsed = self.parseRequest()
+            message = TrackingMessage('POST', self.client_ip(), parsed, answer, self.error_response)
+            self.check_basic_auth_pw()
+            if self.error_response:
+                return
+            if self.path != '/api/':
+                self.return_error(400, 'Url {}: POST api: Path must be /api/'.format(self.path))
+                return
+            request = parsed.get('request')
+            if not request:
+                self.return_error(400, 'No request given in {}'.format(parsed))
+                return
+            try:
+                method = getattr(self, 'xml_{}'.format(request))
+            except AttributeError:
+                self.return_error(400, 'Unknown request {}'.format(request))
+                return
+            try:
+                answer = method(parsed) or ''
+            except BaseException as exc:
+                self.return_error(400, '{}: {}'.format(request, exc))
+                self.server.logger.debug(traceback.format_exc())
+                return
+            xml = '<?xml version="1.0" encoding="UTF-8"?><message>{}</message>'.format(answer)
+            self.send_response(200, 'OK')
+            self.send_header('WWW-Authenticate', 'Basic realm="MMTracks API"')
+            self.send_header('Content-Type', 'text/xml; charset=UTF-8')
+            self.send_header('Content-Length', len(xml))
+            self.end_headers()
+            self.wfile.write(bytes(xml.encode('utf-8')))
         finally:
             try:
                 if message is None:
@@ -269,9 +268,9 @@ class MMTHandler(BaseHTTPRequestHandler):
                     message.response = self.error_response
                 message.log(prefix='  ')
                 self.server.history.append(message)
-            except Exception as exc:
+            except BaseException as exc:
                 logging.error(exc)
-            logging.debug('POST turnaround time: %s',  datetime.datetime.now() - got_post_time)
+            logging.debug('POST turnaround time: %s', datetime.datetime.now() - got_post_time)
 
     @staticmethod
     def xml_get_time(_) ->str:
@@ -320,8 +319,8 @@ class MMTHandler(BaseHTTPRequestHandler):
             try:
                 time = datetime.datetime.utcfromtimestamp(float(values[idx + 3]))
             except ValueError:
-                logging.error('Point has illegal time stamp {}'.format(values))
-                time=0
+                logging.error('Point has illegal time stamp %s', str(values))
+                time = 0
             point = GPXTrackPoint(
                 latitude=float(values[idx]),
                 longitude=float(values[idx + 1]),
@@ -345,7 +344,8 @@ class MMTHandler(BaseHTTPRequestHandler):
             _.add(track)
         return '<type>success</type><id>{}</id>'.format(new_ident)
 
-    def _fix_headers(self, parsed):
+    @staticmethod
+    def _fix_headers(parsed):
         """Fix some not so nice things in headers."""
         if 'privicity' in parsed:
             parsed['privacy'] = parsed['privicity']
@@ -408,7 +408,8 @@ class MMTHandler(BaseHTTPRequestHandler):
         else:
             raise KeyError("activity_id is missing")
         if tracker is None and trackers:
-            logging.error('%s: No tracker found for IP=%s and activity_id=%s in %s',
+            logging.error(
+                '%s: No tracker found for IP=%s and activity_id=%s in %s',
                 request, sender_ip, parsed.get('activity_id'),
                 ', '.join('{}:{}'.format(k, v.formatted_ids().replace('----', '->')) for k, v in trackers.items()))
         return tracker
@@ -420,29 +421,30 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer or None if there was an error
 
         """
-        if self.error_response is None:
-            tracker = self.find_tracker(parsed)
-            try:
-                points = self.parse_points(parsed['points'])
-            except Exception as exc:
-                self.return_error(400, str(exc))
-                return
+        if self.error_response is not None:
+            return None
+        tracker = self.find_tracker(parsed)
+        try:
+            points = self.parse_points(parsed['points'])
+        except BaseException as exc:
+            self.return_error(400, str(exc))
+            return None
 
-            if tracker is None:
-                tracker = self._new_tracker(parsed)
-                title = parsed.get('title', '')
-                public = parsed.get('privacy', 'private') == 'public'
-                # the MMT API example uses cycling instead of Cycling,
-                # and Oruxmaps does so too.
-                category = parsed.get('activity', MMT.supported_categories[0]).capitalize()
-                tracker.start(points, title, public, category)
-                self.server.trackers[tracker.formatted_ids()] = tracker
-            else:
-                tracker.update(points)
-            logging.info(
-                'Starting %s, remote software: %s version %s',
-                tracker, parsed.get('source'), parsed.get('version'))
-            return '<type>activity_started</type><activity_id>{}</activity_id>'.format(tracker.formatted_ids())
+        if tracker is None:
+            tracker = self._new_tracker(parsed)
+            title = parsed.get('title', '')
+            public = parsed.get('privacy', 'private') == 'public'
+            # the MMT API example uses cycling instead of Cycling,
+            # and Oruxmaps does so too.
+            category = parsed.get('activity', MMT.supported_categories[0]).capitalize()
+            tracker.start(points, title, public, category)
+            self.server.trackers[tracker.formatted_ids()] = tracker
+        else:
+            tracker.update(points)
+        logging.info(
+            'Starting %s, remote software: %s version %s',
+            tracker, parsed.get('source'), parsed.get('version'))
+        return '<type>activity_started</type><activity_id>{}</activity_id>'.format(tracker.formatted_ids())
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
@@ -503,7 +505,8 @@ class LifeServerMMT(HTTPServer):
         port = options.port or (443 if offer_https else 80)
         super(LifeServerMMT, self).__init__((options.servername, port), MMTHandler)
         if offer_https:
-            self.socket = ssl.wrap_socket (self.socket, certfile=options.certfile, keyfile=options.keyfile, server_side=True)
+            self.socket = ssl.wrap_socket(
+                self.socket, certfile=options.certfile, keyfile=options.keyfile, server_side=True)
         first_target = options.target[0]
         if not first_target.lower().startswith('serverdirectory:'):
             first_target = 'serverdirectory:' + first_target
@@ -516,18 +519,29 @@ class LifeServerMMT(HTTPServer):
         self.history = list()
 
     def define_logger(self, options):
+        """Setup logging."""
         result = logging.getLogger()
         result.setLevel(options.loglevel.upper())
-        logfile = logging.FileHandler(os.path.join(self.targets[0].url,'gpxity_server.log'))
+        logfile = logging.FileHandler(os.path.join(self.targets[0].url, 'gpxity_server.log'))
         logfile.setLevel(logging.DEBUG)
         result.addHandler(logfile)
         logging.getLogger('urllib3').level = logging.DEBUG
         return result
 
     def second(self):
+        """The timestamp.
+
+        Returns: A string.
+
+        """
         return '{:10.4f}'.format(datetime.datetime.now().timestamp() - self.start_second)
 
 def create_parser():
+    """Create the options parser.add_argument
+
+    Returns: The parser
+
+    """
     epilog = """
     The MMT server uses BASIC AUTH for login. Please define user:password in  the file .users in the first target.
     Please define authorization for the other targets in the file auth.cfg in the first target."""
@@ -536,11 +550,16 @@ def create_parser():
     parser.add_argument('--certfile', help='if certfile and keyfile are given: offer https')
     parser.add_argument('--keyfile', help='if certfile and keyfile are given, offer https')
     parser.add_argument('--port', help='listen on PORT. Default is 80 for http and 443 for https', type=int)
-    parser.add_argument('--loglevel', help='set the loglevel, default is error', choices=('debug', 'info', 'warning', 'error'), default='error')
+    parser.add_argument(
+        '--loglevel', help='set the loglevel, default is error',
+        choices=('debug', 'info', 'warning', 'error'), default='error')
     parser.add_argument('--timeout', help="""
         either one value in seconds or two comma separated values: The first one is the connection
         timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
-    parser.add_argument('target', help='backends who should receive the data. The first one must be a local directory', nargs='+')
+    parser.add_argument(
+        'target',
+        help='backends who should receive the data. The first one must be a local directory',
+        nargs='+')
     return parser
 
 class Main:  # pylint: disable=too-few-public-methods

@@ -34,6 +34,7 @@ from ...util import repr_timespan, positions_equal
 
 GPXTrackPoint = mod_gpx.GPXTrackPoint
 
+
 class TrackTests(BasicTest):
 
     """track tests."""
@@ -765,7 +766,7 @@ class TrackTests(BasicTest):
                 ([(-50.1041, -7.2354), (0.1325, 8.7458)], True),
                 ([(-50.10341, -7.23554), (0.13325, 8.7458)], True),
                 ([(-50.109341, -7.203554), (0.133425, 8.74258)], False),
-            ]:
+        ]:
             points = [GPXTrackPoint(latitude=lat, longitude=lon) for lat, lon in track]
             enc_dec = Encoding.decode_points(Encoding.encode_points(points))
-            self.assertEqual(result, all(positions_equal(*x, digits=10) for x in zip(points, enc_dec)), track)
+            self.assertEqual(result, all(positions_equal(*x, digits=10) for x in zip(points, enc_dec)), track)  # noqa

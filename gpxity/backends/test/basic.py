@@ -111,7 +111,8 @@ class BasicTest(unittest.TestCase):
         if not os.path.exists(gpx_test_file):
             raise Exception('MMTTests needs a GPX file named {}.gpx for testing in {}'.format(
                 name, os.getcwd()))
-        result = Track(gpx=gpxpy.parse(io.StringIO(get_data(__package__, '{}.gpx'.format(name)).decode('utf-8'))))
+        filename = '{}.gpx'.format(name)
+        result = Track(gpx=gpxpy.parse(io.StringIO(get_data(__package__, filename).decode('utf-8'))))
         if backend_cls:
             result.category = backend_cls.decode_category(random.choice(backend_cls.supported_categories))
         return result
@@ -236,8 +237,7 @@ class BasicTest(unittest.TestCase):
         self.maxDiff = None  # pylint: disable=invalid-name
         if with_last_time is None:
             with_last_time = not (
-                isinstance(backend1, (Openrunner, GPSIES)) or
-                isinstance(backend2, (Openrunner, GPSIES)))
+                isinstance(backend1, (Openrunner, GPSIES)) or isinstance(backend2, (Openrunner, GPSIES)))
         if backend1 != backend2:
             precision = min(backend1.point_precision, backend2.point_precision)
             keys1 = sorted(x.key(with_category, with_last_time, precision=precision) for x in backend1)
@@ -257,8 +257,7 @@ class BasicTest(unittest.TestCase):
         # Openrunner always does.
         no_time_backend = (GPSIES, Openrunner)
         with_last_time = not (
-            isinstance(track1.backend, no_time_backend)
-            or isinstance(track2.backend, no_time_backend))
+            isinstance(track1.backend, no_time_backend) or isinstance(track2.backend, no_time_backend))
         precision = Backend.point_precision
         if track1.backend and track1.backend.point_precision < precision:
             precision = track1.backend.precision

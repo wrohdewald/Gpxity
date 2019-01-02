@@ -5,7 +5,7 @@
 
 """define things that should be visible to the user."""
 
-# pylint: disable=wildcard-import, missing-docstring,protected-access
+# pylint: disable=protected-access
 
 from .track import *
 from .lifetrack import *

@@ -173,10 +173,14 @@ class Backend:
             return False
         return self.url == self.default_url
 
-    def _get_author(self):
+    def _get_author(self) ->str:
         """Get the username for the account.
 
         Raise BackendException if no username is given.
+
+        Returns:
+            The username
+
         """
         author = self.config.section.get('Username')
         if not author:
@@ -301,6 +305,7 @@ class Backend:
 
         Returns:
             The encoded name
+
         """
         if value in cls.supported_categories:
             return value
@@ -312,7 +317,6 @@ class Backend:
             if value.lower() == target.lower():
                 return key
         raise cls.BackendException('{} has no equivalent for "{}"'.format(cls.__name__, value))
-
 
     @staticmethod
     def _encode_keyword(value: str) ->str:

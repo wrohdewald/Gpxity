@@ -4,10 +4,7 @@
 # Copyright (c) 2018 Wolfgang Rohdewald <wolfgang@rohdewald.de>
 # See LICENSE for details.
 
-"""
-This implements :class:`gpxity.openrunner.Openrunner` for https://www.openrunner.com.
-
-"""
+"""This implements :class:`gpxity.openrunner.Openrunner` for https://www.openrunner.com."""
 
 # pylint: disable=protected-access
 
@@ -35,11 +32,18 @@ if False:  # pylint: disable=using-constant-test
 
 __all__ = ['Openrunner', 'Encoding']
 
+
 class Encoding:
+
     """Openrunner transfers point data in a compressed format."""
+
     @staticmethod
-    def encode_number(nbr):
-        """Encode a single unsigned number."""
+    def encode_number(nbr) -> str:
+        """Encode a single unsigned number.
+
+        Returns: the encoded string
+
+        """
         result = ''
         while nbr >= 32:
             result += chr(95 + (nbr & 31))
@@ -48,16 +52,24 @@ class Encoding:
         return result
 
     @staticmethod
-    def encode_signed_number(nbr):
-        """Encode a single signed number."""
+    def encode_signed_number(nbr) ->str:
+        """Encode a single signed number.
+
+        Returns: The encoded string
+
+        """
         tmp = nbr << 1
         if nbr < 0:
             tmp = ~tmp
         return Encoding.encode_number(tmp)
 
     @staticmethod
-    def encode_points(points):
-        """Encode a list of points."""
+    def encode_points(points) ->str:
+        """Encode a list of points.
+
+        Returns: the encoded string
+
+        """
         result = ''
         prev_lat = 0
         prev_lon = 0
@@ -73,8 +85,12 @@ class Encoding:
         return result
 
     @staticmethod
-    def decode_points(input_str):
-        """Decode str into a list of points."""
+    def decode_points(input_str) ->list:
+        """Decode str into a list of points.
+
+        Returns: list(GPXTrackPoint)
+
+        """
         def decode_number():
             """Decode a single number."""
             nonlocal input_str
@@ -90,6 +106,7 @@ class Encoding:
             if 1 & result:
                 return ~(result >> 1)
             return result >> 1
+
         def blow_up(nbr):
             return round(0.00001 * nbr, 5)
         result = list()
@@ -181,6 +198,7 @@ class ParseOpenrunnerSubscription(HTMLParser):  # pylint: disable=abstract-metho
             self.current_card_title = None
 
     def handle_data(self, data):
+        """Handle data."""
         data = data.strip()
         if data == '':
             return
@@ -304,6 +322,7 @@ class Openrunner(Backend):
             see http://docs.python-requests.org/en/master/user/advanced/#timeouts
 
     """
+
     # pylint: disable=abstract-method
 
     max_field_sizes = {'keywords': 200}
@@ -343,12 +362,12 @@ class Openrunner(Backend):
     )
 
     _category_decoding = {
-        'Cyclisme - Randonnée': 'Cycling - Randonnée',
-        'Other': 'Miscellaneous',
         'Canoe-Kayak': 'Canoeing',
         'Cycling - Touring': 'Cycling',
+        'Cyclisme - Randonnée': 'Cycling - Randonnée',
         'Footbiking': 'Cycling - Foot',
         'Longboard': 'Miscellaneous',
+        'Other': 'Miscellaneous',
         'River navigation': 'Miscellaneous',
         'Rollerblading': 'Skating - Inline',
         'Running - Trail': 'Running',
@@ -363,66 +382,67 @@ class Openrunner(Backend):
 
     # translate internal names to Openrunner names
     _category_encoding = {
+        'Cabriolet': 'Autre',
+        'Canoeing': 'Canoe-Kayak',
+        'Coach': 'Autre',
+        'Crossskating': 'Autre',
         'Cycling': 'Cycling - Road',
         'Cycling - Foot': 'Footbiking',
         'Cycling - Hand': 'Cycling',
         'Cycling - Indoor': 'Autre',
-        'Running': 'Running- Road',
-        'Running - Road': 'Running- Road',
-        'Indoor cycling': 'Cycling - Road',
-        'Skiing - Nordic': 'Skiing - Backcountry',
-        'Wheelchair': 'Autre',
-        'Sightseeing': 'Autre',
-        'Geocaching': 'Autre',
-        'Skiing - Alpine': 'Autre',
-        'Sailing': 'Autre',
-        'Skating - Inline': 'Rollerblading',
-        'Hiking - Speed': 'Hiking',
-        'Miscellaneous': 'Autre',
-        'Pack animal trekking': 'Horse riding',
-        'Coach': 'Autre',
-        'Powerboating': 'River navigation',
         'Driving': 'Autre',
+        'Enduro': 'Autre',
+        'Flying': 'Autre',
+        'Geocaching': 'Autre',
+        'Gliding': 'Autre',
+        'Handcycle': 'Autre',
+        'Hang gliding': 'Autre',
+        'Hiking - Speed': 'Hiking',
+        'Hot air ballooning': 'Autre',
+        'Indoor cycling': 'Cycling - Road',
+        'Jet skiing': 'Autre',
         'Kayaking': 'Canoe-Kayak',
-        'Windsurfing': 'Autre',
-        'Off road driving': 'Autre',
+        'Kiteboarding': 'Autre',
+        'Miscellaneous': 'Autre',
         'Motor racing': 'Autre',
         'Motorcycling': 'Autre',
-        'Enduro': 'Autre',
-        'Skiing': 'Skiing - Touring',
-        'Skiing - Touring': 'Skiing - Crosscountry',
-        'Canoeing': 'Canoe-Kayak',
-        'Sea kayaking': 'Canoe-Kayak',
-        'Stand up paddle boarding': 'Stand Up Paddle',
-        'Rowing': 'River navigation',
-        'Kiteboarding': 'Autre',
-        'Orienteering': 'Autre',
-        'Mountaineering': 'Autre',
-        'Skating': 'Autre',
-        'Skateboarding': 'Autre',
-        'Hang gliding': 'Autre',
-        'Gliding': 'Autre',
-        'Flying': 'Autre',
-        'Snowboarding': 'Autre',
-        'Paragliding': 'Autre',
-        'Hot air ballooning': 'Autre',
-        'Nordic walking': 'Autre',
-        'Snowshoeing': 'Autre',
-        'Jet skiing': 'Autre',
-        'Pedelec': 'Autre',
-        'Crossskating': 'Autre',
-        'Handcycle': 'Autre',
         'Motorhome': 'Autre',
-        'Cabriolet': 'Autre',
+        'Mountaineering': 'Autre',
+        'Nordic walking': 'Autre',
+        'Off road driving': 'Autre',
+        'Orienteering': 'Autre',
+        'Pack animal trekking': 'Horse riding',
+        'Paragliding': 'Autre',
+        'Pedelec': 'Autre',
+        'Powerboating': 'River navigation',
+        'Rowing': 'River navigation',
+        'Running': 'Running- Road',
+        'Running - Road': 'Running- Road',
+        'Sailing': 'Autre',
+        'Sea kayaking': 'Canoe-Kayak',
+        'Sightseeing': 'Autre',
+        'Skateboarding': 'Autre',
+        'Skating': 'Autre',
+        'Skating - Inline': 'Rollerblading',
+        'Skiing': 'Skiing - Touring',
+        'Skiing - Alpine': 'Autre',
+        'Skiing - Nordic': 'Skiing - Backcountry',
+        'Skiing - Touring': 'Skiing - Crosscountry',
+        'Snowboarding': 'Autre',
+        'Snowshoeing': 'Autre',
+        'Stand up paddle boarding': 'Stand Up Paddle',
         'Train': 'Autre',
+        'Wheelchair': 'Autre',
+        'Windsurfing': 'Autre',
     }
 
     # translate Openrunner names to Openrunner numbers
     _legal_categories_numbers = {
-        'Cycling - Road': 1,
+        'Autre': 2,
         'Canoe-Kayak': 18,
         'Cycling - Gravel': 20,
         'Cycling - MTB': 3,
+        'Cycling - Road': 1,
         'Cycling - Touring': 11,
         'Footbiking': 13,
         'Hiking': 9,
@@ -443,7 +463,6 @@ class Openrunner(Backend):
         'Swimming': 6,
         'Swimrun': 23,
         'Walking': 7,
-        'Autre': 2
     }
 
     assert set(_legal_categories_numbers.keys()) == set(supported_categories)
@@ -469,8 +488,12 @@ class Openrunner(Backend):
         return sorted(category_parser.result_names)
 
     @property
-    def current_subscription(self):
-        """Get the current subscription model."""
+    def current_subscription(self) ->str:
+        """Get the current subscription model.
+
+        Returns: The name of the subscription.
+
+        """
         # TODO: unused, untested. Intended for use with callers trying
         # to set private to True without having a sufficient subscription.
         parser = ParseOpenrunnerSubscription()
@@ -493,10 +516,10 @@ class Openrunner(Backend):
             self._session[ident] = requests.Session()
             if self.config.password:
                 data = {
+                    'language': 'en',
                     'login': self.config.username,
                     'password': self.config.password,
-                    'language': 'en'
-                    }
+                }
                 self._session[ident].response = self._session[ident].post(
                     '{}/user/login'.format(self.url),
                     data=data, timeout=self.timeout)
@@ -507,7 +530,11 @@ class Openrunner(Backend):
 
     @property
     def session_response(self):
-        """The last response received."""
+        """The last response received.
+
+        Returns: The response
+
+        """
         # TODO: also in GPSIES
         ident = str(self)
         if ident in self._session:
@@ -516,7 +543,11 @@ class Openrunner(Backend):
         return None
 
     def __http_post(self, post_type, action: str, data=None):
-        """Common code for HTTP POST."""
+        """Common code for HTTP POST.
+
+        Returns: the response
+
+        """
         if data is None:
             data = dict()
         data['_'] = int(datetime.datetime.now().timestamp())
@@ -535,8 +566,7 @@ class Openrunner(Backend):
     def __get(self, action: str, data=None):
         """common code for a GET within the session.
 
-        Returns:
-            the response
+        Returns: the response
 
         """
         return self.__http_post("get", action, data)
@@ -544,8 +574,7 @@ class Openrunner(Backend):
     def __post(self, action: str, data):
         """common code for a POST within the session.
 
-        Returns:
-            the response
+        Returns: the response
 
         """
         return self.__http_post("post", action, data)
@@ -569,8 +598,8 @@ class Openrunner(Backend):
         """
         try:
             return super(Openrunner, cls).decode_category(value)
-        except:
-            if value == 'Autre': # TODO: Should not happen
+        except Exception:
+            if value == 'Autre':  # TODO: Should not happen
                 logging.error("Openrunner said Autre")
                 return 'Miscellaneous'
             reverse_nbr = dict(zip(cls._legal_categories_numbers.values(), cls._legal_categories_numbers.keys()))
@@ -634,38 +663,36 @@ class Openrunner(Backend):
             raise self.BackendException('Openrunner does not accept a track without trackpoints:{}'.format(track))
         points = list(track.points())
         data = {
-            'route[name]': track.title,
             'route[activity]': self._legal_categories_numbers[self.encode_category(track.category)],
             'route[description]': track.description,
-            'route[keyword]': ', '.join(track.keywords),
-            'route[terrain]': 0,
-            'route[is_tested]': 1,
-            'route[surface]': 0,
-            'route[is_private]': 0,  # TODO: private only if the subscription allows that if track.public else 1,
-            'route[labelColor]': '#ffffff',
-            'route[official]': 0,
-            'route[waymark]': 0,
-            'route[source]': 'openrunner-web',
-            'route[lengthInMeter]': min(track.distance(), 1200) * 1000,  # TODO: unittest: is max length still 1200km?
-            'route[start][lat]': points[0].latitude,
-            'route[start][lng]': points[0].longitude,
+            'route[elevation][sampleEncoded]': Encoding.encode_points(points),
+            'route[elevation][sampleIntervalInMeter]': track.distance() / len(points),
             'route[end][lat]': points[-1].latitude,
             'route[end][lng]': points[-1].longitude,
+            'route[is_private]': 0,  # TODO: private only if the subscription allows that if track.public else 1,
+            'route[is_tested]': 1,
+            'route[keyword]': ', '.join(track.keywords),
+            'route[labelColor]': '#ffffff',
+            'route[lengthInMeter]': min(track.distance(), 1200) * 1000,  # TODO: unittest: is max length still 1200km?
+            'route[name]': track.title,
+            'route[official]': 0,
+            'route[shape][pointShapeEncoded]': '',
+            'route[shape][pointShapeReducedEncoded]': Encoding.encode_points(points[:20]),
             'route[shape][pointWaypointEncoded]': Encoding.encode_points(points),
             'route[shape][pointWaypointType]': 'A' * len(points),
             'route[shape][showMilestone]': 1,
-            'route[shape][pointShapeEncoded]': '',
-            'route[shape][pointShapeReducedEncoded]': Encoding.encode_points(points[:20]),
             'route[shape][strokeColor]': "#b71c0c",
-            'route[shape][strokeWidth]': 5,
             'route[shape][strokeOpacity]': 0.8,
-            'route[elevation][sampleEncoded]': Encoding.encode_points(points),
-            'route[elevation][sampleIntervalInMeter]': track.distance() / len(points),
+            'route[shape][strokeWidth]': 5,
+            'route[source]': 'openrunner-web',
+            'route[start][lat]': points[0].latitude,
+            'route[start][lng]': points[0].longitude,
+            'route[surface]': 0,
+            'route[terrain]': 0,
+            'route[waymark]': 0,
         }
         response = self.__post(action='route', data=data)
- #       self.logger.debug("POST route returned %s", response.text)
         json = response.json()
-#        self.logger.debug("JSON: %s", json)
         new_ident = str(json['id'])
         if not new_ident:
             raise self.BackendException('No id found in response')

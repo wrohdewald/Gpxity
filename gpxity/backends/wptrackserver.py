@@ -102,7 +102,6 @@ class WPTrackserver(Backend):
         except _mysql_exceptions.OperationalError as exc:
             raise Backend.BackendException(exc)
 
-
     def _encode_description(self, track):
         """Encode keywords in description.
 
@@ -150,7 +149,7 @@ class WPTrackserver(Backend):
     def _load_track_headers(self):
         """."""
         cmd = 'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s'
-        args = (self.user_id, )
+        args = (self.user_id, )  # noqa
         cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
             track = self._found_track(self.ident_format.format(_[0]))
@@ -186,7 +185,7 @@ class WPTrackserver(Backend):
         """
         if ident is None:
             return True
-        cursor.execute('select 1 from wp_ts_tracks where id=%s', (ident, ))
+        cursor.execute('select 1 from wp_ts_tracks where id=%s', (ident, ))  # noqa
         return len(cursor.fetchall()) == 0
 
     def _save_header(self, track):

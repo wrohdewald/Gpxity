@@ -216,40 +216,40 @@ class MMT(Backend):
         'Snowshoeing', 'Jet skiing', 'Powerboating', 'Wheelchair', 'Indoor cycling')
 
     _category_decoding = {
-        'SUP boarding': 'Stand up paddle boarding',
-        'Mountain biking': 'Cycling - MTB',
         'Cross country skiing': 'Skiing - Touring',
         'Hand cycling': 'Cycling - Hand',
         'Indoor cycling': 'Cycling - Indoor',
+        'Mountain biking': 'Cycling - MTB',
+        'SUP boarding': 'Stand up paddle boarding',
     }
 
     _category_encoding = {
-        'Cycling - Road': 'Cycling',
-        'Cycling - Gravel': 'Cycling',
-        'Cycling - Touring': 'Cycling',
-        'Cycling - Foot': 'Cycling',
-        'Cycling - Hand': 'Hand cycling',
         'Cabriolet': 'Driving',
-        'Skiing - Backcountry': 'Cross country skiing',
-        'Skiing - Nordic': 'Cross country skiing',
-        'Skiing - Alpine': 'Skiing',
-        'Skiing - Roller': 'Skiing',
-        'Swimrun': 'Miscellaneous',
-        'Running - Trail': 'Miscellaneous',
-        'Running - Urban Trail': 'Miscellaneous',
-        'Sightseeing': 'Miscellaneous',
-        'Geocaching': 'Miscellaneous',
-        'Longboard': 'Miscellaneous',
-        'River navigation': 'Miscellaneous',
-        'Skating - Inline': 'Skating',
-        'Hiking - Speed': 'Hiking',
         'Coach': 'Miscellaneous',
         'Crossskating': 'Skating',
+        'Cycling - Foot': 'Cycling',
+        'Cycling - Gravel': 'Cycling',
+        'Cycling - Hand': 'Hand cycling',
+        'Cycling - Road': 'Cycling',
+        'Cycling - Touring': 'Cycling',
+        'Geocaching': 'Miscellaneous',
         'Handcycle': 'Cycling',
+        'Hiking - Speed': 'Hiking',
+        'Longboard': 'Miscellaneous',
         'Motorhome': 'Driving',
         'Pack animal trekking': 'Hiking',
         'Pedelec': 'Cycling',
+        'River navigation': 'Miscellaneous',
+        'Running - Trail': 'Miscellaneous',
+        'Running - Urban Trail': 'Miscellaneous',
+        'Sightseeing': 'Miscellaneous',
+        'Skating - Inline': 'Skating',
+        'Skiing - Alpine': 'Skiing',
+        'Skiing - Backcountry': 'Cross country skiing',
+        'Skiing - Nordic': 'Cross country skiing',
+        'Skiing - Roller': 'Skiing',
         'Stand up paddle boarding': 'SUP boarding',
+        'Swimrun': 'Miscellaneous',
         'Train': 'Miscellaneous',
     }
 
@@ -301,7 +301,7 @@ class MMT(Backend):
             # I have no idea what ACT=9 does but it seems to be needed
             payload = {'username': self.config.username, 'password': self.config.password, 'ACT': '9'}
             login_url = '{}/login'.format(self.https_url)
-            headers = {'User-Agent': 'Gpxity'} # see https://github.com/MapMyTracks/api/issues/26
+            headers = {'User-Agent': 'Gpxity'}  # see https://github.com/MapMyTracks/api/issues/26
             response = self._session[ident].post(
                 login_url, data=payload, headers=headers, timeout=self.timeout)
             if 'You are now logged in.' not in response.text:
@@ -365,6 +365,9 @@ class MMT(Backend):
         """Helper for the real function with some error handling.
 
         Sets User-Agent.
+
+        Returns: response
+
         """
         if headers is None:
             headers = dict()
@@ -397,7 +400,7 @@ class MMT(Backend):
 
         full_url = self.url + '/' + (url if url else 'api/')
         headers = {'DNT': '1'}  # do not track
-        headers['User-Agent'] = 'Gpxity' # see https://github.com/MapMyTracks/api/issues/26
+        headers['User-Agent'] = 'Gpxity'  # see https://github.com/MapMyTracks/api/issues/26
         if not self.config.username or not self.config.password:
             raise self.BackendException('{}: Needs authentication data'.format(self.url))
         if data:

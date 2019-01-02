@@ -499,8 +499,12 @@ class Track:  # pylint: disable=too-many-public-methods
         self._load_full()
         return self.__category or self.__default_category()
 
-    def __default_category(self):
-        """The default for either an unsaved track or for the corresponding backend."""
+    def __default_category(self) ->str:
+        """The default for either an unsaved track or for the corresponding backend.
+
+        Returns: The category
+
+        """
         if self.backend is None:
             return self.categories[0]
         return self.backend.decode_category(self.backend.supported_categories[0])
@@ -568,14 +572,14 @@ class Track:  # pylint: disable=too-many-public-methods
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
-    def _decode_keywords(self, data, into_header_data: bool = False):  # noqa
-        """'self.keywords' is 1:1 as parsed from xml.
-        Here we extract our special keywords Category: and Status:
+    def _decode_keywords(self, data: str, into_header_data: bool = False):  # noqa
+        """Extract our special keywords Category: and Status:.
 
         # TODO: why is this not backend specific? Some backends have
         # their own fields for this
 
         Args:
+            data: The raw keywords coming from the backend
             into_header_data: if False, set the real track fields.
                 If True, save everything in self._header_data.
 
@@ -822,6 +826,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         Returns:
             A list with keywords.setter
+
         """
         self._load_full()
         if self.__gpx.keywords:
@@ -1338,8 +1343,13 @@ class Track:  # pylint: disable=too-many-public-methods
                 other, other.gpx.get_track_points_no(),
                 self, self.gpx.get_track_points_no()))
 
-    def __merge_waypoints(self, other, dry_run):
-        """Merge waypoints from other with differing positions."""
+    def __merge_waypoints(self, other, dry_run) ->list:
+        """Merge waypoints from other with differing positions.
+
+        Returns: list(str)
+            Messages about what has been done.
+
+        """
         # TODO: unittest
         def have(wpt):
             """True if we already have this waypoint."""
@@ -1357,8 +1367,13 @@ class Track:  # pylint: disable=too-many-public-methods
             return ['{} got {} waypoints from {}'.format(self, merged_count, other)]
         return []
 
-    def __merge_tracks(self, other, dry_run, shorter_at):
-        """Merge tracks from other."""
+    def __merge_tracks(self, other, dry_run, shorter_at) ->list:
+        """Merge tracks from other.
+
+        Returns: list(str)
+            Messages about what has been done.
+
+        """
         msg = []
         if other.gpx.get_track_points_no() > self.gpx.get_track_points_no():
             if not dry_run:
