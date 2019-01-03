@@ -323,6 +323,11 @@ class Utility:
         self.apply_parser(self.parser)
         if self.exit_code:
             return
+
+        if self.options.list_categories:
+            self.list_categories()
+            return
+
         logging.getLogger().setLevel(self.options.loglevel.upper())
         sources = []
         self.source_tracks = []
@@ -368,6 +373,21 @@ class Utility:
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
+
+    @staticmethod
+    def list_categories():
+        """List all supported categories."""
+        print('Those are all supported categories. Backends not listed save Track.category exactly.')
+        print()
+        backend_classes = Backend.all_backend_classes(needs={'own_categories'})
+        max_width = max(len(x) for x in Track.categories)
+        print('{cat:{width}} Names in Backends'.format(cat='Track.category', width=max_width))
+        print()
+        for internal_name in sorted(Track.categories):
+            backend_names = ', '.join('{}:{}'.format(
+                x.__name__, x.encode_category(internal_name)) for x in backend_classes)
+            print('{internal:{width}} {backend_names}'.format(
+                width=max_width, internal=internal_name, backend_names=backend_names))
 
     def error(self, msg, exit_code=None):
         """Prints the error message.
@@ -823,6 +843,10 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         parser = argparse.ArgumentParser(
             'gpxdo', formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=self.help_epilog)
+        parser.add_argument(
+            '--list-categories', help='list all categories',
+            action='store_true', default=False)
+
         self.subparsers = parser.add_subparsers()
 
         ls_parser = self.subparsers.add_parser(
@@ -1038,6 +1062,9 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         """Prepare parsed options for usage."""
         # pylint: disable=too-many-branches,too-many-statements
         self.options = parser.parse_args()
+
+        if self.options.list_categories:
+            return
 
         if self.options.timeout is not None:
             if ',' in self.options.timeout:
