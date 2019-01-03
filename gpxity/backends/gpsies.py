@@ -269,7 +269,7 @@ class GPSIES(Backend):
         if url is None:
             url = self.default_url
         super(GPSIES, self).__init__(url, auth, cleanup, timeout)
-        self.session_response = None
+        self._session_respoinse = None
 
     def _download_legal_categories(self):
         """Needed only for unittest.
@@ -297,10 +297,10 @@ class GPSIES(Backend):
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
             data = {'username': self.config.username, 'password': self.config.password}
-            self.session_response = self._session[ident].post(
+            self._session_respoinse = self._session[ident].post(
                 '{}/loginLayer.do?language=en'.format(self.url),
                 data=data, timeout=self.timeout)
-            self._check_response(self.session_response)
+            self._check_response(self._session_respoinse)
             cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             cookies['cookieconsent_dismissed'] = 'yes'
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)

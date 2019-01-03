@@ -518,13 +518,13 @@ class Openrunner(Backend):
                 self._session[ident].response = self._session[ident].post(
                     '{}/user/login'.format(self.url),
                     data=data, timeout=self.timeout)
-                self._check_response(self.session_response, data)
-        if self.session_response is None:
-            self.logger.info('Openrunner.session got no session_response')
+                self._check_response(self._session_respoinse, data)
+        if self._session_respoinse is None:
+            self.logger.info('Openrunner.session got no _session_respoinse')
         return self._session[ident]
 
     @property
-    def session_response(self):
+    def _session_respoinse(self):
         """The last response received.
 
         Returns: The response
@@ -549,8 +549,8 @@ class Openrunner(Backend):
         full_url = '{}/{}'.format(self.url, action)
         self.session  # because headers needs accessToken  pylint: disable=pointless-statement
         headers = {'X-Language': 'en'}
-        if self.session_response:
-            headers['Authorization'] = 'Bearer {}'.format(self.session_response.json()['user']['accessToken'])
+        if self._session_respoinse:
+            headers['Authorization'] = 'Bearer {}'.format(self._session_respoinse.json()['user']['accessToken'])
             method = getattr(self.session, post_type)
         else:
             method = getattr(requests, post_type)
