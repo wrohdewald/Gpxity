@@ -760,10 +760,12 @@ class Utility:
                                 type=int, default=None)
             parser.add_argument('--max-points', help='Limit tracks by maximal number of points',
                                 type=int, default=None)
-            parser.add_argument('--min-distance', help='Limit tracks by minimal distance', type=int, default=None)
-            parser.add_argument('--max-distance', help='Limit tracks by maximal distance', type=int, default=None)
-            parser.add_argument('--min-speed', help='Limit tracks by minimal speed', type=int, default=None)
-            parser.add_argument('--max-speed', help='Limit tracks by maximal speed', type=int, default=None)
+            parser.add_argument(
+                '--min-distance', help='Limit tracks by minimal distance in km', type=int, default=None)
+            parser.add_argument(
+                '--max-distance', help='Limit tracks by maximal distance in km', type=int, default=None)
+            parser.add_argument('--min-speed', help='Limit tracks by minimal speed in km/h', type=int, default=None)
+            parser.add_argument('--max-speed', help='Limit tracks by maximal speed in km/h', type=int, default=None)
             parser.add_argument('--only-keywords', help='Limit tracks by keywords', default=None)
             parser.add_argument('--only-category', help='Limit tracks by category',
                                 default=None, choices=Track.categories)
