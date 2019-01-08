@@ -23,6 +23,7 @@ from collections import defaultdict
 import logging
 import textwrap
 import geocoder
+from geocoder.location import Location as Geocoder_location
 
 try:
     import argcomplete
@@ -438,6 +439,15 @@ class Utility:
             new_track.id_in_backend = new_track.title
         new_track.rewrite()
 
+    def start_place(self, track):
+        """Determine the starting place."""
+        first_point = next(track.points())
+        if first_point:
+            _ = Geocoder_location([first_point.latitude, first_point.longitude])
+            place = geocoder.get(location=_, provider=self.options.location_provider, method='reverse')
+            return '{}, {}'.format(place.city, place.country)
+        return ''
+
     def list_them(self):
         """list tracks"""
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -483,6 +493,7 @@ class Utility:
             (False, 'Moving duration', lambda x: x.moving_duration, '{}', datetime.timedelta),
             (False, 'Moving distance', lambda x: x.moving_distance, '{}', float),
             (self.options.similarity, 'Similarity', lambda x: x.similarity(self.similar_to), '{:>1.2f}', float),
+            (self.options.location, 'Location', self.start_place),
             (self.options.warnings, 'Warnings', lambda x: x.warnings(), 'warnings')))
 
         if 'speed' in LsRow.visible_headers():
@@ -878,6 +889,8 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                action='store_true', default=False)
         ls_parser.add_argument('--distance', help='show the distance',
                                action='store_true', default=False)
+        ls_parser.add_argument('--location', help='show the starting location',
+                               action='store_true', default=False)
         ls_parser.add_argument('--points', help='show the number of points',
                                action='store_true', default=False)
         ls_parser.add_argument('--status', help='show the status public/private',
@@ -897,7 +910,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
         ls_parser.add_argument('--warnings', help='show warnings',
                                action='store_true', default=False)
         ls_parser.add_argument(
-            '--location-provider', help="data provider for --locate",
+            '--location-provider', help="data provider for --locate and --location",
             choices=geocoder.api.options.keys(), default='osm')
         ls_parser.add_argument(
             '--locate', action='append',
