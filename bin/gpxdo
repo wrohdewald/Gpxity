@@ -1093,7 +1093,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             if not self.options.source:
                 self.options.source = ['.']
             if self.options.locate and self.options.sort != 'identifier':
-                logging.error('gpxdo: --location implies an order, do not use --sort')
+                logging.error('gpxdo: --locate implies an order, do not use --sort')
                 self.exit_code = 2
                 return
         elif self.options.func == self.merge:  # pylint: disable=comparison-with-callable
