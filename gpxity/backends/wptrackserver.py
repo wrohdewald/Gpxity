@@ -99,6 +99,7 @@ class WPTrackserver(Backend):
             self._db = MySQLdb.connect(
                 host=self.url, user=user, passwd=self.config.password, database=database,
                 autocommit=True, charset='utf8')
+            self.logger.info('reconnected to %s %s', self.url, database)
         except _mysql_exceptions.OperationalError as exc:
             raise Backend.BackendException(exc)
 
@@ -312,8 +313,11 @@ class WPTrackserver(Backend):
         execute = cursor.executemany if many else cursor.execute
         try:
             execute(cmd, args)
-        except _mysql_exceptions.OperationalError as exception:
-            self.logger.error("MySQL Error: %s", exception)
+        except _mysql_exceptions.OperationalError:
+            # timeout disconnected
             self.__connect_mysql()
-            execute(cmd, args)
+            try:
+                execute(cmd, args)
+            except _mysql_exceptions.Error as exception:
+                self.logger.error("MySQL Error: %s", exception)
         return cursor
