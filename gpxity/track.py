@@ -572,6 +572,10 @@ class Track:  # pylint: disable=too-many-public-methods
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
+    def __decode_category(self, value):
+        """Helper for _decode_keywords"""
+        return self.backend.decode_category(value) if self.backend is not None else value
+
     def _decode_keywords(self, data: str, into_header_data: bool = False):  # noqa
         """Extract our special keywords Category: and Status:.
 
@@ -596,7 +600,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 value = ':'.join(_[1:])
                 if into_header_data:
                     if what == 'Category':
-                        self._header_data['category'] = value
+                        self._header_data['category'] = self.__decode_category(value)
                     elif what == 'Status':
                         self._header_data['public'] = value == 'public'
                     elif what == 'Id':
@@ -609,7 +613,7 @@ class Track:  # pylint: disable=too-many-public-methods
                         gpx_keywords.append(keyword)
                 else:
                     if what == 'Category':
-                        self.category = value
+                        self.category = self.__decode_category(value)
                     elif what == 'Status':
                         self.public = value == 'public'
                     elif what == 'Id':
