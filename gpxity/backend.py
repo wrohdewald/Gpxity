@@ -293,6 +293,9 @@ class Backend:
         """
         if value in Track.categories:
             return value
+        if value == 'Mountain biking':
+            # obsolete
+            return 'Cycling - MTB'
         if value.capitalize() in Track.categories:
             return value.capitalize()
         if value not in cls._category_decoding:
