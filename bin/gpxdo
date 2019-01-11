@@ -790,9 +790,6 @@ class Utility:
         parser.add_argument(
             '--loglevel', help='set the loglevel',
             choices=('none', 'debug', 'info', 'warning', 'error'), default='none')
-        parser.add_argument('--timeout', help="""
-            Timeout: Either one value in seconds or two comma separated values: The first one is the connection timeout,
-            the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
         return parser
 
     @staticmethod
@@ -1078,12 +1075,6 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
         if self.options.list_categories:
             return
-
-        if self.options.timeout is not None:
-            if ',' in self.options.timeout:
-                self.options.timeout = tuple(float(x) for x in self.options.timeout.split(','))
-            else:
-                self.options.timeout = float(self.options.timeout)
 
         if self.options.func == self.list_them:  # pylint: disable=comparison-with-callable
             if self.options.long or self.options.all:

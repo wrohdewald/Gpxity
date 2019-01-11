@@ -78,9 +78,9 @@ class WPTrackserver(Backend):
 
     _max_length = {'title': 255, 'description': 255}
 
-    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
+    def __init__(self, url=None, auth=None, cleanup=False):
         """See class docstring. The url is host."""
-        super(WPTrackserver, self).__init__(url, auth, cleanup, timeout)
+        super(WPTrackserver, self).__init__(url, auth, cleanup)
         self._db = None
         self.__connect_mysql()
         cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.config.username])

@@ -155,9 +155,9 @@ class Mailer(Backend):  # pylint: disable=abstract-method
 
     test_is_expensive = False
 
-    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
+    def __init__(self, url=None, auth=None, cleanup=False):
         """See class docstring."""
-        super(Mailer, self).__init__(url, auth, cleanup, timeout)
+        super(Mailer, self).__init__(url, auth, cleanup)
         self.history = list()
         self.subject_template = '{title} {distance}'
         self.timer = None

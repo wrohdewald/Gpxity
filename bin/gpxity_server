@@ -513,7 +513,7 @@ class LifeServerMMT(HTTPServer):
         self.targets = [Backend.instantiate(first_target)]
         Authenticate.path = self.targets[0].url + '/auth.cfg'
         self.logger = self.define_logger(options)
-        self.targets.extend(Backend.instantiate(x, options.timeout) for x in options.target[1:])
+        self.targets.extend(Backend.instantiate(x) for x in options.target[1:])
         self.start_second = datetime.datetime.now().timestamp()
         self.trackers = dict()
         self.history = list()
@@ -553,9 +553,6 @@ def create_parser():
     parser.add_argument(
         '--loglevel', help='set the loglevel, default is error',
         choices=('debug', 'info', 'warning', 'error'), default='error')
-    parser.add_argument('--timeout', help="""
-        either one value in seconds or two comma separated values: The first one is the connection
-        timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
     parser.add_argument(
         'target',
         help='backends who should receive the data. The first one must be a local directory',
@@ -576,8 +573,6 @@ class Main:  # pylint: disable=too-few-public-methods
             pass
 
         options = parser.parse_args()
-        if options.timeout is not None:
-            options.timeout = [int(x.strip()) for x in options.timeout.split(',')]
 
         LifeServerMMT(options).serve_forever()
 

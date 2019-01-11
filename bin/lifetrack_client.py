@@ -99,11 +99,11 @@ class Main:
             else:
                 account = rest
             if clsname == 'MMT':
-                result = MMT(auth=account, timeout=self.options.timeout)
+                result = MMT(auth=account)
             elif clsname == 'TRACKMMT':
-                result = TrackMMT(auth=account, timeout=self.options.timeout)
+                result = TrackMMT(auth=account)
             elif clsname == 'GPSIES':
-                result = GPSIES(auth=account, timeout=self.options.timeout)
+                result = GPSIES(auth=account)
         else:
             if os.path.isdir(name):
                 account = name
@@ -130,10 +130,6 @@ class Main:
         parser.add_argument(
             '--loglevel', help='set the loglevel',
             choices=('debug', 'info', 'warning', 'error'), default='error')
-        parser.add_argument('--timeout', help="""
-            Timeout: Either one value in seconds or two comma separated values: The first one is the connection
-            timeout, the second one is the read timeout. Default is to wait forever.""", type=str, default=None)
-
         try:
             argcomplete.autocomplete(parser)
         except NameError:
@@ -144,12 +140,6 @@ class Main:
             sys.exit(2)
 
         self.options = parser.parse_args()
-
-        if self.options.timeout is not None:
-            if ',' in self.options.timeout:
-                self.options.timeout = tuple(float(x) for x in self.options.timeout.split(','))
-            else:
-                self.options.timeout = float(self.options.timeout)
 
 
 sys.exit(Main().exit_code)

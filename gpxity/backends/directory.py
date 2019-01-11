@@ -122,7 +122,7 @@ class Directory(Backend):
 
     needs_config = False
 
-    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
+    def __init__(self, url=None, auth=None, cleanup=False):
         """See class docstring."""
         if url is None and isinstance(auth, str):
             url = auth
@@ -136,7 +136,7 @@ class Directory(Backend):
         if isinstance(url, str):
             if url != '/' and url.endswith('/'):
                 url = url[:-1]
-        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup, timeout=timeout)
+        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup)
 
         self.fs_encoding = sys.getfilesystemencoding()
         if not self.fs_encoding.lower().startswith('utf-8'):

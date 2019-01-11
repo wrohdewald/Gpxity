@@ -172,8 +172,6 @@ class GPSIES(Backend):
         auth (tuple(str, str)): Username and password
         cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all tracks in the
             user account.
-        timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
-            see http://docs.python-requests.org/en/master/user/advanced/#timeouts
 
     """
 
@@ -264,11 +262,11 @@ class GPSIES(Backend):
 
     default_url = 'https://www.gpsies.com'
 
-    def __init__(self, url=None, auth=None, cleanup=False, timeout=None):
+    def __init__(self, url=None, auth=None, cleanup=False):
         """See class docstring."""
         if url is None:
             url = self.default_url
-        super(GPSIES, self).__init__(url, auth, cleanup, timeout)
+        super(GPSIES, self).__init__(url, auth, cleanup)
         self._session_respoinse = None
 
     def _download_legal_categories(self):

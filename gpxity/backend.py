@@ -73,8 +73,6 @@ class Backend:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url. Must never end with '/' except for
             Directory(url='/').
-        timeout: If None, there are no timeouts: Gpxity waits forever. For legal values
-            see http://docs.python-requests.org/en/master/user/advanced/#timeouts
         fences: The fences as found in config. You can programmatically change them but they will
             never be applied to already existing data.
         needs_config: If True, the Backend class expects data in auth.cfg
@@ -126,6 +124,8 @@ class Backend:
 
     point_precision = 5
 
+    _timeout = None
+
     # It is important that we have only one global session
     # because gpsies.com seems to have several servers and their
     # synchronization is sometimes slower than expected. See
@@ -135,7 +135,7 @@ class Backend:
     __all_backend_classes = None
     __all_backends = dict()
 
-    def __init__(self, url: str = None, auth=None, cleanup: bool = False, timeout=None):
+    def __init__(self, url: str = None, auth=None, cleanup: bool = False):
         """See class docstring."""
         logging.debug('Backend(%s: url=%s, auth=%s)', self.__class__.__name__, url, auth)
         if self.is_disabled():
@@ -150,8 +150,16 @@ class Backend:
         self._cleanup = cleanup
         self.__match = None
         self.logger = logging.getLogger(str(self))
-        self.timeout = timeout
         self.fences = Fences(self.config.fences)
+
+    @property
+    def timeout(self):
+        """Timeout from config or class default.
+
+        Returns: The timeout
+
+        """
+        return self.config.timeout or self._timeout
 
     @property
     def url(self):
@@ -1012,12 +1020,11 @@ class Backend:
         return self.__class__(self.config)
 
     @classmethod
-    def instantiate(cls, name, timeout=None):
+    def instantiate(cls, name: str):
         """Instantiate a Backend or a Track out of its identifier.
 
         Args:
-            timeout: Needed for creating backends like MMT or GPSIES.
-                See :attr:`Backend.timeout <gpxity.backend.Backend.timeout>`
+            name: The string identifier to be parsed
 
         Returns:
             A Track or a Backend. If the Backend has already been instantiated, return the cached value.
@@ -1030,7 +1037,7 @@ class Backend:
         if cache_key in cls.__all_backends:
             result = cls.__all_backends[cache_key]
         else:
-            result = backend_class(auth=account, timeout=timeout)
+            result = backend_class(auth=account)
             cls.__all_backends[cache_key] = result
         if track_id:
             try:
