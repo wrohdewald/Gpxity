@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxity -->
-<!-- Saved: 2018-09-25, 08:27:40 -->
-<!-- Copyright (C) 2018 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
+<!-- Saved: 2019-01-11, 09:24:55 -->
+<!-- Copyright (C) 2019 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
   <Hash>07d0779d70d5de2689b8cbdbbba74b6255465a71</Hash>
@@ -16,6 +16,7 @@
     <Source>bin/gpxity_server</Source>
     <Source>bin/lifetrack_client.py</Source>
     <Source>gpxity/__init__.py</Source>
+    <Source>gpxity/accounts.py</Source>
     <Source>gpxity/auth.py</Source>
     <Source>gpxity/backend.py</Source>
     <Source>gpxity/backends/__init__.py</Source>
@@ -25,6 +26,7 @@
     <Source>gpxity/backends/mmt.py</Source>
     <Source>gpxity/backends/openrunner.py</Source>
     <Source>gpxity/backends/server_directory.py</Source>
+    <Source>gpxity/backends/temp_directory.py</Source>
     <Source>gpxity/backends/test/__init__.py</Source>
     <Source>gpxity/backends/test/basic.py</Source>
     <Source>gpxity/backends/test/test_backends.py</Source>

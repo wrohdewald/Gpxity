@@ -18,7 +18,6 @@ from collections import defaultdict
 import gpxpy.gpxfield as mod_gpxfield
 
 from .. import Backend
-from ..util import remove_directory
 
 __all__ = ['Directory', 'Backup']
 
@@ -97,8 +96,6 @@ class Directory(Backend):
             :attr:`prefix`.X where X are some random characters.
             If the directory does not exist, it is created.
         auth (str): In addition to other backends: if given and url is None, use auth as url.
-        cleanup (bool): If True, :meth:`destroy` will remove all tracks. If url was
-            not given, it will also remove the directory.
 
     Attributes:
         prefix (str):  Class attribute, may be changed. The default prefix for
@@ -110,7 +107,6 @@ class Directory(Backend):
             support any other character set but UTF-8.
             Note that :attr:`fs_encoding` is independent of the platform we are running on - we
             might use a network file system.
-        is_temporary (bool): True if no Url was given and we created a temporary directory
 
     """
 
@@ -122,21 +118,20 @@ class Directory(Backend):
 
     needs_config = False
 
-    def __init__(self, url=None, auth=None, cleanup=False):
+    def __init__(self, url=None, auth=None):
         """See class docstring."""
         if url is None and isinstance(auth, str):
             url = auth
             auth = None
         if isinstance(url, str) and url.startswith('gpxitytest'):
             url = None
-        self.is_temporary = url is None
-        if self.is_temporary:
+        if url is None:
             url = tempfile.mkdtemp(prefix=self.__class__.prefix)
 
         if isinstance(url, str):
             if url != '/' and url.endswith('/'):
                 url = url[:-1]
-        super(Directory, self).__init__(url=url, auth=auth, cleanup=cleanup)
+        super(Directory, self).__init__(url=url, auth=auth)
 
         self.fs_encoding = sys.getfilesystemencoding()
         if not self.fs_encoding.lower().startswith('utf-8'):
@@ -238,16 +233,6 @@ class Directory(Backend):
         if value is None:
             return None
         return value.replace('/', '_')
-
-    def destroy(self):
-        """If `cleanup` was set at init time, removes all tracks.
-        If :attr:`~gpxity.directory.Directory.url` was set at init time,
-        also removes the directory."""
-        super(Directory, self).destroy()
-        if self._cleanup:
-            self.remove_all()
-            if self.is_temporary:
-                remove_directory(self.url)
 
     def gpx_path(self, ident) ->str:
         """The full path name for the local copy of a track.

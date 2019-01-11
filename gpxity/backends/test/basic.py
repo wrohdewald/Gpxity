@@ -30,6 +30,7 @@ from gpxpy.gpx import GPXTrackPoint
 
 from ... import Track, Backend, Authenticate
 from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner
+from ...util import remove_directory
 
 # pylint: disable=attribute-defined-outside-init,protected-access
 
@@ -284,7 +285,7 @@ class BasicTest(unittest.TestCase):
 
     def setup_backend(  # pylint: disable=too-many-arguments
             self, cls_, username: str = None, url: str = None, count: int = 0,
-            cleanup: bool = None, clear_first: bool = None, category: str = None,
+            clear_first: bool = None, category: str = None,
             public: bool = None):
         """set up an instance of a backend with count tracks.
 
@@ -298,7 +299,6 @@ class BasicTest(unittest.TestCase):
                 Special case WPTrackserver: pass the IP address of the mysql test server
             url: for the backend
             count: how many random tracks should be inserted?
-            cleanup: If True, remove all tracks when done. Passed to the backend. None: do if the backend supports it.
             clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
             category: The wanted category, one out of Track.categories. But this is a problem because we do the same
                 call for all backend classes and they support different categories. So: If category is int, this is an
@@ -315,8 +315,6 @@ class BasicTest(unittest.TestCase):
             username = 'gpxitytest'
         if public is None:
             public = cls_._default_public
-        if cleanup is None:
-            cleanup = 'remove' in cls_.supported
         if clear_first is None:
             clear_first = 'remove' in cls_.supported
         if isinstance(category, int):
@@ -338,7 +336,7 @@ class BasicTest(unittest.TestCase):
                 'url': pwd.getpwuid(os.geteuid()).pw_name}
         else:
             auth = username
-        result = cls_(url, auth=auth, cleanup=cleanup)
+        result = cls_(url, auth=auth)
         if clear_first and'scan' in cls_.supported and 'write' in cls_.supported:
             result.remove_all()
         if count:
@@ -408,14 +406,17 @@ class BasicTest(unittest.TestCase):
 
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
-                     cleanup=None, clear_first=None, category=None,
+                     cleanup=True, clear_first=None, category=None,
                      public: bool = None, username=None):
         """Just like setup_backend but usable as a context manager. which will call destroy() when done."""
-        tmp_backend = self.setup_backend(cls_, username, url, count, cleanup, clear_first, category, public)
+        tmp_backend = self.setup_backend(cls_, username, url, count, clear_first, category, public)
         try:
             yield tmp_backend
         finally:
-            tmp_backend.destroy()
+            if cleanup and 'remove' in cls_.supported:
+                tmp_backend.remove_all()
+                if url is None:
+                    remove_directory(tmp_backend.url)
 
     @classmethod
     def create_db_for_wptrackserver(cls):

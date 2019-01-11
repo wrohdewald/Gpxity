@@ -60,17 +60,14 @@ class Main:
             assert isinstance(source, Track)
             backend = Backend.instantiate(self.options.backend)
             assert isinstance(backend, Backend)
-            try:
-                life = Lifetrack('127.0.0.1', [backend])
-                all_points = list(source.points())
-                life.start(all_points[:5])
-                for point in all_points[5:]:
-                    time.sleep(random.randrange(10))
-                    life.update([point])
+            life = Lifetrack('127.0.0.1', [backend])
+            all_points = list(source.points())
+            life.start(all_points[:5])
+            for point in all_points[5:]:
                 time.sleep(random.randrange(10))
-                life.end()
-            finally:
-                backend.destroy()
+                life.update([point])
+            time.sleep(random.randrange(10))
+            life.end()
         except Exception as _:  # pylint: disable=broad-except
             self.error(_)
 

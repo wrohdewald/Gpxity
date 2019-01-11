@@ -170,8 +170,6 @@ class GPSIES(Backend):
     Args:
         url (str): The Url of the server. Default is https://gpsies.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all tracks in the
-            user account.
 
     """
 
@@ -262,11 +260,11 @@ class GPSIES(Backend):
 
     default_url = 'https://www.gpsies.com'
 
-    def __init__(self, url=None, auth=None, cleanup=False):
+    def __init__(self, url=None, auth=None):
         """See class docstring."""
         if url is None:
             url = self.default_url
-        super(GPSIES, self).__init__(url, auth, cleanup)
+        super(GPSIES, self).__init__(url, auth)
         self._session_respoinse = None
 
     def _download_legal_categories(self):

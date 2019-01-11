@@ -231,8 +231,6 @@ class Openrunner(Backend):
     Args:
         url (str): The Url of the server. Default is https://openrunner.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all tracks in the
-            user account.
 
     """
 
@@ -462,11 +460,11 @@ class Openrunner(Backend):
             result.append(GPXTrackPoint(latitude=blow_up(latitude), longitude=blow_up(longitude)))
         return result
 
-    def __init__(self, url=None, auth=None, cleanup=False):
+    def __init__(self, url=None, auth=None):
         """See class docstring."""
         if url is None:
             url = self.default_url
-        super(Openrunner, self).__init__(url, auth, cleanup)
+        super(Openrunner, self).__init__(url, auth)
 
     def _download_legal_categories(self):
         """Needed only for unittest.

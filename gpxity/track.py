@@ -572,8 +572,13 @@ class Track:  # pylint: disable=too-many-public-methods
             self._round_points(points)
             self.__gpx.tracks[-1].segments[-1].points.extend(points)
 
-    def __decode_category(self, value):
-        """Helper for _decode_keywords"""
+    def __decode_category(self, value) -> str:
+        """Helper for _decode_keywords.
+
+        Returns:
+            A value out of Track.categories
+
+        """
         return self.backend.decode_category(value) if self.backend is not None else value
 
     def _decode_keywords(self, data: str, into_header_data: bool = False):  # noqa

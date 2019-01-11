@@ -89,8 +89,8 @@ class TestBackends(BasicTest):
     def test_directory_backend(self):
         """Manipulate backend."""
         track = self.create_test_track()
-        with Directory(cleanup=True) as directory1:
-            with Directory(cleanup=True) as directory2:
+        with self.temp_backend(Directory) as directory1:
+            with self.temp_backend(Directory) as directory2:
                 saved = directory1.add(track)
                 self.assertEqual(len(directory1), 1)
                 self.assertEqual(saved.backend, directory1)
@@ -259,10 +259,8 @@ class TestBackends(BasicTest):
 
         for cls in Backend.all_backend_classes(needs={'write', 'scan', 'keywords'}):
             with self.tst_backend(cls):
-                is_mmt = cls.__name__ == 'MMT'
-                with self.temp_backend(cls, clear_first=not is_mmt, cleanup=not is_mmt) as backend:
-                    if not backend:
-                        continue
+                with self.temp_backend(cls, clear_first=True, count=1) as backend:
+                    # TODO: warum  noch clear_first?
                     track = backend[0]
                     track.keywords = list()
                     self.assertEqual(track.keywords, list())
@@ -329,8 +327,8 @@ class TestBackends(BasicTest):
     def test_download_many_from_mmt(self):
         """Download many tracks."""
         many = 150
-        backend = self.setup_backend(MMT, username='gpxstoragemany', count=many, cleanup=False, clear_first=True)
-        self.assertEqual(len(backend), many)
+        with self.temp_backend(MMT, username='gpxstoragemany', count=many, clear_first=True) as backend:
+            self.assertEqual(len(backend), many)
 
     def test_duplicate_title(self):
         """two tracks having the same title."""
@@ -361,7 +359,7 @@ class TestBackends(BasicTest):
                         for _ in backend:
                             self.assertFalse(_.public)
                         backend2 = backend.clone()
-                        with Directory(cleanup=True) as copy:
+                        with self.temp_backend(Directory) as copy:
                             for _ in copy.merge(backend2):
                                 self.logger.debug(_)
                             self.assertSameTracks(local, copy, with_last_time=cls is not GPSIES, with_category=False)
@@ -513,23 +511,18 @@ class TestBackends(BasicTest):
     def test_directory(self):
         """directory creation/deletion."""
 
-        dir_a = Directory(cleanup=True)
-        self.assertTrue(dir_a.is_temporary)
-        a_url = dir_a.url
-        self.assertTrue(os.path.exists(a_url))
-        dir_a.destroy()
+        with self.temp_backend(Directory) as dir_a:
+            a_url = dir_a.url
+            self.assertTrue(os.path.exists(a_url))
         self.assertFalse(os.path.exists(a_url))
 
         test_url = tempfile.mkdtemp()
-        dir_b = Directory(url=test_url, cleanup=True)
-        self.assertFalse(dir_b.is_temporary)
-        self.assertTrue(dir_b.url == test_url)
-        dir_b.destroy()
+        with self.temp_backend(Directory, url=test_url) as dir_b:
+            self.assertTrue(dir_b.url == test_url)
         self.assertTrue(os.path.exists(test_url))
         os.rmdir(test_url)
 
         dir_c = Directory(auth='gpxitytest')
-        self.assertTrue(dir_c.is_temporary)
 
         self.assertIn('/gpxity.TestBackends.test_directory_', dir_c.url)
         dir_c.destroy()

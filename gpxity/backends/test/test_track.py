@@ -44,7 +44,7 @@ class TrackTests(BasicTest):
         """test initialisation."""
         track = Track()
         self.assertFalse(track.public)
-        with Directory(cleanup=True) as backend:
+        with self.temp_backend(Directory) as backend:
             track = Track()
             track._set_backend(backend)
             self.assertEqual(len(backend), 0)
@@ -60,7 +60,7 @@ class TrackTests(BasicTest):
         os.rmdir(test_url)
         self.assertFalse(os.path.exists(test_url))
         try:
-            with Directory(url=test_url, cleanup=True):
+            with self.temp_backend(Directory, url=test_url):
                 self.assertTrue(os.path.exists(test_url))
         finally:
             os.rmdir(test_url)
@@ -68,7 +68,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_track_list(self):
         """test list of tracks."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             self.assertEqual(len(directory), 0)
             track1 = Track()
             directory.add(track1)
@@ -245,7 +245,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_save_dir(self):
         """Correct files?."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             os.chmod(directory.url, 0o555)
             track = self.create_test_track()
             if os.getuid() == 0:
@@ -263,7 +263,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_save(self):
         """save locally."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             dir2 = directory.clone()
             try:
                 track = self.create_test_track()
@@ -374,7 +374,7 @@ class TrackTests(BasicTest):
         """test __str__."""
         track = Track()
         self.assertNotIn('id:', str(track))
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             track = Track()
             track.title = 'Title'
             track.category = 'Running'
@@ -447,7 +447,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_symlinks(self):
         """Directory symlinks."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             source = os.path.join(directory.url, 'deadlink')
             target = 'deadtarget'
             target_path = os.path.join(directory.url, target)
@@ -481,7 +481,8 @@ class TrackTests(BasicTest):
         try:
             sys.getfilesystemencoding = lambda: 'wrong'
             with self.assertRaises(Backend.BackendException) as context:
-                Directory(cleanup=True)
+                with self.temp_backend(Directory):
+                    pass
             expect = (
                 'Backend Directory needs a unicode file system encoding,'
                 ' .* has wrong. Please change your locale settings.')
@@ -531,7 +532,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_id(self):
         """id_in_backend must be str."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             track = Track()
             with self.assertRaises(Exception):
                 directory.add(track).id_in_backend = 56
@@ -546,7 +547,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_in(self):
         """x in backend."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             track = Track()
             directory.add(track).id_in_backend = '56'
             self.assertEqual(track.id_in_backend, '56')
@@ -559,7 +560,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_getitem(self):
         """backend[idx]."""
-        with Directory(cleanup=True) as directory:
+        with self.temp_backend(Directory) as directory:
             directory.scan(now=True)
             track = Track()
             directory.add(track).id_in_backend = '56'

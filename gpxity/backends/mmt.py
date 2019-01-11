@@ -194,8 +194,6 @@ class MMT(Backend):
     Args:
         url (str): The Url of the server. Default is http://mapmytracks.com
         auth (tuple(str, str)): Username and password
-        cleanup (bool): If True, :meth:`~gpxity.backend.Backend.destroy` will remove all tracks in the
-            user account.
 
     """
 
@@ -259,11 +257,11 @@ class MMT(Backend):
     # every MMT account only gets one.
     _current_lifetrack = None
 
-    def __init__(self, url=None, auth=None, cleanup=False):
+    def __init__(self, url=None, auth=None):
         """See class docstring."""
         if url is None:
             url = self.default_url
-        super(MMT, self).__init__(url, auth, cleanup)
+        super(MMT, self).__init__(url, auth)
         self.__mid = -1  # member id at MMT for auth
         self.__is_free_account = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT

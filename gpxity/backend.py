@@ -31,9 +31,7 @@ class Backend:
     should not overlap in time. This is not enforced but sometimes
     behaviour is undefined if you ignore this.
 
-    A Backend be used as a context manager. Upon termination, all tracks
-    may be removed automatically by setting cleanup=True. Some concrete
-    implementations may also remove the backend itself.
+    A Backend be used as a context manager.
 
     A Backend allows indexing by normal int index, by :class:`Track <gpxity.track.Track>`
     and by :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>`.
@@ -62,7 +60,6 @@ class Backend:
             This will lookup the password and config from :class:`Authenticate <gpxity.auth.Authenticate>`.
             You can also pass a dict containing what would normally be obtained from
             :class:`Authenticate <gpxity.auth.Authenticate>`. The dict must also contain 'Username'.
-        cleanup (bool): If true, :meth:`destroy` will remove all tracks.
 
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
@@ -135,7 +132,7 @@ class Backend:
     __all_backend_classes = None
     __all_backends = dict()
 
-    def __init__(self, url: str = None, auth=None, cleanup: bool = False):
+    def __init__(self, url: str = None, auth=None):
         """See class docstring."""
         logging.debug('Backend(%s: url=%s, auth=%s)', self.__class__.__name__, url, auth)
         if self.is_disabled():
@@ -147,7 +144,6 @@ class Backend:
             self.config = url
         else:
             self.config = Authenticate(self, url, auth)
-        self._cleanup = cleanup
         self.__match = None
         self.logger = logging.getLogger(str(self))
         self.fences = Fences(self.config.fences)
@@ -658,13 +654,7 @@ class Backend:
                 self.remove(track)
 
     def destroy(self):
-        """If `cleanup` was set at init time, removes all tracks.
-
-        Some backends (example: :class:`Directory <gpxity.directory.Directory.destroy>`)
-
-        may also remove the account (or directory). See also :meth:`remove_all`."""
-        if self._cleanup:
-            self.remove_all()
+        """Should be called when access to the Backend is not needed anymore."""
 
     def __contains__(self, value) ->bool:
         """value is either an a track or a track id.
@@ -772,7 +762,6 @@ class Backend:
 
     def __exit__(self, exc_type, exc_value, trback):
         """See class docstring."""
-        self.destroy()
 
     def __iter__(self):
         """See class docstring.
