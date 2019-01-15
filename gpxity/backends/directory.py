@@ -354,9 +354,15 @@ class Directory(Backend):
         Returns: The new ident.
 
         """
-        ident = track.id_in_backend
-        if ident is None:
-            ident = self._new_id_from(None)
+        if self.config.id_method == 'counter':
+            try:
+                return str(max(int(x) for x in self._list_gpx()) + 1)
+            except ValueError:
+                return '1'
+        else:
+            ident = track.id_in_backend
+            if ident is None:
+                ident = self._new_id_from(None)
         return ident
 
     def _make_symlinks(self, track):

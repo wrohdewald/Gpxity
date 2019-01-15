@@ -56,15 +56,6 @@ gpxity.backends.trackmmt module
     :show-inheritance:
     :exclude-members: load_full, skip_test
 
-gpxity.backends.server_directory module
----------------------------------------
-
-.. automodule:: gpxity.backends.server_directory
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :exclude-members: load_full, skip_test
-
 gpxity.backends.mailer module
 -----------------------------
 

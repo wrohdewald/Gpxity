@@ -26,7 +26,7 @@ from gpxpy import gpx as mod_gpx
 
 from .basic import BasicTest, disabled
 from ... import Track, Backend, Fences
-from .. import Directory, ServerDirectory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
+from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from .. import Openrunner
 from ...util import repr_timespan, positions_equal
 
@@ -662,7 +662,7 @@ class TrackTests(BasicTest):
     def test_all_backend_classes(self):
         """Test Backend.all_backend_classes."""
         all_classes = [x.__name__ for x in Backend.all_backend_classes()]
-        expected = [Directory, GPSIES, Mailer, MMT, Openrunner, ServerDirectory, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, Mailer, MMT, Openrunner, TrackMMT, WPTrackserver]
         expected = [x.__name__ for x in expected if not x.is_disabled()]
         self.assertEqual(all_classes, expected)
 
@@ -688,35 +688,6 @@ class TrackTests(BasicTest):
                      ('subdir/abc', 'Directory', 'subdir', 'abc'),
                      ('subdir/sub2', 'Directory', 'subdir/sub2', None),
                      ('subdir/sub2/sub3/xy', 'Directory', 'subdir/sub2/sub3', 'xy'))
-            for string, *expect in cases:
-                cls, account, ident = Backend.parse_objectname(string)
-                self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
-        finally:
-            os.chdir(old_dir)
-            os.rmdir(sub3)
-            os.rmdir(sub2)
-            os.rmdir(subdir)
-
-    @skipIf(*disabled(ServerDirectory))
-    def test_parse_objectname_serverdirectory(self):
-        """Test Backend.parse_objectname for serverdirectory."""
-        prefix = Directory.prefix
-        subdir = os.path.join(prefix, 'subdir')
-        sub2 = os.path.join(subdir, 'sub2')
-        sub3 = os.path.join(subdir, 'sub3')
-        os.mkdir(subdir)
-        os.mkdir(sub2)
-        os.mkdir(sub3)
-        old_dir = os.getcwd()
-        try:
-            os.chdir(prefix)
-            cases = (('serverdirectory:.', 'ServerDirectory', '.', None),
-                     ('serverdirectory:', 'ServerDirectory', '.', None),
-                     ('serverdirectory:subdir', 'ServerDirectory', 'subdir', None),
-                     ('serverdirectory:abc', 'ServerDirectory', '.', 'abc'),
-                     ('serverdirectory:subdir/abc', 'ServerDirectory', 'subdir', 'abc'),
-                     ('serverdirectory:subdir/sub2', 'ServerDirectory', 'subdir/sub2', None),
-                     ('serverdirectory:subdir/sub2/sub3/xy', 'ServerDirectory', 'subdir/sub2/sub3', 'xy'))
             for string, *expect in cases:
                 cls, account, ident = Backend.parse_objectname(string)
                 self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))

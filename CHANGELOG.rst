@@ -6,6 +6,7 @@ Changelog
 
   * fix documentation at readthedocs.io
   * gpxdo ls --location shows name of starting place: city, country
+  * integrate ServerDirectory into Directory
 
 1.5.0 release 2019-01-02
 ------------------------

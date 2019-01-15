@@ -16,7 +16,7 @@ import tempfile
 from unittest import skipIf
 
 from .basic import BasicTest, disabled
-from .. import Directory, MMT, GPSIES, ServerDirectory, TrackMMT, Mailer, WPTrackserver, Openrunner
+from .. import Directory, MMT, GPSIES, TrackMMT, Mailer, WPTrackserver, Openrunner
 from ... import Track, Lifetrack, Backend
 
 # pylint: disable=attribute-defined-outside-init
@@ -32,9 +32,6 @@ class TestBackends(BasicTest):
         expect_unsupported[Directory] = {
             'own_categories', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_description', 'write_public', 'write_title'}
-        expect_unsupported[ServerDirectory] = {
-            'own_categories', 'write_add_keywords', 'write_remove_keywords',
-            'write_category', 'write_title', 'write_description', 'write_public'}
         expect_unsupported[MMT] = set()
         expect_unsupported[GPSIES] = {
             'keywords', 'write_add_keywords', 'write_remove_keywords'}
@@ -69,7 +66,7 @@ class TestBackends(BasicTest):
     def test_all_backends(self):
         """Check if Backend.all_backend_classes works."""
         backends = Backend.all_backend_classes()
-        expected = [Directory, GPSIES, MMT, Mailer, Openrunner, ServerDirectory, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, MMT, Mailer, Openrunner, TrackMMT, WPTrackserver]
         expected = [x for x in expected if not x.is_disabled()]
         self.assertEqual(backends, expected)
 
@@ -123,7 +120,7 @@ class TestBackends(BasicTest):
 
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
-        for cls in Backend.all_backend_classes(exclude=[Directory, ServerDirectory]):
+        for cls in Backend.all_backend_classes(exclude=[Directory]):
             with self.tst_backend(cls):
                 with self.assertRaises(KeyError):
                     self.setup_backend(cls, username='wrong_user')
@@ -429,7 +426,7 @@ class TestBackends(BasicTest):
                 life.start(self._random_points())
             self.assertEqual(str(context.exception), 'Your free MMT account does not allow lifetracking')
 
-    @skipIf(*disabled(Directory, ServerDirectory))
+    @skipIf(*disabled(Directory))
     def test_lifetrack(self):
         """test life tracking against a local server."""
         def track():
@@ -446,8 +443,10 @@ class TestBackends(BasicTest):
 
         for cls in Backend.all_backend_classes():
             with self.tst_backend(cls):
-                with self.temp_backend(ServerDirectory) as local_serverdirectory:
-                    with self.temp_backend(ServerDirectory) as remote_serverdirectory:
+                with self.temp_backend(Directory) as local_serverdirectory:
+                    local_serverdirectory.config.section['id_method'] = 'counter'
+                    with self.temp_backend(Directory) as remote_serverdirectory:
+                        remote_serverdirectory.config.section['id_method'] = 'counter'
                         with self.lifetrackserver(remote_serverdirectory.url):
                             with self.temp_backend(cls) as uplink:
                                 track()
@@ -620,7 +619,7 @@ class TestBackends(BasicTest):
                         backend2[0].keywords)
                     self.assertEqual(sorted(expected_keywords), backend2[0].keywords)
 
-    @skipIf(*disabled(ServerDirectory))
+    @skipIf(*disabled(Directory))
     def test_legal_categories(self):
         """Check if our fixed list of categories still matches the online service."""
 
@@ -636,6 +635,7 @@ class TestBackends(BasicTest):
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
                         with self.temp_backend(Directory) as serverdirectory:
+                            serverdirectory.config.id_method = 'counter'
                             with self.lifetrackserver(serverdirectory.url):
                                 check()
                     else:
