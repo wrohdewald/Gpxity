@@ -28,7 +28,7 @@ from .basic import BasicTest, disabled
 from ... import Track, Backend, Fences
 from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from .. import Openrunner
-from ...util import repr_timespan, positions_equal
+from ...util import repr_timespan, positions_equal, remove_directory
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -57,13 +57,13 @@ class TrackTests(BasicTest):
 
         test_url = tempfile.mkdtemp(prefix=Directory.prefix)
         self.assertTrue(os.path.exists(test_url))
-        os.rmdir(test_url)
+        remove_directory(test_url)
         self.assertFalse(os.path.exists(test_url))
         try:
             with self.temp_backend(Directory, url=test_url):
                 self.assertTrue(os.path.exists(test_url))
         finally:
-            os.rmdir(test_url)
+            remove_directory(test_url)
 
     @skipIf(*disabled(Directory))
     def test_track_list(self):
@@ -693,9 +693,9 @@ class TrackTests(BasicTest):
                 self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
         finally:
             os.chdir(old_dir)
-            os.rmdir(sub3)
-            os.rmdir(sub2)
-            os.rmdir(subdir)
+            remove_directory(sub3)
+            remove_directory(sub2)
+            remove_directory(subdir)
 
     @skipIf(*disabled(MMT))
     def test_parse_objectname_mmt(self):

@@ -18,6 +18,7 @@ from unittest import skipIf
 from .basic import BasicTest, disabled
 from .. import Directory, MMT, GPSIES, TrackMMT, Mailer, WPTrackserver, Openrunner
 from ... import Track, Lifetrack, Backend
+from ...util import remove_directory
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -519,7 +520,7 @@ class TestBackends(BasicTest):
         with self.temp_backend(Directory, url=test_url) as dir_b:
             self.assertTrue(dir_b.url == test_url)
         self.assertTrue(os.path.exists(test_url))
-        os.rmdir(test_url)
+        remove_directory(test_url)
 
         dir_c = Directory(auth='gpxitytest')
 

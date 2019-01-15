@@ -85,7 +85,7 @@ class BasicTest(unittest.TestCase):
         """Check if there are still /tmp/gpxitytest.* directories."""
         if not Mailer.is_disabled():
             self.stop_mailserver()
-        os.rmdir(Directory.prefix)
+        remove_directory(Directory.prefix)
         timedelta = datetime.datetime.now() - self.start_time
         self.logger.debug('%s seconds ', timedelta.seconds)
         logging.shutdown()
