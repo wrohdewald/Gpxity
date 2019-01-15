@@ -73,8 +73,11 @@ def remove_directory(path):
     """If this fails, show directory content."""
     try:
         os.rmdir(path)
+    except FileNotFoundError:
+        logging.debug("REMOVE_DIRECTORY %s: not found", path)
+        raise
     except OSError as exc:
-        logging.error('rmdir: errno: %s cannot remove directory: %s', exc.errno, path)
+        logging.error('rmdir: errno: %s cannot remove directory: %s', exc, path)
         if os.path.exists(path):
             for _ in os.listdir(path):
                 logging.error('  dir still has %s', _)
