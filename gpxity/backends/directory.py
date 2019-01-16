@@ -158,6 +158,18 @@ class Directory(Backend):
             result = '.'
         return result
 
+    @staticmethod
+    def _strip_gpx(name: str) ->str:
+        """If it is there, strip traling .gpx.
+
+        Returns:
+            The stripped string.
+
+        """
+        if name.endswith('.gpx'):
+            return name[:-4]
+        return name
+
     def _load_symlinks(self, directory=None):
         """scan the subdirectories with the symlinks.
 
@@ -173,10 +185,7 @@ class Directory(Backend):
                 if os.path.islink(full_name):
                     if os.path.exists(full_name):
                         target = os.readlink(full_name)
-                        gpx_target = os.path.basename(target)
-                        if gpx_target.endswith('.gpx'):
-                            # it really should ...
-                            gpx_target = gpx_target[:-4]
+                        gpx_target = self._strip_gpx(os.path.basename(target))
                         if full_name not in self._symlinks[gpx_target]:
                             self._symlinks[gpx_target].append(full_name)
                     else:
