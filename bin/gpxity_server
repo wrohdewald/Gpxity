@@ -142,6 +142,8 @@ class MMTHandler(BaseHTTPRequestHandler):
 
     def return_error(self, code, reason):
         """Answer the clint with an xml formatted error message."""
+        if self.error_response:
+            reason = '{} ({})'.format(reason, self.error_response[1])
         self.error_response = (code, reason)  # pylint: disable=attribute-defined-outside-init
         try:
             self.send_response(code, reason)
