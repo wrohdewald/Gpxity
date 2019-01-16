@@ -485,9 +485,9 @@ class GPSIES(Backend):
         track.id_in_backend = new_ident
         return new_ident
 
-    def destroy(self):
+    def detach(self):
         """also close session."""
-        super(GPSIES, self).destroy()
+        super(GPSIES, self).detach()
         if self.session:
             self.session.close()
 

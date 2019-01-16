@@ -776,10 +776,10 @@ class MMT(Backend):
             self.__post(request='stop_activity')
             MMT._current_lifetrack = None
 
-    def destroy(self):
+    def detach(self):
         """also close session."""
-        # TODO: session/destroy are quite similar between MMT and GPSIES
-        super(MMT, self).destroy()
+        # TODO: session/detach are quite similar between MMT and GPSIES
+        super(MMT, self).detach()
         ident = str(self)
         if ident in self._session:
             self._session[ident].close()

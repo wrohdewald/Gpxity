@@ -193,7 +193,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
                 self._start_timer()
         return track.id_in_backend
 
-    def destroy(self):
+    def detach(self):
         """Mail the rest."""
         if self.timer:
             self.timer.cancel()

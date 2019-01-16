@@ -653,7 +653,7 @@ class Backend:
             if self.matches(track):
                 self.remove(track)
 
-    def destroy(self):
+    def detach(self):
         """Should be called when access to the Backend is not needed anymore."""
 
     def __contains__(self, value) ->bool:

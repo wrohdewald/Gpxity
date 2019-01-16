@@ -308,7 +308,7 @@ class TrackTests(BasicTest):
                 self.assertEqual(len(dir2), 1)
                 filecmp.clear_cache()
             finally:
-                dir2.destroy()
+                dir2.detach()
 
     def test_add_points(self):
         """test Track.add_points."""

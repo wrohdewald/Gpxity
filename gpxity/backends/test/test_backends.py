@@ -312,7 +312,7 @@ class TestBackends(BasicTest):
                         self.assertTrackFileContains(track, tstdescr)
                     backend2.scan()
                     self.assertEqual(backend2[0].description, tstdescr)
-                    backend2.destroy()
+                    backend2.detach()
 
     def test_change_points(self):
         """Can we change the points of a track?.
@@ -525,7 +525,7 @@ class TestBackends(BasicTest):
         dir_c = Directory(auth='gpxitytest')
 
         self.assertIn('/gpxity.TestBackends.test_directory_', dir_c.url)
-        dir_c.destroy()
+        dir_c.detach()
 
     @skipIf(*disabled(MMT))
     def test_mmt_empty(self):

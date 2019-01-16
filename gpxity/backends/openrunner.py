@@ -699,8 +699,8 @@ class Openrunner(Backend):
         """remove on the server."""
         self.__delete(action='route', data={'routeIds[0]': ident})
 
-    def destroy(self):
+    def detach(self):
         """also close session."""
-        super(Openrunner, self).destroy()
+        super(Openrunner, self).detach()
         if self.session:
             self.session.close()
