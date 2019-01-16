@@ -91,7 +91,7 @@ class MailQueue:
         if self.disabled:
             self.tracks = dict()
             return
-        section = self.mailer.config.section
+        section = self.mailer.account.section
         mail = EmailMessage()
         mail['subject'] = self.subject()
         mail['from'] = section.get('From', 'gpxity')
@@ -140,10 +140,10 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         outstanding_tracks: Do not change this dict. Key is track.id_in_backend, value is
             a clone of the track. This freezes the current title in the clone.
         url: Holds the address of the recipient.
-        config.from: The name of the mail sender. Default "gpxity".
-        config.port: The port of the smtp server to talk to. Default 25
-        config.smtp: The name of the smtp server. Default "localhost".
-        config.interval (str): seconds. Mails are not sent more often. Default is None. If None, always send when
+        account.from: The name of the mail sender. Default "gpxity".
+        account.port: The port of the smtp server to talk to. Default 25
+        account.smtp: The name of the smtp server. Default "localhost".
+        account.interval (str): seconds. Mails are not sent more often. Default is None. If None, always send when
             Mailer.flush() is called. This is used for bundling several writes into one single mail:
             gpxdo merge --copy will send all tracks with one single mail.
             Lifetracking uses this to send mails with the current track only every X seconds, the
@@ -185,8 +185,8 @@ class Mailer(Backend):  # pylint: disable=abstract-method
             with track._decouple():
                 track.id_in_backend = new_ident
         self.queue.append(track)
-        if self.config.interval is not None:
-            seconds = int(self.config.interval)
+        if self.account.interval is not None:
+            seconds = int(self.account.interval)
             if self.queue.last_sent_time + datetime.timedelta(seconds=seconds) < datetime.datetime.now():
                 self.queue.send()
             else:
@@ -211,7 +211,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         """Start the flush timer."""
         if self.timer is None:
             if interval is None:
-                interval = int(self.config.interval)
+                interval = int(self.account.interval)
             self.timer = Timer(interval, self.flush)
             self.timer.start()
 

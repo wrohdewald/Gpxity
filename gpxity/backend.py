@@ -57,7 +57,7 @@ class Backend:
     Args:
         url (str): Initial value for :attr:`url`
         auth (str):  The username.
-            This will lookup the password and config from :class:`Authenticate <gpxity.auth.Authenticate>`.
+            This will lookup the password and account from :class:`Authenticate <gpxity.auth.Authenticate>`.
             You can also pass a dict containing what would normally be obtained from
             :class:`Authenticate <gpxity.auth.Authenticate>`. The dict must also contain 'Username'.
 
@@ -70,11 +70,11 @@ class Backend:
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url. Must never end with '/' except for
             Directory(url='/').
-        fences: The fences as found in config. You can programmatically change them but they will
+        fences: The fences as found in account. You can programmatically change them but they will
             never be applied to already existing data.
         needs_config: If True, the Backend class expects data in auth.cfg
-        config: A Section with all entries in auth.cfg for this backend
-        config.fences: The backend will never write points within fences.
+        account: A Section with all entries in auth.cfg for this backend
+        account.fences: The backend will never write points within fences.
             You can define any number of fences separated by spaces. Every fence is a circle.
             It has the form Lat/Long/meter.
             Lat and Long are the center position in decimal degrees, meter is the radius.
@@ -141,30 +141,30 @@ class Backend:
         self.__tracks = list()
         self._tracks_fully_listed = False
         if isinstance(url, Authenticate):
-            self.config = url
+            self.account = url
         else:
-            self.config = Authenticate(self, url, auth)
+            self.account = Authenticate(self, url, auth)
         self.__match = None
         self.logger = logging.getLogger(str(self))
-        self.fences = Fences(self.config.fences)
+        self.fences = Fences(self.account.fences)
 
     @property
     def timeout(self):
-        """Timeout from config or class default.
+        """Timeout from account or class default.
 
         Returns: The timeout
 
         """
-        return self.config.timeout or self._timeout
+        return self.account.timeout or self._timeout
 
     @property
     def url(self):
-        """get self.config['url'].
+        """get self.account['url'].
 
         Returns: The url
 
         """
-        return self.config.url
+        return self.account.url
 
     def _has_default_url(self) ->bool:
         """Check if the backend has the default url.
@@ -186,7 +186,7 @@ class Backend:
             The username
 
         """
-        author = self.config.section.get('Username')
+        author = self.account.section.get('Username')
         if not author:
             raise Backend.BackendException('{} needs a username'.format(self.url))
         return author
@@ -206,7 +206,7 @@ class Backend:
         result = '{}:{}{}'.format(
             self.__class__.__name__.lower(),
             url,
-            self.config.username)
+            self.account.username)
         return result
 
     supported_categories = Track.categories
@@ -746,7 +746,7 @@ class Backend:
             The repr str
 
         """
-        dirname = self.config.username
+        dirname = self.account.username
         result = '{}({} in {}{})'.format(
             self.__class__.__name__, len(self.__tracks), self.url, dirname)
         return result
@@ -1007,7 +1007,7 @@ class Backend:
 
     def clone(self):
         """return a clone."""
-        return self.__class__(self.config)
+        return self.__class__(self.account)
 
     @classmethod
     def instantiate(cls, name: str):

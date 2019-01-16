@@ -445,9 +445,9 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes():
             with self.tst_backend(cls):
                 with self.temp_backend(Directory) as local_serverdirectory:
-                    local_serverdirectory.config.section['id_method'] = 'counter'
+                    local_serverdirectory.account.section['id_method'] = 'counter'
                     with self.temp_backend(Directory) as remote_serverdirectory:
-                        remote_serverdirectory.config.section['id_method'] = 'counter'
+                        remote_serverdirectory.account.section['id_method'] = 'counter'
                         with self.lifetrackserver(remote_serverdirectory.url):
                             with self.temp_backend(cls) as uplink:
                                 track()
@@ -636,7 +636,7 @@ class TestBackends(BasicTest):
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
                         with self.temp_backend(Directory) as serverdirectory:
-                            serverdirectory.config.id_method = 'counter'
+                            serverdirectory.account.id_method = 'counter'
                             with self.lifetrackserver(serverdirectory.url):
                                 check()
                     else:

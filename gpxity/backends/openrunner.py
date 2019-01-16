@@ -502,14 +502,14 @@ class Openrunner(Backend):
         """
         ident = str(self)
         if ident not in self._session:
-            if not hasattr(self.config, 'username') or not self.config.username:
+            if not hasattr(self.account, 'username') or not self.account.username:
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
-            if self.config.password:
+            if self.account.password:
                 data = {
                     'language': 'en',
-                    'login': self.config.username,
-                    'password': self.config.password,
+                    'login': self.account.username,
+                    'password': self.account.password,
                 }
                 self._session[ident].response = self._session[ident].post(
                     '{}/user/login'.format(self.url),

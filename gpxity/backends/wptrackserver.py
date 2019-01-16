@@ -83,21 +83,21 @@ class WPTrackserver(Backend):
         super(WPTrackserver, self).__init__(url, auth)
         self._db = None
         self.__connect_mysql()
-        cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.config.username])
+        cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.account.username])
         row = cursor.fetchone()
         if row is None:
-            raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.config.username))
+            raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.account.username))
         self.user_id = row[0]
 
     def __connect_mysql(self):
         """Connect to the Mysql server."""
         try:
-            user, database = self.config.mysql.split('@')
+            user, database = self.account.mysql.split('@')
         except ValueError:
             raise Backend.BackendException('Url is illegal: {}'.format(self.url))
         try:
             self._db = MySQLdb.connect(
-                host=self.url, user=user, passwd=self.config.password, database=database,
+                host=self.url, user=user, passwd=self.account.password, database=database,
                 autocommit=True, charset='utf8')
             self.logger.info('reconnected to %s %s', self.url, database)
         except _mysql_exceptions.OperationalError as exc:

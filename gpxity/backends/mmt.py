@@ -295,14 +295,14 @@ class MMT(Backend):
         if ident not in self._session:
             self._session[ident] = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
-            payload = {'username': self.config.username, 'password': self.config.password, 'ACT': '9'}
+            payload = {'username': self.account.username, 'password': self.account.password, 'ACT': '9'}
             login_url = '{}/login'.format(self.https_url)
             headers = {'User-Agent': 'Gpxity'}  # see https://github.com/MapMyTracks/api/issues/26
             response = self._session[ident].post(
                 login_url, data=payload, headers=headers, timeout=self.timeout)
             if 'You are now logged in.' not in response.text:
                 raise self.BackendException('Login as {} / {} failed, I got {}'.format(
-                    self.config.username, self.config.password, response.text))
+                    self.account.username, self.account.password, response.text))
             else:
                 cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
@@ -397,7 +397,7 @@ class MMT(Backend):
         full_url = self.url + '/' + (url if url else 'api/')
         headers = {'DNT': '1'}  # do not track
         headers['User-Agent'] = 'Gpxity'  # see https://github.com/MapMyTracks/api/issues/26
-        if not self.config.username or not self.config.password:
+        if not self.account.username or not self.account.password:
             raise self.BackendException('{}: Needs authentication data'.format(self.url))
         if data:
             data = data.encode('ascii', 'xmlcharrefreplace')
@@ -410,7 +410,7 @@ class MMT(Backend):
             else:
                 response = requests.post(
                     full_url, data=data, headers=headers,
-                    auth=(self.config.username, self.config.password), timeout=self.timeout)
+                    auth=(self.account.username, self.account.password), timeout=self.timeout)
         except requests.exceptions.ReadTimeout:
             self.logger.error('%s: timeout for %s', self, data)
             raise
@@ -466,7 +466,7 @@ class MMT(Backend):
             '<{attr}>{value}</{attr}></message>'.format(
                 attr=attribute,
                 eid=track.id_in_backend,
-                usrid=self.config.username,
+                usrid=self.account.username,
                 value=attr_value,
                 uid=self.session.cookies['exp_uniqueid'])
         self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
@@ -521,7 +521,7 @@ class MMT(Backend):
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<tagnames>{value}</tagnames></message>'.format(
                 eid=track.id_in_backend,
-                usrid=self.config.username,
+                usrid=self.account.username,
                 value=values,
                 uid=self.session.cookies['exp_uniqueid'])
         text = self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')

@@ -508,7 +508,7 @@ class LifeServerMMT(HTTPServer):
             self.socket = ssl.wrap_socket(
                 self.socket, certfile=options.certfile, keyfile=options.keyfile, server_side=True)
         self.targets = [Backend.instantiate(options.target[0])]
-        self.targets[0].config.id_method = 'counter'
+        self.targets[0].account.id_method = 'counter'
         Authenticate.path = self.targets[0].url + '/auth.cfg'
         self.logger = self.define_logger(options)
         self.targets.extend(Backend.instantiate(x) for x in options.target[1:])

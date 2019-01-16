@@ -354,7 +354,7 @@ class Directory(Backend):
         Returns: The new ident.
 
         """
-        if self.config.id_method == 'counter':
+        if self.account.id_method == 'counter':
             try:
                 return str(max(int(x) for x in self._list_gpx()) + 1)
             except ValueError:

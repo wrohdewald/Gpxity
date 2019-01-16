@@ -289,10 +289,10 @@ class GPSIES(Backend):
         """
         ident = str(self)
         if ident not in self._session:
-            if not self.config.username or not self.config.password:
+            if not self.account.username or not self.account.password:
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
-            data = {'username': self.config.username, 'password': self.config.password}
+            data = {'username': self.account.username, 'password': self.account.password}
             self._session_respoinse = self._session[ident].post(
                 '{}/loginLayer.do?language=en'.format(self.url),
                 data=data, timeout=self.timeout)
