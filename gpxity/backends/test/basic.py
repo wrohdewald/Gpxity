@@ -421,8 +421,7 @@ class BasicTest(unittest.TestCase):
         finally:
             if cleanup and 'remove' in cls_.supported:
                 tmp_backend.remove_all()
-                if url is None:
-                    remove_directory(tmp_backend.url)
+            tmp_backend.detach()
 
     @classmethod
     def create_db_for_wptrackserver(cls):

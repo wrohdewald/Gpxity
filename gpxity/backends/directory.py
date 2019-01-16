@@ -18,6 +18,7 @@ from collections import defaultdict
 import gpxpy.gpxfield as mod_gpxfield
 
 from .. import Backend
+from ..util import remove_directory
 
 __all__ = ['Directory', 'Backup']
 
@@ -95,6 +96,7 @@ class Directory(Backend):
             temporary directory named
             :attr:`prefix`.X where X are some random characters.
             If the directory does not exist, it is created.
+            It will be removed in __exit__ / detach.
         auth (str): In addition to other backends: if given and url is None, use auth as url.
 
     Attributes:
@@ -125,7 +127,8 @@ class Directory(Backend):
             auth = None
         if isinstance(url, str) and url.startswith('gpxitytest'):
             url = None
-        if url is None:
+        self.is_temporary = url is None
+        if self.is_temporary:
             url = tempfile.mkdtemp(prefix=self.__class__.prefix)
 
         if isinstance(url, str):
@@ -426,3 +429,9 @@ class Directory(Backend):
             self._remove_symlinks(old_ident)
             self._make_symlinks(track)
         return new_ident
+
+    def detach(self):
+        """also remove temporary directory."""
+        super(Directory, self).detach()
+        if self.is_temporary:
+            remove_directory(self.url)
