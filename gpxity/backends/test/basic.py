@@ -233,6 +233,12 @@ class BasicTest(unittest.TestCase):
             result.append(point)
         return result
 
+    def assertBackendLength(self, backend, length): # noqa pylint: disable=invalid-name
+        """Check length of backend."""
+        if len(backend) != length:
+            message = ','.join(str(x) for x in backend)
+            self.assertEqual(len(backend), length, 'Should have {} tracks: {}'.format(backend, message))
+
     def assertSameTracks(self, backend1, backend2, msg=None, with_category=True, with_last_time=None):  # noqa pylint: disable=invalid-name
         """both backends must hold identical tracks."""
         self.maxDiff = None  # pylint: disable=invalid-name

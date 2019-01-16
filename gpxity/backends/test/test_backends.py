@@ -90,14 +90,14 @@ class TestBackends(BasicTest):
         with self.temp_backend(Directory) as directory1:
             with self.temp_backend(Directory) as directory2:
                 saved = directory1.add(track)
-                self.assertEqual(len(directory1), 1)
+                self.assertBackendLength(directory1, 1)
                 self.assertEqual(saved.backend, directory1)
                 directory1.add(track.clone())
-                self.assertEqual(len(directory1), 2)
+                self.assertBackendLength(directory1, 2)
                 directory2.add(track)
-                self.assertEqual(len(directory2), 1)
+                self.assertBackendLength(directory2, 1)
                 directory2.scan()
-                self.assertEqual(len(directory2), 1)
+                self.assertBackendLength(directory2, 1)
 
     def test_duplicate_tracks(self):
         """What happens if we save the same track twice?."""
@@ -106,18 +106,18 @@ class TestBackends(BasicTest):
                 with self.temp_backend(cls) as backend:
                     track = self.create_test_track()
                     backend.add(track)
-                    self.assertEqual(len(backend), 1)
+                    self.assertBackendLength(backend, 1)
                     with self.assertRaises(ValueError):
                         backend.add(track)
-                    self.assertEqual(len(backend), 1)
+                    self.assertBackendLength(backend, 1)
                     if cls is GPSIES:
                         # if the same track data is uploaded again, we get the same id_in_backend.
                         with self.assertRaises(ValueError):
                             backend.add(track.clone())
-                        self.assertEqual(len(backend), 1)
+                        self.assertBackendLength(backend, 1)
                     else:
                         backend.add(track.clone())
-                        self.assertEqual(len(backend), 2)
+                        self.assertBackendLength(backend, 2)
 
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
@@ -160,17 +160,17 @@ class TestBackends(BasicTest):
                     _.adjust_time(datetime.timedelta(hours=idx))
                 new_track = backend[0].clone()
                 self.assertIsNotNone(match_date(new_track))
-                self.assertEqual(len(backend), 3)
+                self.assertBackendLength(backend, 3)
                 backend.match = match_date
-                self.assertEqual(len(backend), 1)
+                self.assertBackendLength(backend, 1)
                 with self.assertRaises(cls.NoMatch):
                     backend.add(new_track)
-                self.assertEqual(len(backend), 1)
+                self.assertBackendLength(backend, 1)
                 orig_time = backend[0].time
                 delta = datetime.timedelta(days=-5)
                 with self.assertRaises(cls.NoMatch):
                     backend[0].adjust_time(delta)
-                self.assertEqual(len(backend), 1)
+                self.assertBackendLength(backend, 1)
                 self.assertEqual(orig_time + delta, backend[0].time)
 
     def test_z9_create_backend(self):
@@ -179,7 +179,7 @@ class TestBackends(BasicTest):
             if not cls.test_is_expensive:
                 with self.tst_backend(cls):
                     with self.temp_backend(cls, count=3) as backend:
-                        self.assertEqual(len(backend), 3)
+                        self.assertBackendLength(backend, 3)
                         first_time = backend.get_time()
                         time.sleep(2)
                         second_time = backend.get_time()
@@ -326,7 +326,7 @@ class TestBackends(BasicTest):
         """Download many tracks."""
         many = 150
         with self.temp_backend(MMT, username='gpxstoragemany', count=many, clear_first=True) as backend:
-            self.assertEqual(len(backend), many)
+            self.assertBackendLength(backend, many)
 
     def test_duplicate_title(self):
         """two tracks having the same title."""
@@ -346,7 +346,7 @@ class TestBackends(BasicTest):
             track.public = False
             self.assertFalse(track.public)
             local.add(track)
-            self.assertEqual(len(local), 1)
+            self.assertBackendLength(local, 1)
             for cls in Backend.all_backend_classes(needs={'remove'}):
                 if cls is Openrunner:
                     # The test account does not allow private
@@ -391,21 +391,21 @@ class TestBackends(BasicTest):
                 # and one track once in source and once in sink:
                 sink.add(source[1])
 
-                self.assertEqual(len(source), org_source_len + 1)
-                self.assertEqual(len(sink), org_sink_len + 3)
+                self.assertBackendLength(source, org_source_len + 1)
+                self.assertBackendLength(sink, org_sink_len + 3)
 
                 dump(sink.merge(source, dry_run=True))
-                self.assertEqual(len(source), org_source_len + 1)
-                self.assertEqual(len(sink), org_sink_len + 3)
+                self.assertBackendLength(source, org_source_len + 1)
+                self.assertBackendLength(sink, org_sink_len + 3)
 
                 dump(sink.merge(source))
-                self.assertEqual(len(source), org_source_len + 1)
-                self.assertEqual(len(sink), org_source_len + org_sink_len + 1)
+                self.assertBackendLength(source, org_source_len + 1)
+                self.assertBackendLength(sink, org_source_len + org_sink_len + 1)
 
                 for _ in range(2):
                     dump(sink.merge(source, remove=True))
-                    self.assertEqual(len(source), 0)
-                    self.assertEqual(len(sink), org_source_len + org_sink_len)
+                    self.assertBackendLength(source, 0)
+                    self.assertBackendLength(sink, org_source_len + org_sink_len)
 
     @skipIf(*disabled(Directory))
     def test_scan(self):
@@ -414,7 +414,7 @@ class TestBackends(BasicTest):
             backend2 = source.clone()
             track = self.create_test_track()
             backend2.add(track)
-            self.assertEqual(len(backend2), 6)
+            self.assertBackendLength(backend2, 6)
             source.scan()  # because it cannot know backend2 added something
 
     @skipIf(*disabled(MMT))
