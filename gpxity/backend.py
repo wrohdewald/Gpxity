@@ -762,6 +762,7 @@ class Backend:
 
     def __exit__(self, exc_type, exc_value, trback):
         """See class docstring."""
+        self.detach()
 
     def __iter__(self):
         """See class docstring.
