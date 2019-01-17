@@ -72,8 +72,6 @@ class WPTrackserver(Backend):
 
     needs_config = False
 
-    ident_format = '{:06}'   # noqa format the id int to a string. We want the sort order to be correct.
-
     _keywords_marker = '\nKEYWORDS: '
 
     _max_length = {'title': 255, 'description': 255}
@@ -153,7 +151,7 @@ class WPTrackserver(Backend):
         args = (self.user_id, )  # noqa
         cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
-            track = self._found_track(self.ident_format.format(_[0]))
+            track = self._found_track(str(int(_[0])))
             self._enrich_with_headers(track, _)
 
     @staticmethod
@@ -208,7 +206,7 @@ class WPTrackserver(Backend):
                     ' values(%s,%s,%s,%s,%s,%s)'
                 args = (self.user_id, title, track_time, description, track_distance, '')
                 cursor = self.__exec_mysql(cmd, args)
-                track.id_in_backend = self.ident_format.format(cursor.lastrowid)
+                track.id_in_backend = str(int(cursor.lastrowid))
             else:
                 self.__exec_mysql(
                     'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) '
