@@ -368,8 +368,6 @@ class Utility:
                 if not isinstance(self.destination, Track) and not self.options.copy:
                     logging.debug('')
                     logging.debug('collecting tracks from destination %s', self.destination)
-            if hasattr(self.options, 'id_from_backend') and self.options.id_from_backend:
-                self.source = Backend.instantiate(self.options.id_from_backend)
 
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
@@ -580,6 +578,19 @@ class Utility:
         for line in all_lines:
             line.print_row()
 
+    def _fix_id_from_account(self, fix_track):
+        """Set id from other account."""
+        logging.debug('track has ids %s', fix_track.ids)
+        for _ in fix_track.ids:
+            acc, ident = Backend.parse_objectname(_)
+            if str(acc) == self.options.id_from_account:
+                fix_track.id_in_backend = ident
+                break
+        else:
+            logging.info(
+                '--id-from-account: Account %s not found, track %s only has %s',
+                self.options.id_from_account, _, ','.join(fix_track.ids))
+
     def fix(self):
         """fix tracks"""
         result_lines = []
@@ -588,10 +599,8 @@ class Utility:
                 fix_track.title = fix_track.id_in_backend
             if self.options.id_from_title:
                 fix_track.id_in_backend = fix_track.title
-            elif self.options.id_from_backend:
-                backend_id = str(self.source)
-                new_id = fix_track.ids[backend_id]
-                fix_track.id_in_backend = new_id
+            elif self.options.id_from_account:
+                self._fix_id_from_account(fix_track)
             elif self.options.id_from_time:
                 if fix_track.time:
                     fix_track.id_in_backend = str(fix_track.time).replace(' ', '_')
@@ -697,7 +706,7 @@ class Utility:
             """shows tracks appearing only on one side."""
             backends = uniq(x.backend for x in side.exclusive)
             for backend in backends:
-                logging.error('only in %s:', backend.url)
+                logging.error('only in %s:', backend.account)
                 for _ in side.exclusive:
                     if _.backend is backend:
                         logging.error('    %s', _)
@@ -711,7 +720,7 @@ class Utility:
 
         # pylint: disable=too-many-nested-blocks
         for left, right in backend_pairs:
-            logging.error('Differences between %s and %s', left.url, right.url)
+            logging.error('Differences between %s and %s', left.account, right.account)
             for pair in differ.similar:
                 if (pair.left.backend, pair.right.backend) == (left, right):
                     _ = ''.join(x if x in pair.differences else ' ' for x in BackendDiff.diff_flags)
@@ -1021,7 +1030,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                                 action='store_true', default=False)
         fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
                                 action='store_true', default=False)
-        fix_parser.add_argument('--id-from-backend', help='use last known id for a track in BACKEND')
+        fix_parser.add_argument('--id-from-account', help='use last known id for a track in account')
         fix_parser.add_argument(
             '--simplify',
             help='Reduce track points. The new track may move MAX meters away from the original',
@@ -1104,7 +1113,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
             if not self.options.source:
                 self.options.source = [self.options.destination]
         elif self.options.func == self.fix:  # pylint: disable=comparison-with-callable
-            exclusive = ('id_from_title', 'title_from_id', 'id_from_backend')
+            exclusive = ('id_from_title', 'title_from_id', 'id_from_account')
             if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
                 logging.error('gpxdo: only one out of %s is allowed', ', '.join(exclusive).replace('_', '-'))
                 self.exit_code = 2

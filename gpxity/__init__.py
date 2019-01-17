@@ -7,6 +7,7 @@
 
 # pylint: disable=protected-access
 
+from .accounts import *
 from .track import *
 from .lifetrack import *
 from .backend import *
@@ -14,11 +15,10 @@ from .diff import *
 from .locate import *
 from .backends import *
 from .version import *
-from .auth import *
 
 __all__ = [
     'Track', 'Fences', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'Openrunner',
-    'Authenticate', 'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION']
+    'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION', 'Account']
 
 
 def prepare_backends():

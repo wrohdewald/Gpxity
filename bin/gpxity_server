@@ -49,7 +49,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track, MMT, Authenticate, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
+from gpxity import Track, Directory, MMT, Account, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
 
 try:
     import argcomplete
@@ -135,7 +135,16 @@ class MMTHandler(BaseHTTPRequestHandler):
     def load_users(self):
         """load legal user auth from serverdirectory/.users."""
         self.users = dict()
-        with open(os.path.join(self.server.targets[0].url, '.users')) as user_file:
+        users_filename = os.path.join(self.server.targets[0].account.url, '.users')
+        if not os.path.exists(users_filename):
+            _ = users_filename
+            prev = _
+            while not os.path.exists(os.path.dirname(_)):
+                prev = _
+                _ = os.path.dirname(_)
+            self.return_error(401, 'Cannot find {}: {} missing'.format(users_filename, prev))
+            return
+        with open(users_filename) as user_file:
             for line in user_file:
                 user, password = line.strip().split(':')
                 self.users[user] = password
@@ -285,8 +294,10 @@ class MMTHandler(BaseHTTPRequestHandler):
         return '<type>time</type><server_time>{}</server_time>'.format(
             int(datetime.datetime.now().timestamp()))
 
-    def xml_get_tracks(self, parsed) ->str:
+    def xml_get_activities(self, parsed) ->str:
         """List all tracks as defined by the mapmytracks API.
+
+        # TODO: untested!
 
         Returns:
             Our answer
@@ -503,26 +514,26 @@ class LifeServerMMT(HTTPServer):
 
     def __init__(self, options):
         """See class docstring."""
+        self.logger = self.define_logger(options)
         offer_https = options.certfile and options.keyfile
         port = options.port or (443 if offer_https else 80)
         super(LifeServerMMT, self).__init__((options.servername, port), MMTHandler)
         if offer_https:
             self.socket = ssl.wrap_socket(
                 self.socket, certfile=options.certfile, keyfile=options.keyfile, server_side=True)
-        self.targets = [Backend.instantiate(options.target[0])]
-        self.targets[0].account.id_method = 'counter'
-        Authenticate.path = self.targets[0].url + '/auth.cfg'
-        self.logger = self.define_logger(options)
+        self.targets = [Directory(Account(url=options.target[0], id_method='counter'))]
+        Account.path = self.targets[0].url + '/accounts'
         self.targets.extend(Backend.instantiate(x) for x in options.target[1:])
         self.start_second = datetime.datetime.now().timestamp()
         self.trackers = dict()
         self.history = list()
 
-    def define_logger(self, options):
+    @staticmethod
+    def define_logger(options):
         """Setup logging."""
         result = logging.getLogger()
         result.setLevel(options.loglevel.upper())
-        logfile = logging.FileHandler(os.path.join(self.targets[0].url, 'gpxity_server.log'))
+        logfile = logging.FileHandler(os.path.join(options.target[0], 'gpxity_server.log'))
         logfile.setLevel(logging.DEBUG)
         result.addHandler(logfile)
         logging.getLogger('urllib3').level = logging.DEBUG
@@ -543,8 +554,8 @@ def create_parser():
 
     """
     epilog = """
-    The MMT server uses BASIC AUTH for login. Please define user:password in  the file .users in the first target.
-    Please define authorization for the other targets in the file auth.cfg in the first target."""
+    The MMT server uses BASIC AUTH for login. Define user:password in  the file .users in the first target.
+    Define authorization for optional other targets in the file accounts the first target."""
     parser = argparse.ArgumentParser('gpxity_server', epilog=epilog)
     parser.add_argument('--servername', help='the name of this server', required=True)
     parser.add_argument('--certfile', help='if certfile and keyfile are given: offer https')

@@ -74,7 +74,7 @@ def remove_directory(path):
     try:
         os.rmdir(path)
     except FileNotFoundError:
-        logging.debug("REMOVE_DIRECTORY %s: not found", path)
+        logging.error("REMOVE_DIRECTORY %s: not found", path)
         raise
     except OSError as exc:
         logging.error('rmdir: errno: %s cannot remove directory: %s', exc, path)
@@ -103,7 +103,7 @@ def collect_tracks(sources):
             result.append(source)
         else:
             logging.debug('')
-            logging.debug('collecting tracks from %s', source)
+            logging.debug('collecting tracks from %s %s', source.account.backend, source)
             result.extend(source)
     return result
 

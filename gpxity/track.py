@@ -220,7 +220,7 @@ class Track:  # pylint: disable=too-many-public-methods
         if self.__id_in_backend == value:
             return
         if self.__id_in_backend:
-            self._ids.insert(0, (str(self.backend), self.__id_in_backend))
+            self._ids.insert(0, (str(self.backend.account) + self.__id_in_backend))
         if self.__is_decoupled:
             # internal use
             self.__id_in_backend = value
@@ -311,7 +311,7 @@ class Track:  # pylint: disable=too-many-public-methods
         result.public = self.public
         result._ids = deepcopy(self._ids)
         if self.backend is not None:
-            result._ids.insert(0, (str(self.backend), self.__id_in_backend))
+            result._ids.insert(0, (str(self.backend.account), self.__id_in_backend))
         return result
 
     def _rewrite(self):
@@ -609,11 +609,7 @@ class Track:  # pylint: disable=too-many-public-methods
                     elif what == 'Status':
                         self._header_data['public'] = value == 'public'
                     elif what == 'Id':
-                        _ = value.split('/')
-                        backend_name = '/'.join(_[:-1])
-                        if backend_name == '':
-                            backend_name = '.'
-                        ids.append((backend_name, _[-1]))
+                        ids.append(value)
                     else:
                         gpx_keywords.append(keyword)
                 else:
@@ -626,7 +622,7 @@ class Track:  # pylint: disable=too-many-public-methods
                         backend_name = '/'.join(_[:-1])
                         if backend_name == '':
                             backend_name = '.'
-                        ids.append((backend_name, _[-1]))
+                        ids.append(value)
                     else:
                         gpx_keywords.append(keyword)
         gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
@@ -653,7 +649,7 @@ class Track:  # pylint: disable=too-many-public-methods
         result.append('Status:{}'.format('public' if self.public else 'private'))
         for _ in self.ids:
             # TODO: encode the , to something else
-            result.append('Id:{}/{}'.format(*_))
+            result.append('Id:{}'.format(_))
         return ', '.join(result)
 
     def parse(self, indata):
@@ -1022,10 +1018,8 @@ class Track:  # pylint: disable=too-many-public-methods
         if self.backend is None:
             return 'unsaved: "{}" time={} id={}'.format(self.title or 'untitled', self.time, id(self))
         ident = self.id_in_backend or 'unsaved'
-        if str(self.backend) == '.':
-            # current directory
-            return ident
-        return '{}/{}'.format(self.backend, ident)
+        # TODO: current dir sollte wohl nur ident returnen
+        return str(self.backend.account) + ident
 
     def key(self, with_category: bool = True, with_last_time: bool = True, precision=None) ->str:
         """For speed optimized equality checks, not granted to be exact, but sufficiently safe IMHO.
@@ -1628,14 +1622,13 @@ class Track:  # pylint: disable=too-many-public-methods
     def ids(self):
         """Return ids for all backends where this track has already been.
 
-        This is a list of pairs. pair[0] is the name of the backend, pair[1] is the track id within.
         You can modify it but your changes will never be saved.
         They are sorted by ascending age.
         Only the 5 youngest are kept.
-        If the same filename appears in more than one directory, keep only the youngest.
+        If the same id_in_backend appears in more than one directory, keep only the youngest.
 
-        Returns: list( (str, str))
-            a list of tuple pairs with str(backend) and id_in_backend
+        Returns: list( (str))
+            a list of track ids
 
         """
         if 'ids' in self._header_data:
@@ -1645,8 +1638,7 @@ class Track:  # pylint: disable=too-many-public-methods
             result = self._ids
         return self.__clean_ids(result)
 
-    @staticmethod
-    def __clean_ids(original):
+    def __clean_ids(self, original):
         """Remove redundancies and old ids.append.
 
         1. if the same id_in_backend is in several directories, keep only the first one
@@ -1658,10 +1650,10 @@ class Track:  # pylint: disable=too-many-public-methods
         result = list()
         seen = set()
         for _ in original:
-            is_dir = ':' not in _[0]
-            if is_dir:
-                if _[1] not in seen:
-                    seen.add(_[1])
+            acc, _ = self.backend.parse_objectname(_)
+            if acc.backend == 'Directory':
+                if acc.url not in seen:
+                    seen.add(acc.url)
                     result.append(_)
             else:
                 result.append(_)

@@ -28,7 +28,7 @@ except ImportError:
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 
-from ... import Track, Backend, Authenticate
+from ... import Track, Backend, Account
 from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner
 from ...util import remove_directory
 
@@ -63,19 +63,18 @@ class BasicTest(unittest.TestCase):
     def setUp(self):  # noqa
         """define test specific Directory.prefix."""
         self.maxDiff = None  # pylint: disable=invalid-name
-        Authenticate.path = os.path.join(os.path.dirname(__file__), 'test_auth_cfg')
+        Account.path = os.path.join(os.path.dirname(__file__), 'test_accounts')
         self.logger = logging.getLogger()
         self.logger.level = logging.DEBUG
-        self.logger.debug('auth file now is %s', Authenticate.path)
+        self.logger.debug('Using accounts out of %s', Account.path)
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
+        self.org_dirprefix = Directory.prefix
         Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '_'  # noqa
         path = tempfile.mkdtemp(prefix=Directory.prefix)
         Backend._session.clear()
 
-        if not os.path.exists(path):
-            os.mkdir(path)
         Directory.prefix = path
 
         if not Mailer.is_disabled():
@@ -86,6 +85,7 @@ class BasicTest(unittest.TestCase):
         if not Mailer.is_disabled():
             self.stop_mailserver()
         remove_directory(Directory.prefix)
+        Directory.prefix = self.org_dirprefix
         timedelta = datetime.datetime.now() - self.start_time
         self.logger.debug('%s seconds ', timedelta.seconds)
         logging.shutdown()
@@ -290,7 +290,7 @@ class BasicTest(unittest.TestCase):
         self.assertIn(string, data, msg)
 
     def setup_backend(  # pylint: disable=too-many-arguments
-            self, cls_, username: str = None, url: str = None, count: int = 0,
+            self, cls_, test_name: str = None, url: str = None, count: int = 0,
             clear_first: bool = None, category: str = None,
             public: bool = None):
         """set up an instance of a backend with count tracks.
@@ -316,9 +316,7 @@ class BasicTest(unittest.TestCase):
             the prepared Backend
 
         """
-
-        if username is None:
-            username = 'gpxitytest'
+        # pylint: disable=too-many-branches
         if public is None:
             public = cls_._default_public
         if clear_first is None:
@@ -328,21 +326,24 @@ class BasicTest(unittest.TestCase):
 
         if cls_ is WPTrackserver:
             self.create_temp_mysqld()
-            auth = {
-                'Mysql': 'root@gpxitytest_db',
+            kwargs = {
                 'Password': self.test_passwd,
                 'Url': self.mysql_ip_address,
-                'Username': username}
-            url = self.mysql_ip_address
+            }
         elif cls_ is Mailer:
-            auth = {
-                'Username': username,
-                'interval': 2,
-                'port': 8025,
-                'url': pwd.getpwuid(os.geteuid()).pw_name}
+            kwargs = {
+                'mailfrom': pwd.getpwuid(os.geteuid()).pw_name
+            }
         else:
-            auth = username
-        result = cls_(url, auth=auth)
+            kwargs = dict()
+        if url:
+            kwargs['Url'] = url
+        if test_name:
+            account_name = '{}_{}_unittest'.format(cls_.__name__, test_name)
+        else:
+            account_name = '{}_unittest'.format(cls_.__name__)
+        account = Account(account_name, **kwargs)
+        result = cls_(account)
         if clear_first and'scan' in cls_.supported and 'write' in cls_.supported:
             result.remove_all()
         if count:
@@ -385,7 +386,7 @@ class BasicTest(unittest.TestCase):
                 logging.debug('SRV: Directory exists but not gpxity_server.log')
             else:
                 logging.debug('SRV: Directory %s does not exist', directory)
-            Directory(directory).remove_all()
+            Directory(Account(url=directory)).remove_all()
             process.kill()
 
     def start_mailserver(self):
@@ -413,9 +414,9 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
                      cleanup=True, clear_first=None, category=None,
-                     public: bool = None, username=None):
+                     public: bool = None, test_name=None):
         """Just like setup_backend but usable as a context manager. which will call detach() when done."""
-        tmp_backend = self.setup_backend(cls_, username, url, count, clear_first, category, public)
+        tmp_backend = self.setup_backend(cls_, test_name, url, count, clear_first, category, public)
         try:
             yield tmp_backend
         finally:

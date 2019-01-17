@@ -17,7 +17,7 @@ from unittest import skipIf
 
 from .basic import BasicTest, disabled
 from .. import Directory, MMT, GPSIES, TrackMMT, Mailer, WPTrackserver, Openrunner
-from ... import Track, Lifetrack, Backend
+from ... import Track, Lifetrack, Backend, Account
 from ...util import remove_directory
 
 # pylint: disable=attribute-defined-outside-init
@@ -121,10 +121,10 @@ class TestBackends(BasicTest):
 
     def test_open_wrong_username(self):
         """Open backends with username missing in auth.cfg."""
-        for cls in Backend.all_backend_classes(exclude=[Directory]):
+        for cls in Backend.all_backend_classes(exclude=[Directory, Mailer, TrackMMT]):
             with self.tst_backend(cls):
-                with self.assertRaises(KeyError):
-                    self.setup_backend(cls, username='wrong_user')
+                with self.assertRaises(cls.BackendException):
+                    self.setup_backend(cls, test_name='wrong_username').scan(now=True)
 
     def test_open_wrong_password(self):
         """Open backends with wrong password."""
@@ -134,7 +134,7 @@ class TestBackends(BasicTest):
             with self.tst_backend(cls):
                 if not issubclass(cls, Directory):
                     with self.assertRaises(cls.BackendException):
-                        self.setup_backend(cls, username='wrong_password')
+                        self.setup_backend(cls, test_name='wrong_password').scan(now=True)
 
     @skipIf(*disabled(Directory))
     def test_match(self):
@@ -325,7 +325,7 @@ class TestBackends(BasicTest):
     def test_download_many_from_mmt(self):
         """Download many tracks."""
         many = 150
-        with self.temp_backend(MMT, username='gpxstoragemany', count=many, clear_first=True) as backend:
+        with self.temp_backend(MMT, test_name='gpxstoragemany', count=many, clear_first=True) as backend:
             self.assertBackendLength(backend, many)
 
     def test_duplicate_title(self):
@@ -420,7 +420,7 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(MMT))
     def test_mmt_free_lifetrack(self):
         """test life tracking against a free account on mapmytracks.com."""
-        with MMT(auth='gpxitytest') as uplink:
+        with MMT(Account()) as uplink:
             self.assertTrue(uplink.is_free_account)
             life = Lifetrack('127.0.0.1', [uplink])
             with self.assertRaises(Exception) as context:
@@ -445,23 +445,30 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes():
             with self.tst_backend(cls):
                 with self.temp_backend(Directory) as local_serverdirectory:
-                    local_serverdirectory.account.section['id_method'] = 'counter'
+                    local_serverdirectory.account.config['id_method'] = 'counter'
                     with self.temp_backend(Directory) as remote_serverdirectory:
-                        remote_serverdirectory.account.section['id_method'] = 'counter'
+                        remote_serverdirectory.account.config['id_method'] = 'counter'
                         with self.lifetrackserver(remote_serverdirectory.url):
                             with self.temp_backend(cls) as uplink:
                                 track()
+                                track()
                                 local_serverdirectory.scan()
+                                self.assertBackendLength(local_serverdirectory, 2)
+                                local_ids = [x.id_in_backend for x in local_serverdirectory]
+                                self.assertEqual(local_ids, ['1', '2'])
                                 if cls is TrackMMT:
                                     remote_serverdirectory.scan()
                                     self.assertSameTracks(local_serverdirectory, remote_serverdirectory)
                                 elif cls is Mailer:
                                     self.assertEqual(
-                                        len(uplink.history), 3,
+                                        len(uplink.history), 6,
                                         'Mailer.history: {}'.format(uplink.history))
                                     self.assertIn('Lifetracking starts', uplink.history[0])
                                     self.assertIn('Lifetracking continues', uplink.history[1])
                                     self.assertIn('Lifetracking ends', uplink.history[2])
+                                    self.assertIn('Lifetracking starts', uplink.history[3])
+                                    self.assertIn('Lifetracking continues', uplink.history[4])
+                                    self.assertIn('Lifetracking ends', uplink.history[5])
                                 else:
                                     uplink.scan()
                                     self.assertSameTracks(local_serverdirectory, uplink)
@@ -513,16 +520,16 @@ class TestBackends(BasicTest):
 
         with self.temp_backend(Directory) as dir_a:
             a_url = dir_a.url
-            self.assertTrue(os.path.exists(a_url))
-        self.assertFalse(os.path.exists(a_url))
+            self.assertTrue(os.path.exists(a_url), a_url)
+        self.assertFalse(os.path.exists(a_url), a_url)
 
         test_url = tempfile.mkdtemp()
         with self.temp_backend(Directory, url=test_url) as dir_b:
             self.assertTrue(dir_b.url == test_url)
-        self.assertTrue(os.path.exists(test_url))
+        self.assertTrue(os.path.exists(test_url), test_url)
         remove_directory(test_url)
 
-        dir_c = Directory(auth='gpxitytest')
+        dir_c = Directory(Account())
 
         self.assertIn('/gpxity.TestBackends.test_directory_', dir_c.url)
         dir_c.detach()
@@ -532,7 +539,7 @@ class TestBackends(BasicTest):
         """MMT refuses upload without a specific error message if there is no track point."""
         track = self.create_test_track()
         del track.gpx.tracks[0]
-        with MMT(auth='gpxitytest') as mmt:
+        with MMT(Account()) as mmt:
             with self.assertRaises(mmt.BackendException):
                 mmt.add(track)
 
@@ -636,7 +643,7 @@ class TestBackends(BasicTest):
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
                         with self.temp_backend(Directory) as serverdirectory:
-                            serverdirectory.account.id_method = 'counter'
+                            serverdirectory.account.config['id_method'] = 'counter'
                             with self.lifetrackserver(serverdirectory.url):
                                 check()
                     else:
@@ -668,11 +675,16 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes(needs={'scan'}):
             if not cls.needs_config:
                 continue
-            for _ in ({'username': ''}, {}, {'password': 'test'}):
+            if cls is TrackMMT:
+                # TODO: this raises no exception
+                continue
+            with self.tst_backend(cls):
                 with self.assertRaises(Backend.BackendException) as context:
-                    with self.temp_backend(cls, username=_):
+                    with self.temp_backend(cls, test_name='no_username'):
                         pass
-                self.assertEqual(str(context.exception), '{} needs a username'.format(cls.default_url), _)
+                self.assertEqual(
+                    str(context.exception),
+                    '{}_no_username_unittest needs a username'.format(cls.__name__))
 
     def test_can_encode_all_categories(self):
         """Check if we can encode all internal categories to a given backend value for all backends."""

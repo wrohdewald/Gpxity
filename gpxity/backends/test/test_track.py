@@ -25,7 +25,7 @@ from unittest import skipIf
 from gpxpy import gpx as mod_gpx
 
 from .basic import BasicTest, disabled
-from ... import Track, Backend, Fences
+from ... import Track, Backend, Fences, Account
 from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from .. import Openrunner
 from ...util import repr_timespan, positions_equal, remove_directory
@@ -604,11 +604,11 @@ class TrackTests(BasicTest):
             backend2[0].description = 'test'
             self.assertTrackFileContains(backend2[0], '<trk>')
         with self.temp_backend(Directory, count=1) as backend:
-            backend2 = Directory(url=backend.url)
+            backend2 = Directory(Account(url=backend.url))
             backend2[0].title = 'test title'
             self.assertTrackFileContains(backend2[0], '<trk>')
         with self.temp_backend(Directory, count=1) as backend:
-            backend2 = Directory(url=backend.url)
+            backend2 = Directory(Account(url=backend.url))
             backend2[0].category = backend2.supported_categories[2]
             self.assertTrackFileContains(backend2[0], '<trk>')
 
@@ -669,33 +669,48 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_parse_objectname_directory(self):
         """Test Backend.parse_objectname for directory."""
-        prefix = Directory.prefix
-        subdir = os.path.join(prefix, 'subdir')
-        sub2 = os.path.join(subdir, 'sub2')
-        sub3 = os.path.join(subdir, 'sub3')
-        os.mkdir(subdir)
-        os.mkdir(sub2)
-        os.mkdir(sub3)
-        old_dir = os.getcwd()
+        save = os.getenv('HOME'), os.getcwd()
         try:
+            prefix = Directory.prefix
+            abs_prefix = os.path.abspath(prefix)
             os.chdir(prefix)
-            cases = (('.', 'Directory', '.', None),
-                     ('subdir', 'Directory', 'subdir', None),
-                     ('directory:', 'Directory', '.', None),
-                     ('directory:.', 'Directory', '.', None),
-                     ('directory:subdir', 'Directory', 'subdir', None),
-                     ('abc', 'Directory', '.', 'abc'),
-                     ('subdir/abc', 'Directory', 'subdir', 'abc'),
-                     ('subdir/sub2', 'Directory', 'subdir/sub2', None),
-                     ('subdir/sub2/sub3/xy', 'Directory', 'subdir/sub2/sub3', 'xy'))
-            for string, *expect in cases:
-                cls, account, ident = Backend.parse_objectname(string)
-                self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
+            test_home = os.path.abspath('subdir')
+            os.environ['HOME'] = test_home  # for ~ in pathname
+            cases = (
+                ('.', '.', 'Directory', None),
+                ('subdir', 'subdir', 'Directory', None),
+                ('abc', '.', 'Directory', 'abc'),
+                ('subdir/abc', 'subdir', 'Directory', 'abc'),
+                ('subdir/sub2', 'subdir/sub2', 'Directory', None),
+                ('subdir/sub2/sub3/xy', 'subdir/sub2/sub3', 'Directory', 'xy'),
+                ('~/sub2', os.path.join(abs_prefix, 'subdir/sub2'), 'Directory', None),
+                ('~/sub2/sub3/xy', os.path.join(abs_prefix, 'subdir/sub2/sub3'), 'Directory', 'xy'),
+                ('wptrackserver_unittest:', 'wptrackserver_unittest', 'WPTrackserver', None),
+                ('wptrackserver_unittest:24', 'wptrackserver_unittest', 'WPTrackserver', '24'),
+                ('wptrackserver_unittest', 'wptrackserver_unittest', 'Directory', None),
+                ('wptrackserver_unittest/24', 'wptrackserver_unittest', 'Directory', '24'),
+                (os.path.join(test_home, 'sub2/sub3/xy'), os.path.join(test_home, 'sub2/sub3'), 'Directory', 'xy'),
+            )
+
+            subdirs = list()
+            subdirs.append(os.path.join(prefix, 'subdir'))
+            subdirs.append(os.path.join(subdirs[0], 'sub2'))
+            subdirs.append(os.path.join(subdirs[1], 'sub3'))
+            subdirs.append(os.path.join(prefix, 'wptrackserver_unittest'))
+            try:
+                for _ in subdirs:
+                    os.mkdir(_)
+                for string, expect_account_name, expect_backend, expect_ident in cases:
+                    account, ident = Backend.parse_objectname(string)
+                    self.assertEqual(account.backend, expect_backend, 'backend wrong in test case:{}'.format(string))
+                    self.assertEqual(account.name, expect_account_name, 'account wrong in test case:{}'.format(string))
+                    self.assertEqual(ident, expect_ident, 'ident wrong in test case:{}'.format(string))
+            finally:
+                for _ in reversed(subdirs):
+                    remove_directory(_)
         finally:
-            os.chdir(old_dir)
-            remove_directory(sub3)
-            remove_directory(sub2)
-            remove_directory(subdir)
+            os.environ['HOME'] = save[0]
+            os.chdir(save[1])
 
     @skipIf(*disabled(MMT))
     def test_parse_objectname_mmt(self):

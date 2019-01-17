@@ -1,12 +1,17 @@
 Changelog
 =========
 
+1.6.0 release 2019-01-xx
+------------------------
+
+  * integrate ServerDirectory into Directory
+  * replace auth_cfg with accounts, new syntax for identifiers
+
 1.5.1 release 2019-01-02
 ------------------------
 
   * fix documentation at readthedocs.io
   * gpxdo ls --location shows name of starting place: city, country
-  * integrate ServerDirectory into Directory
 
 1.5.0 release 2019-01-02
 ------------------------

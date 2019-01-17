@@ -15,8 +15,9 @@ import dis
 from contextlib import contextmanager
 import logging
 import importlib
+from copy import deepcopy
 
-from .auth import Authenticate
+from .accounts import Account
 from .track import Track, Fences
 from .util import collect_tracks
 
@@ -132,18 +133,21 @@ class Backend:
     __all_backend_classes = None
     __all_backends = dict()
 
-    def __init__(self, url: str = None, auth=None):
+    def __init__(self, account):
         """See class docstring."""
-        logging.debug('Backend(%s: url=%s, auth=%s)', self.__class__.__name__, url, auth)
         if self.is_disabled():
             raise Backend.BackendException('class {} is disabled'.format(self.__class__.__name__))
+        if not isinstance(account, Account):
+            raise Exception('Backend() wants an Account')
+        account.config = deepcopy(account.config)
+        self.account = account
+        if 'url' not in self.account.config:
+            self.account.config['url'] = self.default_url
+        if 'backend' not in self.account.config:
+            self.account.config['backend'] = self.__class__.__name__
         self._decoupled = False
         self.__tracks = list()
         self._tracks_fully_listed = False
-        if isinstance(url, Authenticate):
-            self.account = url
-        else:
-            self.account = Authenticate(self, url, auth)
         self.__match = None
         self.logger = logging.getLogger(str(self))
         self.fences = Fences(self.account.fences)
@@ -159,7 +163,9 @@ class Backend:
 
     @property
     def url(self):
-        """get self.account['url'].
+        """get self.account.url.
+
+        This also makes sure Backend.url is not writable.
 
         Returns: The url
 
@@ -186,10 +192,18 @@ class Backend:
             The username
 
         """
-        author = self.account.section.get('Username')
+        author = self.account.username
         if not author:
-            raise Backend.BackendException('{} needs a username'.format(self.url))
+            raise Backend.BackendException('{} needs a username'.format(self.account))
         return author
+
+    def account_str(self):
+        """Backend specifc format.
+
+        Returns: A string.
+
+        """
+        return self.account.name
 
     def __str__(self) ->str:
         """A unique identifier for every physical backend.
@@ -200,14 +214,7 @@ class Backend:
             A unique identifier
 
         """
-        url = ''
-        if not self._has_default_url():
-            url = self.url + '/'
-        result = '{}:{}{}'.format(
-            self.__class__.__name__.lower(),
-            url,
-            self.account.username)
-        return result
+        return self.account_str()
 
     supported_categories = Track.categories
 
@@ -746,10 +753,7 @@ class Backend:
             The repr str
 
         """
-        dirname = self.account.username
-        result = '{}({} in {}{})'.format(
-            self.__class__.__name__, len(self.__tracks), self.url, dirname)
-        return result
+        return '{}({} in {})'.format(self.__class__.__name__, len(self.__tracks), self.account)
 
     def __enter__(self):
         """See class docstring.
@@ -795,7 +799,7 @@ class Backend:
             if not dry_run:
                 new_track = self.add(old_track)
             result.append('{} {} -> {}'.format(
-                'blind move' if remove else 'blind copy', old_track, '' if dry_run else new_track))
+                'blind move' if remove else 'blind copy', old_track, self.account if dry_run else new_track))
             if remove and not dry_run:
                 old_track.remove()
         return result
@@ -910,58 +914,86 @@ class Backend:
     def find_class(cls, name: str):
         """Find the Backend class name "name".
 
-        if "name" contains a ":", only the part before will be used.
+        The only backend where the backend is not specified
+        is Directory, so that is returned if no class is found.
 
         Args:
-            name: May be anycase (upper,lower)
+            name: May be anycase (upper,lower). Must match an
+                existing Backend class name.
 
         Returns:
-            the backend class or None
+            the backend class or Exception
 
         """
-        if ':' in name:
-            name = name.split(':')[0]
+        assert name
         for _ in cls.all_backend_classes():
             if _.__name__.lower() == name.lower():
                 return _
-        return cls.find_class('Directory')
+        raise Exception('find_class failed for {}'.format(name))
+
+    @classmethod
+    def _find_local(cls, name: str) ->str:
+        """If name refers to a local file, return its expanded path.dirname.
+
+        Returns: The expanded path or None.
+
+        """
+        name = os.path.expanduser(name)
+        if os.path.exists(name):
+            if name.endswith('.gpx'):
+                name = name[:-4]
+            return name
+        if not name.endswith('.gpx'):
+            if os.path.exists(name + '.gpx'):
+                return name
+        dirname, file = os.path.split(name)
+        if file:
+            if os.path.isdir(dirname):
+                return name
+        return None
 
     @classmethod
     def parse_objectname(cls, name):
         """Parse the full identifier for a track.
 
+        1. if name is an existing file or directory, or if name.gpx is an existing file, Backend will be Directory
+        2. if ":" is not in name: Backend will be Directory, url=None, track_id=name without .gpx
+        3. the part before the first ":" is used as key into accounts. Not case sensitive.
+
         Args:
             name: the full identifier for a Track
 
         Returns:
-            A tuple with class, account, track_id
+            A tuple with account, track_id
 
         """
-        account = track_id = None
-        backend_class = cls.find_class(name)
-
-        if 'Directory' in backend_class.__name__:  # TODO: not nice
-            if not os.path.exists(name) and name.lower().startswith(backend_class.__name__.lower() + ':'):  # noqa
-                name = ':'.join(name.split(':')[1:])
-            if os.path.isdir(name):
-                account = name
+        assert name
+        expanded = cls._find_local(name)
+        if expanded:
+            if os.path.isdir(expanded):
+                url = expanded
+                track_id = None
             else:
-                id_name = name
-                if id_name.endswith('.gpx'):
-                    id_name = id_name[:-4]
-                account = os.path.dirname(id_name) or '.'
-                track_id = os.path.basename(id_name) or None
+                url, track_id = os.path.split(expanded)
+                if not url and not os.path.exists(track_id):
+                    url = '.'
+            account = Account(url=url)
+        elif ':' not in name:
+            url = None
+            track_id = name
+            if track_id.endswith('.gpx'):
+                track_id = track_id[:-4]
+            account = Account(url='.')
         else:
-            rest = ':'.join(name.split(':')[1:])
-            if '/' in rest:
-                if rest.count('/') > 1:
-                    raise Exception('wrong syntax in {}'.format(name))
-                account, track_id = rest.split('/')
-            else:
-                account = rest
-            if account is None:
-                raise Exception('{} not found'.format(name))
-        return backend_class, account, track_id
+            _ = name.split(':')
+            account_name = _[0]
+            track_id = ':'.join(_[1:]) or None
+            if 'directory' in account_name.lower() and not track_id:
+                account_name += ':.'
+            account = Account(account_name)
+            # backend name in accounts is case insensitive, we want the exact name
+            account.backend = cls.find_class(account.backend).__name__
+        return account, track_id
 
     @classmethod
     def all_backend_classes(cls, exclude=None, needs=None):
@@ -1013,6 +1045,19 @@ class Backend:
     def instantiate(cls, name: str):
         """Instantiate a Backend or a Track out of its identifier.
 
+        The full notation of an id_in_backend in a specific backend is
+        similiar to what scp expects:
+
+        Account:id_in_backend where Account is a reference to the accounts file.
+
+        Locally reachable files or directories may be written without the leading
+        Directory:. And a leading ~ is translated into the user home directory.
+        The trailing .gpx can be omitted. It will be removed anyway for id_in_backend.
+
+        If the file path of a local track (Directory) contains a ":", the file path
+        must be absolute or relative (start with "/" or with "."), or the full notation
+        with the leading Directory: is needed
+
         Args:
             name: The string identifier to be parsed
 
@@ -1020,20 +1065,19 @@ class Backend:
             A Track or a Backend. If the Backend has already been instantiated, return the cached value.
 
         """
-        # pylint: disable=too-many-branches
-        backend_class, account, track_id = Backend.parse_objectname(name)
-        clsname = backend_class.__name__
-        cache_key = (clsname, account)
+        account, track_id = cls.parse_objectname(name)
+        cache_key = str(account)
         if cache_key in cls.__all_backends:
             result = cls.__all_backends[cache_key]
         else:
-            result = backend_class(auth=account)
+            account.backend_cls = cls.find_class(account.backend)
+            result = account.backend_cls(account)
             cls.__all_backends[cache_key] = result
         if track_id:
             try:
                 result = result[track_id]
             except IndexError:
-                raise Exception('Backend {} does not have {}'.format(result, track_id))
+                raise Exception('gpxdo: {}:{} not found'.format(result.account.name, track_id))
 
         assert result is not None
         return result

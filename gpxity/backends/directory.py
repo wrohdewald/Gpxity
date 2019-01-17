@@ -13,6 +13,7 @@ import sys
 import datetime
 import tempfile
 import html
+
 from collections import defaultdict
 
 import gpxpy.gpxfield as mod_gpxfield
@@ -81,7 +82,7 @@ class Directory(Backend):
     Make the storage id unique by attaching a number if needed.
     An track without title gets a random name.
 
-    The main directory (given by :attr:`Directory.url <gpxity.backend.Backend.url>`) will have
+    The main directory (given by account.url) will have
     subdirectories YYYY/MM (year/month) with only the tracks for one month.
     Those are symbolic links to the main file and have the same file name.
 
@@ -92,13 +93,9 @@ class Directory(Backend):
     Changing the title also changes the id.
 
     Args:
-        url (str): a directory. If no Url is given, either here or through auth, use a unique
-            temporary directory named
-            :attr:`prefix`.X where X are some random characters.
-            If the directory does not exist, it is created.
+        Account: If its url is unset, this will create a temporary
+            directory named :attr:`prefix`.X where X are some random characters.
             It will be removed in __exit__ / detach.
-        auth (str): In addition to other backends: if given and url is None, use auth as url.
-
     Attributes:
         prefix (str):  Class attribute, may be changed. The default prefix for
             temporary directories. Default value is :literal:`gpxity.`
@@ -120,21 +117,13 @@ class Directory(Backend):
 
     needs_config = False
 
-    def __init__(self, url=None, auth=None):
+    def __init__(self, account):
         """See class docstring."""
-        if url is None and isinstance(auth, str):
-            url = auth
-            auth = None
-        if isinstance(url, str) and url.startswith('gpxitytest'):
-            url = None
-        self.is_temporary = url is None
+        super(Directory, self).__init__(account)
+        self.is_temporary = not account.url
         if self.is_temporary:
             url = tempfile.mkdtemp(prefix=self.__class__.prefix)
-
-        if isinstance(url, str):
-            if url != '/' and url.endswith('/'):
-                url = url[:-1]
-        super(Directory, self).__init__(url=url, auth=auth)
+            account.config['url'] = url
 
         self.fs_encoding = sys.getfilesystemencoding()
         if not self.fs_encoding.lower().startswith('utf-8'):
@@ -351,7 +340,7 @@ class Directory(Backend):
         """
         ident = track.id_in_backend
         time = datetime.datetime.fromtimestamp(os.path.getmtime(self.gpx_path(ident)))
-        by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))
+        by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))  # noqa
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
         else:
@@ -360,20 +349,20 @@ class Directory(Backend):
         name = track.title or ident
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
-    def _new_ident(self, track) ->str:
+    def _new_ident(self, track):
         """Create an id for track.
 
         Returns: The new ident.
 
         """
-        if self.account.id_method == 'counter':
-            try:
-                return str(max(int(x) for x in self._list_gpx()) + 1)
-            except ValueError:
-                return '1'
-        else:
-            ident = track.id_in_backend
-            if ident is None:
+        ident = track.id_in_backend
+        if ident is None:
+            if self.account.id_method == 'counter':
+                try:
+                    ident = str(max(int(x) for x in self._list_gpx()) + 1)
+                except ValueError:
+                    ident = '1'
+            else:
                 ident = self._new_id_from(None)
         return ident
 
@@ -401,7 +390,7 @@ class Directory(Backend):
         assert track.id_in_backend != new_ident
         unique_id = self._new_id_from(new_ident)
         self._remove_symlinks(track.id_in_backend)
-        self.logger.debug('renamed %s to %s', track.id_in_backend, unique_id)
+        self.logger.debug('%s: renamed %s to %s', self.url, track.id_in_backend, unique_id)
         os.rename(self.gpx_path(track.id_in_backend), self.gpx_path(unique_id))
         track.id_in_backend = unique_id
         self._make_symlinks(track)
@@ -416,7 +405,6 @@ class Directory(Backend):
             the new track.id_in_backend
 
         """
-        old_ident = track.id_in_backend
         new_ident = self._new_ident(track)
 
         with Backup(track):
@@ -424,10 +412,6 @@ class Directory(Backend):
             with open(self.gpx_path(new_ident), 'w', encoding='utf-8') as out_file:
                 out_file.write(track.to_xml())
             self._set_filetime(track)
-
-        if old_ident and new_ident != old_ident:
-            self._remove_symlinks(old_ident)
-            self._make_symlinks(track)
         return new_ident
 
     def detach(self):

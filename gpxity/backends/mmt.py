@@ -257,11 +257,9 @@ class MMT(Backend):
     # every MMT account only gets one.
     _current_lifetrack = None
 
-    def __init__(self, url=None, auth=None):
+    def __init__(self, account):
         """See class docstring."""
-        if url is None:
-            url = self.default_url
-        super(MMT, self).__init__(url, auth)
+        super(MMT, self).__init__(account)
         self.__mid = -1  # member id at MMT for auth
         self.__is_free_account = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
@@ -608,7 +606,8 @@ class MMT(Backend):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
-        response = self.__get(with_session=True, url='{}/explore/activity/{}'.format(self.url, track.id_in_backend))
+        response = self.__get(
+            with_session=True, url='{}/explore/activity/{}'.format(self.url, track.id_in_backend))
         page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
         return page_parser.result

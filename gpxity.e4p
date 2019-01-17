@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project gpxity -->
-<!-- Saved: 2019-01-11, 09:24:55 -->
+<!-- Saved: 2019-01-16, 17:09:42 -->
 <!-- Copyright (C) 2019 Wolfgang Rohdewald, wolfgang@rohdewald.de -->
 <Project version="5.1">
   <Language></Language>
@@ -25,8 +25,6 @@
     <Source>gpxity/backends/mailer.py</Source>
     <Source>gpxity/backends/mmt.py</Source>
     <Source>gpxity/backends/openrunner.py</Source>
-    <Source>gpxity/backends/server_directory.py</Source>
-    <Source>gpxity/backends/temp_directory.py</Source>
     <Source>gpxity/backends/test/__init__.py</Source>
     <Source>gpxity/backends/test/basic.py</Source>
     <Source>gpxity/backends/test/test_backends.py</Source>

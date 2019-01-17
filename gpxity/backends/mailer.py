@@ -91,19 +91,19 @@ class MailQueue:
         if self.disabled:
             self.tracks = dict()
             return
-        section = self.mailer.account.section
+        account = self.mailer.account
         mail = EmailMessage()
         mail['subject'] = self.subject()
-        mail['from'] = section.get('From', 'gpxity')
-        mail['to'] = self.mailer.url.split()
+        mail['from'] = account.mailfrom or 'gpxity'
+        mail['to'] = account.url.split()
         mail.set_content('\n'.join(self.content()))
 
         for key, track in self.tracks.items():
             if not key.endswith('.gpx'):
                 key += '.gpx'
             mail.add_attachment(track.to_xml(), filename=key)
-        host = section.get('Smtp', 'localhost')
-        port = int(section.get('port', '25'))
+        host = account.smtp or 'localhost'
+        port = int(account.port or '25')
         timeout = self.mailer.timeout
         if isinstance(timeout, (tuple, list)):
             timeout = timeout[0]
@@ -140,7 +140,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         outstanding_tracks: Do not change this dict. Key is track.id_in_backend, value is
             a clone of the track. This freezes the current title in the clone.
         url: Holds the address of the recipient.
-        account.from: The name of the mail sender. Default "gpxity".
+        account.mailfrom: The name of the mail sender. Default "gpxity".
         account.port: The port of the smtp server to talk to. Default 25
         account.smtp: The name of the smtp server. Default "localhost".
         account.interval (str): seconds. Mails are not sent more often. Default is None. If None, always send when
@@ -155,9 +155,9 @@ class Mailer(Backend):  # pylint: disable=abstract-method
 
     test_is_expensive = False
 
-    def __init__(self, url=None, auth=None):
+    def __init__(self, account):
         """See class docstring."""
-        super(Mailer, self).__init__(url, auth)
+        super(Mailer, self).__init__(account)
         self.history = list()
         self.subject_template = '{title} {distance}'
         self.timer = None

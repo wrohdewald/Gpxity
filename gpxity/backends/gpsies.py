@@ -260,12 +260,10 @@ class GPSIES(Backend):
 
     default_url = 'https://www.gpsies.com'
 
-    def __init__(self, url=None, auth=None):
+    def __init__(self, account):
         """See class docstring."""
-        if url is None:
-            url = self.default_url
-        super(GPSIES, self).__init__(url, auth)
-        self._session_respoinse = None
+        super(GPSIES, self).__init__(account)
+        self._session_response = None
 
     def _download_legal_categories(self):
         """Needed only for unittest.
@@ -293,10 +291,10 @@ class GPSIES(Backend):
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
             data = {'username': self.account.username, 'password': self.account.password}
-            self._session_respoinse = self._session[ident].post(
+            self._session_response = self._session[ident].post(
                 '{}/loginLayer.do?language=en'.format(self.url),
                 data=data, timeout=self.timeout)
-            self._check_response(self._session_respoinse)
+            self._check_response(self._session_response)
             cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             cookies['cookieconsent_dismissed'] = 'yes'
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
@@ -313,7 +311,8 @@ class GPSIES(Backend):
             data[key] = self._html_encode(data[key])
         if data.get('fileDescription'):
             data['fileDescription'] = '<p>{}</p>'.format(data['fileDescription'])
-        response = self.session.post('{}/{}.do'.format(self.url, action), data=data, files=files, timeout=self.timeout)
+        response = self.session.post(
+            '{}/{}.do'.format(self.url, action), data=data, files=files, timeout=self.timeout)
         self._check_response(response, track)
         return response
 
@@ -375,6 +374,7 @@ class GPSIES(Backend):
 
     def _load_track_headers(self):
         """get all tracks for this user."""
+    #    return
         response = self.__post('trackList', data={'username': self._get_author()})
         page_parser = ParseGPSIESList()
         page_parser.feed(response.text)

@@ -460,12 +460,6 @@ class Openrunner(Backend):
             result.append(GPXTrackPoint(latitude=blow_up(latitude), longitude=blow_up(longitude)))
         return result
 
-    def __init__(self, url=None, auth=None):
-        """See class docstring."""
-        if url is None:
-            url = self.default_url
-        super(Openrunner, self).__init__(url, auth)
-
     def _download_legal_categories(self):
         """Needed only for unittest.
 
@@ -502,7 +496,7 @@ class Openrunner(Backend):
         """
         ident = str(self)
         if ident not in self._session:
-            if not hasattr(self.account, 'username') or not self.account.username:
+            if not self.account.username:
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
             self._session[ident] = requests.Session()
             if self.account.password:
@@ -514,13 +508,13 @@ class Openrunner(Backend):
                 self._session[ident].response = self._session[ident].post(
                     '{}/user/login'.format(self.url),
                     data=data, timeout=self.timeout)
-                self._check_response(self._session_respoinse, data)
-        if self._session_respoinse is None:
-            self.logger.info('Openrunner.session got no _session_respoinse')
+                self._check_response(self._session_response, data)
+        if self._session_response is None:
+            self.logger.info('Openrunner.session got no _session_response')
         return self._session[ident]
 
     @property
-    def _session_respoinse(self):
+    def _session_response(self):
         """The last response received.
 
         Returns: The response
@@ -545,8 +539,8 @@ class Openrunner(Backend):
         full_url = '{}/{}'.format(self.url, action)
         self.session  # because headers needs accessToken  pylint: disable=pointless-statement
         headers = {'X-Language': 'en'}
-        if self._session_respoinse:
-            headers['Authorization'] = 'Bearer {}'.format(self._session_respoinse.json()['user']['accessToken'])
+        if self._session_response:
+            headers['Authorization'] = 'Bearer {}'.format(self._session_response.json()['user']['accessToken'])
             method = getattr(self.session, post_type)
         else:
             method = getattr(requests, post_type)

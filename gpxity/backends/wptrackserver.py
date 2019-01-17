@@ -78,9 +78,9 @@ class WPTrackserver(Backend):
 
     _max_length = {'title': 255, 'description': 255}
 
-    def __init__(self, url=None, auth=None):
+    def __init__(self, account=None):
         """See class docstring. The url is host."""
-        super(WPTrackserver, self).__init__(url, auth)
+        super(WPTrackserver, self).__init__(account)
         self._db = None
         self.__connect_mysql()
         cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.account.username])
@@ -100,7 +100,7 @@ class WPTrackserver(Backend):
                 host=self.url, user=user, passwd=self.account.password, database=database,
                 autocommit=True, charset='utf8')
             self.logger.info('reconnected to %s %s', self.url, database)
-        except _mysql_exceptions.OperationalError as exc:
+        except _mysql_exceptions.Error as exc:
             raise Backend.BackendException(exc)
 
     def _encode_description(self, track):
