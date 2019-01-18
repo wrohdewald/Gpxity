@@ -142,7 +142,7 @@ class WPTrackserver(Backend):
         """Get header values out of row."""
         track._header_data['time'] = row[1]
         track._header_data['title'] = row[2]
-        self._decode_description(track, row[3])
+        self._decode_description(track, row[3].replace('\r', ''))
         track._header_data['distance'] = row[4] / 1000.0
 
     def _load_track_headers(self):
