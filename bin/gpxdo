@@ -143,6 +143,7 @@ class LsRow(dict):
     def __init__(self, track=None):
         super(LsRow, self).__init__()
         self.track = track
+        self.comparable = dict()
         for field in self.needed_fields():
             self[field.head_ident] = field.zero()
         if track:
@@ -157,6 +158,7 @@ class LsRow(dict):
                     track.gpxdo_identifier += '.gpx'
             for field in self.needed_fields():
                 self[field.head_ident] = field.value(track)
+                self.comparable[field.head_ident] = field.value(track)
         self.continuations = list()
 
     @classmethod
@@ -446,32 +448,41 @@ class Utility:
             return '{}, {}'.format(place.city, place.country)
         return ''
 
+    def __fill_groups(self, rows, mainsort):
+        """Returns groups containing matching rows."""
+        result = defaultdict(list)
+        for row in rows:
+            for group in self.__yield_track_group_keys(row.track, mainsort):
+                result[group].append(row)
+        return result
+
+    @staticmethod
+    def __yield_track_group_keys(track, mainsort):
+        """Yields group key for track"""
+        if mainsort == 'category':
+            yield track.category
+        elif mainsort == 'keywords' and track.keywords:
+            for _ in track.keywords:
+                yield _
+        elif mainsort == 'time' and track.time:
+            yield '{:4}-{:02}'.format(track.time.year, track.time.month)
+        elif mainsort == 'status':
+            yield 'public' if track.public else 'private'
+        else:
+            yield None
+
+    def __yield_all_group_keys(self, mainsort):
+        """Yields all group keys for all tracks"""
+        seen = set()
+        for track in self.source_tracks:
+            for groupkey in self.__yield_track_group_keys(track, mainsort):
+                if groupkey not in seen:
+                    yield groupkey
+                    seen.add(groupkey)
+
     def list_them(self):
         """list tracks"""
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-        def yield_track_group_keys(track, mainsort):
-            """Yields group key for track"""
-            if mainsort == 'category':
-                yield track.category
-            elif mainsort == 'keywords' and track.keywords:
-                for _ in track.keywords:
-                    yield _
-            elif mainsort == 'time' and track.time:
-                yield '{:4}-{:02}'.format(track.time.year, track.time.month)
-            elif mainsort == 'status':
-                yield 'public' if track.public else 'private'
-            else:
-                yield None
-
-        def yield_all_group_keys(mainsort):
-            """Yields all group keys for all tracks"""
-            seen = set()
-            for track in self.source_tracks:
-                for groupkey in yield_track_group_keys(track, mainsort):
-                    if groupkey not in seen:
-                        yield groupkey
-                        seen.add(groupkey)
-
         list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.gpxdo_identifier),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
@@ -515,26 +526,27 @@ class Utility:
         group_keys = [None]
         if self.options.sort and self.options.total:
             mainsort = self.options.sort.split(',')[0]
-            group_keys = sorted(set(yield_all_group_keys(mainsort)), key=lambda x: '' if x is None else x)
+            group_keys = sorted(set(self.__yield_all_group_keys(mainsort)), key=lambda x: '' if x is None else x)
 
         if self.options.locate:
             locator = Locate(self.options.locate, self.source_tracks, provider=self.options.location_provider)
             self.source_tracks = locator.found(max_away=self.options.max_away)
 
-        track_groups = defaultdict(list)
-        all_tracks = list()
-        for _ in self.source_tracks:
-            row = LsRow(_)
-            for group in yield_track_group_keys(_, mainsort):
-                track_groups[group].append(row)
-            all_tracks.append(row)
+        all_rows = [LsRow(x) for x in self.source_tracks]
+        if all(x.track.id_in_backend.isnumeric() for x in all_rows):
+            for row in all_rows:
+                row.comparable['identifier'] = '{}:{:>10f}'.format(
+                    row.track.backend.account.name, float(row.track.id_in_backend))
+
+        track_groups = self.__fill_groups(all_rows, mainsort)
+
         all_lines = list()
         for group_key in group_keys:
             group_tracks = track_groups[group_key][:]
             group_lines = list()
             if sort_fields and not self.options.locate:
                 group_tracks.sort(
-                    key=lambda x: tuple(x[y.head_ident] for y in sort_fields))
+                    key=lambda x: tuple(x.comparable[y.head_ident] for y in sort_fields))
             for line in group_tracks:
                 group_lines.append(line)
                 if self.options.segments:
@@ -557,14 +569,14 @@ class Utility:
         if list(LsRow.visible_headers()) != ['identifier', ]:
             all_lines.insert(0, HeaderRow())
         if self.options.total:
-            all_lines.append(TotalRow(all_tracks))
+            all_lines.append(TotalRow(all_rows))
             if mainsort == 'keywords':
                 all_lines.append(SeparatorRow('='))
                 for group_key in group_keys:
                     all_lines.append(SubTotalRow(track_groups[group_key], mainsort, group_key or 'No keyword'))
 
         if self.options.warnings:
-            time_sorted = sorted(all_tracks, key=lambda x: x['time'])
+            time_sorted = sorted(all_rows, key=lambda x: x['time'])
             for span1, span2 in pairs(time_sorted):
                 if span1['time'] and span1['duration'] and span2['time']:
                     if span2['time'] < span1['time'] + span1['duration']:
