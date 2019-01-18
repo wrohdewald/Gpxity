@@ -515,7 +515,9 @@ class Backend:
                 new_track = track.clone()
         else:
             if any(x is track for x in self.__tracks):
-                raise ValueError('Already in list: Track {} with id={}'.format(track, id(track)))
+                raise ValueError(
+                    'Already in list: Track {} with id={}, have={}'.format(
+                        track, id(track), ','.join(str(x) for x in self)))
             new_track = track
         try:
             with self._decouple():
