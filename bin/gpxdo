@@ -583,29 +583,29 @@ class Utility:
     def fix(self):
         """fix tracks"""
         result_lines = []
-        for _ in self.source_tracks:
+        for fix_track in self.source_tracks:
             if self.options.title_from_id:
-                _.title = _.id_in_backend
+                fix_track.title = fix_track.id_in_backend
             if self.options.id_from_title:
-                _.id_in_backend = _.title
+                fix_track.id_in_backend = fix_track.title
             elif self.options.id_from_backend:
                 backend_id = str(self.source)
-                new_id = _.ids[backend_id]
-                _.id_in_backend = new_id
+                new_id = fix_track.ids[backend_id]
+                fix_track.id_in_backend = new_id
             elif self.options.id_from_time:
-                if _.time:
-                    _.id_in_backend = str(_.time).replace(' ', '_')
-            result_lines.extend(_.fix(orux=self.options.orux, jumps=self.options.jumps))
+                if fix_track.time:
+                    fix_track.id_in_backend = str(fix_track.time).replace(' ', '_')
+            result_lines.extend(fix_track.fix(orux=self.options.orux, jumps=self.options.jumps))
             if self.options.add_minutes:
-                _.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
+                fix_track.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
             if self.options.simplify:
-                point_count = _.gpx.get_track_points_no()
-                _.gpx.simplify(self.options.simplify)
-                if _.gpx.get_track_points_no() != point_count:
+                point_count = fix_track.gpx.get_track_points_no()
+                fix_track.gpx.simplify(self.options.simplify)
+                if fix_track.gpx.get_track_points_no() != point_count:
                     logging.info(
                         '%s: reduced points from %s to %s',
-                        _, point_count, _.gpx.get_track_points_no())
-                    _.rewrite()
+                        fix_track, point_count, fix_track.gpx.get_track_points_no())
+                    fix_track.rewrite()
         for _ in result_lines:
             logging.error(_)
 
