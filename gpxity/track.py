@@ -1649,14 +1649,17 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         result = list()
         seen = set()
-        for _ in original:
-            acc, _ = self.backend.parse_objectname(_)
+        for orig_id in original:
+            try:
+                acc, _ = self.backend.parse_objectname(orig_id)
+            except KeyError:
+                continue
             if acc.backend == 'Directory':
                 if acc.url not in seen:
                     seen.add(acc.url)
-                    result.append(_)
+                    result.append(orig_id)
             else:
-                result.append(_)
+                result.append(orig_id)
         return result[:5]
 
     def split(self):
