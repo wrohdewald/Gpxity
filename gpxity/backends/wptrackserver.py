@@ -94,10 +94,14 @@ class WPTrackserver(Backend):
         except ValueError:
             raise Backend.BackendException('Url is illegal: {}'.format(self.url))
         try:
+            _ = self._db
             self._db = MySQLdb.connect(
                 host=self.url, user=user, passwd=self.account.password, database=database,
                 autocommit=True, charset='utf8')
-            self.logger.info('reconnected to %s %s', self.url, database)
+            if _:
+                self.logger.info('reconnected to %s %s', self.url, database)
+            else:
+                self.logger.info('connected to %s %s', self.url, database)
         except _mysql_exceptions.Error as exc:
             raise Backend.BackendException(exc)
 
