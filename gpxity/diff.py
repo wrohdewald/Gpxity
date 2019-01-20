@@ -8,6 +8,9 @@
 
 # pylint: disable=protected-access
 
+import logging
+import datetime
+
 from collections import defaultdict
 from difflib import SequenceMatcher
 
@@ -96,7 +99,7 @@ class BackendDiff:
                 times = list()
                 positions = list()
                 for _ in track.points():
-                    times.append(_.time)
+                    times.append(_.time or datetime.datetime(year=1970, month=1, day=1))
                     positions.append(tuple([_.latitude or 0, _.longitude or 0, _.elevation or 0]))  # noqa
                 return times, positions
 
