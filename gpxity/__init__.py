@@ -26,8 +26,7 @@ def prepare_backends():
     for key in globals().keys():
         cls = globals()[key]
         if hasattr(cls, "__mro__") and cls is not Backend:
-            if cls.__mro__[-2] == Backend:
+            if len(cls.__mro__) > 3 and cls.__mro__[-3] == Backend:
                 cls._define_support()
-
 
 prepare_backends()
