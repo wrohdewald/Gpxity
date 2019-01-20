@@ -221,8 +221,7 @@ class BackendBase:
         if cache_key in cls.__all_backends:
             result = cls.__all_backends[cache_key]
         else:
-            account.backend_cls = cls.find_class(account.backend)
-            result = account.backend_cls(account)
+            result = cls.find_class(account.backend)
             cls.__all_backends[cache_key] = result
         if track_id:
             try:

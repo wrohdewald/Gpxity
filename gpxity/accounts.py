@@ -140,7 +140,6 @@ class Account:
         for key, value in kwargs.items():
             self.config[key.lower()] = value
         self.config['from_name'] = name
-        self.backend_cls = None
         if self.name.lower().startswith('directory:'):
             self.name = self.name[len('directory:'):]
         if self.name == '':
