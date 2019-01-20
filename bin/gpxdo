@@ -1115,6 +1115,7 @@ Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
                     self.options.description = True
                     self.options.points = True
                     self.options.moving_speed = True
+                    self.options.ids = True
             if not self.options.source:
                 self.options.source = ['.']
             if self.options.locate and self.options.sort != 'identifier':
