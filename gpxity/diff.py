@@ -8,7 +8,6 @@
 
 # pylint: disable=protected-access
 
-import logging
 import datetime
 
 from collections import defaultdict
