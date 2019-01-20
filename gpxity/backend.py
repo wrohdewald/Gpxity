@@ -376,6 +376,16 @@ class Backend(BackendBase):
         if now:
             self._scan()
 
+    @property
+    def is_scanned(self) ->bool:
+        """Check if the backend has already been scanned for tracks.
+
+        Returns: (bool)
+            The answer
+
+        """
+        return self._tracks_fully_listed
+
     def _scan(self) ->None:
         """load the list of all tracks in the backend if not yet done.
         Enforce this by calling :meth:`scan` first.
