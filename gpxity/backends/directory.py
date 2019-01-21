@@ -387,7 +387,7 @@ class Directory(Backend):
             _ = self.gpx_path(track.id_in_backend)
             os.utime(_, (time.timestamp(), time.timestamp()))
 
-    def _change_id(self, track, new_ident: str):
+    def _change_ident(self, track, new_ident: str):
         """Change the id in the backend."""
         assert track.id_in_backend != new_ident
         unique_id = self._new_id_from(new_ident)

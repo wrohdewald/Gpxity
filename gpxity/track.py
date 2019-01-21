@@ -231,7 +231,7 @@ class Track:  # pylint: disable=too-many-public-methods
             if not value:
                 raise Exception('Cannot remove id_in_backend for saved track {}'.format(self))
             with self._decouple():
-                self.backend._change_id(self, value)
+                self.backend._change_ident(self, value)
 
     def _set_backend(self, value):
         """To be used only by backend implementations."""

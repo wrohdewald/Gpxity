@@ -350,7 +350,7 @@ class Backend(BackendBase):
         """
         return datetime.datetime.now()
 
-    def _change_id(self, track, new_ident: str):
+    def _change_ident(self, track, new_ident: str):
         """Change the id in the backend."""
         raise NotImplementedError
 
