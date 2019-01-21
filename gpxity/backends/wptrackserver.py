@@ -103,7 +103,9 @@ class WPTrackserver(Backend):
             else:
                 self.logger.info('connected to %s %s', self.url, database)
         except _mysql_exceptions.Error as exc:
-            raise Backend.BackendException(exc)
+            raise Backend.BackendException(
+                '{}: host={} user={} passwd={} database={}'.format(
+                    exc, self.url, user, self.account.password, database))
 
     def _encode_description(self, track):
         """Encode keywords in description.
