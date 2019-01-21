@@ -1646,7 +1646,9 @@ class Track:  # pylint: disable=too-many-public-methods
     def ids(self):
         """Return ids for all backends where this track has already been.
 
-        You can modify it but your changes will never be saved.
+        You can modify it but your changes will only be saved if and when
+        the entire track is saved.
+
         They are sorted by ascending age.
         Only the 5 youngest are kept.
         If the same id_in_backend appears in more than one directory, keep only the youngest.
