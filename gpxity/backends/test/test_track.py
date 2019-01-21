@@ -634,6 +634,25 @@ class TrackTests(BasicTest):
         self.assertNotIn('distance', track._header_data)
         self.assertEqual(track.distance(), gpx_track.distance())
 
+    def test_merge_track(self):
+        """Check if everything is correctly merged."""
+        track1 = self.create_test_track()
+        track1.title = '44432321'
+        track1.keywords = 'KeyA,KeyB,KeyA'
+        track1.ids = ['wptrackserver_unittest:5', '/tmp/x.gpx']
+        track2 = track1.clone()
+        track2.title = 'Track2-title'
+        track2.ids = ['wptrackserver_unittest:5', 'wptrackserver_unittest:6', 'tmp/y.gpx']
+        msg = track1.merge(track2, partial_tracks=True)
+        for _ in msg:
+            self.logger.debug(_)
+        self.assertEqual(track1.gpx.get_track_points_no(), track2.gpx.get_track_points_no())
+        self.assertTrue(track1.points_equal(track2, digits=9))
+        self.assertEqual(track1.title, 'Track2-title')
+        self.assertEqual(
+            track1.ids,
+            ['wptrackserver_unittest:5', '/tmp/x.gpx', 'wptrackserver_unittest:6', 'tmp/y.gpx'])
+
     def test_merge_partial_tracks(self):
         """Test Track.merge(partial_tracks=True)."""
 

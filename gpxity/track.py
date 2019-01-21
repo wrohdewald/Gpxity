@@ -1328,6 +1328,12 @@ class Track:  # pylint: disable=too-many-public-methods
             msg.append('New keywords: {}'.format(','.join(kw_src - kw_dst)))
             if not dry_run:
                 self.keywords = kw_src | kw_dst
+        # ids are diffent. keywords are sorted, ids is fifo
+        new_ids = self.__clean_ids(self.ids + other.ids)
+        if new_ids != self.ids:
+            msg.append('New Ids: {}'.format(','.join(set(new_ids) - set(self.ids))))
+            if not dry_run:
+                self.ids = new_ids
         return msg
 
     def can_merge(self, other, partial_tracks: bool = False):
@@ -1656,6 +1662,11 @@ class Track:  # pylint: disable=too-many-public-methods
             result = self._ids
         return self.__clean_ids(result)
 
+    @ids.setter
+    def ids(self, value):
+        """Setter for ids."""
+        self._ids = self.__clean_ids(value)
+
     @staticmethod
     def __clean_ids(original):
         """Remove redundancies and old ids.append.
@@ -1667,19 +1678,26 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         result = list()
-        seen = set()
+        seen_url = set()
+        seen_id = set()
         for orig_id in original:
+            if orig_id in seen_id:
+                continue
+            seen_id.add(orig_id)
             try:
                 acc, _ = BackendBase.parse_objectname(orig_id)
             except KeyError:
                 continue
             if acc.backend == 'Directory':
-                if acc.url not in seen:
-                    seen.add(acc.url)
+                if acc.url not in seen_url:
+                    seen_url.add(acc.url)
                     result.append(orig_id)
             else:
                 result.append(orig_id)
-        return result[:5]
+        result = result[:5]
+        if result != original:
+            logging.debug('ids: %s -> %s', original, result)
+        return result
 
     def split(self):
         """Create separate tracks for every track/segment."""
