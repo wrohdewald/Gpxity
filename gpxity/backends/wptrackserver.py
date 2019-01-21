@@ -79,33 +79,50 @@ class WPTrackserver(Backend):
     def __init__(self, account=None):
         """See class docstring. The url is host."""
         super(WPTrackserver, self).__init__(account)
-        self._db = None
-        self.__connect_mysql()
-        cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.account.username])
-        row = cursor.fetchone()
-        if row is None:
-            raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.account.username))
-        self.user_id = row[0]
+        self.__cached_db = None
+        self.__cached_user_id = None
 
     def __connect_mysql(self):
-        """Connect to the Mysql server."""
+        """Connect to the Mysql server.
+
+        Returns: The db handle
+
+        """
         try:
             user, database = self.account.mysql.split('@')
         except ValueError:
             raise Backend.BackendException('Url is illegal: {}'.format(self.url))
         try:
-            _ = self._db
-            self._db = MySQLdb.connect(
+            result = MySQLdb.connect(
                 host=self.url, user=user, passwd=self.account.password, database=database,
                 autocommit=True, charset='utf8')
-            if _:
+            if self.__cached_db:
                 self.logger.info('reconnected to %s %s', self.url, database)
             else:
                 self.logger.info('connected to %s %s', self.url, database)
+            return result
         except _mysql_exceptions.Error as exc:
             raise Backend.BackendException(
                 '{}: host={} user={} passwd={} database={}'.format(
                     exc, self.url, user, self.account.password, database))
+
+    @property
+    def _db(self):
+        """Cached mysql handle."""
+        if self.__cached_db is None:
+            self.__cached_db = self.__connect_mysql()
+        return self.__cached_db
+
+    @property
+    def _user_id(self):
+        """Cached user_id from mysql."""
+        if self.__cached_user_id is None:
+            cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.account.username])
+            row = cursor.fetchone()
+            if row is None:
+                raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.account.username))
+            self.__cached_user_id = row[0]
+        return self.__cached_user_id
 
     def _encode_description(self, track):
         """Encode keywords in description.
@@ -154,7 +171,7 @@ class WPTrackserver(Backend):
     def _load_track_headers(self):
         """."""
         cmd = 'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s'
-        args = (self.user_id, )  # noqa
+        args = (self._user_id, )  # noqa
         cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
             track = self._found_track(str(int(_[0])))
@@ -210,14 +227,14 @@ class WPTrackserver(Backend):
             if track.id_in_backend is None:
                 cmd = 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source)' \
                     ' values(%s,%s,%s,%s,%s,%s)'
-                args = (self.user_id, title, track_time, description, track_distance, '')
+                args = (self._user_id, title, track_time, description, track_distance, '')
                 cursor = self.__exec_mysql(cmd, args)
                 track.id_in_backend = str(int(cursor.lastrowid))
             else:
                 self.__exec_mysql(
                     'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) '
                     ' values(%s,%s,%s,%s,%s,%s,%s)',
-                    (track.id_in_backend, self.user_id, title, track_time, description, track_distance, ''))
+                    (track.id_in_backend, self._user_id, title, track_time, description, track_distance, ''))
                 self.logger.error('wptrackserver wrote missing header with id=%s', track.id_in_backend)
         else:
             self.__exec_mysql(
