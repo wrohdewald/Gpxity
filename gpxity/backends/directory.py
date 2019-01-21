@@ -392,7 +392,7 @@ class Directory(Backend):
         assert track.id_in_backend != new_ident
         unique_id = self._new_id_from(new_ident)
         self._remove_symlinks(track.id_in_backend)
-        self.logger.debug('%s: renamed %s to %s', self.url, track.id_in_backend, unique_id)
+        self.logger.info('%s: renamed %s to %s', self.account, track.id_in_backend, unique_id)
         os.rename(self.gpx_path(track.id_in_backend), self.gpx_path(unique_id))
         track.id_in_backend = unique_id
         self._make_symlinks(track)
