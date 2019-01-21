@@ -119,6 +119,8 @@ class Directory(Backend):
 
     def __init__(self, account):
         """See class docstring."""
+        if account.name == '/':
+            raise Backend.BackendException('Directory: / is not allowed')
         super(Directory, self).__init__(account)
         self.is_temporary = not account.url
         if self.is_temporary:
