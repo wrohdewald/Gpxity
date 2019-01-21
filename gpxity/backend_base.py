@@ -32,7 +32,6 @@ class BackendBase:
     # pylint: disable=too-many-instance-attributes
 
     __all_backend_classes = None
-    __all_backends = dict()
 
     class BackendException(Exception):
         """Is raised for general backend exceptions, especially error messages from a remote server"""
@@ -133,11 +132,10 @@ class BackendBase:
                     url = '.'
             account = Account(url=url)
         elif ':' not in name:
-            url = None
-            track_id = name
+            url, track_id = os.path.split(name)
             if track_id.endswith('.gpx'):
                 track_id = track_id[:-4]
-            account = Account(url='.')
+            account = Account(url=url)
         else:
             _ = name.split(':')
             account_name = _[0]
@@ -191,52 +189,3 @@ class BackendBase:
         return sorted(
             (x for x in cls.__all_backend_classes
              if x not in exclude and needs < x.supported), key=lambda x: x.__name__)
-
-    @classmethod
-    def instantiate(cls, name: str):
-        """Instantiate a Backend or a Track out of its identifier.
-
-        The full notation of an id_in_backend in a specific backend is
-        similiar to what scp expects:
-
-        Account:id_in_backend where Account is a reference to the accounts file.
-
-        Locally reachable files or directories may be written without the leading
-        Directory:. And a leading ~ is translated into the user home directory.
-        The trailing .gpx can be omitted. It will be removed anyway for id_in_backend.
-
-        If the file path of a local track (Directory) contains a ":", the file path
-        must be absolute or relative (start with "/" or with "."), or the full notation
-        with the leading Directory: is needed
-
-        Args:
-            name: The string identifier to be parsed
-
-        Returns:
-            A Track or a Backend. If the Backend has already been instantiated, return the cached value.
-
-        """
-        account, track_id = cls.parse_objectname(name)
-        cache_key = str(account)
-        if cache_key in cls.__all_backends:
-            result = cls.__all_backends[cache_key]
-        else:
-            result = cls.find_class(account.backend)
-            cls.__all_backends[cache_key] = result
-        if track_id:
-            try:
-                result = result[track_id]
-            except IndexError:
-                raise Exception('gpxdo: {}:{} not found'.format(result.account.name, track_id))
-
-        assert result is not None
-        return result
-
-    def _get_current_keywords(self, track):  # pylint:disable=no-self-use
-        """A backend might be able to return the currently stored keywords.
-
-        This is useful for unittests: Compare the internal state with what the
-        backend actually says.
-
-        """
-        return track.keywords

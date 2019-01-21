@@ -119,6 +119,8 @@ class Backend(BackendBase):
 
     _timeout = None
 
+    __all_backends = dict()
+
     # It is important that we have only one global session
     # because gpsies.com seems to have several servers and their
     # synchronization is sometimes slower than expected. See
@@ -899,3 +901,43 @@ class Backend(BackendBase):
 
         """
         return track.keywords
+
+    @classmethod
+    def instantiate(cls, name: str):
+        """Instantiate a Backend or a Track out of its identifier.
+
+        The full notation of an id_in_backend in a specific backend is
+        similiar to what scp expects:
+
+        Account:id_in_backend where Account is a reference to the accounts file.
+
+        Locally reachable files or directories may be written without the leading
+        Directory:. And a leading ~ is translated into the user home directory.
+        The trailing .gpx can be omitted. It will be removed anyway for id_in_backend.
+
+        If the file path of a local track (Directory) contains a ":", the file path
+        must be absolute or relative (start with "/" or with "."), or the full notation
+        with the leading Directory: is needed
+
+        Args:
+            name: The string identifier to be parsed
+
+        Returns:
+            A Track or a Backend. If the Backend has already been instantiated, return the cached value.
+            If the wanted object does not exist, exception FileNotFoundError is raised.
+
+        """
+        account, track_id = cls.parse_objectname(name)
+        cache_key = str(account)
+        if cache_key in cls.__all_backends:
+            result = cls.__all_backends[cache_key]
+        else:
+            result = cls.find_class(account.backend)(account)
+            cls.__all_backends[cache_key] = result
+        if track_id:
+            try:
+                result = result[track_id]
+            except IndexError:
+                raise FileNotFoundError('{} not found'.format(Track.identifier(account, track_id)))
+        assert result is not None
+        return result
