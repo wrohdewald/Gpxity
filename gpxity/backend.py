@@ -191,13 +191,6 @@ class Backend(BackendBase):
             raise Backend.BackendException('{} needs a username'.format(self.account))
         return author
 
-    def account_str(self):
-        """Backend specifc format.
-
-        Returns: A string.
-
-        """
-        return self.account.name
 
     def __str__(self) ->str:
         """A unique identifier for every physical backend.
@@ -208,7 +201,7 @@ class Backend(BackendBase):
             A unique identifier
 
         """
-        return self.account_str()
+        return self.account.name
 
     supported_categories = Track.categories
 

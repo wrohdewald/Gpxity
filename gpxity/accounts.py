@@ -158,14 +158,6 @@ class Account:
             return None
         return config.get(key.lower())
 
-    def xxxkey(self) ->str:
-        """Cache key.
-
-        Returns: the key
-
-        """
-        return str(self.config)
-
     def __repr__(self):
         """For debugging output.
 

@@ -7,7 +7,6 @@
 """Tests for gpxity.backends."""
 
 import unittest
-import pwd
 import os
 import io
 import datetime
@@ -324,18 +323,10 @@ class BasicTest(unittest.TestCase):
         if isinstance(category, int):
             category = cls_.decode_category(cls_.supported_categories[category])
 
+        kwargs = dict()
         if cls_ is WPTrackserver:
             self.create_temp_mysqld()
-            kwargs = {
-                'Password': self.test_passwd,
-                'Url': self.mysql_ip_address,
-            }
-        elif cls_ is Mailer:
-            kwargs = {
-                'mailfrom': pwd.getpwuid(os.geteuid()).pw_name
-            }
-        else:
-            kwargs = dict()
+            kwargs['Url'] = self.mysql_ip_address
         if url:
             kwargs['Url'] = url
         if test_name:
