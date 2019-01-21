@@ -26,6 +26,7 @@ from gpxpy import gpx as mod_gpx
 
 from .basic import BasicTest, disabled
 from ... import Track, Backend, Fences, Account
+from ...backend_base import BackendBase
 from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from .. import Openrunner
 from ...util import repr_timespan, positions_equal, remove_directory
@@ -666,8 +667,7 @@ class TrackTests(BasicTest):
         expected = [x.__name__ for x in expected if not x.is_disabled()]
         self.assertEqual(all_classes, expected)
 
-    @skipIf(*disabled(Directory))
-    def test_parse_objectname_directory(self):
+    def test_parse_objectname(self):
         """Test Backend.parse_objectname for directory."""
         save = os.getenv('HOME'), os.getcwd()
         try:
@@ -677,19 +677,20 @@ class TrackTests(BasicTest):
             test_home = os.path.abspath('subdir')
             os.environ['HOME'] = test_home  # for ~ in pathname
             cases = (
-                ('.', '.', 'Directory', None),
-                ('subdir', 'subdir', 'Directory', None),
-                ('abc', '.', 'Directory', 'abc'),
-                ('subdir/abc', 'subdir', 'Directory', 'abc'),
-                ('subdir/sub2', 'subdir/sub2', 'Directory', None),
-                ('subdir/sub2/sub3/xy', 'subdir/sub2/sub3', 'Directory', 'xy'),
-                ('~/sub2', os.path.join(abs_prefix, 'subdir/sub2'), 'Directory', None),
-                ('~/sub2/sub3/xy', os.path.join(abs_prefix, 'subdir/sub2/sub3'), 'Directory', 'xy'),
-                ('wptrackserver_unittest:', 'wptrackserver_unittest', 'WPTrackserver', None),
-                ('wptrackserver_unittest:24', 'wptrackserver_unittest', 'WPTrackserver', '24'),
-                ('wptrackserver_unittest', 'wptrackserver_unittest', 'Directory', None),
-                ('wptrackserver_unittest/24', 'wptrackserver_unittest', 'Directory', '24'),
-                (os.path.join(test_home, 'sub2/sub3/xy'), os.path.join(test_home, 'sub2/sub3'), 'Directory', 'xy'),
+                ('.', '', 'Directory', None),
+                ('subdir', 'subdir/', 'Directory', None),
+                ('abc', '', 'Directory', 'abc'),
+                ('subdir/abc', 'subdir/', 'Directory', 'abc'),
+                ('subdir/sub2', 'subdir/sub2/', 'Directory', None),
+                ('subdir/sub2/sub3/xy', 'subdir/sub2/sub3/', 'Directory', 'xy'),
+                ('~/sub2', os.path.join(abs_prefix, 'subdir/sub2/'), 'Directory', None),
+                ('~/sub2/sub3/xy', os.path.join(abs_prefix, 'subdir/sub2/sub3/'), 'Directory', 'xy'),
+                ('wptrackserver_unittest:', 'wptrackserver_unittest:', 'WPTrackserver', None),
+                ('wptrackserver_unittest:24', 'wptrackserver_unittest:', 'WPTrackserver', '24'),
+                ('wptrackserver_unittest', 'wptrackserver_unittest/', 'Directory', None),
+                ('wptrackserver_unittest/24', 'wptrackserver_unittest/', 'Directory', '24'),
+                ('missing_dir/24', 'missing_dir/', 'Directory', '24'),
+                (os.path.join(test_home, 'sub2/sub3/xy'), os.path.join(test_home, 'sub2/sub3/'), 'Directory', 'xy'),
             )
 
             subdirs = list()
@@ -700,11 +701,14 @@ class TrackTests(BasicTest):
             try:
                 for _ in subdirs:
                     os.mkdir(_)
-                for string, expect_account_name, expect_backend, expect_ident in cases:
-                    account, ident = Backend.parse_objectname(string)
-                    self.assertEqual(account.backend, expect_backend, 'backend wrong in test case:{}'.format(string))
-                    self.assertEqual(account.name, expect_account_name, 'account wrong in test case:{}'.format(string))
-                    self.assertEqual(ident, expect_ident, 'ident wrong in test case:{}'.format(string))
+                for string, expect_account_str, expect_backend, expect_ident in cases:
+                    account, track_id = BackendBase.parse_objectname(string)
+                    self.assertEqual(
+                        str(account), expect_account_str, 'str(account) wrong in test case:{}'.format(string))
+                    self.assertEqual(
+                        account.backend, expect_backend, 'backend wrong in test case:{}'.format(string))
+                    self.assertEqual(
+                        track_id, expect_ident, 'track_id wrong in test case:{}'.format(string))
             finally:
                 for _ in reversed(subdirs):
                     remove_directory(_)
