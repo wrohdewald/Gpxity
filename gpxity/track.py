@@ -29,6 +29,7 @@ from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length, Location
 from gpxpy.geo import simplify_polyline
 
+from .backend_base import BackendBase
 from .util import repr_timespan, uniq, positions_equal
 
 GPX = mod_gpx.GPX
@@ -1638,7 +1639,8 @@ class Track:  # pylint: disable=too-many-public-methods
             result = self._ids
         return self.__clean_ids(result)
 
-    def __clean_ids(self, original):
+    @staticmethod
+    def __clean_ids(original):
         """Remove redundancies and old ids.append.
 
         1. if the same id_in_backend is in several directories, keep only the first one
@@ -1651,7 +1653,7 @@ class Track:  # pylint: disable=too-many-public-methods
         seen = set()
         for orig_id in original:
             try:
-                acc, _ = self.backend.parse_objectname(orig_id)
+                acc, _ = BackendBase.parse_objectname(orig_id)
             except KeyError:
                 continue
             if acc.backend == 'Directory':
