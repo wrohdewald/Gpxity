@@ -1018,14 +1018,22 @@ class Track:  # pylint: disable=too-many-public-methods
         str(track) uses this. However if a track has no id_in_backend,
         str(track will create one using title, time, id(track).
 
+        Args:
+            backend: May be Backend or Account
+            ident: id_in_backend
+
         Returns:
             the full identifier.
         """
-        if backend is None:
+        if isinstance(backend, BackendBase):
+            account = backend.account
+        else:
+            account = backend
+        if account is None:
             return 'unsaved: "{}"'.format(ident)
         if not ident:
             ident = 'no id_in_backend'
-        return str(backend.account) + ident
+        return str(account) + ident
 
     def __str__(self) ->str:
         """The str.
