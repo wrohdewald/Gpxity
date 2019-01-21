@@ -178,7 +178,9 @@ class Account:
 
         """
         if self.backend == 'Directory':
-            if self.name == '':
+            if self.name == '.':
                 return ''
+            if self.name == '/':
+                return '/'
             return self.name + '/'
         return self.name + ':'

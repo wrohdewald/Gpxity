@@ -221,7 +221,7 @@ class Track:  # pylint: disable=too-many-public-methods
         if self.__id_in_backend == value:
             return
         if self.__id_in_backend:
-            self._ids.insert(0, (str(self.backend.account) + self.__id_in_backend))
+            self._ids.insert(0, str(self))
         if self.__is_decoupled:
             # internal use
             self.__id_in_backend = value
@@ -312,7 +312,7 @@ class Track:  # pylint: disable=too-many-public-methods
         result.public = self.public
         result._ids = deepcopy(self._ids)
         if self.backend is not None:
-            result._ids.insert(0, (str(self.backend.account), self.__id_in_backend))
+            result._ids.insert(0, str(self))
         return result
 
     def _rewrite(self):
@@ -1008,6 +1008,25 @@ class Track:  # pylint: disable=too-many-public-methods
                     parts.append('{} points'.format(self.gpx.get_track_points_no()))
             return '{}({})'.format(str(self), ' '.join(parts))
 
+    @staticmethod
+    def identifier(backend, ident: str) ->str:
+        """The full identifier for a track
+
+        Since we may want to do this without instantiating a track,
+        this must be staticmethod or classmethod.
+
+        str(track) uses this. However if a track has no id_in_backend,
+        str(track will create one using title, time, id(track).
+
+        Returns:
+            the full identifier.
+        """
+        if backend is None:
+            return 'unsaved: "{}"'.format(ident)
+        if not ident:
+            ident = 'no id_in_backend'
+        return str(backend.account) + ident
+
     def __str__(self) ->str:
         """The str.
 
@@ -1015,12 +1034,10 @@ class Track:  # pylint: disable=too-many-public-methods
             a unique full identifier
 
         """
-
-        if self.backend is None:
-            return 'unsaved: "{}" time={} id={}'.format(self.title or 'untitled', self.time, id(self))
-        ident = self.id_in_backend or 'unsaved'
-        # TODO: current dir sollte wohl nur ident returnen
-        return str(self.backend.account) + ident
+        ident = self.id_in_backend
+        if not ident:
+            ident = '"{}" time={} id={}'.format(self.title or 'untitled', self.time, id(self))
+        return self.identifier(self.backend, ident)
 
     def key(self, with_category: bool = True, with_last_time: bool = True, precision=None) ->str:
         """For speed optimized equality checks, not granted to be exact, but sufficiently safe IMHO.

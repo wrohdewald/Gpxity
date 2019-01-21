@@ -684,7 +684,7 @@ class TestBackends(BasicTest):
                         pass
                 self.assertEqual(
                     str(context.exception),
-                    '{}_no_username_unittest needs a username'.format(cls.__name__))
+                    '{}_no_username_unittest: needs a username'.format(cls.__name__))
 
     def test_can_encode_all_categories(self):
         """Check if we can encode all internal categories to a given backend value for all backends."""
