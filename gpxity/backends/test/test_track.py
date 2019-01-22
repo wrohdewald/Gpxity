@@ -531,21 +531,6 @@ class TrackTests(BasicTest):
         self.assertEqual(track.keywords, test_tracks)
 
     @skipIf(*disabled(Directory))
-    def test_id(self):
-        """id_in_backend must be str."""
-        with self.temp_backend(Directory) as directory:
-            track = Track()
-            with self.assertRaises(Exception):
-                directory.add(track).id_in_backend = 56
-            with self.assertRaises(Exception):
-                track.id_in_backend = 'a/b'
-            self.assertEqual(len(directory), 1)
-            with self.assertRaises(ValueError):
-                directory.add(track)
-            directory.add(track.clone())
-            self.assertEqual(len(directory), 2)
-
-    @skipIf(*disabled(Directory))
     def test_in(self):
         """x in backend."""
         with self.temp_backend(Directory) as directory:

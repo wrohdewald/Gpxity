@@ -33,22 +33,23 @@ class TestBackends(BasicTest):
         expect_unsupported[Directory] = {
             'own_categories', 'write_add_keywords', 'write_remove_keywords',
             'write_category', 'write_description', 'write_public', 'write_title'}
-        expect_unsupported[MMT] = set()
+        expect_unsupported[MMT] = {
+            'rename', }
         expect_unsupported[GPSIES] = {
-            'keywords', 'write_add_keywords', 'write_remove_keywords'}
+            'keywords', 'write_add_keywords', 'write_remove_keywords', 'rename'}
         expect_unsupported[TrackMMT] = {
-            'scan', 'remove',
+            'scan', 'remove', 'rename',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
         expect_unsupported[Mailer] = {
-            'own_categories', 'scan', 'remove',
+            'own_categories', 'scan', 'remove', 'rename',
             'write_title', 'write_description', 'write_public',
             'write_category', 'write_add_keywords',
             'write_remove_keywords'}
         expect_unsupported[Openrunner] = {
             'write_title', 'write_description', 'write_public',
-            'write_category', 'write_add_keywords',
+            'write_category', 'write_add_keywords', 'rename',
             'write_remove_keywords'}
         expect_unsupported[WPTrackserver] = {
             'own_categories',
@@ -62,7 +63,8 @@ class TestBackends(BasicTest):
                         cls.__name__, cls.supported & expect_unsupported[cls]))
                 self.assertEqual(
                     sorted(cls.supported | expect_unsupported[cls]),
-                    sorted(cls.full_support))
+                    sorted(cls.full_support),
+                    '{}.supported is wrong'.format(cls.__name__))
 
     def test_all_backends(self):
         """Check if Backend.all_backend_classes works."""
@@ -715,3 +717,31 @@ class TestBackends(BasicTest):
                     self.assertEqual(
                         category, back,
                         '{}: {} -> {} -> {}'.format(cls.__name__, category, internal, back))
+
+    def test_id_change(self):
+        """id_in_backend must be legal."""
+        for cls in Backend.all_backend_classes(needs={'rename'}):
+            if cls is Directory:
+                failing = ('', 56, 'a/b', '/', '.', True, False, 5.0)
+                working = ('6', 'fdasfds:fasdds')
+            elif cls is WPTrackserver:
+                failing = ('', 'a', '/', 19, True, False, 5.0, '2147483648')
+                working = ('8', '17', '2147483647')
+            else:
+                raise Exception('untested class {}'.format(cls))
+            with self.tst_backend(cls):
+                with self.temp_backend(cls) as backend:
+                    track = Track()
+                    backend.add(track)
+                    orig_id = track.id_in_backend
+                    for _ in failing:
+                        with self.assertRaises(ValueError, msg='for class={} id={}'.format(cls.__name__, _)):
+                            track.id_in_backend = _
+                    backend.scan()
+                    self.assertEqual(len(backend), 1)
+                    self.assertEqual(backend[0].id_in_backend, orig_id, 'Testing {} for {}'.format(_, cls.__name__))
+                    for _ in working:
+                        track.id_in_backend = _
+                        backend.scan()
+                        self.assertEqual(len(backend), 1)
+                        self.assertEqual(backend[0].id_in_backend, _, 'Testing {} for {}'.format(_, cls.__name__))

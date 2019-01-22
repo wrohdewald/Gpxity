@@ -277,6 +277,26 @@ class WPTrackserver(Backend):
         cmd = 'delete from wp_ts_tracks where id=%s'
         self.__exec_mysql(cmd, [int(ident)])
 
+    def _change_ident(self, track, new_ident: str):
+        """Change the id in the backend."""
+        assert track.id_in_backend != new_ident
+        if new_ident in self:
+            raise self.BackendException(
+                'New id_in_backend {} already exists in {}'.format(
+                    new_ident, self.account))
+        try:
+            self.__exec_mysql(
+                'update wp_ts_tracks set id=%s where id=%s',
+                (new_ident, track.id_in_backend))
+        except _mysql_exceptions.DataError as exc:
+            raise ValueError(str(exc))
+        self.__exec_mysql(
+            'update wp_ts_locations set trip_id=%s where trip_id=%s',
+            (new_ident, track.id_in_backend))
+
+        self.logger.info('%s: renamed %s to %s', self.account, track.id_in_backend, new_ident)
+        track.id_in_backend = new_ident
+
     @classmethod
     def is_disabled(cls) ->bool:
         """True if this backend is disabled by env variable GPXITY_DISABLE_BACKENDS.
@@ -347,3 +367,16 @@ class WPTrackserver(Backend):
             self.__connect_mysql()
             do_it()
         return cursor
+
+    @classmethod
+    def _check_id_legal(cls, value):
+        """Check if value is a legal id.
+
+        If not, raise ValueError.
+        """
+        # it is not necessary to call BackendBase._check_id_legal
+        if value is not None:
+            if int(value) <= 0:
+                # max is actually 2147483647 but the column is autoincrement
+                # so just make mysql fail if we exceed that
+                raise ValueError('{} not allowed as id_in_backend for WPTrackServer'.format(value))

@@ -108,7 +108,7 @@ class Backend(BackendBase):
 
     full_support = (
         'scan', 'remove', 'write', 'write_title', 'write_public',
-        'own_categories',
+        'own_categories', 'rename',
         'write_category', 'write_description', 'keywords', 'write_add_keywords', 'write_remove_keywords')
 
     _max_length = dict()
@@ -256,6 +256,7 @@ class Backend(BackendBase):
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
             '_load_track_headers': 'scan',
+            '_change_ident': 'rename',
             '_remove_ident': 'remove',
             '_write_all': 'write'}
         cls.supported = set()

@@ -197,7 +197,14 @@ class Track:  # pylint: disable=too-many-public-methods
     def id_in_backend(self) ->str:
         """Every backend has its own scheme for unique track ids.
 
-        Some backends may change the id if the track data changes.
+        Some backends may change this if the track data changes.
+
+        Some backends support assigning a new value. Those are
+        currently Directory and WPTrackServer. The others will
+        raise NotImplementedError.
+
+        Assigning a value illegal for the specific backend will raise
+        ValueError.
 
         Returns:
             the id in the backend
@@ -207,17 +214,17 @@ class Track:  # pylint: disable=too-many-public-methods
 
     @id_in_backend.setter
     def id_in_backend(self, value: str) ->None:
-        """Change the id in the backend. Currently supported only by Directory.
+        """Change the id in the backend.
+
+        Illegal changes raise ValueError.
 
         Args:
             value: The new value
 
         """
-        if value is not None:
-            if not isinstance(value, str):
-                raise Exception('{}: id_in_backend must be str'.format(value))
-            if '/' in value:
-                raise Exception('{}: / not allowed in id_in_backend'.format(value))
+        BackendBase._check_id_legal(value)
+        if self.__backend:
+            self.__backend._check_id_legal(value)
         if self.__id_in_backend == value:
             return
         if self.__id_in_backend:
@@ -227,15 +234,17 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__id_in_backend = value
         else:
             if not self.__id_in_backend:
-                raise Exception('Cannot set id_in_backend for yet unsaved track {}'.format(self))
+                raise ValueError('Cannot set id_in_backend for yet unsaved track {}'.format(self))
             if not value:
-                raise Exception('Cannot remove id_in_backend for saved track {}'.format(self))
+                raise ValueError('Cannot remove id_in_backend for saved track {}'.format(self))
             with self._decouple():
                 self.backend._change_ident(self, value)
 
     def _set_backend(self, value):
         """To be used only by backend implementations."""
         assert self.__is_decoupled
+        if self.__backend:
+            self.__backend._check_id_legal(self.id_in_backend)
         old_backend = self.__backend
         self.__backend = value
         if self.__gpx.keywords:

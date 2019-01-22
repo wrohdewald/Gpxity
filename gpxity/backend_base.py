@@ -189,3 +189,15 @@ class BackendBase:
         return sorted(
             (x for x in cls.__all_backend_classes
              if x not in exclude and needs < x.supported), key=lambda x: x.__name__)
+
+    @classmethod
+    def _check_id_legal(cls, value):
+        """Check if this backend accepts value as id.
+
+        If not, raise ValueError
+        """
+        if value is not None:
+            if not isinstance(value, str):
+                raise ValueError('{}: id_in_backend must be str'.format(value))
+            if value == '':
+                raise ValueError('id_in_backend must not be an empty string')

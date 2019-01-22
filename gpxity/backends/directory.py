@@ -421,3 +421,16 @@ class Directory(Backend):
         super(Directory, self).detach()
         if self.is_temporary:
             remove_directory(self.url)
+
+    @classmethod
+    def _check_id_legal(cls, value):
+        """Check if value is a legal id.
+
+        If not, raise ValueError.
+        """
+        # it is not necessary to call BackendBase._check_id_legal
+        if value is not None:
+            if '/' in value:
+                raise ValueError('/ not allowed as id_in_backend for Directory')
+            if value == '.':
+                raise ValueError('. not allowed as id_in_backend for Directory')
