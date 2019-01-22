@@ -428,14 +428,13 @@ class BasicTest(unittest.TestCase):
             except _mysql_exceptions.OperationalError:
                 # wait until the docker instance is ready
                 time.sleep(1)
-        logging.debug('%s: connected to %s', datetime.datetime.now(), cls.mysql_ip_address)
         cursor = server.cursor()
         cursor.execute('create database gpxitytest_db')
         cursor.execute('use gpxitytest_db')
         cursor.execute("""
             CREATE TABLE wp_ts_locations (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            trip_id int(11) NOT NULL,
+            id int NOT NULL AUTO_INCREMENT,
+            trip_id int NOT NULL,
             latitude double NOT NULL,
             longitude double NOT NULL,
             altitude double NOT NULL,
@@ -453,14 +452,14 @@ class BasicTest(unittest.TestCase):
         """)
         cursor.execute("""
             CREATE TABLE wp_ts_tracks (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            user_id int(11) NOT NULL,
+            id int NOT NULL AUTO_INCREMENT,
+            user_id int NOT NULL,
             name varchar({title_length}) NOT NULL,
             updated timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
             created timestamp NOT NULL default '0000-00-00 00:00:00',
             source varchar(255) NOT NULL default '',
             comment varchar({descr_length}) NOT NULL default '',
-            distance int(11) NOT NULL,
+            distance int NOT NULL,
             PRIMARY KEY (id),
             KEY user_id (user_id)
          )
@@ -477,7 +476,7 @@ class BasicTest(unittest.TestCase):
             user_url varchar(100) NOT NULL DEFAULT '',
             user_registered datetime NOT NULL DEFAULT '1970-01-01',
             user_activation_key varchar(255) NOT NULL DEFAULT '',
-            user_status int(11) NOT NULL DEFAULT '0',
+            user_status int NOT NULL DEFAULT '0',
             display_name varchar(250) NOT NULL DEFAULT '',
             PRIMARY KEY (ID),
             KEY user_login_key (user_login),
@@ -488,7 +487,6 @@ class BasicTest(unittest.TestCase):
         cursor.execute("""
             insert into wp_users (user_login) values(%s)""", ['gpxitytest'])
         cursor.execute("select id,user_login from wp_users")
-        logging.debug(cursor.fetchall())
         server.commit()
         server.close()
 
