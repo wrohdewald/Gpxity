@@ -325,7 +325,9 @@ class BasicTest(unittest.TestCase):
 
         kwargs = dict()
         if cls_ is WPTrackserver:
-            self.create_temp_mysqld()
+            if not self.find_mysql_docker():
+                self.create_temp_mysqld()  # only once for all tests
+            self.create_db_for_wptrackserver()  # recreate for each test
             kwargs['Url'] = self.mysql_ip_address
         if url:
             kwargs['Url'] = url
@@ -429,6 +431,7 @@ class BasicTest(unittest.TestCase):
                 # wait until the docker instance is ready
                 time.sleep(1)
         cursor = server.cursor()
+        cursor.execute('drop database if exists gpxitytest_db')
         cursor.execute('create database gpxitytest_db')
         cursor.execute('use gpxitytest_db')
         cursor.execute("""
@@ -510,8 +513,6 @@ class BasicTest(unittest.TestCase):
     @classmethod
     def create_temp_mysqld(cls):
         """Create a temporary mysql server and initialize it with test data for WPTrackserver."""
-        if cls.find_mysql_docker():
-            return
         cmd = [
             'docker', 'run', '--name', cls.mysql_docker_name, '--detach',
             '--env', 'MYSQL_ROOT_PASSWORD={}'.format(cls.test_passwd), 'mysql']
@@ -524,4 +525,3 @@ class BasicTest(unittest.TestCase):
                 raise Exception('Cannot run docker: {}'.format(std_err))
         if not cls.find_mysql_docker():
             raise Exception('Unknown problem while creating mysql docker')
-        cls.create_db_for_wptrackserver()
