@@ -347,13 +347,6 @@ class Utility:
                     # optimize the case where destination is also source
                     if hasattr(self.options, 'destination') and _ == self.options.destination:
                         self.destination = sources[-1]
-                        if self.options.func == self.merge and not self.options.remove:  # pylint: disable=comparison-with-callable
-                            msg = 'CAUTION: merging something with itself does nothing. Did you forget --remove?'
-                            if len(self.options.source) == 1:
-                                self.exit_code = 2
-                                raise Exception(msg)
-                            else:
-                                logging.error(msg)
 
                 tracks = collect_tracks(sources)
                 for track in tracks:
@@ -691,6 +684,14 @@ class Utility:
 
     def merge(self):
         """Merge"""
+        if any(x is self.destination for x in self.source_tracks):
+            if not self.options.remove:  # pylint: disable=comparison-with-callable
+                msg = 'CAUTION: merging something with itself does nothing. Did you forget --remove?'
+                if len(self.options.source) == 1:
+                    self.exit_code = 2
+                    raise Exception(msg)
+                else:
+                    logging.error(msg)
         if isinstance(self.destination, Backend):
             msg = self.destination.merge(
                 self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
