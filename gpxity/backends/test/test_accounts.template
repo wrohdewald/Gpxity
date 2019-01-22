@@ -1,0 +1,63 @@
+Account gp
+	Backend GPSIES
+	Password xxxx
+
+Account MMT_unittest
+	Backend MMT
+	Password xxxx
+
+Account MMT_gpxstoragemany_unittest
+	Backend MMT
+	Username gpxstoragemany
+	Password xxxx
+
+Account MMT_gpxity2_unittest
+	Backend MMT
+	Username gpxity2
+	Password xxxx
+
+Account Directory_unittest
+	Backend Directory
+
+Account ServerDirectory_unittest
+	backend ServerDirectory
+
+Account Mailer_unittest
+	Backend Mailer
+	Mailfrom wr
+	Url backup@rohdewald.de
+	Interval 2
+	Port 8025
+
+Account GPSIES_unittest
+	Username gpxitytest
+	Backend GPSIES
+	Password xxxx
+
+Account WPTrackserver_unittest
+	Username gpxitytest
+	Backend WPTrackserver
+	Password pwd
+	Mysql root@gpxitytest_db
+
+Account WPTrackserver_wrong_username_unittest
+	Username gpxitytest
+	Password wrong
+	Backend WPTrackserver
+	Mysql wrong@gpxitytest_db
+
+Account ServerDirectory
+	Backend ServerDirectory
+	Username mmtserver
+	Url /tmp/serverdirectory_test
+
+Account TrackMMT_unittest
+	Backend TrackMMT
+	Url http://localhost:12398
+	Username gpxitytest
+	Password gpxitytestpw
+
+Account Openrunner
+	Backend Openrunner
+	Password xxxx
+
