@@ -902,6 +902,28 @@ class Backend(BackendBase):
     def instantiate(cls, name: str):
         """Instantiate a Backend or a Track out of its identifier.
 
+        Calls instantiate_backend and optionally changes result to Track.
+
+        Args:
+            name: The string identifier to be parsed
+
+        Returns:
+            A Track or a Backend. If the Backend has already been instantiated, return the cached value.
+            If the wanted object does not exist, exception FileNotFoundError is raised.
+
+        """
+        result, track_id = cls.instantiate_backend(name)
+        if track_id:
+            try:
+                result = result[track_id]
+            except IndexError:
+                raise FileNotFoundError('{} not found'.format(Track.identifier(result, track_id)))
+        return result
+
+    @classmethod
+    def instantiate_backend(cls, name: str):
+        """Instantiate a Backend.
+
         The full notation of an id_in_backend in a specific backend is
         similiar to what scp expects:
 
@@ -918,10 +940,10 @@ class Backend(BackendBase):
         Args:
             name: The string identifier to be parsed
 
-        Returns:
-            A Track or a Backend. If the Backend has already been instantiated, return the cached value.
-            If the wanted object does not exist, exception FileNotFoundError is raised.
-
+        Returns: tuple()
+            * The first element is the Backend. If the Backend has already been instantiated, return the cached value.
+                If the wanted object does not exist, exception FileNotFoundError is raised.
+            * The second element is a track_id or None
         """
         account, track_id = cls.parse_objectname(name)
         cache_key = str(account)
@@ -930,10 +952,4 @@ class Backend(BackendBase):
         else:
             result = cls.find_class(account.backend)(account)
             cls.__all_backends[cache_key] = result
-        if track_id:
-            try:
-                result = result[track_id]
-            except IndexError:
-                raise FileNotFoundError('{} not found'.format(Track.identifier(account, track_id)))
-        assert result is not None
-        return result
+        return result, track_id
