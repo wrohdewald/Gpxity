@@ -326,20 +326,24 @@ class WPTrackserver(Backend):
             cursor or None if done nothing
 
         """
-        if many:
-            # only log the first one
-            self.logger.debug("executemany, first one: " + cmd, *args[0])
-        else:
-            self.logger.debug(cmd, *args)
-        cursor = self._db.cursor()
-        execute = cursor.executemany if many else cursor.execute
-        try:
-            execute(cmd, args)
-        except _mysql_exceptions.OperationalError:
-            # timeout disconnected
-            self.__connect_mysql()
+        def logit(prefix):
+            if many:
+                # only log the first one
+                self.logger.debug(prefix + " executemany, first one: " + cmd, *args[0])
+            else:
+                self.logger.debug(prefix + ' ' + cmd, *args)
+        def do_it():
             try:
                 execute(cmd, args)
             except _mysql_exceptions.Error as exception:
-                self.logger.error("MySQL Error: %s", exception)
+                logit("MySQL Error: {} for".format(exception))
+                raise
+        cursor = self._db.cursor()
+        execute = cursor.executemany if many else cursor.execute
+        try:
+            do_it()
+        except _mysql_exceptions.OperationalError:
+            # timeout disconnected
+            self.__connect_mysql()
+            do_it()
         return cursor
