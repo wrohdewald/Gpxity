@@ -93,7 +93,7 @@ class Track:  # pylint: disable=too-many-public-methods
     this documentation says track or Track it does not refer to one of possibly multiple entities in
     the GPX file. It refers to this class Track.
 
-    If a backend supports attributes not directly
+    If a :class:`~gpxity.backend.Backend` supports attributes not directly
     supported by the GPX format like the MapMyTracks track type, they will
     transparently be encodeded in existing GPX fields like keywords, see :attr:`keywords`.
 
@@ -136,7 +136,7 @@ class Track:  # pylint: disable=too-many-public-methods
     # pylint: disable = too-many-instance-attributes,too-many-public-methods
 
     class CannotMerge(Exception):
-        """Is raised if  Track.merge() fails."""
+        """Is raised if :meth:`Track.merge() <gpxity.track.Track.merge>` fails."""
 
     categories = (
         'Cycling', 'Cycling - Road', 'Cycling - Gravel', 'Cycling - MTB', 'Cycling - Indoor', 'Cycling - Hand',
@@ -1028,7 +1028,7 @@ class Track:  # pylint: disable=too-many-public-methods
         str(track will create one using title, time, id(track).
 
         Args:
-            backend: May be Backend or Account
+            backend: May be :class:`~gpxity.backend.Backend` or :class:`~gpxity.accounts.Account`
             ident: id_in_backend
 
         Returns:
@@ -1458,8 +1458,8 @@ class Track:  # pylint: disable=too-many-public-methods
             other (:class:`~gpxity.track.Track`): The track to be merged
             remove: After merging succeeded, remove other
             dry_run: if True, do not really apply the merge
-            copy: This argument is ignored. It is only here to give Track.merge() and Backend.merge()
-                the same interface.
+            copy: This argument is ignored. It is only here to give :meth:`Track.merge() <gpxity.track.Track.merge>`
+                and :meth:`Backend.merge() <gpxity.backend.Backend.merge>` the same interface.
             partial_tracks: merges other track
                 if either track is part of the other one
 

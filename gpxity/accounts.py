@@ -18,19 +18,27 @@ class Accounts:
 
     """Representation of config information as stored in the format used by Gpxity.
 
-    Queries can be made via `lookup`. The format is a subset of
-    ssh, see man ssh_config. But without variable expansion. The keyword
-    Account only allows one name. Wildcards are supported in the Account
-    name. Earlier matches
-    have precendence over later matches.
+    Queries can be made via `lookup`. The keyword  :literal:`Account` only allows one name.
 
     Keywords are case insensitive, arguments are not.
+
+    Example for an entry in the accounts file:
+
+    ::
+
+        Account wp
+            Backend WPTrackserver
+            Username wordpress_username
+            Url localhost
+            Mysql wordpress_7@wordpress_7
+            Password xxxx
+            Fences 53.7505,10.7445/750
 
     """
 
     # pylint: disable=too-few-public-methods
 
-    SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
+    __SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
     __account_files = dict()
 
@@ -68,7 +76,7 @@ class Accounts:
     def __yield_matches(cls, file_obj):
         """Yield usable lines."""
         for line in cls.__strip_whitespace(file_obj):
-            match = re.match(cls.SETTINGS_REGEX, line)
+            match = re.match(cls.__SETTINGS_REGEX, line)
             if not match:
                 raise Exception('Unparsable line {}'.format(line))
             yield match
@@ -104,11 +112,15 @@ class Accounts:
             yield account
 
     @classmethod
-    def lookup(cls, filename, wanted_account):
+    def lookup(cls, filename: str, wanted_account: str):
         """
-        Return a dict of config options for a given wanted_account.
+        Build an :class:`~gpxity.accounts.Account`
 
-        Returns: The dict
+        Args:
+            filename: The name of the accounts file
+            wanted_account: The name to look for in the accounts file
+
+        Returns: :class:`~gpxity.accounts.Account`
 
         """
         cls.__parse(filename)
@@ -117,7 +129,22 @@ class Accounts:
 
 class Account:
 
-    """As parsed from the accounts file. TODO: more docstring."""
+    """As parsed from the accounts file.
+
+    Attributes can be referenced as account.xxxx where xxx is an arbitrary
+    value in the account definition from the accounts file.
+
+    Args:
+        name: The name of the account. Must exist in the accounts file.
+        filename: Name of the accounts file. Default is Account.path
+
+    Attributes:
+        path: Default value for the accounts file
+        name: The name of the account
+        config: A dict with all config values
+        backend: The name of the backend class
+
+    """
 
     path = '~/.config/Gpxity/accounts'
 

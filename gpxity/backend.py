@@ -54,17 +54,19 @@ class Backend(BackendBase):
     Some backends may use cookies.
 
     Args:
-        url (str): Initial value for :attr:`url`
-        auth (str):  The username.
-            This will lookup the password and account from :class:`Authenticate <gpxity.auth.Authenticate>`.
-            You can also pass a dict containing what would normally be obtained from
-            :class:`Authenticate <gpxity.auth.Authenticate>`. The dict must also contain 'Username'.
+        account (:class:`~gpxity.accounts.Account`): The account to be used.
+            Alternatively a dict can be passed to build an ad hoc :class:`~gpxity.accounts.Account`
+            instance.
 
     Attributes:
         supported (set(str)): The names of supported methods. Creating the first instance of
             the backend initializes this. Only methods which may not be supported are mentioned here.
             If a particular value write_* like write_public does not exist, the entire track is written instead
             which normally results in a new ident for the track.
+
+            Some special values are:
+                * rename: allows assigning values to id_in_backend
+
         full_support (set(str)): All possible values for the supported attribute.
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url. Must never end with '/' except for

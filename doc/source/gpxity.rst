@@ -1,18 +1,4 @@
 
-gpxdo
-=====
-
-.. argparse::
-    :filename: ../../bin/gpxdo
-    :func: parser_for_sphinx
-
-gpxity_server
-=============
-
-.. argparse::
-    :filename: ../../bin/gpxity_server
-    :func: create_parser
-
 Library
 =======
 
@@ -32,10 +18,10 @@ Track
     :show-inheritance:
     :exclude-members: loading, is_loading, legal_categories, append, skip_test
 
-Authenticate
-------------
+Account
+--------
 
-.. automodule:: gpxity.auth
+.. automodule:: gpxity.accounts
     :members:
     :undoc-members:
     :show-inheritance:
@@ -79,4 +65,18 @@ Diff
     :show-inheritance:
     :exclude-members: append, skip_test
 
+
+gpxdo
+=====
+
+.. argparse::
+    :filename: ../../bin/gpxdo
+    :func: parser_for_sphinx
+
+gpxity_server
+=============
+
+.. argparse::
+    :filename: ../../bin/gpxity_server
+    :func: create_parser
 

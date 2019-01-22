@@ -828,28 +828,20 @@ class Utility:
 source and destination arguments may be single
 tracks or entire backend instances.
 Local files and directories are given as usual.
-Mail targets are given as mailer:my_mail@address.test
 
 For all other backends, the syntax is:
+    * account: for all tracks in a backend. Example:  g:
+    * account:track_id for one specific track in a backend. Example: g:1234
 
-backend:username  for all tracks in a backend
+Available backends are Directory,MapMytracks, GPSIES, Openrunner, Mailer,WPTrackServer
 
-or
+The file $HOME/.config/Gpxity/accounts
+defines the account. Example: ::
 
-backend:username/track_id for one specific track in a backend
-
-Available backends are:
-
-  - mmt       MapMytracks
-  - gpsies    gpsies.com
-  - openrunner openrunner.com
-  - mailer    mails tracks
-
-The file $HOME/.config/Gpxity/auth.cfg
-defines the type of the backend, username and password. Example:
-
-[MMT:username]
-Password = whatever
+    Account g
+        Backend GPSIES
+        Username gpsies_username
+        Password xxxx
 
 Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
 
