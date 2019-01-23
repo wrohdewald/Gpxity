@@ -337,7 +337,7 @@ class Utility:
             if hasattr(self.options, 'similar') and self.options.similar:
                 self.similar_to = [Backend.instantiate(x) for x in self.options.similar.split(',')]
             self.source_tracks = self.parse_sources()
-            self.destination = self.parse_destination()
+            self.destination_backend, self.destination_track_id = self.parse_destination()
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
@@ -368,31 +368,25 @@ class Utility:
     def parse_destination(self):
         """Parse options.destination.
 
-        Returns: Track or Backend
+        Returns: Backend and track_id
 
         """
-        result = None
+        result = (None, None)
         if hasattr(self.options, 'destination'):
             # if destination is in a backend which is already instantiated for a source, re-use it
-            dest_backend, track_id = Backend.instantiate_backend(self.options.destination)
+            result = Backend.instantiate_backend(self.options.destination)
             for source in self.source_tracks:
-                if str(source.backend.account) == str(dest_backend.account):
-                    if track_id:
-                        result = source.backend[track_id]
-                    else:
-                        result = source.backend
-                    logging.debug('reused source for destination')
+                if str(source.backend.account) == str(result[0].account):
+                    result = (source.backend, result[1])
                     break
-            if result is None:
-                result = Backend.instantiate(self.options.destination)
-            if not isinstance(result, Track) and not self.options.copy:
+            if not result[1] and not self.options.copy:
                 logging.debug('')
                 logging.debug('collecting tracks from destination %s', result)
         return result
 
     def destination_must_be_backend(self):
         """If it is not, raise an exception."""
-        if not isinstance(self.destination, Backend):
+        if self.destination_track_id:
             raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
 
     @staticmethod
@@ -426,13 +420,13 @@ class Utility:
         they would disappear for good."""
         self.destination_must_be_backend()
         for _ in self.source_tracks:
-            new_track = self.destination.add(_)
+            new_track = self.destination_backend.add(_)
             try:
                 new_track.id_in_backend = _.id_in_backend
             except NotImplementedError:
                 pass
             _.remove()
-            logging.info('moved %s to %s', _, self.destination)
+            logging.info('moved %s to %s', _, new_track)
 
     def remove(self):
         """remove tracks"""
@@ -451,7 +445,7 @@ class Utility:
     def join(self):
         """Join tracks."""
         self.destination_must_be_backend()
-        new_track = self.destination.add(self.source_tracks[0].clone())
+        new_track = self.destination_backend.add(self.source_tracks[0].clone())
         new_track.gpx.tracks[0].name = new_track.title
         for _ in self.source_tracks[1:]:
             _.gpx.tracks[0].name = _.title
@@ -706,15 +700,16 @@ class Utility:
     def copy(self):
         """Copy"""
         self.destination_must_be_backend()
-        msg = self.destination.merge(
+        msg = self.destination_backend.merge(
             self.source_tracks, dry_run=self.options.dry_run, copy=True)
-        self.destination.flush()
+        self.destination_backend.flush()
         for _ in msg:
             logging.info(_)
 
     def merge(self):
         """Merge"""
-        if any(x is self.destination for x in self.source_tracks):
+        if any(x.backend is self.destination_backend and x.id_in_backend == self.destination_track_id
+               for x in self.source_tracks):
             if not self.options.remove:  # pylint: disable=comparison-with-callable
                 msg = 'CAUTION: merging something with itself does nothing. Did you forget --remove?'
                 if len(self.options.source) == 1:
@@ -722,24 +717,21 @@ class Utility:
                     raise Exception(msg)
                 else:
                     logging.error(msg)
-        if isinstance(self.destination, Backend):
-            msg = self.destination.merge(
+        if not self.destination_track_id:
+            msg = self.destination_backend.merge(
                 self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
                 partial_tracks=self.options.partial_tracks)
         else:
             msg = list()
             for _ in self.source_tracks:
                 try:
-                    msg.extend(self.destination.merge(
+                    msg.extend(self.destination_backend[self.destination_track_id].merge(
                         _, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
                         partial_tracks=self.options.partial_tracks))
                 except Track.CannotMerge as exc:
                     msg.append(str(exc))
         if not self.options.dry_run:
-            if isinstance(self.destination, Backend):
-                self.destination.flush()
-            else:
-                self.destination.backend.flush()
+            self.destination_backend.flush()
         for _ in msg:
             logging.info(_)
 
@@ -754,8 +746,11 @@ class Utility:
                     if _.backend is backend:
                         logging.error('    %s', _)
                 logging.error('')
-
-        differ = BackendDiff(self.source_tracks, self.destination)
+        if self.destination_track_id:
+            right_side = self.destination_backend[self.destination_track_id]
+        else:
+            right_side = self.destination_backend
+        differ = BackendDiff(self.source_tracks, right_side)
         show_exclusive(differ.left)
         show_exclusive(differ.right)
 
