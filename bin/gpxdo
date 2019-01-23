@@ -418,15 +418,34 @@ class Utility:
         We cannot just do merge() followed by remove() because
         the source might have gotten new tracks meanwhile, and
         they would disappear for good."""
-        self.destination_must_be_backend()
+        if self.destination_track_id:
+            self.rename_track()
+        else:
+            self.move_to_another_backend()
+
+    def move_to_another_backend(self):
+        """Move all source tracks to another backend. Try to keep the id_in_backend."""
         for _ in self.source_tracks:
             new_track = self.destination_backend.add(_)
-            try:
+            if 'rename' in self.destination_backend.supported:
                 new_track.id_in_backend = _.id_in_backend
-            except NotImplementedError:
-                pass
             _.remove()
             logging.info('moved %s to %s', _, new_track)
+
+    def rename_track(self):
+        """Rename a track."""
+        if len(self.source_tracks) != 1:
+            self.error('Renaming a track: Only one source track is allowed')
+            return
+        track = self.source_tracks[0]
+        if 'rename' not in self.destination_backend.supported:
+            self.error('Destination backend does not support changing track ids')
+            return
+        if self.source_tracks[0].backend is not self.destination_backend:
+            new_track = self.destination_backend.add(track)
+            new_track.id_in_backend = self.destination_track_id
+        else:
+            track.id_in_backend = self.destination_track_id
 
     def remove(self):
         """remove tracks"""
