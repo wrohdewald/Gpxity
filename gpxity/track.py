@@ -631,9 +631,9 @@ class Track:  # pylint: disable=too-many-public-methods
                         gpx_keywords.append(keyword)
                 else:
                     if what == 'Category':
-                        self.category = self.__decode_category(value)
+                        self.__category = self.__decode_category(value)
                     elif what == 'Status':
-                        self.public = value == 'public'
+                        self.__public = value == 'public'
                     elif what == 'Id':
                         _ = value.split('/')
                         backend_name = '/'.join(_[:-1])
