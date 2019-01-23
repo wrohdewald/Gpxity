@@ -332,51 +332,66 @@ class Utility:
             return
 
         logging.getLogger().setLevel(self.options.loglevel.upper())
-        sources = []
-        self.source_tracks = []
         self.similar_to = None
-        self.destination = None
         try:
             if hasattr(self.options, 'similar') and self.options.similar:
                 self.similar_to = [Backend.instantiate(x) for x in self.options.similar.split(',')]
-
-            if self.options.source:
-                for _ in self.options.source:
-                    if _.endswith('/') and _ != '/':
-                        _ = _[:-1]
-                    sources.append(Backend.instantiate(_))
-
-                tracks = collect_tracks(sources)
-                for track in tracks:
-                    msg = self.match(track)
-                    if msg:
-                        logging.debug('%s: %s', track, msg)
-                    else:
-                        self.source_tracks.append(track)
-
-            if hasattr(self.options, 'destination'):
-                # if destination is in a backend which is already instantiated for a source, re-use it
-                dest_backend, track_id = Backend.instantiate_backend(self.options.destination)
-                for source in self.source_tracks:
-                    if str(source.backend.account) == str(dest_backend.account):
-                        if track_id:
-                            self.destination = source.backend[track_id]
-                        else:
-                            self.destination = source.backend
-                        logging.debug('reused source for destination')
-                        break
-                if self.destination is None:
-                    self.destination = Backend.instantiate(self.options.destination)
-                if self.options.func not in (self.diff, self.merge):
-                    if isinstance(self.destination, Track):
-                        raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
-                if not isinstance(self.destination, Track) and not self.options.copy:
-                    logging.debug('')
-                    logging.debug('collecting tracks from destination %s', self.destination)
-
+            self.source_tracks = self.parse_sources()
+            self.destination = self.parse_destination()
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
             self.error(_)
+
+    def parse_sources(self):
+        """Parse options.source.
+
+        Returns: The list of source tracks.append
+
+        """
+        result = []
+        if self.options.source:
+            sources = []
+            for _ in self.options.source:
+                if _.endswith('/') and _ != '/':
+                    _ = _[:-1]
+                sources.append(Backend.instantiate(_))
+
+            tracks = collect_tracks(sources)
+            for track in tracks:
+                msg = self.match(track)
+                if msg:
+                    logging.debug('%s: %s', track, msg)
+                else:
+                    result.append(track)
+        return result
+
+    def parse_destination(self):
+        """Parse options.destination.
+
+        Returns: Track or Backend
+
+        """
+        result = None
+        if hasattr(self.options, 'destination'):
+            # if destination is in a backend which is already instantiated for a source, re-use it
+            dest_backend, track_id = Backend.instantiate_backend(self.options.destination)
+            for source in self.source_tracks:
+                if str(source.backend.account) == str(dest_backend.account):
+                    if track_id:
+                        result = source.backend[track_id]
+                    else:
+                        result = source.backend
+                    logging.debug('reused source for destination')
+                    break
+            if result is None:
+                result = Backend.instantiate(self.options.destination)
+            if self.options.func not in (self.diff, self.merge):
+                if isinstance(result, Track):
+                    raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
+            if not isinstance(result, Track) and not self.options.copy:
+                logging.debug('')
+                logging.debug('collecting tracks from destination %s', result)
+        return result
 
     @staticmethod
     def list_categories():
