@@ -384,10 +384,32 @@ class Utility:
                 logging.debug('collecting tracks from destination %s', result)
         return result
 
+    def must_have_single_source(self):
+        """If there is not exactly one source track, raise an exception.
+
+        Returns: the track
+
+        """
+        if len(self.source_tracks) != 1:
+            self.error('Only one source track is allowed because destination track id is given')
+            return None
+        return self.source_tracks[0]
+
     def destination_must_be_backend(self):
         """If it is not, raise an exception."""
         if self.destination_track_id:
             raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
+
+    def destination_must_support_rename(self):
+        """True if so.
+
+        Returns: True if it does.
+
+        """
+        result = 'rename' in self.destination_backend.supported
+        if not result:
+            self.error('Destination backend does not support changing track ids')
+        return result
 
     @staticmethod
     def list_categories():
@@ -434,18 +456,13 @@ class Utility:
 
     def rename_track(self):
         """Rename a track."""
-        if len(self.source_tracks) != 1:
-            self.error('Renaming a track: Only one source track is allowed')
-            return
-        track = self.source_tracks[0]
-        if 'rename' not in self.destination_backend.supported:
-            self.error('Destination backend does not support changing track ids')
-            return
-        if self.source_tracks[0].backend is not self.destination_backend:
-            new_track = self.destination_backend.add(track)
-            new_track.id_in_backend = self.destination_track_id
-        else:
-            track.id_in_backend = self.destination_track_id
+        if self.destination_must_support_rename():
+            track = self.must_have_single_source()
+            if track.backend is not self.destination_backend:
+                new_track = self.destination_backend.add(track)
+                new_track.id_in_backend = self.destination_track_id
+            else:
+                track.id_in_backend = self.destination_track_id
 
     def copy(self):
         """Copy"""
