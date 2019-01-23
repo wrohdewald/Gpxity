@@ -386,12 +386,16 @@ class Utility:
             if result is None:
                 result = Backend.instantiate(self.options.destination)
             if self.options.func not in (self.diff, self.merge):
-                if isinstance(result, Track):
-                    raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
+                self.destination_must_be_backend()
             if not isinstance(result, Track) and not self.options.copy:
                 logging.debug('')
                 logging.debug('collecting tracks from destination %s', result)
         return result
+
+    def destination_must_be_backend(self):
+        """If it is not, raise an exception."""
+        if not isinstance(self.destination, Backend):
+            raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
 
     @staticmethod
     def list_categories():
