@@ -878,7 +878,7 @@ For all other backends, the syntax is:
     * account: for all tracks in a backend. Example:  g:
     * account:track_id for one specific track in a backend. Example: g:1234
 
-Available backends are Directory,MapMytracks, GPSIES, Openrunner, Mailer,WPTrackServer
+Available backends are Directory,MapMytracks, GPSIES, Openrunner, Mailer,WPTrackserver
 
 The file $HOME/.config/Gpxity/accounts
 defines the account. Example: ::

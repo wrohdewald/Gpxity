@@ -5,7 +5,7 @@
 # See LICENSE for details.
 
 """
-This implements :class:`gpxity.wptrackserver.WPTrackServer`.
+This implements :class:`gpxity.wptrackserver.WPTrackserver`.
 
 WPTrackserver talks directly to the WP mysql database holding the trackserver data.
 
@@ -46,22 +46,17 @@ class WPTrackserver(Backend):
 
     The section in  auth.cfg could look like::
 
-        [wptrackserver:username]
-        Url = hostname
-        Mysql =user@db_name
-        Password = mysql_password
+        Account wp
+            Backend WPTrackserver
+            Username wordpress_username
+            Url localhost
+            Mysql wordpress_7@wordpress_7
+            Password xxxx
+            Fences 53.7505,10.7445/750
 
-    username is the wordpress user name.
+    Find the values for MySql in the wordpress config file (DB_USER and DB_NAME).
 
-    hostname is the server wordpress is running on
-
-    user is the mysql user. Find it in the wordpress config file,
-    look for DB_USER.
-
-    db_name is the name of the database. Find it in the wordpress config file,
-    look for DB_NAME.
-
-    mysql_password is for the mysql user. Find it in the wordpress config file,
+    Password is for the mysql user. Find it in the wordpress config file,
     look for DB_PASSWORD.
 
     """
@@ -379,4 +374,4 @@ class WPTrackserver(Backend):
             if int(value) <= 0:
                 # max is actually 2147483647 but the column is autoincrement
                 # so just make mysql fail if we exceed that
-                raise ValueError('{} not allowed as id_in_backend for WPTrackServer'.format(value))
+                raise ValueError('{} not allowed as id_in_backend for WPTrackserver'.format(value))

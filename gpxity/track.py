@@ -200,11 +200,12 @@ class Track:  # pylint: disable=too-many-public-methods
         Some backends may change this if the track data changes.
 
         Some backends support assigning a new value. Those are
-        currently Directory and WPTrackServer. The others will
-        raise NotImplementedError.
+        currently :class:`~gpxity.backends.directory.Directory` and
+        :class:`~gpxity.backends.wptrackserver.WPTrackserver`.
+        The others will raise NotImplementedError.
 
         If the value already exists in the backend, it may make it
-        unique (:class:~gpxity.backends.directory.Directory does), or it may raise ValueError.
+        unique (:class:`~gpxity.backends.directory.Directory` does), or it may raise ValueError.
 
         Assigning a value illegal for the specific backend will raise
         ValueError.
@@ -365,8 +366,8 @@ class Track:  # pylint: disable=too-many-public-methods
     def time(self) ->datetime.datetime:
         """datetime.datetime: start time of track.
 
-        For a simpler implementation of backends, notably MMT, we ignore
-        gpx.time. Instead we return the time of the earliest track point.
+        For a simpler implementation of backends, notably :class:`~gpxity.backends.mmt.MMT`
+        we ignore gpx.time. Instead we return the time of the earliest track point.
         Only if there is no track point, return gpx.time. If that is unknown
         too, return None.
 
@@ -485,7 +486,10 @@ class Track:  # pylint: disable=too-many-public-methods
     def batch_changes(self):
         """Context manager: disable the direct update in the backend and saves the entire track when done.
 
-        This may or may not make things faster. Directory and GPSIES profits from this, MMT maybe.
+        This may or may not make things faster.
+        :class:`~gpxity.backends.directory.Directory` and
+        :class:`~gpxity.backends.gpsies.GPSIES` profits from this,
+        :class:`~gpxity.backends.mmt.MMT` maybe.
 
         """
         prev_batch_changes = self._batch_changes
