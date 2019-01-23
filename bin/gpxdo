@@ -385,8 +385,6 @@ class Utility:
                     break
             if result is None:
                 result = Backend.instantiate(self.options.destination)
-            if self.options.func not in (self.diff, self.merge):
-                self.destination_must_be_backend()
             if not isinstance(result, Track) and not self.options.copy:
                 logging.debug('')
                 logging.debug('collecting tracks from destination %s', result)
@@ -426,6 +424,7 @@ class Utility:
         We cannot just do merge() followed by remove() because
         the source might have gotten new tracks meanwhile, and
         they would disappear for good."""
+        self.destination_must_be_backend()
         for _ in self.source_tracks:
             new_track = self.destination.add(_)
             try:
@@ -451,6 +450,7 @@ class Utility:
 
     def join(self):
         """Join tracks."""
+        self.destination_must_be_backend()
         new_track = self.destination.add(self.source_tracks[0].clone())
         new_track.gpx.tracks[0].name = new_track.title
         for _ in self.source_tracks[1:]:
@@ -705,6 +705,7 @@ class Utility:
 
     def copy(self):
         """Copy"""
+        self.destination_must_be_backend()
         msg = self.destination.merge(
             self.source_tracks, dry_run=self.options.dry_run, copy=True)
         self.destination.flush()
