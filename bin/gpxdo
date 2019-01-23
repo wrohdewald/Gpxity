@@ -447,6 +447,15 @@ class Utility:
         else:
             track.id_in_backend = self.destination_track_id
 
+    def copy(self):
+        """Copy"""
+        self.destination_must_be_backend()
+        msg = self.destination_backend.merge(
+            self.source_tracks, dry_run=self.options.dry_run, copy=True)
+        self.destination_backend.flush()
+        for _ in msg:
+            logging.info(_)
+
     def remove(self):
         """remove tracks"""
         for _ in self.source_tracks:
@@ -715,15 +724,6 @@ class Utility:
     def set_private(self):
         """Sets the status."""
         self.set_public(False)
-
-    def copy(self):
-        """Copy"""
-        self.destination_must_be_backend()
-        msg = self.destination_backend.merge(
-            self.source_tracks, dry_run=self.options.dry_run, copy=True)
-        self.destination_backend.flush()
-        for _ in msg:
-            logging.info(_)
 
     def merge(self):
         """Merge"""
