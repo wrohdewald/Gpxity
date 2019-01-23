@@ -466,7 +466,25 @@ class Utility:
 
     def copy(self):
         """Copy"""
-        self.destination_must_be_backend()
+        if self.destination_track_id:
+            self.copy_track()
+        else:
+            self.copy_to_another_backend()
+
+    def copy_track(self):
+        """Copy a track, using a given target track id."""
+        if self.destination_must_support_rename():
+            track = self.must_have_single_source()
+            if self.options.dry_run:
+                logging.info(
+                    'copy %s to %s',
+                    track, Track.identifier(self.destination_backend, self.destination_track_id))
+            else:
+                new_track = self.destination_backend.add(track)
+                new_track.id_in_backend = self.destination_track_id
+
+    def copy_to_another_backend(self):
+        """Copy all sources to another backend."""
         msg = self.destination_backend.merge(
             self.source_tracks, dry_run=self.options.dry_run, copy=True)
         self.destination_backend.flush()
