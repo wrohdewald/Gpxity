@@ -366,13 +366,11 @@ class MMT(Backend):
         if headers is None:
             headers = dict()
         headers['User-Agent'] = 'Gpxity'
-        self.logger.debug('MMT.__get: url=%s', url)
+        self.logger.debug('MMT.__get:%s url=%s', 'with session' if with_session else '', url)
         if with_session:
             response = self.session.get(url, headers=headers, timeout=self.timeout)
-            self.logger.debug('MMT.__get with_session')
         else:
             response = requests.get(url, headers=headers, timeout=self.timeout)
-            self.logger.debug('MMT.__get without session')
         return response
 
     def __post(  # noqa
