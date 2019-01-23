@@ -339,14 +339,12 @@ class Utility:
         try:
             if hasattr(self.options, 'similar') and self.options.similar:
                 self.similar_to = [Backend.instantiate(x) for x in self.options.similar.split(',')]
+
             if self.options.source:
                 for _ in self.options.source:
                     if _.endswith('/') and _ != '/':
                         _ = _[:-1]
                     sources.append(Backend.instantiate(_))
-                    # optimize the case where destination is also source
-                    if hasattr(self.options, 'destination') and _ == self.options.destination:
-                        self.destination = sources[-1]
 
                 tracks = collect_tracks(sources)
                 for track in tracks:
@@ -355,8 +353,20 @@ class Utility:
                         logging.debug('%s: %s', track, msg)
                     else:
                         self.source_tracks.append(track)
-            if hasattr(self.options, 'destination') and self.destination is None:
-                self.destination = Backend.instantiate(self.options.destination)
+
+            if hasattr(self.options, 'destination'):
+                # if destination is in a backend which is already instantiated for a source, re-use it
+                dest_backend, track_id = Backend.instantiate_backend(self.options.destination)
+                for source in self.source_tracks:
+                    if str(source.backend.account) == str(dest_backend.account):
+                        if track_id:
+                            self.destination = source.backend[track_id]
+                        else:
+                            self.destination = source.backend
+                        logging.debug('reused source for destination')
+                        break
+                if self.destination is None:
+                    self.destination = Backend.instantiate(self.options.destination)
                 if self.options.func not in (self.diff, self.merge):
                     if isinstance(self.destination, Track):
                         raise Exception('Destination must not be a single track:{}'.format(self.options.destination))
