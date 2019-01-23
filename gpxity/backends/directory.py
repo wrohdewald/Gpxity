@@ -388,7 +388,7 @@ class Directory(Backend):
             os.utime(_, (time.timestamp(), time.timestamp()))
 
     def _change_ident(self, track, new_ident: str):
-        """Change the id in the backend."""
+        """Change the id in the backend. Make it unique if needed."""
         assert track.id_in_backend != new_ident
         unique_id = self._new_id_from(new_ident)
         self._remove_symlinks(track.id_in_backend)

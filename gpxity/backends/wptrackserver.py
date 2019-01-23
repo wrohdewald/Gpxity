@@ -281,7 +281,7 @@ class WPTrackserver(Backend):
         """Change the id in the backend."""
         assert track.id_in_backend != new_ident
         if new_ident in self:
-            raise self.BackendException(
+            raise ValueError(
                 'New id_in_backend {} already exists in {}'.format(
                     new_ident, self.account))
         try:

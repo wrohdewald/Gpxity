@@ -354,7 +354,11 @@ class Backend(BackendBase):
         return datetime.datetime.now()
 
     def _change_ident(self, track, new_ident: str):
-        """Change the id in the backend."""
+        """Change the id in the backend.
+
+        If new_ident already exists, the backend is free to
+        change it to a unique name or to raise an Exception.
+        """
         raise NotImplementedError
 
     def scan(self, now: bool = False) ->None:

@@ -203,6 +203,9 @@ class Track:  # pylint: disable=too-many-public-methods
         currently Directory and WPTrackServer. The others will
         raise NotImplementedError.
 
+        If the value already exists in the backend, it may make it
+        unique (:class:~gpxity.backends.directory.Directory does), or it may raise ValueError.
+
         Assigning a value illegal for the specific backend will raise
         ValueError.
 
