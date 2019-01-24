@@ -395,6 +395,8 @@ class TrackTests(BasicTest):
             self.assertNotIn(' points', repr(clone[0]))
             self.assertEqual(clone[0].gpx.get_track_points_no(), 15)
             self.assertIn(' 15 points', repr(clone[0]))
+            self.assertEqual(track.category, 'Running')
+            self.assertEqual(clone[0].category, 'Running')
 
     def test_angle(self):
         """test Track.angle."""

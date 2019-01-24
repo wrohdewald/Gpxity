@@ -193,35 +193,53 @@ class TestBackends(BasicTest):
         """If we change title, description, public, category in track, is the backend updated?."""
         for cls in Backend.all_backend_classes(needs={'remove', }):
             with self.tst_backend(cls):
-                test_category = cls.decode_category(cls.supported_categories[5])
-                with self.temp_backend(cls, count=1, category=test_category) as backend:
+                with self.temp_backend(cls, count=1) as backend:
                     track = backend[0]
-                    first_public = track.public
                     first_title = track.title
                     first_description = track.description
-                    first_category = track.category
-                    self.assertEqual(first_category, test_category)
-                    if cls is Openrunner:
-                        # the test account does not allow private tracks
-                        self.assertTrue(track.public)
-                    else:
-                        self.assertFalse(track.public)
-                    track.public = True
-                    self.assertTrue(track.public)
                     track.title = 'A new title'
                     self.assertEqual(track.title, 'A new title')
                     track.description = 'A new description'
-                    track.category = cls.decode_category(cls.supported_categories[6])
                     # make sure there is no cache in the way
                     backend2 = backend.clone()
                     track2 = backend2[0]
-                    self.assertEqualTracks(track, track2, with_category=False)
-                    if cls is not Openrunner:
-                        # see above
-                        self.assertNotEqual(first_public, track2.public)
+                    self.assertEqualTracks(track, track2)
                     self.assertNotEqual(first_title, track2.title)
                     self.assertNotEqual(first_description, track2.description)
-                    self.assertNotEqual(first_category, track2.category)
+
+    def test_write_category(self):
+        """If we change category in track, is the backend updated?."""
+        for cls in Backend.all_backend_classes(needs={'remove', }):
+            with self.tst_backend(cls):
+                test_category = cls.decode_category(cls.supported_categories[10])
+                test_category2 = cls.decode_category(cls.supported_categories[15])
+                with self.temp_backend(cls, count=1, category=test_category) as backend:
+                    track = backend[0]
+                    self.assertEqual(track.category, test_category)
+                    track.category = test_category2
+                    # make sure there is no cache in the way
+                    backend2 = backend.clone()
+                    track2 = backend2[0]
+                    self.assertEqualTracks(track, track2, 'category should be {}'.format(test_category2))
+                    self.assertEqual(track2.category, test_category2, 'category should be {}'.format(test_category2))
+
+    def test_write_public(self):
+        """If we change public in track, is the backend updated?."""
+        for cls in Backend.all_backend_classes(needs={'remove', }):
+            if cls is Openrunner:
+                continue
+            with self.tst_backend(cls):
+                test_public = True
+                test_public2 = False
+                with self.temp_backend(cls, count=1, public=test_public) as backend:
+                    track = backend[0]
+                    self.assertEqual(track.public, test_public)
+                    track.public = test_public2
+                    # make sure there is no cache in the way
+                    backend2 = backend.clone()
+                    track2 = backend2[0]
+                    self.assertEqualTracks(track, track2)
+                    self.assertEqual(track2.public, test_public2)
 
     def xtest_gpsies_bug(self):
         """We have this bug only sometimes: title, category or time will be wrong in track2.
