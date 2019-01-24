@@ -122,7 +122,7 @@ class TestBackends(BasicTest):
                         self.assertBackendLength(backend, 2)
 
     def test_open_wrong_username(self):
-        """Open backends with username missing in auth.cfg."""
+        """Open backends with username missing in Account."""
         for cls in Backend.all_backend_classes(exclude=[Directory, Mailer, TrackMMT]):
             with self.tst_backend(cls):
                 with self.assertRaises(cls.BackendException):

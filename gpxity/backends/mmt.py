@@ -192,8 +192,9 @@ class MMT(Backend):
     :attr:`Track.keywords <gpxity.track.Track.keywords>` for how Gpxity handles this.
 
     Args:
-        url (str): The Url of the server. Default is http://mapmytracks.com
-        auth (tuple(str, str)): Username and password
+        account (:class:`~gpxity.accounts.Account`): The account to be used.
+            Alternatively a dict can be passed to build an ad hoc :class:`~gpxity.accounts.Account`
+            instance.
 
     """
 
@@ -262,7 +263,7 @@ class MMT(Backend):
     def __init__(self, account):
         """See class docstring."""
         super(MMT, self).__init__(account)
-        self.__mid = -1  # member id at MMT for auth
+        self.__mid = -1  # member id at MMT for authentication
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
         # has a lookup table and never deletes there. So a given tag will always get
         # the same ID. We use this fact.
@@ -309,7 +310,7 @@ class MMT(Backend):
 
     @property
     def mid(self):
-        """the member id on MMT belonging to auth.
+        """the member id on MMT belonging to Account.
 
         Returns:
             The mid

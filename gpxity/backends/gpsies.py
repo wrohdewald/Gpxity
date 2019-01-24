@@ -168,8 +168,9 @@ class GPSIES(Backend):
     they will silently be ignored.
 
     Args:
-        url (str): The Url of the server. Default is https://gpsies.com
-        auth (tuple(str, str)): Username and password
+        account (:class:`~gpxity.accounts.Account`): The account to be used.
+            Alternatively a dict can be passed to build an ad hoc :class:`~gpxity.accounts.Account`
+            instance.
 
     """
 

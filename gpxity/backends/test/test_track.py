@@ -741,7 +741,7 @@ class TrackTests(BasicTest):
     def test_fences(self):
         """Test fences."""
 
-        # TODO: check auth.cfg parsing
+        # TODO: check accounts parsing
 
         for illegal in (
                 '', 'a/b', '5.4.3/3.0/10', '5.4.3/3/10', '5/6/7/8'

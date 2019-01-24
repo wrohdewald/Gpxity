@@ -50,8 +50,7 @@ class Fences:  # pylint: disable=too-few-public-methods
     Defines circles.
 
     Args:
-        config_str: The string from auth.cfg
-
+        config_str: The string from the accounts file
     Attributes:
         center (GPXTrackPoint): The center
         radius (meter): The radius in meters

@@ -133,7 +133,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         self.return_error(401, 'Authorization failed')
 
     def load_users(self):
-        """load legal user auth from serverdirectory/.users."""
+        """load user authentication data from serverdirectory/.users."""
         self.users = dict()
         users_filename = os.path.join(self.server.targets[0].account.url, '.users')
         if not os.path.exists(users_filename):

@@ -73,7 +73,7 @@ class Backend(BackendBase):
             Directory(url='/').
         fences: The fences as found in account. You can programmatically change them but they will
             never be applied to already existing data.
-        account: A Section with all entries in auth.cfg for this backend
+        account: A Section with all entries from account for this backend
         account.fences: The backend will never write points within fences.
             You can define any number of fences separated by spaces. Every fence is a circle.
             It has the form Lat/Long/meter.

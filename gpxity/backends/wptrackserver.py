@@ -44,7 +44,7 @@ class WPTrackserver(Backend):
 
     See https://www.grendelman.net/wp/trackserver-wordpress-plugin/
 
-    The section in  auth.cfg could look like::
+    The section in the acounts file could look like::
 
         Account wp
             Backend WPTrackserver
