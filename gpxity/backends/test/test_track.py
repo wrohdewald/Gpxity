@@ -673,7 +673,19 @@ class TrackTests(BasicTest):
         expected = [x.__name__ for x in expected if not x.is_disabled()]
         self.assertEqual(all_classes, expected)
 
-    def test_parse_objectname(self):
+    def parse_objectnames(self, cases):
+        """Helper for test_parse_objectname."""
+        for string, expect_account_str, expect_backend, expect_ident in cases:
+            account, track_id = BackendBase.parse_objectname(string)
+            self.assertEqual(
+                str(account), expect_account_str, 'str(account) wrong in test case:{}'.format(string))
+            self.assertEqual(
+                account.backend, expect_backend, 'backend wrong in test case:{}'.format(string))
+            self.assertEqual(
+                track_id, expect_ident, 'track_id wrong in test case:{}'.format(string))
+
+    @skipIf(*disabled(Directory))
+    def test_parse_objectname_directory(self):
         """Test Backend.parse_objectname for directory."""
         save = os.getenv('HOME'), os.getcwd()
         try:
@@ -691,11 +703,9 @@ class TrackTests(BasicTest):
                 ('subdir/sub2/sub3/xy', 'subdir/sub2/sub3/', 'Directory', 'xy'),
                 ('~/sub2', os.path.join(abs_prefix, 'subdir/sub2/'), 'Directory', None),
                 ('~/sub2/sub3/xy', os.path.join(abs_prefix, 'subdir/sub2/sub3/'), 'Directory', 'xy'),
-                ('wptrackserver_unittest:', 'wptrackserver_unittest:', 'WPTrackserver', None),
-                ('wptrackserver_unittest:24', 'wptrackserver_unittest:', 'WPTrackserver', '24'),
+                ('missing_dir/24', 'missing_dir/', 'Directory', '24'),
                 ('wptrackserver_unittest', 'wptrackserver_unittest/', 'Directory', None),
                 ('wptrackserver_unittest/24', 'wptrackserver_unittest/', 'Directory', '24'),
-                ('missing_dir/24', 'missing_dir/', 'Directory', '24'),
                 (os.path.join(test_home, 'sub2/sub3/xy'), os.path.join(test_home, 'sub2/sub3/'), 'Directory', 'xy'),
             )
 
@@ -707,14 +717,7 @@ class TrackTests(BasicTest):
             try:
                 for _ in subdirs:
                     os.mkdir(_)
-                for string, expect_account_str, expect_backend, expect_ident in cases:
-                    account, track_id = BackendBase.parse_objectname(string)
-                    self.assertEqual(
-                        str(account), expect_account_str, 'str(account) wrong in test case:{}'.format(string))
-                    self.assertEqual(
-                        account.backend, expect_backend, 'backend wrong in test case:{}'.format(string))
-                    self.assertEqual(
-                        track_id, expect_ident, 'track_id wrong in test case:{}'.format(string))
+                self.parse_objectnames(cases)
             finally:
                 for _ in reversed(subdirs):
                     remove_directory(_)
@@ -722,14 +725,18 @@ class TrackTests(BasicTest):
             os.environ['HOME'] = save[0]
             os.chdir(save[1])
 
-    @skipIf(*disabled(MMT))
-    def test_parse_objectname_mmt(self):
-        """Test Backend.parse_objectname for MMT."""
-        cases = (('mmt:testlogin', 'MMT', 'testlogin', None),
-                 ('mmt:testlogin/345', 'MMT', 'testlogin', '345'))
-        for string, *expect in cases:
-            cls, account, ident = Backend.parse_objectname(string)
-            self.assertEqual([cls.__name__, account, ident], expect, 'teststring:{}'.format(string))
+    def test_parse_objectname_other(self):
+        """Test Backend.parse_objectname for other than Directory."""
+        for cls in Backend.all_backend_classes():
+            if cls is Directory:
+                continue
+            acc_name = cls.__name__.lower() + '_unittest'
+            cases = (
+                (acc_name + ':', acc_name + ':', cls.__name__, None),
+                (acc_name +':24', acc_name + ':', cls.__name__, '24'),
+            )
+            self.parse_objectnames(cases)
+            break
 
     def test_fences(self):
         """Test fences."""
