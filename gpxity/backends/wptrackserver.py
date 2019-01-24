@@ -65,8 +65,6 @@ class WPTrackserver(Backend):
 
     test_is_expensive = False
 
-    needs_config = False
-
     _keywords_marker = '\nKEYWORDS: '
 
     _max_length = {'title': 255, 'description': 255}

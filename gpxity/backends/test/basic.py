@@ -412,7 +412,7 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
                      cleanup=True, clear_first=None, category=None,
-                     public: bool = None, test_name=None):
+                     public: bool = False, test_name=None):
         """Just like setup_backend but usable as a context manager. which will call detach() when done."""
         tmp_backend = self.setup_backend(cls_, test_name, url, count, clear_first, category, public)
         try:

@@ -73,7 +73,6 @@ class Backend(BackendBase):
             Directory(url='/').
         fences: The fences as found in account. You can programmatically change them but they will
             never be applied to already existing data.
-        needs_config: If True, the Backend class expects data in auth.cfg
         account: A Section with all entries in auth.cfg for this backend
         account.fences: The backend will never write points within fences.
             You can define any number of fences separated by spaces. Every fence is a circle.
@@ -98,8 +97,6 @@ class Backend(BackendBase):
     supported = set()
 
     default_url = None  # Override in the backends
-
-    needs_config = True
 
     test_is_expensive = True
 

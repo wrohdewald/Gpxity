@@ -115,8 +115,6 @@ class Directory(Backend):
 
     test_is_expensive = False
 
-    needs_config = False
-
     def __init__(self, account):
         """See class docstring."""
         if account.name == '/':

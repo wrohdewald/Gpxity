@@ -786,6 +786,8 @@ class Track:  # pylint: disable=too-many-public-methods
     @public.setter
     def public(self, value):
         """Store this flag as keyword 'public'."""
+        if value not in (True, False):
+            raise ValueError('public must be True or False, I got {}'.format(value))
         if value != self.__public:
             self._load_full()
             self.__public = value
