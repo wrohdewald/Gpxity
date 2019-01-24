@@ -110,6 +110,8 @@ class WPTrackserver(Backend):
     def _user_id(self):
         """Cached user_id from mysql."""
         if self.__cached_user_id is None:
+            if not self.account.username:
+                raise self.BackendException('{} needs a username'.format(self.account))
             cursor = self.__exec_mysql('select id from wp_users where user_login=%s', [self.account.username])
             row = cursor.fetchone()
             if row is None:
