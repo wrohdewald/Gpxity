@@ -209,7 +209,6 @@ class GPSIES(Backend):
     }
 
     _category_encoding = {
-        'Cross country skiing': 'skiingNordic',
         'Cycling - Foot': 'biking',
         'Cycling - Gravel': 'biking',
         'Cycling - Hand': 'handcycle',
@@ -223,7 +222,6 @@ class GPSIES(Backend):
         'Hiking': 'trekking',
         'Horse riding': 'riding',
         'Hot air ballooning': 'flying',
-        'Indoor cycling': 'Cycling - Indoor',
         'Jet skiing': 'motorboat',
         'Kayaking': 'boating',
         'Kiteboarding': 'sailing',
@@ -240,6 +238,7 @@ class GPSIES(Backend):
         'River navigation': 'miscellaneous',
         'Rowing': 'boating',
         'Running': 'jogging',
+        'Running - Road': 'jogging',
         'Running - Urban Trail': 'jogging',
         'Sea kayaking': 'boating',
         'Skateboarding': 'skating',
@@ -247,6 +246,7 @@ class GPSIES(Backend):
         'Skiing': 'wintersports',
         'Skiing - Alpine': 'skiingAlpine',
         'Skiing - Backcountry': 'skiingRandonnee',
+        'Skiing - Crosscountry': 'skiingRandonnee',
         'Skiing - Roller': 'miscellaneous',
         'Skiing - Touring': 'skiingRandonnee',
         'Snowboarding': 'wintersports',

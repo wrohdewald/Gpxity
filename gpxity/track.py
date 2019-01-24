@@ -141,10 +141,11 @@ class Track:  # pylint: disable=too-many-public-methods
     categories = (
         'Cycling', 'Cycling - Road', 'Cycling - Gravel', 'Cycling - MTB', 'Cycling - Indoor', 'Cycling - Hand',
         'Cycling - Touring', 'Cycling - Foot',
-        'Running', 'Running - Trail', 'Running - Urban Trail',
+        'Running', 'Running - Trail', 'Running - Urban Trail', 'Running - Road',
         'Sailing', 'Walking', 'Hiking', 'Hiking - Speed',
         'Swimming', 'Driving', 'Off road driving', 'Motor racing', 'Motorcycling', 'Enduro',
-        'Skiing', 'Skiing - Touring', 'Skiing - Backcountry', 'Skiing - Nordic', 'Skiing - Alpine', 'Skiing - Roller',
+        'Skiing', 'Skiing - Touring', 'Skiing - Backcountry', 'Skiing - Crosscountry', 'Skiing - Nordic',
+        'Skiing - Alpine', 'Skiing - Roller',
         'Canoeing', 'Kayaking', 'Sea kayaking', 'Stand up paddle boarding',
         'Rowing', 'Windsurfing', 'Kiteboarding', 'Orienteering', 'Mountaineering', 'Skating',
         'Skateboarding', 'Horse riding', 'Hang gliding', 'Gliding', 'Flying', 'Snowboarding',
@@ -154,6 +155,7 @@ class Track:  # pylint: disable=too-many-public-methods
         'Pack animal trekking', 'Train', 'Wheelchair', 'Sightseeing', 'Geocaching', 'Longboard',
         'River navigation',
         'Skating - Inline',
+        'Wintersports',
         'Miscellaneous')
 
     def __init__(self, gpx=None):

@@ -729,6 +729,12 @@ class TestBackends(BasicTest):
         """
         for cls in Backend.all_backend_classes(needs={'own_categories'}):
             with self.tst_backend(cls):
+                for key, value in cls._category_decoding.items():
+                    self.assertIn(key, cls.supported_categories)
+                    self.assertIn(value, Track.categories)
+                for key, value in cls._category_encoding.items():
+                    self.assertIn(key, Track.categories)
+                    self.assertIn(value, cls.supported_categories)
                 for category in cls.supported_categories:
                     internal = cls.decode_category(category)
                     back = cls.encode_category(internal)
