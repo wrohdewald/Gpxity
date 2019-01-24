@@ -13,6 +13,49 @@ import re
 import logging
 import copy
 
+from gpxpy.geo import Location
+
+__all__ = ['Account']
+
+class Fences:  # pylint: disable=too-few-public-methods
+
+    """
+    Defines circles.
+
+    Args:
+        config_str: The string from the accounts file
+    Attributes:
+        center (GPXTrackPoint): The center
+        radius (meter): The radius in meters
+
+    """
+
+    def __init__(self, config_str: str):
+        """init."""
+        self.circles = list()
+        if config_str is not None:
+            for fence in config_str.split(' '):
+                parts = fence.split('/')
+                if len(parts) != 3:
+                    raise ValueError('fence needs 3 parts: {}'.format(fence))
+                try:
+                    parts = [x.strip() for x in parts]
+                    center = Location(float(parts[0]), float(parts[1]))
+                    radius = float(parts[2])
+                except Exception:
+                    raise ValueError('Fence definition is wrong: {}'.format(fence))
+                circle = (center, radius)
+                self.circles.append(circle)
+
+    def outside(self, point) ->bool:
+        """Determine if point is outside of all fences.
+
+        Returns: True or False.
+
+        """
+        return all(point.distance_2d(x[0]) > x[1] for x in self.circles)
+
+
 
 class Accounts:
 
@@ -138,11 +181,18 @@ class Account:
         name: The name of the account. Must exist in the accounts file.
         filename: Name of the accounts file. Default is Account.path
 
+        Alternatively, if both name and file are None, **kwargs is used as
+        source instead of the entry in the accounts file.
+
     Attributes:
         path: Default value for the accounts file
         name: The name of the account
         config: A dict with all config values
         backend: The name of the backend class
+        fences: The backend will never write points within fences.
+            You can define any number of fences separated by spaces. Every fence is a circle.
+            It has the form Lat/Long/meter.
+            Lat and Long are the center position in decimal degrees, meter is the radius.
 
     """
 
@@ -157,6 +207,7 @@ class Account:
             self.name = self.url or '.'
             if not self.backend:
                 self.config['backend'] = 'Directory'
+            self._resolve_fences()
             return
         self.name = name
         path = os.path.expanduser(filename or Account.path)
@@ -171,7 +222,17 @@ class Account:
             self.name = self.name[len('directory:'):]
         if self.name == '':
             self.name = '.'
+        self._resolve_fences()
     #    logging.error('%s: Using account data from %s kwargs=%s', self.name, accounts.filename, kwargs)
+
+    def _resolve_fences(self):
+        """create self.fences as a Fences instance."""
+        if 'fences' in self.config:
+            _ = Fences(self.config['fences'])
+            del self.config['fences']
+            self.fences = _
+        else:
+            self.fences = Fences(None)
 
     def __getattr__(self, key):
         """Only called if key is not an existing attribute.

@@ -25,7 +25,7 @@ from unittest import skipIf
 from gpxpy import gpx as mod_gpx
 
 from .basic import BasicTest, disabled
-from ... import Track, Backend, Fences, Account
+from ... import Track, Backend, Account
 from ...backend_base import BackendBase
 from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from .. import Openrunner
@@ -746,19 +746,26 @@ class TrackTests(BasicTest):
         for illegal in (
                 '', 'a/b', '5.4.3/3.0/10', '5.4.3/3/10', '5/6/7/8'
         ):
-            with self.assertRaises(Exception, msg='fence "{}" is illegal'.format(illegal)):
-                Fences(illegal)
+            with self.assertRaises(ValueError, msg='fence "{}" is illegal'.format(illegal)):
+                account = Account(fences=illegal)
+
         points = set(self._random_points())
-        fences = Fences(" ".join("{}/{}/{}".format(
-            x.latitude, x.longitude, 500) for x in random.sample(points, 3)))
-        inside = {x for x in points if not fences.outside(x)}
-        outside = {x for x in points if fences.outside(x)}
-        self.assertEqual(inside | outside, points)
-        self.assertEqual(len(inside & outside), 0)
-        for point in inside:
-            self.assertFalse(fences.outside(point))
-        for point in outside:
-            self.assertTrue(fences.outside(point))
+        with self.temp_backend(Directory) as directory:
+            accounts = (
+                directory.account,
+                Account(fences=None),  # Directory
+                Account(fences=' '.join("{}/{}/{}".format(x.latitude, x.longitude, 500) for x in random.sample(points, 3))),
+                )
+            for account in accounts:
+                fences = account.fences
+                inside = {x for x in points if not fences.outside(x)}
+                outside = {x for x in points if fences.outside(x)}
+                self.assertEqual(inside | outside, points)
+                self.assertEqual(len(inside & outside), 0)
+                for point in inside:
+                    self.assertFalse(fences.outside(point))
+                for point in outside:
+                    self.assertTrue(fences.outside(point))
 
     def test_openrunner_point_encoding(self):
         """Test Openrunner encoding/decoding of points."""

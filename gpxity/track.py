@@ -41,46 +41,7 @@ GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 Location.__hash__ = lambda x: int(x.latitude * 1000) + int(x.longitude * 1000) + int(x.elevation * 10)  # noqa
 
 
-__all__ = ['Track', 'Fences']
-
-
-class Fences:  # pylint: disable=too-few-public-methods
-
-    """
-    Defines circles.
-
-    Args:
-        config_str: The string from the accounts file
-    Attributes:
-        center (GPXTrackPoint): The center
-        radius (meter): The radius in meters
-
-    """
-
-    def __init__(self, config_str: str):
-        """init."""
-        self.circles = list()
-        if config_str is not None:
-            for fence in config_str.split(' '):
-                parts = fence.split('/')
-                if len(parts) != 3:
-                    raise Exception('fence needs 3 parts')
-                try:
-                    parts = [x.strip() for x in parts]
-                    center = Location(float(parts[0]), float(parts[1]))
-                    radius = float(parts[2])
-                except Exception:
-                    raise Exception('Fence definition is wrong: {}'.format(fence))
-                circle = (center, radius)
-                self.circles.append(circle)
-
-    def outside(self, point) ->bool:
-        """Determine if point is outside of all fences.
-
-        Returns: True or False.
-
-        """
-        return all(point.distance_2d(x[0]) > x[1] for x in self.circles)
+__all__ = ['Track']
 
 
 @total_ordering
@@ -431,16 +392,23 @@ class Track:  # pylint: disable=too-many-public-methods
 
     @contextmanager
     def fenced(self, fences):
-        """Suppress points in fences."""
+        """Suppress points in fences.
+
+        While this context manager is running, suppressed points are
+        not visible.
+        """
+        if not fences:
+            yield
+            return
+
         if self.__without_fences is not None:
             raise Exception('fenced() is already active')
         self.__without_fences = self.__gpx
         try:
-            if fences:
-                for track in self.__gpx.tracks:
-                    for segment in track.segments:
-                        segment.points = [x for x in segment.points if fences.outside(x)]
-                self.__gpx.waypoints = [x for x in self.gpx.waypoints if fences.outside(x)]
+            for track in self.__gpx.tracks:
+                for segment in track.segments:
+                    segment.points = [x for x in segment.points if fences.outside(x)]
+            self.__gpx.waypoints = [x for x in self.gpx.waypoints if fences.outside(x)]
             self._uncache_gpx()
             yield
         finally:

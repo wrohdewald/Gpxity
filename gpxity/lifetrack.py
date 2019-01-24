@@ -73,7 +73,7 @@ class LifetrackTarget:
             The prepared points
 
         """
-        result = [x for x in points if self.backend.fences.outside(x)]
+        result = [x for x in points if self.backend.account.fences.outside(x)]
         if len(result) < len(points):
             self.backend.logger.debug("Fences removed %d out of %d points", len(points) - len(result), len(points))
         self.track._round_points(result)

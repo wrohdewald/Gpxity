@@ -15,7 +15,7 @@ import logging
 from copy import deepcopy
 
 from .accounts import Account
-from .track import Track, Fences
+from .track import Track
 from .util import collect_tracks
 
 from .backend_base import BackendBase
@@ -71,13 +71,6 @@ class Backend(BackendBase):
         url (str): the address. May be a real URL or a directory, depending on the backend implementation.
             Every implementation may define its own default for url. Must never end with '/' except for
             Directory(url='/').
-        fences: The fences as found in account. You can programmatically change them but they will
-            never be applied to already existing data.
-        account: A Section with all entries from account for this backend
-        account.fences: The backend will never write points within fences.
-            You can define any number of fences separated by spaces. Every fence is a circle.
-            It has the form Lat/Long/meter.
-            Lat and Long are the center position in decimal degrees, meter is the radius.
         test_is_expensive: For internal use. If True, the self tests will reduce test cases and try to
             avoid too much usage of the backend.
         max_field_sizes: Some backends have a limited size for some attributes like keywords. This
@@ -141,7 +134,6 @@ class Backend(BackendBase):
         self._tracks_fully_listed = False
         self.__match = None
         self.logger = logging.getLogger(str(self))
-        self.fences = Fences(self.account.fences)
         self._cached_subscription = None  # to be used by specific Backend classes
 
     @property
@@ -500,7 +492,7 @@ class Backend(BackendBase):
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         self.matches(track, 'add')
         if track.backend is not self and track.backend is not None:
-            with track.fenced(self.fences):
+            with track.fenced(self.account.fences):
                 new_track = track.clone()
         else:
             if any(x is track for x in self.__tracks):
@@ -552,7 +544,7 @@ class Backend(BackendBase):
 
         self.matches(track, '_rewrite')
         if needs_full_save:
-            with track.fenced(self.fences):
+            with track.fenced(self.account.fences):
                 new_id = self._write_all(track)
             track.id_in_backend = new_id
         else:
