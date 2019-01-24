@@ -119,7 +119,7 @@ class BasicTest(unittest.TestCase):
 
     @classmethod
     def create_test_track(
-            cls, count: int = 1, idx: int = 0, category: str = None, public: bool = False,
+            cls, backend_class=None, count: int = 1, idx: int = 0, category: str = None, public: bool = False,
             start_time=None, end_time=None):
         """create a :class:`~gpxity.track.Track`.
 
@@ -130,12 +130,13 @@ class BasicTest(unittest.TestCase):
         in degrees of :literal:`360 * idx / count`.
 
         Args:
+            backend_class: If given, use it as source for a random category
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
             category: The wanted value for the track.
                 Default: if count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
-                the default value will be categories[idx].
-                Otherwise a random value will be applied.
+                the default value will be cls_.supported_categories[idx].
+                Otherwise a random value from cls_.supported_categories will be applied.
             public: should the tracks be public or private?
             start_time: If given, assign it to the first point and adjust all following times
             end_time: explicit time for the last point. If None: See above.
@@ -144,6 +145,7 @@ class BasicTest(unittest.TestCase):
             (~gpxity.track.Track): A new track not bound to a backend
 
         """
+        # pylint: disable=too-many-locals
         result = cls._get_track_from_test_file('test')
         if start_time is not None:
             result.adjust_time(start_time - result.time)
@@ -165,12 +167,17 @@ class BasicTest(unittest.TestCase):
 
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(result.title)
+        if backend_class is None:
+            cat_source = Track.categories
+        else:
+            cat_source = backend_class.supported_categories
+            cat_source = [backend_class.decode_category(x) for x in cat_source]
         if category:
             result.category = category
         elif count == len(Track.categories):
-            result.category = Track.categories[idx]
+            result.category = cat_source[idx]
         else:
-            result.category = random.choice(Track.categories)
+            result.category = random.choice(cat_source)
         result.public = public
         return result
 
@@ -342,7 +349,7 @@ class BasicTest(unittest.TestCase):
         if count:
             # if count == 0, skip this. Needed for write-only backends like Mailer.
             while count > len(result):
-                track = self.create_test_track(count, len(result), category=category, public=public)
+                track = self.create_test_track(cls_, count, len(result), category=category, public=public)
                 result.add(track)
             self.assertGreaterEqual(len(result), count)
             if clear_first:

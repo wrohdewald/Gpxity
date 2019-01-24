@@ -106,7 +106,7 @@ class TestBackends(BasicTest):
         for cls in Backend.all_backend_classes(needs={'remove', 'write'}):
             with self.tst_backend(cls):
                 with self.temp_backend(cls) as backend:
-                    track = self.create_test_track()
+                    track = self.create_test_track(cls)
                     backend.add(track)
                     self.assertBackendLength(backend, 1)
                     with self.assertRaises(ValueError):
@@ -557,7 +557,7 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(MMT))
     def test_mmt_empty(self):
         """MMT refuses upload without a specific error message if there is no track point."""
-        track = self.create_test_track()
+        track = self.create_test_track(MMT)
         del track.gpx.tracks[0]
         with MMT(Account()) as mmt:
             with self.assertRaises(mmt.BackendException):
