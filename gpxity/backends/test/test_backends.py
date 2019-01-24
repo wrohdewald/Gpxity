@@ -224,8 +224,6 @@ class TestBackends(BasicTest):
     def test_write_public(self):
         """If we change public in track, is the backend updated?."""
         for cls in Backend.all_backend_classes(needs={'remove', }):
-            if cls is Openrunner:
-                continue
             with self.tst_backend(cls):
                 test_public = True
                 test_public2 = False
@@ -366,9 +364,6 @@ class TestBackends(BasicTest):
             local.add(track)
             self.assertBackendLength(local, 1)
             for cls in Backend.all_backend_classes(needs={'remove'}):
-                if cls is Openrunner:
-                    # The test account does not allow private
-                    continue
                 with self.tst_backend(cls):
                     with self.temp_backend(cls) as backend:
                         backend.merge(local)
@@ -577,9 +572,6 @@ class TestBackends(BasicTest):
                         'public': (True, False),
                         'title': ('first title', 'Täst Titel'),
                     }
-                    if cls is Openrunner:
-                        # free account does not support private tracks
-                        del test_values['public']
                     if 'keywords' in cls.supported:
                         test_values['keywords'] = (['A', 'Hello Dolly', 'Whatever'], ['Something Else', 'Two'])
                     prev_track = track.clone()

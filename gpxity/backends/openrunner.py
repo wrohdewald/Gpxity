@@ -593,7 +593,10 @@ class Openrunner(Backend):
 
     def _load_track_headers(self):
         """get all tracks for this user."""
-        response = self.__get(action='route/findby?author={}'.format(self._get_author()))
+        if self.account.password:
+            response = self.__get(action='user/myroute')
+        else:
+            response = self.__get(action='route/findby?author={}'.format(self._get_author()))
         page_parser = ParseOpenrunnerList()
         page_parser.feed(response.text)
         for raw_data in page_parser.result['tracks']:
@@ -604,7 +607,6 @@ class Openrunner(Backend):
                 track._header_data['distance'] = raw_data.distance
             if raw_data.category:
                 track._header_data['category'] = self.decode_category(raw_data.category)
-            track._header_data['public'] = True
 
     def _read_all(self, track):
         """Get the entire track."""
@@ -650,7 +652,7 @@ class Openrunner(Backend):
             'route[elevation][sampleIntervalInMeter]': track.distance() / len(points),
             'route[end][lat]': points[-1].latitude,
             'route[end][lng]': points[-1].longitude,
-            'route[is_private]': 0,  # TODO: private only if the subscription allows that if track.public else 1,
+            'route[is_private]': 0 if track.public else 1,
             'route[is_tested]': 1,
             'route[keyword]': ', '.join(track.keywords),
             'route[labelColor]': '#ffffff',
