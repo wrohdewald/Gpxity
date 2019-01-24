@@ -124,7 +124,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self._batch_changes = False
         self.__category = self.categories[0]
         self.__public = False
-        self._ids = list()
+        self.__ids = list()
         self.__id_in_backend = None
         self.__backend = None
         self._loaded = False
@@ -194,7 +194,7 @@ class Track:  # pylint: disable=too-many-public-methods
         if self.__id_in_backend == value:
             return
         if self.__id_in_backend:
-            self._ids.insert(0, str(self))
+            self.__ids.insert(0, str(self))
         if self.__is_decoupled:
             # internal use
             self.__id_in_backend = value
@@ -285,9 +285,9 @@ class Track:  # pylint: disable=too-many-public-methods
         result = Track(gpx=self.gpx.clone())
         result.category = self.category
         result.public = self.public
-        result._ids = deepcopy(self._ids)
+        result.__ids = deepcopy(self.__ids)
         if self.backend is not None:
-            result._ids.insert(0, str(self))
+            result.__ids.insert(0, str(self))
         return result
 
     def _rewrite(self):
@@ -526,7 +526,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 elif key in ('time', 'distance'):
                     pass
                 elif key == 'ids':
-                    self._ids = value
+                    self.__ids = value
                 else:
                     raise Exception('Unhandled header_data: {}/{}'.format(key, value))
             self._header_data.clear()
@@ -621,7 +621,7 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__gpx.keywords = ', '.join(sorted(gpx_keywords))
             if 'ids' in self._header_data:
                 del self._header_data['ids']
-            self._ids = ids
+            self.__ids = ids
 
     def _encode_keywords(self) ->str:
         """Add our special keywords Category and Status.
@@ -850,7 +850,7 @@ class Track:  # pylint: disable=too-many-public-methods
     def __prepare_keywords(self, values):
         """Common introductory code for change_keywords.
 
-        The values may be preceded with a '-' which will be preserved in the result._ids
+        The values may be preceded with a '-' which will be preserved in the result.__ids
 
         Args:
             values: Either single str with one or more keywords, separated by commas
@@ -1657,13 +1657,13 @@ class Track:  # pylint: disable=too-many-public-methods
             result = self._header_data['ids']
         else:
             self._load_full()
-            result = self._ids
+            result = self.__ids
         return self.__clean_ids(result)
 
     @ids.setter
     def ids(self, value):
         """Setter for ids."""
-        self._ids = self.__clean_ids(value)
+        self.__ids = self.__clean_ids(value)
 
     @staticmethod
     def __clean_ids(original):
