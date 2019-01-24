@@ -298,7 +298,7 @@ class BasicTest(unittest.TestCase):
     def setup_backend(  # pylint: disable=too-many-arguments
             self, cls_, test_name: str = None, url: str = None, count: int = 0,
             clear_first: bool = None, category: str = None,
-            public: bool = None):
+            public: bool = False):
         """set up an instance of a backend with count tracks.
 
         If count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
@@ -316,15 +316,13 @@ class BasicTest(unittest.TestCase):
                 call for all backend classes and they support different categories. So: If category is int, this is an
                 index into Backend.supported_categories which will be decoded into Track.categories
 
-            public: should the tracks be public or private? If None, use Backend default.
+            public: should the tracks be public or private? Default is False
 
         Returns:
             the prepared Backend
 
         """
         # pylint: disable=too-many-branches
-        if public is None:
-            public = cls_._default_public
         if clear_first is None:
             clear_first = 'remove' in cls_.supported
         if isinstance(category, int):

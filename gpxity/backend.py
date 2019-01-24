@@ -115,8 +115,6 @@ class Backend(BackendBase):
 
     _max_length = dict()
 
-    _default_public = False
-
     point_precision = 5
 
     _timeout = None

@@ -239,8 +239,6 @@ class Openrunner(Backend):
 
     _default_description = 'None yet. Let everyone know how you got on.'
 
-    _default_public = True  # a basic account does not support private tracks
-
     point_precision = 5
 
     supported_categories = (
