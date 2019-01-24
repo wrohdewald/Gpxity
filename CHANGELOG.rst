@@ -2,6 +2,7 @@ Changelog
 =========
 
   * WPTrackserver and Directory allow renaming by assinging new id_in_backend
+  * Backend.subscription shows the name of the subscription model
 
 1.6.0 release 2019-01-xx
 ------------------------

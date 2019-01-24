@@ -147,6 +147,7 @@ class Backend(BackendBase):
         self.__match = None
         self.logger = logging.getLogger(str(self))
         self.fences = Fences(self.account.fences)
+        self._cached_subscription = None  # to be used by specific Backend classes
 
     @property
     def timeout(self):
@@ -957,3 +958,20 @@ class Backend(BackendBase):
             result = cls.find_class(account.backend)(account)
             cls.__all_backends[cache_key] = result
         return result, track_id
+
+    @property
+    def subscription(self) ->str:
+        """Get the subscription model. Like free, paid, plus, whatever.
+
+        If the backend has no subscription model, return None.
+
+        The unpaid subscription is granted to always return :literal:`free`.
+        The most expensive subscription is granted to always return :literal:`full`.
+        Intermediate values may vary.
+
+        Because I  (the developer) have no paid account, I can test this only
+        partially. Feedback is welcome!
+
+        Returns: The name of the subscription or None
+        """
+        return None

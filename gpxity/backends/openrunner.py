@@ -108,7 +108,7 @@ class ParseOpenrunnerSubscription(HTMLParser):  # pylint: disable=abstract-metho
         """starttag from the parser."""
         attributes = dict(attrs)
         self.seeing_card_title = False
-        if attributes['class'] == 'card-title':
+        if attributes.get('class') == 'card-title':
             self.seeing_card_title = True
             self.current_card_title = None
 
@@ -121,7 +121,6 @@ class ParseOpenrunnerSubscription(HTMLParser):  # pylint: disable=abstract-metho
             self.current_card_title = data
         if data == 'Subscription in progress':
             self.result = self.current_card_title
-            self.reset()
 
 
 class ParseOpenrunnerActivity(HTMLParser):  # pylint: disable=abstract-method
@@ -468,18 +467,21 @@ class Openrunner(Backend):
         return sorted(category_parser.result_names)
 
     @property
-    def current_subscription(self) ->str:
-        """Get the current subscription model.
+    def subscription(self) ->str:
+        """Get the subscription model.
 
         Returns: The name of the subscription.
 
         """
-        # TODO: unused, untested. Intended for use with callers trying
-        # to set private to True without having a sufficient subscription.
-        parser = ParseOpenrunnerSubscription()
-        parser.feed(self.__get(action='user/mysubscription').text)
-        self.logger.debug('current subscription: %s', parser.result)
-        return parser.result
+        if self._cached_subscription is None:
+            parser = ParseOpenrunnerSubscription()
+            parser.feed(self.__get(action='user/mysubscription').text)
+            if parser.result == 'Standard':
+                self._cached_subscription = 'free'
+            else:
+                self._cached_subscription = 'full'
+            self.logger.debug('%s: subscription: %s', self.account, self._cached_subscription)
+        return self._cached_subscription
 
     @property
     def session(self):

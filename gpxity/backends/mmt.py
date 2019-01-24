@@ -263,7 +263,6 @@ class MMT(Backend):
         """See class docstring."""
         super(MMT, self).__init__(account)
         self.__mid = -1  # member id at MMT for auth
-        self.__is_free_account = None
         self.__tag_ids = dict()  # key: tag name, value: tag id in MMT. It seems that MMT
         # has a lookup table and never deletes there. So a given tag will always get
         # the same ID. We use this fact.
@@ -321,16 +320,26 @@ class MMT(Backend):
         return self.__mid
 
     @property
-    def is_free_account(self):
-        """Return True if the current account is not PLUS enabled."""
-        if self.__is_free_account is None:
+    def subscription(self) ->str:
+        """Return free or full.
+
+        Returns: free or full
+
+        """
+        if self._cached_subscription is None:
             self._parse_homepage()
-        return self.__is_free_account
+            self.logger.debug('%s: subscription: %s', self.account, self._cached_subscription)
+            if self.subscription == 'free':
+                self.supported = self.__class__.supported - set('private', )
+        return self._cached_subscription
 
     def _parse_homepage(self):
         """Get some interesting values from the home page."""
         response = self.__get(with_session=True, url=self.url)
-        self.__is_free_account = 'Get PLUS' in response.text
+        if 'Get PLUS' in response.text:
+            self._cached_subscription = 'free'
+        else:
+            self._cached_subscription = 'full'
         page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
         self.__mid = page_parser.result['mid']
@@ -721,7 +730,7 @@ class MMT(Backend):
             new_ident: New track id
 
         """
-        if self.is_free_account:
+        if self.subscription == 'free':
             self.logger.info('Your free MMT account does not allow lifetracking, I will send the entire track')
             return super(MMT, self)._lifetrack_start(track, points)
         if MMT._current_lifetrack is not None:
@@ -750,7 +759,7 @@ class MMT(Backend):
             points: The new points
 
         """
-        if self.is_free_account:
+        if self.subscription == 'free':
             super(MMT, self)._lifetrack_update(track, points)
             return
         if MMT._current_lifetrack != track:
@@ -767,7 +776,7 @@ class MMT(Backend):
             track: The lifetrack
 
         """
-        if self.is_free_account:
+        if self.subscription == 'free':
             super(MMT, self)._lifetrack_end(track)
         else:
             if MMT._current_lifetrack != track:

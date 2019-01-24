@@ -70,14 +70,14 @@ class TrackMMT(MMT):
         raise NotImplementedError()
 
     @property
-    def is_free_account(self):
+    def subscription(self):
         """Our own local server can do lifeftracking.
 
         Returns:
-            False
+            full
 
         """
-        return False
+        return 'full'
 
     def detach(self):
         """Would need implementations for scan and remove."""

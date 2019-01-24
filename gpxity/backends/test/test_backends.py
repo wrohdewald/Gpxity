@@ -441,7 +441,7 @@ class TestBackends(BasicTest):
     def test_mmt_free_lifetrack(self):
         """test life tracking against a free account on mapmytracks.com."""
         with MMT(Account()) as uplink:
-            self.assertTrue(uplink.is_free_account)
+            self.assertTrue(uplink.subscription == 'free')
             life = Lifetrack('127.0.0.1', [uplink])
             with self.assertRaises(Exception) as context:
                 life.start(self._random_points())
