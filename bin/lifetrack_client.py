@@ -80,44 +80,6 @@ class Main:
         if self.logger.level == logging.DEBUG:
             raise msg
 
-    def instantiate_object(self, name):
-        """return a backend for name.
-        If name is a single track, the returned backend has a match filtering
-        only this one wanted track."""
-        # pylint: disable=too-many-branches
-        result = account = track_id = None
-        if ':' in name and name.split(':')[0].upper() in ('MMT', 'GPSIES', 'TRACKMMT'):
-            clsname = name.split(':')[0].upper()
-            rest = name[len(clsname) + 1:]
-            if '/' in rest:
-                if rest.count('/') > 1:
-                    raise Exception('wrong syntax in {}'.format(name))
-                account, track_id = rest.split('/')
-            else:
-                account = rest
-            if clsname == 'MMT':
-                result = MMT(auth=account)
-            elif clsname == 'TRACKMMT':
-                result = TrackMMT(auth=account)
-            elif clsname == 'GPSIES':
-                result = GPSIES(auth=account)
-        else:
-            if os.path.isdir(name):
-                account = name
-                result = Directory(url=account)
-            else:
-                if name.endswith('.gpx'):
-                    name = name[:-4]
-                if os.path.isfile(name + '.gpx'):
-                    account = os.path.dirname(name) or '.'
-                    track_id = os.path.basename(name)
-                result = Directory(url=account)
-        if account is None:
-            raise Exception('{} not found'.format(name))
-        if track_id:
-            result = result[track_id]
-        return result
-
     def parse_commandline(self):
         """into self.options."""
         # pylint: disable=too-many-statements, too-many-branches
