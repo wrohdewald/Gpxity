@@ -576,7 +576,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         return self.backend.decode_category(value) if self.backend is not None else value
 
-    def _decode_keywords(self, data: str, into_header_data: bool = False):  # noqa
+    def _decode_keywords(self, data: str):  # noqa
         """Extract our special keywords Category: and Status:.
 
         # TODO: why is this not backend specific? Some backends have
@@ -584,11 +584,8 @@ class Track:  # pylint: disable=too-many-public-methods
 
         Args:
             data: The raw keywords coming from the backend
-            into_header_data: if False, set the real track fields.
-                If True, save everything in self._header_data.
 
         """
-        # pylint: disable=too-many-branches,too-many-nested-blocks
         gpx_keywords = list()
         ids = list()
         if isinstance(data, str):
@@ -608,7 +605,6 @@ class Track:  # pylint: disable=too-many-public-methods
                     gpx_keywords.append(keyword)
         self.ids = ids
         gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
-        logging.debug('>>>> Track_decode_keywords 99 %r', gpx_keywords)
         self.keywords = sorted(gpx_keywords)
 
     def _encode_keywords(self) ->str:

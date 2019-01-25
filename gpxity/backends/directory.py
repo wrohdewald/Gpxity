@@ -291,7 +291,7 @@ class Directory(Backend):
                     track.description = html.unescape(html.unescape(_))
                 _ = self._get_field(raw_data, 'keywords')
                 if _:
-                    track._decode_keywords(_, into_header_data=True)
+                    track._decode_keywords(_)
                 _ = self._get_field(parts[1], 'time')
                 if _ is not None:
                     track._header_data['time'] = mod_gpxfield.parse_time(_)
