@@ -366,8 +366,11 @@ class Track:  # pylint: disable=too-many-public-methods
         """see getter."""
         if value != self.title:
             self._load_full()
-            self.__gpx.name = value
-            self._dirty = 'title'
+            if self.__gpx:
+                self.__gpx.name = value
+                self._dirty = 'title'
+            else:
+                self._header_data['title'] = value
 
     @property
     def description(self) ->str:
@@ -387,7 +390,10 @@ class Track:  # pylint: disable=too-many-public-methods
         """see getter."""
         if value != self.description:
             self._load_full()
-            self.__gpx.description = value
+            if self.__gpx:
+                self.__gpx.description = value
+            else:
+                self._header_data['description'] = value
             self._dirty = 'description'
 
     @contextmanager
@@ -504,7 +510,10 @@ class Track:  # pylint: disable=too-many-public-methods
             raise Exception('Category {} is not known'.format(value))
         if value != self.category:
             self._load_full()
-            self.__category = value
+            if self.__gpx:
+                self.__category = value
+            else:
+                self._header_data['category'] = value
             self._dirty = 'category'
 
     def _load_full(self) ->None:
@@ -579,7 +588,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 If True, save everything in self._header_data.
 
         """
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-nested-blocks
         gpx_keywords = list()
         ids = list()
         if isinstance(data, str):
@@ -589,28 +598,27 @@ class Track:  # pylint: disable=too-many-public-methods
                 _ = [x.strip() for x in keyword.split(':')]
                 what = _[0]
                 value = ':'.join(_[1:])
-                if into_header_data:
-                    if what == 'Category':
-                        self._header_data['category'] = self.__decode_category(value)
-                    elif what == 'Status':
-                        self._header_data['public'] = value == 'public'
-                    elif what == 'Id':
-                        ids.append(value)
-                    else:
-                        gpx_keywords.append(keyword)
+                if what == 'Category':
+                    self.category = self.__decode_category(value)
                 else:
-                    if what == 'Category':
-                        self.__category = self.__decode_category(value)
-                    elif what == 'Status':
-                        self.__public = value == 'public'
-                    elif what == 'Id':
-                        _ = value.split('/')
-                        backend_name = '/'.join(_[:-1])
-                        if backend_name == '':
-                            backend_name = '.'
-                        ids.append(value)
+                    if into_header_data:
+                        if what == 'Status':
+                            self._header_data['public'] = value == 'public'
+                        elif what == 'Id':
+                            ids.append(value)
+                        else:
+                            gpx_keywords.append(keyword)
                     else:
-                        gpx_keywords.append(keyword)
+                        if what == 'Status':
+                            self.__public = value == 'public'
+                        elif what == 'Id':
+                            _ = value.split('/')
+                            backend_name = '/'.join(_[:-1])
+                            if backend_name == '':
+                                backend_name = '.'
+                            ids.append(value)
+                        else:
+                            gpx_keywords.append(keyword)
         gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
         if into_header_data:
             self._header_data['keywords'] = sorted(gpx_keywords)

@@ -141,7 +141,7 @@ class WPTrackserver(Backend):
                 result = fmt_result()
         return result[:max_length]
 
-    def _decode_description(self, track, value, into_header_data=False):
+    def _decode_description(self, track, value):
         """Extract keywords.
 
         Returns: The decoded description
@@ -153,13 +153,13 @@ class WPTrackserver(Backend):
             track._decode_keywords(raw_keywords)
         else:
             descr = value
-        track._header_data['description'] = descr
+        track.description = descr
         return descr
 
     def _enrich_with_headers(self, track, row):
         """Get header values out of row."""
         track._header_data['time'] = row[1]
-        track._header_data['title'] = row[2]
+        track.title = row[2]
         self._decode_description(track, row[3].replace('\r', ''))
         track._header_data['distance'] = row[4] / 1000.0
 

@@ -285,10 +285,10 @@ class Directory(Backend):
                 raw_data = raw_data.split('</metadata>')[0]
                 _ = self._get_field(raw_data, 'name')
                 if _ is not None:
-                    track._header_data['title'] = html.unescape(html.unescape(_))
+                    track.title = html.unescape(html.unescape(_))
                 _ = self._get_field(raw_data, 'desc')
                 if _ is not None:
-                    track._header_data['description'] = html.unescape(html.unescape(_))
+                    track.description = html.unescape(html.unescape(_))
                 _ = self._get_field(raw_data, 'keywords')
                 if _:
                     track._decode_keywords(_, into_header_data=True)

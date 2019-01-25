@@ -318,17 +318,14 @@ class Backend(BackendBase):
         """
         return track.description
 
-    def _decode_description(self, track, value, into_header_data=False):
+    def _decode_description(self, track, value):
         """A backend might put keywords into the description. WPTrackserver does.
 
         Returns: The description
 
         """
         assert self._decoupled
-        if into_header_data:
-            track._header_data['description'] = value
-        else:
-            track.description = value
+        track.description = value
         return value
 
     def get_time(self) ->datetime.datetime:  # pylint: disable=no-self-use

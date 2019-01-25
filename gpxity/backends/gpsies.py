@@ -392,7 +392,7 @@ class GPSIES(Backend):
             page_parser.feed(response.text)
         for raw_data in page_parser.result['tracks']:
             track = self._found_track(raw_data.track_id)
-            track._header_data['title'] = raw_data.title
+            track.title = raw_data.title
             track._header_data['time'] = raw_data.time
             if raw_data.distance:
                 track._header_data['distance'] = raw_data.distance
