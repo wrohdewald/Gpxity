@@ -733,7 +733,7 @@ class TrackTests(BasicTest):
             acc_name = cls.__name__.lower() + '_unittest'
             cases = (
                 (acc_name + ':', acc_name + ':', cls.__name__, None),
-                (acc_name +':24', acc_name + ':', cls.__name__, '24'),
+                (acc_name + ':24', acc_name + ':', cls.__name__, '24'),
             )
             self.parse_objectnames(cases)
             break
@@ -756,7 +756,7 @@ class TrackTests(BasicTest):
                 Account(fences=None),  # Directory
                 Account(fences=' '.join("{}/{}/{}".format(
                     x.latitude, x.longitude, 500) for x in random.sample(points, 3))),
-                )
+            )
             for account in accounts:
                 fences = account.fences
                 inside = {x for x in points if not fences.outside(x)}

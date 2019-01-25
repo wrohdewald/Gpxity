@@ -18,7 +18,6 @@ from .accounts import Account
 __all__ = ['BackendBase']
 
 
-
 class BackendBase:
 
     """Classmethods.
@@ -180,8 +179,8 @@ class BackendBase:
                     cls.__all_backend_classes.extend(classes)
                 except ImportError:
                     pass
-            cls.__all_backend_classes = set(
-                x for x in cls.__all_backend_classes if x.__name__ != 'Backend')
+            cls.__all_backend_classes = {
+                x for x in cls.__all_backend_classes if x.__name__ != 'Backend'}
         if exclude is None:
             exclude = list()
         if needs is None:
@@ -195,6 +194,7 @@ class BackendBase:
         """Check if this backend accepts value as id.
 
         If not, raise ValueError
+
         """
         if value is not None:
             if not isinstance(value, str):

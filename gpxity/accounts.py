@@ -17,6 +17,7 @@ from gpxpy.geo import Location
 
 __all__ = ['Account']
 
+
 class Fences:  # pylint: disable=too-few-public-methods
 
     """
@@ -54,7 +55,6 @@ class Fences:  # pylint: disable=too-few-public-methods
 
         """
         return all(point.distance_2d(x[0]) > x[1] for x in self.circles)
-
 
 
 class Accounts:
@@ -157,7 +157,7 @@ class Accounts:
     @classmethod
     def lookup(cls, filename: str, wanted_account: str):
         """
-        Build an :class:`~gpxity.accounts.Account`
+        Build an :class:`~gpxity.accounts.Account`.
 
         Args:
             filename: The name of the accounts file

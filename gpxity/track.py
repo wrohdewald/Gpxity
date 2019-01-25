@@ -402,6 +402,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         While this context manager is running, suppressed points are
         not visible.
+
         """
         if not fences:
             yield
@@ -804,7 +805,7 @@ class Track:  # pylint: disable=too-many-public-methods
             if self.__gpx.keywords:
                 return list(sorted(x.strip() for x in self.__gpx.keywords.split(',')))
         else:
-                return self._header_data.get('keywords', [])
+            return self._header_data.get('keywords', [])
         return list()
 
     @keywords.setter
@@ -977,7 +978,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def identifier(backend, ident: str) ->str:
-        """The full identifier for a track
+        """The full identifier for a track.
 
         Since we may want to do this without instantiating a track,
         this must be staticmethod or classmethod.
@@ -991,6 +992,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         Returns:
             the full identifier.
+
         """
         if isinstance(backend, BackendBase):
             account = backend.account

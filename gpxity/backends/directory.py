@@ -425,6 +425,7 @@ class Directory(Backend):
         """Check if value is a legal id.
 
         If not, raise ValueError.
+
         """
         # it is not necessary to call BackendBase._check_id_legal
         if value is not None:

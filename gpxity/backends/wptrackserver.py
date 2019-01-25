@@ -101,14 +101,22 @@ class WPTrackserver(Backend):
 
     @property
     def _db(self):
-        """Cached mysql handle."""
+        """Cached mysql handle.
+
+        Returns: The handle.
+
+        """
         if self.__cached_db is None:
             self.__cached_db = self.__connect_mysql()
         return self.__cached_db
 
     @property
     def _user_id(self):
-        """Cached user_id from mysql."""
+        """Cached user_id from mysql.
+
+        Returns: The user_id in wordpress
+
+        """
         if self.__cached_user_id is None:
             if not self.account.username:
                 raise self.BackendException('{} needs a username'.format(self.account))
@@ -346,6 +354,7 @@ class WPTrackserver(Backend):
                 self.logger.debug(prefix + " executemany, first one: " + cmd, *args[0])
             else:
                 self.logger.debug(prefix + ' ' + cmd, *args)
+
         def do_it():
             try:
                 execute(cmd, args)
@@ -367,6 +376,7 @@ class WPTrackserver(Backend):
         """Check if value is a legal id.
 
         If not, raise ValueError.
+
         """
         # it is not necessary to call BackendBase._check_id_legal
         if value is not None:

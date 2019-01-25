@@ -181,7 +181,6 @@ class Backend(BackendBase):
             raise Backend.BackendException('{} needs a username'.format(self.account))
         return author
 
-
     def __str__(self) ->str:
         """A unique identifier for every physical backend.
 
@@ -245,8 +244,8 @@ class Backend(BackendBase):
         support_mappings = {
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
-            '_load_track_headers': 'scan',
             '_change_ident': 'rename',
+            '_load_track_headers': 'scan',
             '_remove_ident': 'remove',
             '_write_all': 'write'}
         cls.supported = set()
@@ -343,6 +342,7 @@ class Backend(BackendBase):
 
         If new_ident already exists, the backend is free to
         change it to a unique name or to raise an Exception.
+
         """
         raise NotImplementedError
 
@@ -933,6 +933,7 @@ class Backend(BackendBase):
             * The first element is the Backend. If the Backend has already been instantiated, return the cached value.
                 If the wanted object does not exist, exception FileNotFoundError is raised.
             * The second element is a track_id or None
+
         """
         account, track_id = cls.parse_objectname(name)
         cache_key = str(account)
@@ -957,5 +958,6 @@ class Backend(BackendBase):
         partially. Feedback is welcome!
 
         Returns: The name of the subscription or None
+
         """
         return None
