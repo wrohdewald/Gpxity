@@ -894,11 +894,9 @@ class Track:  # pylint: disable=too-many-public-methods
         else:
             add -= have
             remove &= have
-
         new = sorted((have | add) - remove)
-        new_kw_list = ', '.join(new)
-        if not dry_run and self.__gpx.keywords != new_kw_list:
-            self.__gpx.keywords = new_kw_list
+        if not dry_run and self.keywords != new:
+            self.__gpx.keywords = ', '.join(new) or None
             with self.batch_changes():
                 if remove:
                     self._dirty = 'remove_keywords:{}'.format(', '.join(remove))
