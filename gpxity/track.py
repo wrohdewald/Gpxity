@@ -609,17 +609,14 @@ class Track:  # pylint: disable=too-many-public-methods
                         gpx_keywords.append(keyword)
                     else:
                         gpx_keywords.append(keyword)
+        self.ids = ids
         gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
         if into_header_data:
             self._header_data['keywords'] = sorted(gpx_keywords)
-            self._header_data['ids'] = ids
         else:
             if 'keywords' in self._header_data:
                 del self._header_data['keywords']
             self.__gpx.keywords = ', '.join(sorted(gpx_keywords))
-            if 'ids' in self._header_data:
-                del self._header_data['ids']
-            self.__ids = ids
 
     def _encode_keywords(self) ->str:
         """Add our special keywords Category and Status.
@@ -1664,7 +1661,10 @@ class Track:  # pylint: disable=too-many-public-methods
         cleaned = self.__clean_ids(value)
         if cleaned != self.ids:
             self._load_full()
-            self.__ids = cleaned
+            if self.__gpx:
+                self.__ids = cleaned
+            else:
+                self._header_data['ids'] = cleaned
 
     @staticmethod
     def __clean_ids(original):
