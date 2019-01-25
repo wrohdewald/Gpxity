@@ -901,8 +901,8 @@ class Track:  # pylint: disable=too-many-public-methods
             add -= have
             remove &= have
 
-        new = (have | add) - remove
-        new_kw_list = ', '.join(sorted(new))
+        new = sorted((have | add) - remove)
+        new_kw_list = ', '.join(new)
         if not dry_run and self.__gpx.keywords != new_kw_list:
             self.__gpx.keywords = new_kw_list
             with self.batch_changes():
@@ -910,9 +910,9 @@ class Track:  # pylint: disable=too-many-public-methods
                     self._dirty = 'remove_keywords:{}'.format(', '.join(remove))
                 if add:
                     self._dirty = 'add_keywords:{}'.format(', '.join(add))
-        assert sorted(new) == self.keywords, (
-            'change_keywords failed. Expected: {}, got: {}'.format(sorted(new), self.keywords))
-        return sorted(new)
+        assert new == self.keywords, (
+            'change_keywords failed. Expected: {}, got: {}'.format(new, self.keywords))
+        return new
 
     def speed(self) ->float:
         """Speed over the entire time in km/h or 0.0.
