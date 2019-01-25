@@ -608,12 +608,8 @@ class Track:  # pylint: disable=too-many-public-methods
                     gpx_keywords.append(keyword)
         self.ids = ids
         gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
-        if into_header_data:
-            self._header_data['keywords'] = sorted(gpx_keywords)
-        else:
-            if 'keywords' in self._header_data:
-                del self._header_data['keywords']
-            self.__gpx.keywords = ', '.join(sorted(gpx_keywords))
+        logging.debug('>>>> Track_decode_keywords 99 %r', gpx_keywords)
+        self.keywords = sorted(gpx_keywords)
 
     def _encode_keywords(self) ->str:
         """Add our special keywords Category and Status.
