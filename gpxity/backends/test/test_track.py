@@ -380,21 +380,22 @@ class TrackTests(BasicTest):
             track.title = 'Title'
             track.category = 'Running'
             track.add_points(self._random_points(10))
-            self.assertIn('Title', repr(track))
+            first_distance = track.distance()
             self.assertIn('public' if track.public else 'private', repr(track))
             self.assertIn('Running', repr(track))
             self.assertIn(repr_timespan(track.time, track.last_time), repr(track))
             self.assertTrue(repr(track).startswith(str(track)))
             self.assertTrue(repr(track).endswith(')'))
             track.add_points(self._random_points(count=5))
-            self.assertIn(' 15 points', repr(track))
+            self.assertGreater(track.distance(), first_distance)
+            self.assertIn('km', repr(track))
             directory.add(track)
 
             # repr(track) must not fully load it
             clone = directory.clone()
             self.assertNotIn(' points', repr(clone[0]))
             self.assertEqual(clone[0].gpx.get_track_points_no(), 15)
-            self.assertIn(' 15 points', repr(clone[0]))
+            self.assertIn('km', repr(clone[0]))
             self.assertEqual(track.category, 'Running')
             self.assertEqual(clone[0].category, 'Running')
 
@@ -615,10 +616,9 @@ class TrackTests(BasicTest):
         """Test usage of Track._header_data."""
         track = Track()
         gpx_track = self.create_test_track()
-        track._header_data['distance'] = 5000
+        track._set_distance(5000)
         self.assertEqual(track.distance(), 5000)
         track.parse(gpx_track.to_xml())
-        self.assertNotIn('distance', track._header_data)
         self.assertEqual(track.distance(), gpx_track.distance())
 
     def test_merge_track(self):

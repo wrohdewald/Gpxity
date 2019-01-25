@@ -395,7 +395,7 @@ class GPSIES(Backend):
             track.title = raw_data.title
             track._header_data['time'] = raw_data.time
             if raw_data.distance:
-                track._header_data['distance'] = raw_data.distance
+                track._set_distance(raw_data.distance)
             track._header_data['public'] = raw_data.public
             if str(self) not in self._session:  # anonymous, no login
                 track.public = True

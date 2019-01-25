@@ -609,7 +609,7 @@ class MMT(Backend):
                 track.title = raw_data.title
                 track.category = self.decode_category(raw_data.category)
                 track._header_data['time'] = raw_data.time
-                track._header_data['distance'] = raw_data.distance
+                track._set_distance(raw_data.distance)
             assert self.real_len() > old_len
 
     def _scan_track_page(self, track):

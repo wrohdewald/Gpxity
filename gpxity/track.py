@@ -528,6 +528,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
     def __finalize_load(self):
         """Track is now fully loaded. Resolve header data."""
+        self.__cached_distance = None
         self._loaded = True
 
     def __resolve_header_data(self):
@@ -537,7 +538,7 @@ class Track:  # pylint: disable=too-many-public-methods
             for key, value in pairs:
                 if key in ('title', 'description', 'category', 'public', 'keywords'):
                     setattr(self, key, value)
-                elif key in ('time', 'distance'):
+                elif key in ('time', ):  # noqa
                     pass
                 elif key == 'ids':
                     self.__ids = value
@@ -974,10 +975,8 @@ class Track:  # pylint: disable=too-many-public-methods
                     parts.append(repr_timespan(self.time, self.last_time))
                 elif self.time:
                     parts.append(str(self.time))
-                if 'distance' in self._header_data:
-                    parts.append('{:4.2f}km'.format(self._header_data['distance']))
-                elif self.gpx.get_track_points_no() or self._loaded:
-                    parts.append('{} points'.format(self.gpx.get_track_points_no()))
+                if self.distance():
+                    parts.append('{:4.2f}km'.format(self.distance()))
             return '{}({})'.format(str(self), ' '.join(parts))
 
     @staticmethod
@@ -1069,11 +1068,15 @@ class Track:  # pylint: disable=too-many-public-methods
             the distance in km, rounded to m. 0.0 if not computable.  # TODO: needs unittest
 
         """
-        if 'distance' in self._header_data:
-            return self._header_data['distance']
         if self.__cached_distance is None:
             self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
         return self.__cached_distance or 0.0
+
+    def _set_distance(self, value):
+        """Not a property setter because setting should only be possible internally.
+        By the backends.
+        """
+        self.__cached_distance = value
 
     def angle(self, precision=None) ->float:
         """For me, the earth is flat.

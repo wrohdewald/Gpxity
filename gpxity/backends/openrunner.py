@@ -604,7 +604,7 @@ class Openrunner(Backend):
             track.title = raw_data.title
             track._header_data['time'] = raw_data.time
             if raw_data.distance:
-                track._header_data['distance'] = raw_data.distance
+                track._set_distance(raw_data.distance)
             if raw_data.category:
                 track.category = self.decode_category(raw_data.category)
 
@@ -617,7 +617,7 @@ class Openrunner(Backend):
         track.title = route['name']
         track.description = route['description']
         track._decode_keywords(route['keyword'])
-        track._header_data['distance'] = float(route['length']) / 1000.0
+        track._set_distance(float(route['length']) / 1000.0)
         # the date format seems to depend on the language. fr would be %d-%m-%Y
         track._header_data['time'] = datetime.datetime.strptime(route['updatedDate'], '%Y/%m/%d')
         track.public = not route['private']
