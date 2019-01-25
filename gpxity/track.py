@@ -605,10 +605,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 elif what == 'Id':
                     ids.append(value)
                 else:
-                    if into_header_data:
-                        gpx_keywords.append(keyword)
-                    else:
-                        gpx_keywords.append(keyword)
+                    gpx_keywords.append(keyword)
         self.ids = ids
         gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
         if into_header_data:
