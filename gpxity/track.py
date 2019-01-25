@@ -804,15 +804,6 @@ class Track:  # pylint: disable=too-many-public-methods
         if 'keywords' in self._header_data:
             # TODO: unittest checking that keywords is always a deep copy
             return self._header_data['keywords'][:]
-        return self.__gpx_keywords()
-
-    def __gpx_keywords(self):
-        """Return the keywords from GPX.
-
-        Returns:
-            A list with keywords.setter
-
-        """
         self._load_full()
         if self.__gpx.keywords:
             return list(sorted(x.strip() for x in self.__gpx.keywords.split(',')))
