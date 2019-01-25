@@ -592,7 +592,7 @@ class Track:  # pylint: disable=too-many-public-methods
         gpx_keywords = list()
         ids = list()
         if isinstance(data, str):
-            data = [x.strip() for x in data.split(', ')]
+            data = [x.strip() for x in data.split(',')]
         if data is not None:
             for keyword in data:
                 _ = [x.strip() for x in keyword.split(':')]
@@ -782,6 +782,9 @@ class Track:  # pylint: disable=too-many-public-methods
             we encode some of the backend arguments in keywords.
 
             Example for mapmytracks: keywords = 'Status:public, Category:Cycling'.
+
+            Gpxity expects keywords to be separated by ",". When writing them Gpxity
+            uses ", " (with a space after the comma) as separator.
 
             However this is transparent for you. When parsing theGPX file, those are removed
             from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
