@@ -138,7 +138,7 @@ class Track:  # pylint: disable=too-many-public-methods
         if gpx:
             self._decode_keywords(self.__gpx.keywords)
             self._round_points(self.points())
-            self._loaded = True
+            self.__finalize_load()
 
     @property
     def backend(self):
@@ -522,9 +522,13 @@ class Track:  # pylint: disable=too-many-public-methods
         if (self.backend is not None and self.id_in_backend and not self._loaded
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)
-            self._loaded = True
+            self.__finalize_load()
         if not self.__is_decoupled:
             self.__resolve_header_data()
+
+    def __finalize_load(self):
+        """Track is now fully loaded. Resolve header data."""
+        self._loaded = True
 
     def __resolve_header_data(self):
         """Put header data into gpx and clear them."""
@@ -659,7 +663,7 @@ class Track:  # pylint: disable=too-many-public-methods
                 self.__gpx.description = old_description
             self._round_points(self.points())
         self._header_data = dict()
-        self._loaded = True
+        self.__finalize_load()
         self.__workaround_for_gpxpy_issue_140()
 
     def __workaround_for_gpxpy_issue_140(self):
