@@ -608,7 +608,7 @@ class MMT(Backend):
                 track = self._found_track(raw_data.track_id)
                 track.title = raw_data.title
                 track.category = self.decode_category(raw_data.category)
-                track._header_data['time'] = raw_data.time
+                track._set_time(raw_data.time)
                 track._set_distance(raw_data.distance)
             assert self.real_len() > old_len
 

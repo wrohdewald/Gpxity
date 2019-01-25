@@ -393,7 +393,7 @@ class GPSIES(Backend):
         for raw_data in page_parser.result['tracks']:
             track = self._found_track(raw_data.track_id)
             track.title = raw_data.title
-            track._header_data['time'] = raw_data.time
+            track._set_time(raw_data.time)
             if raw_data.distance:
                 track._set_distance(raw_data.distance)
             track._header_data['public'] = raw_data.public

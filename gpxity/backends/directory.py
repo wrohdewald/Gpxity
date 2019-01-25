@@ -294,7 +294,7 @@ class Directory(Backend):
                     track._decode_keywords(_)
                 _ = self._get_field(parts[1], 'time')
                 if _ is not None:
-                    track._header_data['time'] = mod_gpxfield.parse_time(_)
+                    track._set_time(mod_gpxfield.parse_time(_))
 
     def _load_track_headers(self):
         """get all tracks for this user."""

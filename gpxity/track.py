@@ -132,6 +132,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self.__gpx = gpx or GPX()  # we need __gpx: backend.add(Track()) would fail in to_xml()
         self.__backend = None
         self.__cached_distance = None
+        self.__cached_time = None
         self._similarity_others = weakref.WeakValueDictionary()
         self._similarities = dict()
         self.__without_fences = None  # used by context manager "fenced()"
@@ -263,6 +264,11 @@ class Track:  # pylint: disable=too-many-public-methods
     def _uncache_gpx(self):
         """gpx has changed: clear caches."""
         self.__cached_distance = None
+        try:
+            if self.__gpx.tracks[0].segments[0].points[0].time:
+                self.__cached_time = None
+        except IndexError:
+            pass
         for other in self._similarity_others.values():
             del other._similarity_others[id(self)]
             # TODO: unittest where other does not exist anymore
@@ -340,13 +346,18 @@ class Track:  # pylint: disable=too-many-public-methods
         by their time.
 
         """
-        if 'time' in self._header_data:
-            return self._header_data['time']
-        self._load_full()
-        try:
-            return next(self.points()).time
-        except StopIteration:
-            pass
+        if self.__cached_time is None:
+            try:
+                self.__cached_time = next(self.points()).time
+            except StopIteration:
+                pass
+        return self.__cached_time
+
+    def _set_time(self, value):
+        """Not a property setter because setting should only be possible internally.
+        By the backends.
+        """
+        self.__cached_time = value
 
     def distance(self) ->float:
         """For me, the earth is flat.
@@ -546,6 +557,7 @@ class Track:  # pylint: disable=too-many-public-methods
     def __finalize_load(self):
         """Track is now fully loaded. Resolve header data."""
         self.__cached_distance = None
+        self.__cached_time = None
         self._loaded = True
 
     def __resolve_header_data(self):

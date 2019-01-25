@@ -165,7 +165,7 @@ class WPTrackserver(Backend):
 
     def _enrich_with_headers(self, track, row):
         """Get header values out of row."""
-        track._header_data['time'] = row[1]
+        track._set_time(row[1])
         track.title = row[2]
         self._decode_description(track, row[3].replace('\r', ''))
         track._set_distance(row[4] / 1000.0)
