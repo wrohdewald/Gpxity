@@ -754,7 +754,8 @@ class TrackTests(BasicTest):
             accounts = (
                 directory.account,
                 Account(fences=None),  # Directory
-                Account(fences=' '.join("{}/{}/{}".format(x.latitude, x.longitude, 500) for x in random.sample(points, 3))),
+                Account(fences=' '.join("{}/{}/{}".format(
+                    x.latitude, x.longitude, 500) for x in random.sample(points, 3))),
                 )
             for account in accounts:
                 fences = account.fences
