@@ -348,6 +348,23 @@ class Track:  # pylint: disable=too-many-public-methods
         except StopIteration:
             pass
 
+    def distance(self) ->float:
+        """For me, the earth is flat.
+
+        Returns:
+            the distance in km, rounded to m. 0.0 if not computable.  # TODO: needs unittest
+
+        """
+        if self.__cached_distance is None:
+            self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
+        return self.__cached_distance or 0.0
+
+    def _set_distance(self, value):
+        """This is not a property setter because setting should only be possible internally.
+        By the backends.
+        """
+        self.__cached_distance = value
+
     @property
     def title(self) -> str:
         """str: The title.
@@ -1060,23 +1077,6 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         return self.key() < other.key()
-
-    def distance(self) ->float:
-        """For me, the earth is flat.
-
-        Returns:
-            the distance in km, rounded to m. 0.0 if not computable.  # TODO: needs unittest
-
-        """
-        if self.__cached_distance is None:
-            self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
-        return self.__cached_distance or 0.0
-
-    def _set_distance(self, value):
-        """Not a property setter because setting should only be possible internally.
-        By the backends.
-        """
-        self.__cached_distance = value
 
     def angle(self, precision=None) ->float:
         """For me, the earth is flat.
