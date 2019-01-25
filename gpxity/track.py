@@ -281,7 +281,7 @@ class Track:  # pylint: disable=too-many-public-methods
             ~gpxity.track.Track: the new track
 
         """
-        self.__resolve_header_data()
+        self._load_full()
         result = Track(gpx=self.gpx.clone())
         result.category = self.category
         result.public = self.public
@@ -364,7 +364,7 @@ class Track:  # pylint: disable=too-many-public-methods
     @title.setter
     def title(self, value: str):
         """see getter."""
-        if value != self.__gpx.name:
+        if value != self.title:
             self._load_full()
             self.__gpx.name = value
             self._dirty = 'title'
@@ -385,7 +385,7 @@ class Track:  # pylint: disable=too-many-public-methods
     @description.setter
     def description(self, value: str):
         """see getter."""
-        if value != self.__gpx.description:
+        if value != self.description:
             self._load_full()
             self.__gpx.description = value
             self._dirty = 'description'
@@ -480,7 +480,7 @@ class Track:  # pylint: disable=too-many-public-methods
             The current value or the default value (see :attr:`categories`)
 
         """
-        if not self._loaded and 'category' in self._header_data:
+        if 'category' in self._header_data:
             return self._header_data['category']
         self._load_full()
         return self.__category or self.__default_category()
@@ -500,9 +500,9 @@ class Track:  # pylint: disable=too-many-public-methods
         """see getter."""
         if value is None:
             value = self.__default_category()
-        if value != self.__category:
-            if value not in self.categories:
-                raise Exception('Category {} is not known'.format(value))
+        if value not in self.categories:
+            raise Exception('Category {} is not known'.format(value))
+        if value != self.category:
             self._load_full()
             self.__category = value
             self._dirty = 'category'
@@ -1663,7 +1663,10 @@ class Track:  # pylint: disable=too-many-public-methods
     @ids.setter
     def ids(self, value):
         """Setter for ids."""
-        self.__ids = self.__clean_ids(value)
+        cleaned = self.__clean_ids(value)
+        if cleaned != self.ids:
+            self._load_full()
+            self.__ids = cleaned
 
     @staticmethod
     def __clean_ids(original):
