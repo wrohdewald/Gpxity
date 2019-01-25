@@ -181,8 +181,8 @@ class Account:
         name: The name of the account. Must exist in the accounts file.
         filename: Name of the accounts file. Default is Account.path
 
-        Alternatively, if both name and file are None, **kwargs is used as
-        source instead of the entry in the accounts file.
+    Alternatively, if both name and file are None, :literal:`**kwargs` is used as
+    source instead of the entry in the accounts file.
 
     Attributes:
         path: Default value for the accounts file

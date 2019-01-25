@@ -135,8 +135,8 @@ class BasicTest(unittest.TestCase):
             idx: See above. Using 0 as default if not given.
             category: The wanted value for the track.
                 Default: if count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
-                the default value will be cls_.supported_categories[idx].
-                Otherwise a random value from cls_.supported_categories will be applied.
+                the default value will be backend_class.supported_categories[idx].
+                Otherwise a random value from backend_class.supported_categories will be applied.
             public: should the tracks be public or private?
             start_time: If given, assign it to the first point and adjust all following times
             end_time: explicit time for the last point. If None: See above.
