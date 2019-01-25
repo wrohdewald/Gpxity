@@ -436,7 +436,7 @@ class Backend(BackendBase):
         raise NotImplementedError()
 
     def _read_all_decoupled(self, track) ->None:
-        """Decouple and calls the backend specific _read_all."""
+        """Decouple and call the backend specific _read_all."""
         with self._decouple():
             self._read_all(track)
 
