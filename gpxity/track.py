@@ -600,18 +600,16 @@ class Track:  # pylint: disable=too-many-public-methods
                 value = ':'.join(_[1:])
                 if what == 'Category':
                     self.category = self.__decode_category(value)
+                elif what == 'Status':
+                    self.public = value == 'public'
                 else:
                     if into_header_data:
-                        if what == 'Status':
-                            self._header_data['public'] = value == 'public'
-                        elif what == 'Id':
+                        if what == 'Id':
                             ids.append(value)
                         else:
                             gpx_keywords.append(keyword)
                     else:
-                        if what == 'Status':
-                            self.__public = value == 'public'
-                        elif what == 'Id':
+                        if what == 'Id':
                             _ = value.split('/')
                             backend_name = '/'.join(_[:-1])
                             if backend_name == '':
