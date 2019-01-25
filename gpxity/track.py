@@ -602,21 +602,13 @@ class Track:  # pylint: disable=too-many-public-methods
                     self.category = self.__decode_category(value)
                 elif what == 'Status':
                     self.public = value == 'public'
+                elif what == 'Id':
+                    ids.append(value)
                 else:
                     if into_header_data:
-                        if what == 'Id':
-                            ids.append(value)
-                        else:
-                            gpx_keywords.append(keyword)
+                        gpx_keywords.append(keyword)
                     else:
-                        if what == 'Id':
-                            _ = value.split('/')
-                            backend_name = '/'.join(_[:-1])
-                            if backend_name == '':
-                                backend_name = '.'
-                            ids.append(value)
-                        else:
-                            gpx_keywords.append(keyword)
+                        gpx_keywords.append(keyword)
         gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
         if into_header_data:
             self._header_data['keywords'] = sorted(gpx_keywords)

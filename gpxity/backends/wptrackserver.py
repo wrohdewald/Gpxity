@@ -149,7 +149,6 @@ class WPTrackserver(Backend):
         """
         if self._keywords_marker in value:
             descr, raw_keywords = value.split(self._keywords_marker)
-            # not into_header_data! because _read_all only delivers points
             track._decode_keywords(raw_keywords)
         else:
             descr = value
