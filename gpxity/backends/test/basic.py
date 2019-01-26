@@ -30,6 +30,7 @@ from gpxpy.gpx import GPXTrackPoint
 from ... import Track, Backend, Account
 from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner
 from ...util import remove_directory
+from ...gpx import Gpx
 
 # pylint: disable=attribute-defined-outside-init,protected-access
 
@@ -112,7 +113,7 @@ class BasicTest(unittest.TestCase):
             raise Exception('MMTTests needs a GPX file named {}.gpx for testing in {}'.format(
                 name, os.getcwd()))
         filename = '{}.gpx'.format(name)
-        result = Track(gpx=gpxpy.parse(io.StringIO(get_data(__package__, filename).decode('utf-8'))))
+        result = Track(gpx=Gpx.parse(io.StringIO(get_data(__package__, filename).decode('utf-8'))))
         if backend_cls:
             result.category = backend_cls.decode_category(random.choice(backend_cls.supported_categories))
         return result
@@ -148,7 +149,7 @@ class BasicTest(unittest.TestCase):
         # pylint: disable=too-many-locals
         result = cls._get_track_from_test_file('test')
         if start_time is not None:
-            result.adjust_time(start_time - result.time)
+            result.adjust_time(start_time - result.first_time)
         last_point = result.last_point()
         if end_time is None:
             end_time = result.last_time + datetime.timedelta(hours=10, seconds=idx)
@@ -160,7 +161,7 @@ class BasicTest(unittest.TestCase):
 
         # now set all times such that they are in order with this track and do not overlap
         # with other test tracks
-        _ = result.time
+        _ = result.first_time
         duration = new_point.time - _ + datetime.timedelta(seconds=10)
         for point in result.gpx.walk(only_points=True):
             point.time += duration * idx

@@ -150,8 +150,8 @@ class TestBackends(BasicTest):
             Returns:
                 None if match else an error message
             """
-            if track.time < datetime.datetime(year=2016, month=9, day=5):
-                return 'time {} is before {}'.format(track.time, '2016-09-05')
+            if track.first_time < datetime.datetime(year=2016, month=9, day=5):
+                return 'time {} is before {}'.format(track.first_time, '2016-09-05')
             return None
         cls = Directory
         with self.tst_backend(cls):
@@ -166,12 +166,12 @@ class TestBackends(BasicTest):
                 with self.assertRaises(cls.NoMatch):
                     backend.add(new_track)
                 self.assertBackendLength(backend, 1)
-                orig_time = backend[0].time
+                orig_time = backend[0].first_time
                 delta = datetime.timedelta(days=-5)
                 with self.assertRaises(cls.NoMatch):
                     backend[0].adjust_time(delta)
                 self.assertBackendLength(backend, 1)
-                self.assertEqual(orig_time + delta, backend[0].time)
+                self.assertEqual(orig_time + delta, backend[0].first_time)
 
     def test_z9_create_backend(self):
         """Test creation of a backend."""

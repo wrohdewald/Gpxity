@@ -8,37 +8,25 @@
 
 # pylint: disable=protected-access
 
-from math import asin, sqrt, degrees
 import datetime
-from contextlib import contextmanager
 from functools import total_ordering
+from contextlib import contextmanager
 import weakref
 from copy import deepcopy
 import logging
 
-# This code would speed up parsing GPX by about 30%. When doing
-# that, GPX will only return str instead of datetime for times.
-#
-# import gpxpy.gpxfield as mod_gpxfield
-# mod_gpxfield.TIME_TYPE=None
-
 # pylint: disable=too-many-lines
 
 from gpxpy import gpx as mod_gpx
-from gpxpy import parse as gpxpy_parse
-from gpxpy.geo import length as gpx_length, Location
 from gpxpy.geo import simplify_polyline
 
+from .gpx import Gpx
 from .backend_base import BackendBase
-from .util import repr_timespan, uniq, positions_equal
+from .util import repr_timespan
 
-GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
 GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
-
-# see https://github.com/tkrajina/gpxpy/issues/150
-Location.__hash__ = lambda x: int(x.latitude * 1000) + int(x.longitude * 1000) + int(x.elevation * 10)  # noqa
 
 
 __all__ = ['Track']
@@ -80,7 +68,7 @@ class Track:  # pylint: disable=too-many-public-methods
     those tracks may be much faster if you do not want everything listed.
 
     Args:
-        gpx (GPX): Initial content. To be used if you create a new Track from scratch without
+        gpx (Gpx): Initial content. Can be used if you create a new Track from scratch without
             loading it from some backend.
 
     Attributes:
@@ -129,7 +117,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self.__backend = None
         self._loaded = False
         self._header_data = dict()  # only for internal use because we clear data on _full_load()
-        self.__gpx = gpx or GPX()  # we need __gpx: backend.add(Track()) would fail in to_xml()
+        self.__gpx = gpx or Gpx()  # we need __gpx: backend.add(Track()) would fail in to_xml()
         self.__backend = None
         self.__cached_distance = None
         self.__cached_time = None
@@ -331,7 +319,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self.backend.remove(self.id_in_backend)
 
     @property
-    def time(self) ->datetime.datetime:
+    def first_time(self) ->datetime.datetime:
         """datetime.datetime: start time of track.
 
         For a simpler implementation of backends, notably :class:`~gpxity.backends.mmt.MMT`
@@ -347,10 +335,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         if self.__cached_time is None:
-            try:
-                self.__cached_time = next(self.points()).time
-            except StopIteration:
-                pass
+            self.__cached_time = self.gpx.first_time
         return self.__cached_time
 
     def _set_time(self, value):
@@ -363,15 +348,15 @@ class Track:  # pylint: disable=too-many-public-methods
         """For me, the earth is flat.
 
         Returns:
-            the distance in km, rounded to m. 0.0 if not computable.  # TODO: needs unittest
+            the distance in km, rounded to m. 0.0 if not computable.
 
         """
         if self.__cached_distance is None:
-            self.__cached_distance = round(gpx_length(list(self.points())) / 1000, 3)
-        return self.__cached_distance or 0.0
+            self.__cached_distance = self.gpx.distance()
+        return self.__cached_distance
 
     def _set_distance(self, value):
-        """This is not a property setter because setting should only be possible internally.
+        """Not a property setter because setting should only be possible internally.
         By the backends.
         """
         self.__cached_distance = value
@@ -576,7 +561,7 @@ class Track:  # pylint: disable=too-many-public-methods
             self._header_data.clear()
 
     def add_points(self, points) ->None:
-        """Add points to last segment in the last track.
+        """Round and add points to last segment in the last track.
 
         If no track is allocated yet and points is not an empty list, allocates a track.
 
@@ -585,22 +570,9 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         if points:
-            self._add_points(points)
-            self._dirty = 'gpx'
-
-    def _add_points(self, points):
-        """Just add without setting dirty."""
-        if points:
-            if self.__gpx.tracks:
-                # make sure the same points are not added twice
-                _ = self.__gpx.tracks[-1].segments[-1]
-                assert points != _.points[-len(points):]
-            self._load_full()
-            if not self.__gpx.tracks:
-                self.__gpx.tracks.append(GPXTrack())
-                self.__gpx.tracks[0].segments.append(GPXTrackSegment())
             self._round_points(points)
-            self.__gpx.tracks[-1].segments[-1].points.extend(points)
+            self.gpx.add_points(points)
+            self._dirty = 'gpx'
 
     def __decode_category(self, value) -> str:
         """Helper for _decode_keywords.
@@ -679,7 +651,7 @@ class Track:  # pylint: disable=too-many-public-methods
             old_description = self.description
             old_public = self.public
             try:
-                self.__gpx = gpxpy_parse(indata)
+                self.__gpx = Gpx.parse(indata)
             except GPXXMLSyntaxException as exc:
                 self.backend.logger.error(
                     '%s: Track %s has illegal GPX XML: %s', self.backend, self.id_in_backend, exc)
@@ -694,24 +666,14 @@ class Track:  # pylint: disable=too-many-public-methods
             self._round_points(self.points())
         self._header_data = dict()
         self.__finalize_load()
-        self.__workaround_for_gpxpy_issue_140()
-
-    def __workaround_for_gpxpy_issue_140(self):
-        """Remove empty track extension elements.
-
-        Maybe we have to do that for other extension elements too.
-        But I hope gpxity can soon enough depend on a fixed stable
-        version of gpxpy.
-
-        """
-        for track in self.gpx.tracks:
-            track.extensions = [x for x in track.extensions if len(x) or x.text is not None]
 
     @staticmethod
     def _round_points(points):
         """Round points to 6 decimal digits because some backends may cut last digits.
 
         Gpsies truncates to 7 digits. The points are rounded in place!
+
+        # TODO: use backend.precision
 
         Args:
             points (list(GPXTrackPoint): The points to be rounded
@@ -731,24 +693,7 @@ class Track:  # pylint: disable=too-many-public-methods
         old_keywords = self.__gpx.keywords
         try:
             self.__gpx.keywords = self._encode_keywords()
-
             result = self.__gpx.to_xml()
-            result = result.replace('</trkpt><', '</trkpt>\n<')
-            result = result.replace('<copyright ></copyright>', '')   # gpxviewer does not accept such illegal xml
-            result = result.replace('<link ></link>', '')
-            result = result.replace('<author>\n</author>\n', '')
-            result = result.replace('\n</trkpt>', '</trkpt>')
-            result = result.replace('>\n<ele>', '><ele>')
-            result = result.replace('>\n<time>', '><time>')
-            result = result.replace('</ele>\n<time>', '</ele><time>')
-            result = result.replace('.0</ele>', '</ele>')  # this could differ depending on the source
-            # for newer gpxpy 1.3.3 which indents the xml:
-            result = result.replace('\n      </trkpt>', '</trkpt>')
-            result = result.replace('>\n        <ele>', '><ele>')
-            result = result.replace('>\n        <time>', '><time>')
-            result = result.replace('\n\n', '\n')
-            if not result.endswith('\n'):
-                result += '\n'
         finally:
             self.__gpx.keywords = old_keywords
         return result
@@ -780,14 +725,14 @@ class Track:  # pylint: disable=too-many-public-methods
             self._dirty = 'public'
 
     @property
-    def gpx(self) ->GPX:
+    def gpx(self) ->Gpx:
         """
-        Direct access to the GPX object.
+        Direct access to the Gpx object.
 
         If you use it to change its content, remember to call :meth:`rewrite` afterwards.
 
         Returns:
-            the GPX object
+            the Gpx object
 
         """
         self._load_full()
@@ -798,10 +743,10 @@ class Track:  # pylint: disable=too-many-public-methods
         """The last time we received.
 
         Returns:
+            The last time we received so far. If none, return None.
 
-            The last time we received so far. If none, return None."""
-        _ = self.last_point()
-        return _.time if _ else None
+        """
+        return self.gpx.last_time
 
     @property
     def keywords(self):
@@ -943,14 +888,7 @@ class Track:  # pylint: disable=too-many-public-methods
             The speed
 
         """
-        time_range = (self.time, self.last_time)
-        if time_range[0] is None or time_range[1] is None:
-            return 0.0
-        duration = time_range[1] - time_range[0]
-        seconds = duration.days * 24 * 3600 + duration.seconds
-        if seconds:
-            return self.distance() / seconds * 3600
-        return 0.0
+        return self.gpx.speed()
 
     def moving_speed(self) ->float:
         """Speed for time in motion in km/h.
@@ -959,10 +897,7 @@ class Track:  # pylint: disable=too-many-public-methods
             The moving speed
 
         """
-        bounds = self.gpx.get_moving_data()
-        if bounds.moving_time:
-            return bounds.moving_distance / bounds.moving_time * 3.6
-        return 0.0
+        return self.gpx.moving_speed()
 
     def warnings(self):
         """Return a list of strings with easy to find problems."""
@@ -1000,10 +935,10 @@ class Track:  # pylint: disable=too-many-public-methods
                     parts.append(','.join(self.keywords))
                 if self.title:
                     parts.append(self.title)
-                if self.time and self.last_time:
-                    parts.append(repr_timespan(self.time, self.last_time))
-                elif self.time:
-                    parts.append(str(self.time))
+                if self.first_time and self.last_time:
+                    parts.append(repr_timespan(self.first_time, self.last_time))
+                elif self.first_time:
+                    parts.append(str(self.first_time))
                 if self.distance():
                     parts.append('{:4.2f}km'.format(self.distance()))
             return '{}({})'.format(str(self), ' '.join(parts))
@@ -1045,7 +980,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         ident = self.id_in_backend
         if not ident:
-            ident = '"{}" time={} id={}'.format(self.title or 'untitled', self.time, id(self))
+            ident = '"{}" time={} id={}'.format(self.title or 'untitled', self.first_time, id(self))
         return self.identifier(self.backend, ident)
 
     def key(self, with_category: bool = True, with_last_time: bool = True, precision=None) ->str:
@@ -1101,27 +1036,7 @@ class Track:  # pylint: disable=too-many-public-methods
             If we have no track, return 0
 
         """
-        try:
-            first_point = next(self.points())
-        except StopIteration:
-            return 0
-        last_point = self.last_point()
-        if precision is None:
-            if self.backend is None:
-                precision = 6
-            else:
-                precision = self.backend.point_precision
-        delta_lat = round(first_point.latitude, precision) - round(last_point.latitude, precision)
-        delta_long = round(first_point.longitude, precision) - round(last_point.longitude, precision)
-        norm_lat = delta_lat / 90.0
-        norm_long = delta_long / 180.0
-        try:
-            result = degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long ** 2)))
-        except ZeroDivisionError:
-            return 0
-        if norm_lat >= 0.0:
-            return (360.0 + result) % 360.0
-        return 180.0 - result
+        return self.gpx.angle(precision)
 
     def segments(self):
         """
@@ -1131,10 +1046,8 @@ class Track:  # pylint: disable=too-many-public-methods
             GPXTrackSegment: all segments in all tracks
 
         """
-        self._load_full()
-        for track in self.__gpx.tracks:
-            for segment in track.segments:
-                yield segment
+        for _ in self.gpx.segments():
+            yield _
 
     def points(self):
         """
@@ -1144,9 +1057,8 @@ class Track:  # pylint: disable=too-many-public-methods
             GPXTrackPoint: all points in all tracks and segments
 
         """
-        for segment in self.segments():
-            for point in segment.points:
-                yield point
+        for _ in self.gpx.points():
+            yield _
 
     def point_list(self):
         """A flat list with all points.
@@ -1160,22 +1072,11 @@ class Track:  # pylint: disable=too-many-public-methods
     def last_point(self):
         """Return the last point of the track. None if none."""
         # TODO: unittest for track without __gpx or without points
-        try:
-            return self.gpx.tracks[-1].segments[-1].points[-1]
-        except IndexError:
-            return None
+        return self.gpx.last_point()
 
     def adjust_time(self, delta):
-        """Add a timedelta to all times.
-
-        gpxpy.gpx.adjust_time does the same but it ignores waypoints.
-        A newer gpxpy.py has a new bool arg for adjust_time which
-        also adjusts waypoints on request but I do not want to check versions.
-
-        """
+        """Add a timedelta to all times."""
         self.gpx.adjust_time(delta)
-        for wpt in self.gpx.waypoints:
-            wpt.time += delta
         self._dirty = 'gpx'
 
     def points_hash(self) -> float:
@@ -1187,22 +1088,7 @@ class Track:  # pylint: disable=too-many-public-methods
             The hash
 
         """
-        self._load_full()
-        result = 1.0
-        for point in self.points():
-            if point.longitude:
-                result *= point.longitude
-            if point.latitude:
-                result *= point.latitude
-            if point.elevation:
-                result *= point.elevation
-            _ = point.time
-            if _:
-                result *= (_.hour + 1)
-                result *= (_.minute + 1)
-                result *= (_.second + 1)
-            result %= 1e20
-        return result
+        return self.gpx.points_hash()
 
     def points_equal(self, other, digits=4) ->bool:
         """
@@ -1217,14 +1103,7 @@ class Track:  # pylint: disable=too-many-public-methods
         All points of all tracks and segments are combined. Elevations are ignored.
 
         """
-        # We do not use points_hash because we want to abort as soon as we know
-        # they are different.
-        if self.gpx.get_track_points_no() != other.gpx.get_track_points_no():
-            return False
-        for _, (point1, point2) in enumerate(zip(self.points(), other.points())):
-            if not positions_equal(point1, point2, digits):
-                return False
-        return True
+        return self.gpx.points_equal(other.gpx, digits)
 
     def index(self, other, digits=4):
         """Check if this track contains other track.gpx.
@@ -1241,15 +1120,7 @@ class Track:  # pylint: disable=too-many-public-methods
             None or the starting index for other.points in self.points
 
         """
-        self_points = self.point_list()
-        other_points = other.point_list()
-        for self_idx in range(len(self_points) - len(other_points) + 1):
-            for other_idx, other_point in enumerate(other_points):
-                if not positions_equal(self_points[self_idx + other_idx], other_point, digits):
-                    break
-            else:
-                return self_idx
-        return None
+        return self.gpx.index(other.gpx, digits)
 
     @staticmethod
     def overlapping_times(tracks):
@@ -1263,18 +1134,18 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         previous = None
         group = list()  # Track is  mutable, so a set is no possible
-        for current in sorted(tracks, key=lambda x: x.time):
-            if previous and current.time <= previous.last_time:
+        for current in sorted(tracks, key=lambda x: x.first_time):
+            if previous and current.first_time <= previous.last_time:
                 if previous not in group:
                     group.append(previous)
                 group.append(current)
             else:
                 if group:
-                    yield sorted(group, key=lambda x: x.time)
+                    yield sorted(group, key=lambda x: x.first_time)
                     group = list()
             previous = current
         if group:
-            yield sorted(group, key=lambda x: x.time)
+            yield sorted(group, key=lambda x: x.first_time)
 
     def _has_default_title(self) ->bool:
         """Try to check if track has the default title given by a backend.
@@ -1467,19 +1338,6 @@ class Track:  # pylint: disable=too-many-public-methods
                 other.remove()
         return msg
 
-    @staticmethod
-    def __time_diff(last_point, point):
-        """Return difference in seconds, ignoring the date."""
-        result = abs(last_point.hhmmss - point.hhmmss)
-        if result > 33200:  # seconds in 12 hours
-            result = 86400 - result
-        return result
-
-    @staticmethod
-    def __point_is_near(last_point, point, delta_meter):
-        """Return True if distance < delta_meter."""
-        return abs(last_point.distance_2d(point)) < delta_meter
-
     def fix(self, orux: bool = False, jumps: bool = False):
         """Fix bugs. This may fix them or produce more bugs.
 
@@ -1495,99 +1353,13 @@ class Track:  # pylint: disable=too-many-public-methods
             A list of message strings, usable for verbose output.
 
             """
-        self._load_full()
         if orux:
-            self.__fix_orux()
+            if self.gpx.fix_orux():
+                self._dirty = 'gpx'
         if jumps:
-            self.__fix_jumps()
+            if self.gpx.fix_jumps():
+                self._dirty = 'gpx'
         return []
-
-    def __fix_jumps(self):  # noqa pylint: disable=too-many-branches
-        """Split segments at jumps.
-
-        Whenever the time jumps back or more than 30
-        minutes into the future or the distance exceeds 5km,
-
-        split the segment at that point."""
-        did_break = False
-        new_tracks = list()
-        for track in self.gpx.tracks:
-            new_segments = list()
-            for segment in track.segments:
-                if not segment.points:
-                    did_break = True  # sort of - but also needs a rewrite
-                    continue
-                new_segment = GPXTrackSegment()
-                new_segment.points.append(segment.points[0])
-                for point in segment.points[1:]:
-                    prev_point = new_segment.points[-1]
-                    needs_break = False
-                    if point.time is None and prev_point.time is not None:
-                        needs_break = True
-                    elif point.time is None and prev_point.time is None:
-                        if point.distance_2d(prev_point) > 5000:
-                            needs_break = True
-                    elif point.time is not None and prev_point.time is None:
-                        needs_break = True
-                    elif point.time - prev_point.time > datetime.timedelta(minutes=30):
-                        needs_break = True
-                    elif point.time < prev_point.time:
-                        needs_break = True
-                    elif point.distance_2d(prev_point) > 5000:
-                        needs_break = True
-                    if needs_break:
-                        did_break = True
-                        new_segments.append(new_segment)
-                        new_segment = GPXTrackSegment()
-                    new_segment.points.append(point)
-                new_segments.append(new_segment)
-            new_track = GPXTrack()
-            new_track.segments.extend(new_segments)
-            new_tracks.append(new_track)
-        if did_break:
-            self.gpx.tracks = new_tracks
-            self._dirty = 'gpx'
-
-    def __fix_orux(self):
-        """Try to fix Oruxmaps problems.
-
-        1. the 24h bugs
-
-        """
-        all_points = list(uniq(self.points()))
-        for _ in all_points:
-            _.hhmmss = _.time.hour * 3600.0 + _.time.minute * 60
-            _.hhmmss += _.time.second + _.time.microsecond / 1000000
-        new_points = list([all_points.pop(0)])
-        while all_points:
-            last_point = new_points[-1]
-            near_points = [x for x in all_points if self.__point_is_near(last_point, x, 10000)]
-            if not near_points:
-                near_points = all_points[:]
-            nearest = min(near_points, key=lambda x: Track.__time_diff(last_point, x))
-            new_points.append(nearest)
-            all_points.remove(nearest)
-
-        day_offset = 0
-        point1 = None
-        for point in new_points:
-            if point1 is None:
-                point1 = point
-            else:
-                point2 = point
-                if point1.time - point2.time > datetime.timedelta(days=day_offset, hours=23):
-                    day_offset += 1
-                if day_offset:
-                    point2.time += datetime.timedelta(days=day_offset)
-                point1 = point2
-
-        segment = GPXTrackSegment()
-        segment.points.extend(new_points)
-
-        self.__gpx.tracks = list()
-        self.__gpx.tracks.append(GPXTrack())
-        self.__gpx.tracks[0].segments.append(segment)
-        self._dirty = 'gpx'
 
     def __similarity_to(self, other):
         """Return a float 0..1: 1 is identity."""
@@ -1625,18 +1397,7 @@ class Track:  # pylint: disable=too-many-public-methods
     def time_offset(self, other):
         """If time and last_time have the same offset between both tracks, return that time difference.
         Otherwise return None."""
-        def offset(point1, point2):
-            """Returns the time delta if both points have a time."""
-            if point1.time and point2.time:
-                return point2.time - point1.time
-            return None
-
-        start_time_delta = offset(next(self.points()), next(other.points()))
-        if start_time_delta:
-            end_time_delta = offset(self.last_point(), other.last_point())
-            if start_time_delta == end_time_delta:
-                return start_time_delta
-        return None
+        return self.gpx.time_offset(other.gpx)
 
     @property
     def ids(self):

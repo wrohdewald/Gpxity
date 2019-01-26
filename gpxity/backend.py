@@ -835,7 +835,7 @@ class Backend(BackendBase):
         null_datetime = datetime.datetime(year=1, month=1, day=1)
         groups = self.__find_mergable_groups(other, partial_tracks)
         merge_groups = [x for x in groups if len(x) > 1]
-        merge_groups.sort(key=lambda x: x[0].time or null_datetime)
+        merge_groups.sort(key=lambda x: x[0].first_time or null_datetime)
         if merge_groups:
             result.append('{} mergable groups:'.format(len(merge_groups)))
             for _ in merge_groups:

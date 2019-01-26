@@ -32,7 +32,6 @@ except ImportError:
     pass
 
 from gpxpy import gpx as mod_gpx
-GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
 
@@ -43,6 +42,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
 # pylint: disable=wrong-import-position
 from gpxity import Track, Directory, Backend, BackendDiff, Locate
 from gpxity.util import uniq, collect_tracks, pairs
+from gpxity.gpx import Gpx
 
 def __last_month_day(date):
     """Change to the last day of month"""
@@ -258,7 +258,7 @@ class SegmentRow(LsRow):
     def __init__(self, segment):
         gpx_track = GPXTrack()
         gpx_track.segments.append(segment)
-        gpx_data = GPX()
+        gpx_data = Gpx()
         gpx_data.tracks.append(gpx_track)
         seg_track = Track(gpx_data)
         super(SegmentRow, self).__init__(seg_track)
@@ -543,8 +543,8 @@ class Utility:
         elif mainsort == 'keywords' and track.keywords:
             for _ in track.keywords:
                 yield _
-        elif mainsort == 'time' and track.time:
-            yield '{:4}-{:02}'.format(track.time.year, track.time.month)
+        elif mainsort == 'time' and track.first_time:
+            yield '{:4}-{:02}'.format(track.first_time.year, track.first_time.month)
         elif mainsort == 'status':
             yield 'public' if track.public else 'private'
         else:
@@ -565,7 +565,7 @@ class Utility:
         list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.gpxdo_identifier),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
-            (self.options.time, 'Time', lambda x: x.time, '{}', datetime.datetime),
+            (self.options.time, 'Time', lambda x: x.first_time, '{}', datetime.datetime),
             (self.options.category, 'Category', lambda x: x.category),
             (self.options.ids, 'Ids', lambda x: ','.join(x.ids)),
             (self.options.keywords, 'Keywords', lambda x: ','.join(x.keywords)),
@@ -574,7 +574,7 @@ class Utility:
             (self.options.status, 'Status', lambda x: 'public' if x.public else 'private'),
             (self.options.description, 'Description', lambda x: x.description),
             (self.options.duration, 'Duration',
-             lambda x: x.last_time - x.time if x.time and x.last_time
+             lambda x: x.last_time - x.first_time if x.first_time and x.last_time
              else datetime.timedelta(), 'duration', datetime.timedelta),
             (self.options.speed, 'Speed', lambda x: x.speed(), '{:>5.2f}km/h', float),
             (self.options.moving_speed, 'Moving speed', lambda x: x.moving_speed(), '{:>5.2f}km/h', float),
@@ -693,8 +693,8 @@ class Utility:
             elif self.options.id_from_account:
                 self._fix_id_from_account(fix_track)
             elif self.options.id_from_time:
-                if fix_track.time:
-                    fix_track.id_in_backend = str(fix_track.time).replace(' ', '_')
+                if fix_track.first_time:
+                    fix_track.id_in_backend = str(fix_track.first_time).replace(' ', '_')
             result_lines.extend(fix_track.fix(orux=self.options.orux, jumps=self.options.jumps))
             if self.options.add_minutes:
                 fix_track.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
@@ -829,12 +829,12 @@ class Utility:
         """Check against the selecting options. Does cheap check first."""
         # pylint: disable=too-many-return-statements, too-many-branches
         if self.options.first_date or self.options.last_date:
-            if track.time:
-                if self.options.first_date and track.time < self.options.first_date:
-                    return 'time {} is before {}'.format(track.time, self.options.first_date)
+            if track.first_time:
+                if self.options.first_date and track.first_time < self.options.first_date:
+                    return 'time {} is before {}'.format(track.first_time, self.options.first_date)
                 if self.options.last_date:
-                    if self.options.last_date.date() and track.time.date() > self.options.last_date.date():
-                        return 'time {} is after {}'.format(track.time, self.options.last_date)
+                    if self.options.last_date.date() and track.first_time.date() > self.options.last_date.date():
+                        return 'time {} is after {}'.format(track.first_time, self.options.last_date)
             else:
                 return 'has no time'
         if self.options.min_distance and track.distance() < self.options.min_distance:

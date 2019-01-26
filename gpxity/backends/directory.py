@@ -380,7 +380,7 @@ class Directory(Backend):
     def _set_filetime(self, track):
         """Set the file modification time to track start time.
         If the track has no start time, do nothing."""
-        time = track.time
+        time = track.first_time
         if time:
             _ = self.gpx_path(track.id_in_backend)
             os.utime(_, (time.timestamp(), time.timestamp()))

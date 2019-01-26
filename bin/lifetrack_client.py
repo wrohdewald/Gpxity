@@ -26,7 +26,6 @@ except ImportError:
     pass
 
 from gpxpy import gpx as mod_gpx
-GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
 

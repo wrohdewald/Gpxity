@@ -222,7 +222,7 @@ class WPTrackserver(Backend):
         description = self._encode_description(track)
         title = track.title[:self._max_length['title']]
         # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
-        track_time = track.time or datetime.datetime(year=1970, month=1, day=3, hour=1)
+        track_time = track.first_time or datetime.datetime(year=1970, month=1, day=3, hour=1)
         track_distance = track.distance() * 1000
         cursor = self._db.cursor()
         if self.__needs_insert(cursor, track.id_in_backend):
