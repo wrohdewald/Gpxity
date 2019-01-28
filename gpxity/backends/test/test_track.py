@@ -669,7 +669,7 @@ class TrackTests(BasicTest):
     def test_all_backend_classes(self):
         """Test Backend.all_backend_classes."""
         all_classes = [x.__name__ for x in Backend.all_backend_classes()]
-        expected = [Directory, GPSIES, Mailer, MMT, Openrunner, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, MMT, Mailer, Openrunner, TrackMMT, WPTrackserver]
         expected = [x.__name__ for x in expected if not x.is_disabled()]
         self.assertEqual(all_classes, expected)
 
