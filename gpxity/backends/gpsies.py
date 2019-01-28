@@ -21,6 +21,7 @@ from collections import defaultdict
 import requests
 
 from .. import Backend
+from ..gpx import Gpx
 
 __all__ = ['GPSIES']
 
@@ -391,14 +392,16 @@ class GPSIES(Backend):
             response = self.__post('userList', data=data)
             page_parser.feed(response.text)
         for raw_data in page_parser.result['tracks']:
-            track = self._found_track(raw_data.track_id)
-            track.title = raw_data.title
-            track._set_time(raw_data.time)
-            if raw_data.distance:
-                track._set_distance(raw_data.distance)
-            track._header_data['public'] = raw_data.public
+            gpx = Gpx()
+            gpx.name = raw_data.title
+            gpx.time = raw_data.time
+            public = raw_data.public
             if str(self) not in self._session:  # anonymous, no login
-                track.public = True
+                public = True
+            gpx.keywords = 'Status:{}, Category:{}'.format('public' if public else 'private', Gpx.undefined_str)
+            track = self._found_track(raw_data.track_id, gpx)
+            if raw_data.distance:
+                track.distance = raw_data.distance
 
     def _read_category(self, track):
         """I found no way to download all attributes in one go."""
@@ -407,18 +410,15 @@ class GPSIES(Backend):
         page_parser = ParseGPIESEditPage()
         page_parser.feed(response.text)
         track.category = self.decode_category(page_parser.category)
+        self.logger.debug('GPSIES._read_category: %s -> %s', page_parser.category, track.category)
 
     def _read_all(self, track):
         """get the entire track. For gpies, we only need the gpx file."""
         data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data, track=track)
-        track.parse(response.text)
-        # in Track, the results of a full load override _header_data
-        if 'public' in track._header_data:
-            # _header_data is empty if this is a new track we just wrote
-            _ = track._header_data['public']
-            del track._header_data['public']
-            track.public = _
+        self.logger.debug('GPSIES read_all vor Gpx.parse')
+        track.gpx = Gpx.parse(response.text)
+        self.logger.debug('GPSIES read_all nach Gpx.parse und vor _read_category')
         self._read_category(track)
 
     def _check_response(self, response, track=None):

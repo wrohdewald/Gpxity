@@ -12,14 +12,14 @@ import os
 import sys
 import datetime
 import tempfile
-import html
 
 from collections import defaultdict
 
-import gpxpy.gpxfield as mod_gpxfield
+from gpxpy.gpx import GPXXMLSyntaxException
 
-from .. import Backend
+from .. import Backend, Track
 from ..util import remove_directory
+from ..gpx import Gpx
 
 __all__ = ['Directory', 'Backup']
 
@@ -76,11 +76,15 @@ class Backup:
 
 class Directory(Backend):
 
-    """Uses a directory for storage. The filename minus the .gpx ending is used as the track id.
+    """Uses a directory for storage.
 
-    If the track has a title but no storage id yet, use the title as storage id.
+    The filename minus the .gpx ending is used
+    as :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>`.
+
+    If the :class:`~gpxity.directory.Directory` has a title but no id_in_backend,
+    use the title as id_in_backend.
     Make the storage id unique by attaching a number if needed.
-    An track without title gets a random name.
+    A track without title gets a random name.
 
     The main directory (given by account.url) will have
     subdirectories YYYY/MM (year/month) with only the tracks for one month.
@@ -275,40 +279,39 @@ class Directory(Backend):
                     return data
         return None
 
-    def _enrich_with_headers(self, track):
-        """Quick scan of file for getting some header fields."""
-        with open(self.gpx_path(track.id_in_backend), encoding='utf8') as raw_file:
+    def _gpx_from_headers(self, ident):
+        """Quick scan of file for getting some header fields.
+
+        We do this by removing <trk></trk>
+
+        Returns: Gpx
+
+        """
+        result = Gpx()
+        with open(self.gpx_path(ident), encoding='utf8') as raw_file:
             data = raw_file.read(100000)
             parts = data.split('<trk>')
             if len(parts) > 1:
-                raw_data = parts[0].split('<extensions')[0]
-                raw_data = raw_data.split('</metadata>')[0]
-                _ = self._get_field(raw_data, 'name')
-                if _ is not None:
-                    track.title = html.unescape(html.unescape(_))
-                _ = self._get_field(raw_data, 'desc')
-                if _ is not None:
-                    track.description = html.unescape(html.unescape(_))
-                _ = self._get_field(raw_data, 'keywords')
-                if _:
-                    track._decode_keywords(_)
-                _ = self._get_field(parts[1], 'time')
-                if _ is not None:
-                    track._set_time(mod_gpxfield.parse_time(_))
+                try:
+                    result = Gpx.parse(parts[0] + '</gpx>')
+                except GPXXMLSyntaxException:
+                    self.logger.info(
+                        '%s: Track metadata cannot be extracted, there is too much',
+                        Track.identifier(self.backend, self.id_in_backend))
+        return result
 
     def _load_track_headers(self):
         """get all tracks for this user."""
         self._symlinks = defaultdict(list)
         self._load_symlinks()
         for _ in self._list_gpx():
-            track = self._found_track(_)
-            self._enrich_with_headers(track)
+            gpx = self._gpx_from_headers(_)
+            self._found_track(_, gpx)
 
     def _read_all(self, track):
         """fill the track with all its data from source."""
-        assert track.id_in_backend
         with open(self.gpx_path(track.id_in_backend), encoding='utf-8') as in_file:
-            track.parse(in_file)
+            track.gpx = Gpx.parse(in_file.read())
 
     def _remove_symlinks(self, ident: str):
         """Remove its symlinks, empty symlink parent directories."""

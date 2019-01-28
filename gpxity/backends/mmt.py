@@ -42,6 +42,7 @@ from collections import defaultdict
 import requests
 
 from .. import Backend
+from ..gpx import Gpx
 from ..version import VERSION
 
 
@@ -605,11 +606,12 @@ class MMT(Backend):
             self.logger.debug('got chunk %s %s', type(chunk), chunk)
             for _ in chunk:
                 raw_data = MMTRawTrack(_)
-                track = self._found_track(raw_data.track_id)
-                track.title = raw_data.title
+                gpx = Gpx()
+                gpx.name = raw_data.title
+                gpx.time = raw_data.time
+                track = self._found_track(raw_data.track_id, gpx)
                 track.category = self.decode_category(raw_data.category)
-                track._set_time(raw_data.time)
-                track._set_distance(raw_data.distance)
+                track.distance = raw_data.distance
             assert self.real_len() > old_len
 
     def _scan_track_page(self, track):
@@ -664,7 +666,7 @@ class MMT(Backend):
             self.url, track.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
         # some tracks download only a few points if mid/uid are not given, but I
         # have not been able to write a unittest triggering that ...
-        track.parse(response.text)
+        track.gpx = Gpx.parse(response.text)
         # but this does not give us track type and other things,
         # get them from the web page.
         self._use_webpage_results(track)
@@ -706,7 +708,6 @@ class MMT(Backend):
         if old_ident:
             self._remove_ident(old_ident)
         track.id_in_backend = new_ident
-        self.logger.debug('%s fully written', track)
         return new_ident
 
     @staticmethod

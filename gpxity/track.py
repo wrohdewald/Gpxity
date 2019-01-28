@@ -45,27 +45,33 @@ class Track:  # pylint: disable=too-many-public-methods
     supported by the GPX format like the MapMyTracks track type, they will
     transparently be encodeded in existing GPX fields like keywords, see :attr:`keywords`.
 
+    If a :class:`~gpxity.backend.Backend` (like :class:`~gpxity.backends.wptrackserver.WPTrackserver`)
+    does not support keywords, the will transparently be encoded in the description.
+
     The GPX part is done by https://github.com/tkrajina/gpxpy.
 
     If a track is assigned to a backend, all changes will by default be written directly to the backend.
     Some backends are able to change only one attribute with little time overhead, others always have
-    to rewrite the entire track.
+    to rewrite the entire track. Assigning a track with :literal:`gpx == None` will raise an Exception.
 
-    However you can use the context manager :meth:`batch_changes`. This holds back updating the backend until
+    You can use the context manager :meth:`batch_changes`. This holds back updating the backend until
     leaving the context.
 
     If you manipulate the gpx directly, this goes unnoticed to the updating mechanism. Use :meth:`rewrite` when done.
 
     Not all backends support everything, you could get the exception NotImplementedError.
 
+    The data will only be loaded from the backend when it is needed. Backends have two ways
+    of loading data: Either load a list of Tracks or load all information about a specific track. Often
+    loading the list of tracks gives us some attributes for free, so listing
+    those tracks may be much faster if you do not want everything listed.
+
+    Absolutely all attributes (like :attr:`title`, :attr:`distance`) are encoded in :attr:`gpx`.
+    However you can always assign values to them even if :attr:`gpx` is None. As soon
+    as :attr:`gpx` is given, it will be updated.
+
     All points are always rounded to 6 decimal digits when they are added to the track.
     However some backends may support less than 6 decimals. You can query Backend.point_precision.
-
-    The data will only be loaded from the backend when it is needed. Some backends
-    might support loading some attributes separately but we do not make use of that.
-    However backends have two ways of loading data: Either load a list of Tracks or load all information
-    about a specific track. Often loading the list of tracks gives us some attributes for free, so listing
-    those tracks may be much faster if you do not want everything listed.
 
     Args:
         gpx (Gpx): Initial content. Can be used if you create a new Track from scratch without
@@ -108,26 +114,60 @@ class Track:  # pylint: disable=too-many-public-methods
 
     def __init__(self, gpx=None):
         """See class docstring."""
+        if gpx is None:
+            gpx = Gpx()
+        assert isinstance(gpx, Gpx)
         self.__dirty = list()
         self._batch_changes = False
-        self.__category = self.categories[0]
-        self.__public = False
-        self.__ids = list()
+        self.__ids = list()  # TODO: remove
         self.__id_in_backend = None
         self.__backend = None
         self._loaded = False
-        self._header_data = dict()  # only for internal use because we clear data on _full_load()
-        self.__gpx = gpx or Gpx()  # we need __gpx: backend.add(Track()) would fail in xml()
+        self.__gpx = None
         self.__backend = None
-        self.__cached_distance = None
         self.__cached_time = None
+        self.__cached_distance = None
+
+        # __header_cache holds all attributes that are set while gpx is None.
+        # After gpx is given, if an attribute is not set in gpx, remove it from __header_cache
+        # and write it into gpx. Do that for all values from __header_cache before writing
+        # to the backend.
+        self.__header_cache = dict()
+
         self._similarity_others = weakref.WeakValueDictionary()
         self._similarities = dict()
         self.__without_fences = None  # used by context manager "fenced()"
-        if gpx:
-            self._decode_keywords(self.__gpx.keywords)
-            self._round_points(self.points())
-            self.__finalize_load()
+        self.gpx = gpx
+
+    def __decode_gpx(self):
+        """Extract attributes from gpx.
+
+        This is done whenever gpx changes.
+
+        We have 3 groups of attributes depending on how often
+        they are needed an how expensive their computation is,
+        in ascending order:
+
+        1. always read from and write to gpx. Examples: title, description
+        2. cache now. Examples: category ??? Wirklich???? Oder nur 1. und 3.?
+        3. lazy: compute and cache only when needed. Examples: distance, time
+            Those are set to None here.
+
+        If an attribute is changed, the full track is always loaded first.
+
+        """
+        self.__gpx.decode()
+
+        # lazy attributes:
+        self.__cached_distance = None
+        self.__cached_time = None
+        self._clear_similarity_cache()
+
+    def __encode_gpx(self):
+        """Put values into gpx. See __decode_gpx."""
+        self.__gpx.encode()
+        if self.backend is not None:
+            self.__gpx.category = self.backend.encode_category(self.__gpx.category)
 
     @property
     def backend(self):
@@ -155,11 +195,8 @@ class Track:  # pylint: disable=too-many-public-methods
         :class:`~gpxity.backends.wptrackserver.WPTrackserver`.
         The others will raise NotImplementedError.
 
-        If the value already exists in the backend, it may make it
-        unique (:class:`~gpxity.backends.directory.Directory` does), or it may raise ValueError.
+        See also :meth:`Backend.add() <gpxity.backend.Backend.add>`.
 
-        Assigning a value illegal for the specific backend will raise
-        ValueError.
 
         Returns:
             the id in the backend
@@ -206,7 +243,8 @@ class Track:  # pylint: disable=too-many-public-methods
             if old_backend is None or old_backend.__class__ != value.__class__:
                 # encode keywords for the new backend
                 # TODO: unittest
-                self.change_keywords(self.__gpx.keywords)
+                self.__gpx.encode()
+                self.change_keywords(self.__gpx.real_keywords)
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`."""
@@ -236,27 +274,18 @@ class Track:  # pylint: disable=too-many-public-methods
         """See dirty.getter."""
         if not isinstance(value, str):
             raise Exception('_dirty only receives str')
-        if value in self._header_data:
-            del self._header_data[value]
         if value == 'gpx':
-            self._uncache_gpx()
+            if self.__without_fences is not None:
+                raise Exception(
+                    '{}: You may not modify gpx while being in the context manager "fenced()"'.format(self))
+            self.__decode_gpx()
         if not self.__is_decoupled:
-            if value == 'gpx':
-                if self.__without_fences is not None:
-                    raise Exception(
-                        '{}: You may not modify gpx while being in the context manager "fenced()"'.format(self))
             self.__dirty.append(value)
             if not self._batch_changes:
                 self._rewrite()
 
-    def _uncache_gpx(self):
-        """gpx has changed: clear caches."""
-        self.__cached_distance = None
-        try:
-            if self.__gpx.tracks[0].segments[0].points[0].time:
-                self.__cached_time = None
-        except IndexError:
-            pass
+    def _clear_similarity_cache(self):
+        """Clear similarities cache, also in the other similar tracks."""
         for other in self._similarity_others.values():
             del other._similarity_others[id(self)]
             # TODO: unittest where other does not exist anymore
@@ -277,9 +306,6 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         self._load_full()
         result = Track(gpx=self.gpx.clone())
-        result.category = self.category
-        result.public = self.public
-        result.__ids = deepcopy(self.__ids)
         if self.backend is not None:
             result.__ids.insert(0, str(self))
         return result
@@ -296,6 +322,8 @@ class Track:  # pylint: disable=too-many-public-methods
         Otherwise the backend will save this track.
 
         """
+        if 'gpx' in self.__dirty:
+            self.__decode_gpx()
         if self.backend is None:
             self._clear_dirty()
         if not self.__dirty:
@@ -305,7 +333,12 @@ class Track:  # pylint: disable=too-many-public-methods
             raise Exception('Rewriting {}: "write" is not supported'.format(self))
         if not self.__is_decoupled and not self._batch_changes:
             with self._decouple():
-                self.backend._rewrite(self, self.__dirty)
+                old_gpx_keywords = self.__gpx.keywords
+                try:
+                    self.__encode_gpx()
+                    self.backend._rewrite(self, self.__dirty)
+                finally:
+                    self.__gpx.keywords = old_gpx_keywords
             self._clear_dirty()
 
     def remove(self):
@@ -338,15 +371,12 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__cached_time = self.gpx.first_time
         return self.__cached_time
 
-    def _set_time(self, value):
-        """Not a property setter because setting should only be possible internally.
-        By the backends.
-        """
-        self.__cached_time = value
-
     @property
     def distance(self) ->float:
         """For me, the earth is flat.
+
+        This property can only be set while the full track has not yet
+        been loaded. The setter is used by the backends when scanning for all tracks.
 
         Returns:
             the distance in km, rounded to m. 0.0 if not computable.
@@ -356,10 +386,11 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__cached_distance = self.gpx.distance
         return self.__cached_distance
 
-    def _set_distance(self, value):
-        """Not a property setter because setting should only be possible internally.
-        By the backends.
-        """
+    @distance.setter
+    def distance(self, value):
+        """The setter."""
+        if self._loaded:
+            raise Exception('Setting Track.distance is only allowed while the full track has not yet been loaded')
         self.__cached_distance = value
 
     @property
@@ -370,21 +401,19 @@ class Track:  # pylint: disable=too-many-public-methods
             the title
 
         """
-        if 'title' in self._header_data:
-            return self._header_data['title']
-        self._load_full()
-        return self.__gpx.name or ''
+        if self.__gpx.name == Gpx.undefined_str:
+            self._load_full()
+            if self.__gpx.name == Gpx.undefined_str:
+                self.__gpx.name = ''
+        return self.__gpx.name
 
     @title.setter
     def title(self, value: str):
         """see getter."""
-        if value != self.title:
+        if self.__gpx.name != value:
             self._load_full()
-            if self.__gpx:
-                self.__gpx.name = value
-                self._dirty = 'title'
-            else:
-                self._header_data['title'] = value
+            self.__gpx.name = value
+            self._dirty = 'title'
 
     @property
     def description(self) ->str:
@@ -394,20 +423,18 @@ class Track:  # pylint: disable=too-many-public-methods
             The description
 
         """
-        if 'description' in self._header_data:
-            return self._header_data['description']
-        self._load_full()
-        return self.__gpx.description or ''
+        if self.__gpx.description == Gpx.undefined_str:
+            self._load_full()
+            if self.__gpx.description == Gpx.undefined_str:
+                self.__gpx.description = ''
+        return self.__gpx.description
 
     @description.setter
     def description(self, value: str):
         """see getter."""
-        if value != self.description:
+        if self.__gpx.description != value:
             self._load_full()
-            if self.__gpx:
-                self.__gpx.description = value
-            else:
-                self._header_data['description'] = value
+            self.__gpx.description = value
             self._dirty = 'description'
 
     @contextmanager
@@ -429,12 +456,12 @@ class Track:  # pylint: disable=too-many-public-methods
             for track in self.__gpx.tracks:
                 for segment in track.segments:
                     segment.points = [x for x in segment.points if fences.outside(x)]
-            self.__gpx.waypoints = [x for x in self.gpx.waypoints if fences.outside(x)]
-            self._uncache_gpx()
+            self.__gpx.waypoints = [x for x in self.__gpx.waypoints if fences.outside(x)]
+            self._clear_similarity_cache()
             yield
         finally:
             self.__gpx = self.__without_fences
-            self._uncache_gpx()
+            self._clear_similarity_cache()
             self.__without_fences = None
 
     @contextmanager
@@ -496,15 +523,19 @@ class Track:  # pylint: disable=too-many-public-methods
 
         The value is automatically translated between our internal value and
         the value used by the backend. This happens when reading from
-        or writing to the backend.
+        or writing to the backend. Here we return always the internal value.
+
         Returns:
             The current value or the default value (see :attr:`categories`)
 
         """
-        if 'category' in self._header_data:
-            return self._header_data['category']
-        self._load_full()
-        return self.__category or self.__default_category()
+        if self.__gpx.category == Gpx.undefined_str:
+            self._load_full()
+        if self.__gpx.category == Gpx.undefined_str:
+            return self.categories[0]
+        if self.backend is None:
+            return self.__gpx.category
+        return self.backend.decode_category(self.__gpx.category)
 
     def __default_category(self) ->str:
         """The default for either an unsaved track or for the corresponding backend.
@@ -523,43 +554,37 @@ class Track:  # pylint: disable=too-many-public-methods
             value = self.__default_category()
         if value not in self.categories:
             raise Exception('Category {} is not known'.format(value))
-        if value != self.category:
+        if value != self.__gpx.category:
             self._load_full()
-            if self.__gpx:
-                self.__category = value
-            else:
-                self._header_data['category'] = value
+            self.__gpx.category = value
+            self.__encode_gpx()
             self._dirty = 'category'
 
-    def _load_full(self) ->None:
-        """Load the full track from source_backend if not yet loaded."""
+    def _load_full(self) ->bool:
+        """Load the full track from source_backend if not yet loaded and if not decoupled.
+
+        The backend may
+         -  add values to self.__gpx
+         -  replace self.__gpx, see gpx.setter
+
+         The backend is allowed and expected to replace already known values. This may
+         happen
+         - if the backend has a mistake and returns different values in the list of the track
+           and in the full downloaded track
+         - if somebody else changed the track in the backend meanwhile
+
+        Returns: True for success
+
+        """
         if (self.backend is not None and self.id_in_backend and not self._loaded
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)
             self.__finalize_load()
-        if not self.__is_decoupled:
-            self.__resolve_header_data()
+        return self._loaded
 
     def __finalize_load(self):
         """Track is now fully loaded. Resolve header data."""
-        self.__cached_distance = None
-        self.__cached_time = None
         self._loaded = True
-
-    def __resolve_header_data(self):
-        """Put header data into gpx and clear them."""
-        with self._decouple():
-            pairs = [(x[0], x[1]) for x in self._header_data.items()]
-            for key, value in pairs:
-                if key in ('title', 'description', 'category', 'public', 'keywords'):
-                    setattr(self, key, value)
-                elif key in ('time', ):  # noqa
-                    pass
-                elif key == 'ids':
-                    self.__ids = value
-                else:
-                    raise Exception('Unhandled header_data: {}/{}'.format(key, value))
-            self._header_data.clear()
 
     def add_points(self, points) ->None:
         """Round and add points to last segment in the last track.
@@ -584,97 +609,11 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         return self.backend.decode_category(value) if self.backend is not None else value
 
-    def _decode_keywords(self, data: str):  # noqa
-        """Extract our special keywords Category: and Status:.
-
-        # TODO: why is this not backend specific? Some backends have
-        # their own fields for this
-
-        Args:
-            data: The raw keywords coming from the backend
-
-        """
-        gpx_keywords = list()
-        ids = list()
-        if isinstance(data, str):
-            data = [x.strip() for x in data.split(',')]
-        if data is not None:
-            for keyword in data:
-                _ = [x.strip() for x in keyword.split(':')]
-                what = _[0]
-                value = ':'.join(_[1:])
-                if what == 'Category':
-                    self.category = self.__decode_category(value)
-                elif what == 'Status':
-                    self.public = value == 'public'
-                elif what == 'Id':
-                    ids.append(value)
-                else:
-                    gpx_keywords.append(keyword)
-        self.ids = ids
-        gpx_keywords = [x[1:] if x.startswith('-') else x for x in gpx_keywords]
-        self.keywords = sorted(gpx_keywords)
-
-    def _encode_keywords(self) ->str:
-        """Add our special keywords Category and Status.
-
-        Returns:
-            The full list of keywords as one str
-
-        """
-        result = self.keywords
-        result.append('Category:{}'.format(self.category))
-        result.append('Status:{}'.format('public' if self.public else 'private'))
-        for _ in self.ids:
-            # TODO: encode the , to something else
-            result.append('Id:{}'.format(_))
-        return ', '.join(result)
-
-    def parse(self, indata):
-        """Parse GPX.
-
-        :attr:`title`, :attr:`description` and :attr:`category` from indata have precedence over the current values.
-        :attr:`public` will be or-ed
-        :attr:`keywords` will stay unchanged if indata has none, otherwise be replaced from indata
-
-        Args:
-            indata: may be a file descriptor or str
-
-        """
-        assert self.__is_decoupled
-        if hasattr(indata, 'read'):
-            indata = indata.read()
-        if not indata:
-            # ignore empty file
-            return
-        with self._decouple():
-            old_title = self.title
-            old_description = self.description
-            old_public = self.public
-            try:
-                self.__gpx = Gpx.parse(indata)
-            except GPXXMLSyntaxException as exc:
-                self.backend.logger.error(
-                    '%s: Track %s has illegal GPX XML: %s', self.backend, self.id_in_backend, exc)
-                raise
-            if self.__gpx.keywords:
-                self._decode_keywords(self.__gpx.keywords)
-            self.public = self.__public or old_public
-            if old_title and not self.__gpx.name:
-                self.__gpx.name = old_title
-            if old_description and not self.__gpx.description:
-                self.__gpx.description = old_description
-            self._round_points(self.points())
-        self._header_data = dict()
-        self.__finalize_load()
-
     @staticmethod
     def _round_points(points):
         """Round points to 6 decimal digits because some backends may cut last digits.
 
         Gpsies truncates to 7 digits. The points are rounded in place!
-
-        # TODO: use backend.precision
 
         Args:
             points (list(GPXTrackPoint): The points to be rounded
@@ -691,13 +630,10 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         self._load_full()
-        old_keywords = self.__gpx.keywords
-        try:
-            self.__gpx.keywords = self._encode_keywords()
-            result = self.__gpx.xml()
-        finally:
-            self.__gpx.keywords = old_keywords
-        return result
+        if self.__is_decoupled:
+            # if Backend._write_all() calls this, everything is already encoded in __gpx
+            self.__encode_gpx()   # TODO: should not be necessary
+        return self.__gpx.xml()
 
     @property
     def public(self):
@@ -710,19 +646,21 @@ class Track:  # pylint: disable=too-many-public-methods
             True if track is public, False if it is private
 
         """
-        if 'public' in self._header_data:
-            return self._header_data['public']
-        self._load_full()
-        return self.__public
+        if self.__gpx.keywords == Gpx.undefined_str:
+            self._load_full()
+        if self.__gpx.public == Gpx.undefined_str:
+            return False
+        return self.__gpx.public
 
     @public.setter
     def public(self, value):
         """Store this flag as keyword 'public'."""
         if value not in (True, False):
             raise ValueError('public must be True or False, I got {}'.format(value))
-        if value != self.__public:
+        if value != self.__gpx.public:
             self._load_full()
-            self.__public = value
+            self.__gpx.public = value
+            self.__gpx.encode()
             self._dirty = 'public'
 
     @property
@@ -730,7 +668,10 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         Direct access to the Gpx object.
 
-        If you use it to change its content, remember to call :meth:`rewrite` afterwards.
+        If you use it to change its content
+        * remember to call :meth:`rewrite` afterwards.
+        * Since everything is stored in Gpx, all attributes like
+           :attr:`description`, ;attr:`public` ... will change too.
 
         Returns:
             the Gpx object
@@ -738,6 +679,19 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         self._load_full()
         return self.__gpx
+
+    @gpx.setter
+    def gpx(self, value):
+        """Assign new gpx."""
+        self.__gpx = value
+        self._clear_similarity_cache()
+        if self.__is_decoupled:
+            self.__decode_gpx()
+        else:
+            self.__encode_gpx()
+        self._round_points(self.points())
+        if self.__gpx.tracks:
+            self.__finalize_load()
 
     @property
     def last_time(self) ->datetime.datetime:
@@ -777,16 +731,7 @@ class Track:  # pylint: disable=too-many-public-methods
             "Berlin" in DirectoryB.
 
         """
-        if 'keywords' in self._header_data:
-            # TODO: unittest checking that keywords is always a deep copy
-            return self._header_data['keywords'][:]
-        self._load_full()
-        if self.__gpx:
-            if self.__gpx.keywords:
-                return list(sorted(x.strip() for x in self.__gpx.keywords.split(',')))
-        else:
-            return self._header_data.get('keywords', [])
-        return list()
+        return self.gpx.real_keywords
 
     @keywords.setter
     def keywords(self, values):
@@ -872,7 +817,7 @@ class Track:  # pylint: disable=too-many-public-methods
             remove &= have
         new = sorted((have | add) - remove)
         if not dry_run and self.keywords != new:
-            self.__gpx.keywords = ', '.join(new) or None
+            self.__gpx.real_keywords = new
             with self.batch_changes():
                 if remove:
                     self._dirty = 'remove_keywords:{}'.format(', '.join(remove))
@@ -1415,23 +1360,18 @@ class Track:  # pylint: disable=too-many-public-methods
             a list of track ids
 
         """
-        if 'ids' in self._header_data:
-            result = self._header_data['ids']
-        else:
+        if self.__gpx.keywords == Gpx.undefined_str:
             self._load_full()
-            result = self.__ids
-        return self.__clean_ids(result)
+        return self.__clean_ids(self.__gpx.ids)
 
     @ids.setter
     def ids(self, value):
         """Setter for ids."""
         cleaned = self.__clean_ids(value)
-        if cleaned != self.ids:
+        if cleaned != self.__gpx.ids:
             self._load_full()
-            if self.__gpx:
-                self.__ids = cleaned
-            else:
-                self._header_data['ids'] = cleaned
+            self.__gpx.ids = cleaned
+            self.__gpx.encode()
 
     @staticmethod
     def __clean_ids(original):

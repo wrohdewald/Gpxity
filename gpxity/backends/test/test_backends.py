@@ -123,7 +123,8 @@ class TestBackends(BasicTest):
 
     def test_open_wrong_username(self):
         """Open backends with username missing in Account."""
-        for cls in Backend.all_backend_classes(exclude=[Directory, Mailer, TrackMMT]):
+        for cls in Backend.all_backend_classes(exclude=[Directory, Mailer, TrackMMT, Openrunner]):
+            # Openrunner allows arbitrary user names
             with self.tst_backend(cls):
                 with self.assertRaises(cls.BackendException):
                     self.setup_backend(cls, test_name='wrong_username').scan(now=True)
@@ -153,11 +154,12 @@ class TestBackends(BasicTest):
             if track.first_time < datetime.datetime(year=2016, month=9, day=5):
                 return 'time {} is before {}'.format(track.first_time, '2016-09-05')
             return None
+
         cls = Directory
         with self.tst_backend(cls):
             with self.temp_backend(cls, count=3) as backend:
                 for idx, _ in enumerate(backend):
-                    _.adjust_time(datetime.timedelta(hours=idx))
+                    _.adjust_time(datetime.timedelta(hours=4 + idx))
                 new_track = backend[0].clone()
                 self.assertIsNotNone(match_date(new_track))
                 self.assertBackendLength(backend, 3)
@@ -229,11 +231,14 @@ class TestBackends(BasicTest):
                 test_public2 = False
                 with self.temp_backend(cls, count=1, public=test_public) as backend:
                     track = backend[0]
+                    orig_cat = track.category
                     self.assertEqual(track.public, test_public)
                     track.public = test_public2
+                    self.assertEqual(track.category, orig_cat)
                     # make sure there is no cache in the way
                     backend2 = backend.clone()
                     track2 = backend2[0]
+                    self.assertEqual(track2.category, orig_cat)
                     self.assertEqualTracks(track, track2)
                     self.assertEqual(track2.public, test_public2)
 
@@ -280,6 +285,7 @@ class TestBackends(BasicTest):
                     self.assertEqual(track.keywords, list())
                     track.keywords = ([kw_a, kw_b, kw_c])
                     track.change_keywords(minus(kw_b))
+                    self.assertTrue(track is backend[0])
                     self.assertEqual(track.keywords, ([kw_a, kw_c]))
                     with self.assertRaises(Exception):
                         track.change_keywords('Category:whatever')
@@ -287,18 +293,19 @@ class TestBackends(BasicTest):
                     self.assertEqual(set(track.keywords), {kw_a, kw_c, kw_d})
                     backend2 = backend.clone()
                     track2 = backend2[track.id_in_backend]
+                    self.assertTrue(track is backend[0])
                     track2.change_keywords(minus(kw_d))
-                    self.assertEqual(track2.keywords, ([kw_a, kw_c]))
-                    self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
+                    self.assertEqual(backend[0].keywords, ([kw_a, kw_c, kw_d]))
+                    # change_keywords may have change id_in_backend in some backend classes, so reload track
                     backend.scan()
-                    self.assertEqual(track.keywords, ([kw_a, kw_c, kw_d]))
-                    self.assertEqual(backend[track.id_in_backend].keywords, ([kw_a, kw_c]))
+                    track = backend[0]
+                    self.assertEqual(track2.keywords, ([kw_a, kw_c]))
+                    self.assertEqual(track.keywords, ([kw_a, kw_c]))
+                    self.assertTrue(track is backend[0])
+                    backend.scan()
+                    self.assertEqual(track.keywords, ([kw_a, kw_c]))
                     track.change_keywords(minus(kw_a))
-                    # this is tricky: The current implementation assumes that track.keywords is
-                    # current - which it is not. track still thinks kw_d is there but it has been
-                    # removed by somebody else. MMT has a work-around for removing tracks which
-                    # removes them all and re-adds all wanted. So we get kw_d back.
-                    self.assertEqual(track.keywords, ([kw_c, kw_d]))
+                    self.assertEqual(track.keywords, ([kw_c]))
                     # track2.change_keywords(minus(kw_a))
                     track.change_keywords(minus(kw_c))
                     track.change_keywords(minus(kw_d))
@@ -373,7 +380,10 @@ class TestBackends(BasicTest):
                         with self.temp_backend(Directory) as copy:
                             for _ in copy.merge(backend2):
                                 self.logger.debug(_)
-                            self.assertSameTracks(local, copy, with_last_time=cls is not GPSIES, with_category=False)
+                            self.assertSameTracks(
+                                local, copy,
+                                with_last_time=cls not in (GPSIES, Openrunner),
+                                with_category=False)
 
     @skipIf(*disabled(Directory))
     def test_merge_backends(self):
@@ -391,11 +401,11 @@ class TestBackends(BasicTest):
                     _.adjust_time(datetime.timedelta(hours=100))
 
                 # let's have two identical tracks in source without match in sink:
-                next(source[0].points()).latitude = 6
+                next(source[0].points()).latitude += 0.06
                 source.add(source[0].clone())
 
                 # and two identical tracks in sink without match in source:
-                next(sink[1].points()).latitude = 7
+                next(sink[1].points()).latitude += 0.07
                 sink.add(sink[1].clone())
 
                 # and one track twice in source and once in sink:
@@ -443,14 +453,11 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(Directory))
     def test_lifetrack(self):
         """test life tracking against a local server."""
+
         def track():
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
             points = self._random_points(100)
             life.start(points[:50], category=uplink.decode_category(uplink.supported_categories[0]))
-            if isinstance(uplink, Openrunner):
-                local_serverdirectory.scan()
-                local_serverdirectory[0].public = True
-                uplink.public = True
             time.sleep(7)
             life.update(points[50:])
             life.end()
@@ -490,16 +497,17 @@ class TestBackends(BasicTest):
         """track1._dirty."""
         for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
             with self.tst_backend(cls):
-                test_category = cls.decode_category(cls.supported_categories[1])
+                # category in the Track domain:
+                test_category_backend = cls.supported_categories[1]
+                test_category = cls.decode_category(test_category_backend)
                 with self.temp_backend(cls, count=1) as backend1:
                     track1 = backend1[0]
-                    with self.assertRaises(Exception):
-                        track1._dirty = False
                     self.assertFalse(track1._dirty)
                     # version 1.1 should perhaps be a test on its own, see Track.xml()
                     track1.category = test_category
+                    self.assertEqual(track1.category, test_category)
                     track1._dirty = 'gpx'
-                    self.assertFalse(track1._dirty)
+                    self.assertEqual(track1.category, test_category)
                     backend2 = backend1.clone()
                     self.assertEqual(backend2[0].category, test_category)
                     b2track = backend2[0]
@@ -676,7 +684,7 @@ class TestBackends(BasicTest):
                     if max_length < unlimited_length:
                         try_description = 'long description' * 4000
                         encoded = backend._encode_description(track)
-                        decoded = backend._decode_description(track, encoded)
+                        decoded = backend._decode_description(track.gpx, encoded)
                         self.assertEqual(len(encoded), max_length)
                         self.assertTrue(try_description.startswith(decoded))
 

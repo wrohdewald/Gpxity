@@ -19,6 +19,7 @@ from gpxpy import gpx as mod_gpx
 
 
 from .. import Backend
+from ..gpx import Gpx
 
 GPXTrackPoint = mod_gpx.GPXTrackPoint
 
@@ -602,9 +603,9 @@ class Openrunner(Backend):
         for raw_data in page_parser.result['tracks']:
             track = self._found_track(raw_data.track_id)
             track.title = raw_data.title
-            track._set_time(raw_data.time)
+            track.time = raw_data.time
             if raw_data.distance:
-                track._set_distance(raw_data.distance)
+                track.distance = raw_data.distance
             if raw_data.category:
                 track.category = self.decode_category(raw_data.category)
 
@@ -613,13 +614,14 @@ class Openrunner(Backend):
         response = self.__get(action='route/{}'.format(track.id_in_backend))
         route = response.json()['route']
         points = self._decode_points(route['shape']['full_encoded'])
-        track.add_points(points)
-        track.title = route['name']
-        track.description = route['description']
-        track._decode_keywords(route['keyword'])
-        track._set_distance(float(route['length']) / 1000.0)
+        gpx = Gpx()
+        gpx.add_points(points)
+        gpx.name = route['name']
+        gpx.description = route['description']
+        gpx.keywords = route['keyword']
+        track.gpx = gpx
         # the date format seems to depend on the language. fr would be %d-%m-%Y
-        track._set_time(datetime.datetime.strptime(route['updatedDate'], '%Y/%m/%d'))
+        track.time = datetime.datetime.strptime(route['updatedDate'], '%Y/%m/%d')
         track.public = not route['private']
         track.category = self.decode_category(route['activity'])
         self.logger.debug('_read_all category: %s -> %s', route['activity'], track.category)

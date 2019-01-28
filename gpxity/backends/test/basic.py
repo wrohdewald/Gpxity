@@ -29,7 +29,7 @@ from gpxpy.gpx import GPXTrackPoint
 from gpxpy.geo import LocationDelta
 
 from ... import Track, Backend, Account
-from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner
+from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner, MMT
 from ...util import remove_directory
 from ...gpx import Gpx
 
@@ -153,7 +153,7 @@ class BasicTest(unittest.TestCase):
             result.adjust_time(start_time - result.first_time)
         last_point = result.last_point()
         if end_time is None:
-            end_time = result.last_time + datetime.timedelta(hours=10, seconds=idx)
+            end_time = last_point.time + datetime.timedelta(hours=10, seconds=idx)
         new_point = GPXTrackPoint(
             latitude=last_point.latitude, longitude=last_point.longitude + 0.001, time=end_time)
         _ = gpxpy.geo.LocationDelta(distance=1000, angle=360 * idx / count)
@@ -283,7 +283,9 @@ class BasicTest(unittest.TestCase):
         # GPSIES: when uploading tracks. GPSIES sometimes assigns new times to all points,
         # starting at 2010-01-01 00:00. Until I find the reason, ignore point times for comparison.
         # Openrunner always does.
-        no_time_backend = (GPSIES, Openrunner)
+        # MMT now seems to convert times between utc and local time. UP- and downloading
+        # the same track changes the point times.
+        no_time_backend = (GPSIES, Openrunner, MMT)
         with_last_time = not (
             isinstance(track1.backend, no_time_backend) or isinstance(track2.backend, no_time_backend))
         precision = Backend.point_precision

@@ -17,6 +17,7 @@ from copy import deepcopy
 from .accounts import Account
 from .track import Track
 from .util import collect_tracks
+from .gpx import Gpx
 
 from .backend_base import BackendBase
 __all__ = ['Backend']
@@ -296,6 +297,8 @@ class Backend(BackendBase):
         for key, target in cls._category_decoding.items():
             if value.lower() == target.lower():
                 return key
+        if value == Gpx.undefined_str:
+            return cls.encode_category(Track.categories[0])
         raise cls.BackendException('{} has no equivalent for "{}"'.format(cls.__name__, value))
 
     @staticmethod
@@ -317,14 +320,14 @@ class Backend(BackendBase):
         """
         return track.description
 
-    def _decode_description(self, track, value):
+    @classmethod
+    def _decode_description(cls, gpx, value):
         """A backend might put keywords into the description. WPTrackserver does.
 
         Returns: The description
 
         """
-        assert self._decoupled
-        track.description = value
+        gpx.description = value
         return value
 
     def get_time(self) ->datetime.datetime:  # pylint: disable=no-self-use
@@ -398,14 +401,16 @@ class Backend(BackendBase):
             if self.__match is not None:
                 self.__tracks = [x for x in self.__tracks if self.matches(x)]
 
-    def _found_track(self, ident: str):
+    def _found_track(self, ident: str, gpx=None):
         """Create an empty track for ident and inserts it into this backend.
 
         Returns:
             the new track
 
+        # TODO: Do I still need the result? Try not to
+
         """
-        result = Track()
+        result = Track(gpx)
         with self._decouple():
             result._set_backend(self)
             result.id_in_backend = ident
@@ -466,11 +471,19 @@ class Backend(BackendBase):
         """
         Add a track to this backend.
 
-        We do not check if it already exists in this backend. No track
-        already existing in this backend will be overwritten, the id_in_backend
-        of track will be deduplicated if needed. This is currently only needed
-        for Directory. Note that some backends reject a track if it is very
+        No track already existing in this backend will be overwritten.
+        If  :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>`
+        is not given, the backend will create a unique value. If it is given,
+        the backend will raise an exception with the exception of
+        :class:`~gpxity.backends.directory.Directory` which will append
+        a number to make it unique.
+
+        Note that some backends may reject a track if it is very
         similar to an existing track even if it belongs to some other user.
+
+        If :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>` is given,
+        the Backend may use it or not. Some always assign it themselves like
+        :class:`~gpxity.backends.mmt.MMT`.
 
         If the track object is already in the list of tracks, raise ValueError.
 

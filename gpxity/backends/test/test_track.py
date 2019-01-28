@@ -27,6 +27,7 @@ from gpxpy import gpx as mod_gpx
 from .basic import BasicTest, disabled
 from ... import Track, Backend, Account
 from ...backend_base import BackendBase
+from ...gpx import Gpx
 from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
 from .. import Openrunner
 from ...util import repr_timespan, positions_equal, remove_directory
@@ -184,14 +185,13 @@ class TrackTests(BasicTest):
         track = self.create_test_track()
         track.keywords = ['Here are some keywords']
         xml = track.xml()
+        gpx = Gpx.parse(xml)
         track2 = Track()
-        track2.parse(None)
-        track2.parse('')
-        track2.parse(xml)
+        track2.gpx = gpx
         self.assertEqualTracks(track, track2)
         self.assertEqual(track.keywords, track2.keywords)
         track2 = Track()
-        track2.parse(io.StringIO(xml))
+        track2.gpx = Gpx.parse(io.StringIO(xml))
         self.assertEqualTracks(track, track2)
 
     def test_combine(self):
@@ -199,37 +199,41 @@ class TrackTests(BasicTest):
         # Here, category is always from the domain Track.category, no backend involved.
         # first, does it overwrite?
         track = self.create_test_track()
+        self.assertFalse(track.public)
         xml = track.xml()
-        if track.category == 'Cycling':
+        self.assertIn('Status:private', xml)
+        track_category = track.category
+        if track_category == 'Cycling':
             other_category = 'Running'
         else:
             other_category = 'Cycling'
-
         track2 = Track()
         track2.title = 'Title2'
         track2.description = 'Description2'
         track2.category = other_category
         track2.public = True
-        track2.parse(xml)
+        track2.gpx = Gpx.parse(xml)
         self.assertEqual(track2.title, track.title)
         self.assertEqual(track2.description, track.description)
         self.assertEqual(track2.category, track.category)
-        self.assertTrue(track2.public)
+        self.assertFalse(track2.public)
         self.assertEqual(track2.keywords, list())
 
         track.public = True
         xml = track2.xml()
-        self.assertIn('Status:public', xml)
+        self.assertIn('Status:private', xml)
         track2 = Track()
         track2.category = Track.categories[3]
-        track2.public = False
-        track2.parse(xml)
-        self.assertTrue(track2.public)
+        self.assertEqual(track2.gpx.keywords, 'Category:{}, Status:private'.format(Track.categories[3]))
+        track2.public = True
+        self.assertEqual(track2.gpx.keywords, 'Category:{}, Status:public'.format(Track.categories[3]))
+        track2.gpx = Gpx.parse(xml)
+        self.assertFalse(track2.public)
 
         # second, does it keep old values if there are no new values?
         track = self.create_test_track()
         track.title = ''
-        track.description = ''
+        track.description = 'xx'
         xml = track.xml()
         if track.category == 'Cycling':
             other_category = 'Running'
@@ -239,9 +243,10 @@ class TrackTests(BasicTest):
         track2 = Track()
         track2.title = 'Title2'
         track2.description = 'Description2'
-        track2.parse(xml)
-        self.assertEqual(track2.title, 'Title2')
-        self.assertEqual(track2.description, 'Description2')
+        self.assertIn('<desc>Description2</desc>', track2.xml())
+        track2.gpx = Gpx.parse(xml)
+        self.assertEqual(track2.title, '')
+        self.assertEqual(track2.description, 'xx')
 
     @skipIf(*disabled(Directory))
     def test_save_dir(self):
@@ -587,7 +592,7 @@ class TrackTests(BasicTest):
 
     @skipIf(*disabled(Directory))
     def test_header_changes(self):
-        """Only change things in _header_data. Assert that the full gpx is loaded before saving."""
+        """Change fields loaded by track scan, before _load_full() is done."""
         with self.temp_backend(Directory, count=1) as backend:
             backend2 = backend.clone()
             backend2[0].description = 'test'
@@ -614,13 +619,15 @@ class TrackTests(BasicTest):
 
     def test_header_data(self):
         """Test usage of Track._header_data."""
+        # TODO: still needed?
         track = Track()
         gpx_track = self.create_test_track()
-        track._set_distance(5000)
+        track.distance = 5000
         self.assertEqual(track.distance, 5000)
-        track.parse(gpx_track.xml())
+        track.gpx = Gpx.parse(gpx_track.xml())
         self.assertEqual(track.distance, gpx_track.distance)
 
+    @skipIf(*disabled(WPTrackserver))
     def test_merge_track(self):
         """Check if everything is correctly merged."""
         track1 = self.create_test_track()

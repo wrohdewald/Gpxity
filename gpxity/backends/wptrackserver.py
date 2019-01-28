@@ -21,11 +21,12 @@ last part of the strings will be thrown away silently when writing into the data
 
 # pylint: disable=protected-access
 
-import datetime
+import logging
 
 from gpxpy import gpx as mod_gpx
 
 from ..backend import Backend
+from ..gpx import Gpx
 from ..util import add_speed, utc_to_local_delta
 
 try:
@@ -141,7 +142,7 @@ class WPTrackserver(Backend):
                 track.description, self._keywords_marker, ', '.join(kw_parts))
 
         max_length = self._max_length['description']
-        kw_parts = track._encode_keywords().split(', ')
+        kw_parts = track.gpx.keywords.split(', ')  # they already included encoded Category:  etc
         result = fmt_result()
         if len(result) > max_length:
             while kw_parts and len(result) > max_length:
@@ -149,26 +150,32 @@ class WPTrackserver(Backend):
                 result = fmt_result()
         return result[:max_length]
 
-    def _decode_description(self, track, value):
+    @classmethod
+    def _decode_description(cls, gpx, value):
         """Extract keywords.
 
         Returns: The decoded description
 
         """
-        if self._keywords_marker in value:
-            descr, raw_keywords = value.split(self._keywords_marker)
-            track._decode_keywords(raw_keywords)
+        if cls._keywords_marker in value:
+            descr, raw_keywords = value.split(cls._keywords_marker)
+            gpx.keywords = raw_keywords
         else:
             descr = value
-        track.description = descr
+        gpx.description = descr
         return descr
 
-    def _enrich_with_headers(self, track, row):
-        """Get header values out of row."""
-        track._set_time(row[1])
-        track.title = row[2]
-        self._decode_description(track, row[3].replace('\r', ''))
-        track._set_distance(row[4] / 1000.0)
+    def _gpx_from_headers(self, row):
+        """Get header values out of row.
+
+        Returns: Gpx()
+
+        """
+        result = Gpx()
+        result.time = row[1]
+        result.name = row[2]
+        self._decode_description(result, row[3].replace('\r', ''))
+        return result
 
     def _load_track_headers(self):
         """."""
@@ -176,8 +183,8 @@ class WPTrackserver(Backend):
         args = (self._user_id, )  # noqa
         cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
-            track = self._found_track(str(int(_[0])))
-            self._enrich_with_headers(track, _)
+            track = self._found_track(str(int(_[0])), self._gpx_from_headers(_))
+            track.distance = _[4] / 1000.0
 
     @staticmethod
     def __point(row):
@@ -222,7 +229,7 @@ class WPTrackserver(Backend):
         description = self._encode_description(track)
         title = track.title[:self._max_length['title']]
         # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
-        track_time = track.first_time or datetime.datetime(year=1970, month=1, day=3, hour=1)
+        track_time = track.first_time or Gpx.undefined_date
         track_distance = track.distance * 1000
         cursor = self._db.cursor()
         if self.__needs_insert(cursor, track.id_in_backend):

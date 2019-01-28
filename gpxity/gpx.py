@@ -10,6 +10,7 @@
 from math import asin, sqrt, degrees
 import datetime
 
+
 # This code would speed up parsing GPX by about 30%. When doing
 # that, GPX will only return str instead of datetime for times.
 #
@@ -36,7 +37,81 @@ __all__ = ['Gpx']
 
 class Gpx(GPX):
 
-    """Wrapper around class GPX from gpxpy."""
+    """Wrapper around class GPX from gpxpy.
+
+    Attributes:
+        undefined_str_marker: A new Gpx() gets this value for all str attributes
+            relevant for Gpxity. This lets :class:`~gpxity.track.Track` know if
+            the wanted value is already known (by loading the list of tracks
+            in the backend) or if the full track needs to be read.
+        real_keywords: As decoded from keywords
+
+        category: As decoded from keywords, no translation done
+        public: Decoded from keywords
+        ids: Decoded from keywords
+
+    The user may either update keywords or keywords_only/category/public/ids.
+    :meth:`encode` and :meth:`decode` synchronize them.
+
+    Gpx.parse() sets both groups.
+
+    """
+
+    undefined_str = '__UXNXDXEXFXIXNXEXD__'
+    undefined_date = datetime.datetime(year=1970, month=1, day=3, hour=1)
+
+    def __init__(self):
+        """Put 'undefined' markers into all fields of relevance for gpxity."""
+        super(Gpx, self).__init__()
+        self.name = Gpx.undefined_str
+        self.description = Gpx.undefined_str
+        self.keywords = Gpx.undefined_str
+        self.time = Gpx.undefined_date
+
+        self.real_keywords = list()
+        self.category = Gpx.undefined_str
+        self.public = Gpx.undefined_str
+        self.ids = list()
+
+    def encode(self):
+        """Set keywords from real_keywords, category, public, ids."""
+        all_kw = self.real_keywords[:]  # Make sure not to change the orignal
+        if self.category != Gpx.undefined_str:
+            all_kw.append('Category:{}'.format(self.category))
+        all_kw.append('Status:{}'.format('public' if self.public is True else 'private'))
+        for _ in self.ids:
+            # TODO: encode the , to something else
+            all_kw.append('Id:{}'.format(_))
+        self.keywords = ', '.join(all_kw) or None
+
+    def decode(self):
+        """Extract real_keywords, category, public,ids from keywords."""
+        if self.keywords is None:
+            self.keywords = ''
+        if self.keywords == Gpx.undefined_str:
+            self.category = Gpx.undefined_str
+            self.public = Gpx.undefined_str
+            self.ids = list()
+        else:
+            data = [x.strip() for x in self.keywords.split(',')]
+            if data == ['']:
+                data = []
+            real_keywords = list()
+            ids = list()
+            for keyword in data:
+                _ = [x.strip() for x in keyword.split(':')]
+                what = _[0]
+                value = ':'.join(_[1:])
+                if what == 'Category':
+                    self.category = value
+                elif what == 'Status':
+                    self.public = value == 'public'
+                elif what == 'Id':
+                    ids.append(value)
+                else:
+                    real_keywords.append(keyword)
+            self.ids = ids
+            self.real_keywords = sorted(x[1:] if x.startswith('-') else x for x in real_keywords)
 
     @property
     def first_time(self) ->datetime.datetime:
@@ -100,6 +175,11 @@ class Gpx(GPX):
             for _ in gpx.__slots__:
                 setattr(result, _, getattr(gpx, _))
             result.workaround_for_gpxpy_issue_140()
+            result.decode()
+            if result.name is None:
+                result.name = ''
+            if result.description is None:
+                result.description = ''
         return result
 
     def workaround_for_gpxpy_issue_140(self):
@@ -136,7 +216,6 @@ class Gpx(GPX):
         result = result.replace('\n\n', '\n')
         if not result.endswith('\n'):
             result += '\n'
-#        logging.debug('to_xml:%s', result)
         return result
 
     @property
@@ -272,7 +351,7 @@ class Gpx(GPX):
 
     def last_point(self):
         """Return the last point of the track. None if none."""
-        # TODO: unittest for track without _gpx or without points
+        # TODO: unittest for track without __gpx or without points
         try:
             return self.tracks[-1].segments[-1].points[-1]
         except IndexError:
@@ -289,6 +368,7 @@ class Gpx(GPX):
         super(Gpx, self).adjust_time(delta)
         for wpt in self.waypoints:
             wpt.time += delta
+        self.time += delta
 
     def points_hash(self) -> float:
         """A hash that is hopefully different for every possible track.
