@@ -26,6 +26,7 @@ except ImportError:
 
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
+from gpxpy.geo import LocationDelta
 
 from ... import Track, Backend, Account
 from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner
@@ -223,20 +224,33 @@ class BasicTest(unittest.TestCase):
             random.setstate(state)
 
     @classmethod
-    def _random_points(cls, count=100):
+    def _random_points(cls, count=100, root=None):
         """Get some random points.
+
+        Distance between two points will never exceed 200m.
 
         Returns:
             A list with count points
 
         """
-        result = list()
+
         start_time = cls._random_datetime()
-        for _ in range(count):
-            point = GPXTrackPoint(
-                latitude=random.uniform(0.0, 90.0),
-                longitude=random.uniform(0.0, 180.0), elevation=_,
-                time=start_time + datetime.timedelta(seconds=10 * _))
+        if root is None:
+            root = GPXTrackPoint(
+                latitude=random.uniform(-90.0, 90.0),
+                longitude=random.uniform(-180.0, 180.0),
+                elevation=0,
+                time=start_time)
+        result = [root]
+
+        angle = 50
+        for _ in range(1, count):
+            angle = angle + random.uniform(-20, 20)
+            delta = LocationDelta(distance=random.randrange(200), angle=angle)
+            point = GPXTrackPoint(latitude=result[-1].latitude, longitude=result[-1].longitude)
+            point.move(delta)
+            point.elevation = _
+            point.time = start_time + datetime.timedelta(seconds=10 * _)
             result.append(point)
         return result
 

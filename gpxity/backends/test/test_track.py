@@ -386,7 +386,7 @@ class TrackTests(BasicTest):
             self.assertIn(repr_timespan(track.first_time, track.last_time), repr(track))
             self.assertTrue(repr(track).startswith(str(track)))
             self.assertTrue(repr(track).endswith(')'))
-            track.add_points(self._random_points(count=5))
+            track.add_points(self._random_points(count=5, root=track.last_point()))
             self.assertGreater(track.distance(), first_distance)
             self.assertIn('km', repr(track))
             directory.add(track)
@@ -650,7 +650,7 @@ class TrackTests(BasicTest):
         track2.title = 'Track2-title'
         self.assertTrue(track1.points_equal(track2, digits=9))
 
-        track2.add_points(self._random_points(5))
+        track2.add_points(self._random_points(5, root=track1.last_point()))
         msg = track1.merge(track2, partial_tracks=True)
         for _ in msg:
             self.logger.debug(_)
