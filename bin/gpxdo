@@ -569,7 +569,7 @@ class Utility:
             (self.options.category, 'Category', lambda x: x.category),
             (self.options.ids, 'Ids', lambda x: ','.join(x.ids)),
             (self.options.keywords, 'Keywords', lambda x: ','.join(x.keywords)),
-            (self.options.distance > 0, 'Distance', lambda x: x.distance(), '{:>8.3f}km', float),
+            (self.options.distance > 0, 'Distance', lambda x: x.distance, '{:>8.3f}km', float),
             (self.options.points, 'Points', lambda x: x.gpx.get_track_points_no(), '{:>6}', int),
             (self.options.status, 'Status', lambda x: 'public' if x.public else 'private'),
             (self.options.description, 'Description', lambda x: x.description),
@@ -837,10 +837,10 @@ class Utility:
                         return 'time {} is after {}'.format(track.first_time, self.options.last_date)
             else:
                 return 'has no time'
-        if self.options.min_distance and track.distance() < self.options.min_distance:
-            return 'distance {} is below {}'.format(track.distance(), self.options.min_distance)
-        if self.options.max_distance and track.distance() > self.options.max_distance:
-            return 'distance {} is above {}'.format(track.distance(), self.options.max_distance)
+        if self.options.min_distance and track.distance < self.options.min_distance:
+            return 'distance {} is below {}'.format(track.distance, self.options.min_distance)
+        if self.options.max_distance and track.distance > self.options.max_distance:
+            return 'distance {} is above {}'.format(track.distance, self.options.max_distance)
         if self.options.min_speed and track.speed() < self.options.min_speed:
             return 'Speed is below {}'.format(self.options.min_speed)
         if self.options.max_speed and track.speed() > self.options.max_speed:

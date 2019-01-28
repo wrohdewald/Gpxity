@@ -59,6 +59,7 @@ class Gpx(GPX):
         except StopIteration:
             return self.time
 
+    @property
     def distance(self) ->float:
         """For me, the earth is flat.
 
@@ -161,7 +162,7 @@ class Gpx(GPX):
         duration = time_range[1] - time_range[0]
         seconds = duration.days * 24 * 3600 + duration.seconds
         if seconds:
-            return self.distance() / seconds * 3600
+            return self.distance / seconds * 3600
         return 0.0
 
     def moving_speed(self) ->float:
@@ -192,8 +193,8 @@ class Gpx(GPX):
             parts.append(repr_timespan(self.first_time, self.last_time))
         elif self.first_time:
             parts.append(str(self.first_time))
-        if self.distance():
-            parts.append('{:4.2f}km'.format(self.distance()))
+        if self.distance:
+            parts.append('{:4.2f}km'.format(self.distance))
         return '{}({})'.format(str(self), ' '.join(parts))
 
     def __str__(self) ->str:

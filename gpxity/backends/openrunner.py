@@ -649,14 +649,14 @@ class Openrunner(Backend):
             'route[activity]': self._legal_categories_numbers[self.encode_category(track.category)],
             'route[description]': track.description,
             'route[elevation][sampleEncoded]': self._encode_points(points),
-            'route[elevation][sampleIntervalInMeter]': track.distance() / len(points),
+            'route[elevation][sampleIntervalInMeter]': track.distance / len(points),
             'route[end][lat]': points[-1].latitude,
             'route[end][lng]': points[-1].longitude,
             'route[is_private]': 0 if track.public else 1,
             'route[is_tested]': 1,
             'route[keyword]': ', '.join(track.keywords),
             'route[labelColor]': '#ffffff',
-            'route[lengthInMeter]': min(track.distance(), 1200) * 1000,  # TODO: unittest: is max length still 1200km?
+            'route[lengthInMeter]': min(track.distance, 1200) * 1000,  # TODO: unittest: is max length still 1200km?
             'route[name]': track.title,
             'route[official]': 0,
             'route[shape][pointShapeEncoded]': '',

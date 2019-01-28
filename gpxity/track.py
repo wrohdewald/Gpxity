@@ -344,6 +344,7 @@ class Track:  # pylint: disable=too-many-public-methods
         """
         self.__cached_time = value
 
+    @property
     def distance(self) ->float:
         """For me, the earth is flat.
 
@@ -352,7 +353,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         if self.__cached_distance is None:
-            self.__cached_distance = self.gpx.distance()
+            self.__cached_distance = self.gpx.distance
         return self.__cached_distance
 
     def _set_distance(self, value):
@@ -939,8 +940,8 @@ class Track:  # pylint: disable=too-many-public-methods
                     parts.append(repr_timespan(self.first_time, self.last_time))
                 elif self.first_time:
                     parts.append(str(self.first_time))
-                if self.distance():
-                    parts.append('{:4.2f}km'.format(self.distance()))
+                if self.distance:
+                    parts.append('{:4.2f}km'.format(self.distance))
             return '{}({})'.format(str(self), ' '.join(parts))
 
     @staticmethod

@@ -380,14 +380,14 @@ class TrackTests(BasicTest):
             track.title = 'Title'
             track.category = 'Running'
             track.add_points(self._random_points(10))
-            first_distance = track.distance()
+            first_distance = track.distance
             self.assertIn('public' if track.public else 'private', repr(track))
             self.assertIn('Running', repr(track))
             self.assertIn(repr_timespan(track.first_time, track.last_time), repr(track))
             self.assertTrue(repr(track).startswith(str(track)))
             self.assertTrue(repr(track).endswith(')'))
             track.add_points(self._random_points(count=5, root=track.last_point()))
-            self.assertGreater(track.distance(), first_distance)
+            self.assertGreater(track.distance, first_distance)
             self.assertIn('km', repr(track))
             directory.add(track)
 
@@ -617,9 +617,9 @@ class TrackTests(BasicTest):
         track = Track()
         gpx_track = self.create_test_track()
         track._set_distance(5000)
-        self.assertEqual(track.distance(), 5000)
+        self.assertEqual(track.distance, 5000)
         track.parse(gpx_track.to_xml())
-        self.assertEqual(track.distance(), gpx_track.distance())
+        self.assertEqual(track.distance, gpx_track.distance)
 
     def test_merge_track(self):
         """Check if everything is correctly merged."""

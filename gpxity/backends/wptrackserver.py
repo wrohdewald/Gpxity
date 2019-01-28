@@ -223,7 +223,7 @@ class WPTrackserver(Backend):
         title = track.title[:self._max_length['title']]
         # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
         track_time = track.first_time or datetime.datetime(year=1970, month=1, day=3, hour=1)
-        track_distance = track.distance() * 1000
+        track_distance = track.distance * 1000
         cursor = self._db.cursor()
         if self.__needs_insert(cursor, track.id_in_backend):
             if track.id_in_backend is None:
@@ -337,7 +337,7 @@ class WPTrackserver(Backend):
         points = list(points)
         add_speed(list(track.points()), window=10)
         cmd = 'update wp_ts_tracks set distance=%s where id=%s'
-        args = (track.distance() * 1000, track.id_in_backend)
+        args = (track.distance * 1000, track.id_in_backend)
         self.__exec_mysql(cmd, args)
         self.__write_points(track, points)
 

@@ -57,7 +57,7 @@ class MailQueue:
         if track is not None:
             subject = track.mail_subject if hasattr(track, 'mail_subject') else track.title
             return self.mailer.subject_template.format(
-                title=subject, distance='{:8.3f}km'.format(track.distance()))
+                title=subject, distance='{:8.3f}km'.format(track.distance))
         return '{} tracks'.format(len(self.tracks))
 
     def content(self) ->str:
