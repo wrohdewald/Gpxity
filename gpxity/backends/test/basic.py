@@ -277,7 +277,7 @@ class BasicTest(unittest.TestCase):
 
         Args:
 
-            xml: if True, also compare to_xml()"""
+            xml: if True, also compare xml()"""
         self.maxDiff = None
 
         # GPSIES: when uploading tracks. GPSIES sometimes assigns new times to all points,
@@ -296,13 +296,13 @@ class BasicTest(unittest.TestCase):
             track2.key(with_category, with_last_time, precision=precision), msg)
         self.assertTrue(track1.points_equal(track2), msg)
         if xml:
-            self.assertEqual(track1.gpx.to_xml(), track2.gpx.to_xml(), msg)
+            self.assertEqual(track1.gpx.xml(), track2.gpx.xml(), msg)
 
     def assertNotEqualTracks(self, track1, track2, msg=None, with_category: bool = True):  # noqa pylint: disable=invalid-name
         """both tracks must be different. We test more than necessary for better test coverage."""
         self.assertNotEqual(track1.key(with_category), track2.key(with_category), msg)
         self.assertFalse(track1.points_equal(track2), msg)
-        self.assertNotEqual(track1.gpx.to_xml(), track2.gpx.to_xml(), msg)
+        self.assertNotEqual(track1.gpx.xml(), track2.gpx.xml(), msg)
 
     def assertTrackFileContains(self, track, string, msg=None):  # noqa pylint: disable=invalid-name
         """Assert that string is in the physical file. Works only for Directory backend."""

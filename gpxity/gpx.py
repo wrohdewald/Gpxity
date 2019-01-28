@@ -113,13 +113,13 @@ class Gpx(GPX):
         for track in self.tracks:
             track.extensions = [x for x in track.extensions if len(x) or x.text is not None]
 
-    def to_xml(self, version=None, prettyprint=True) ->str:
+    def xml(self) ->str:
         """Produce exactly one line per trackpoint for easier editing (like removal of unwanted points).
 
         Returns: The xml string.
 
         """
-        result = super(Gpx, self).to_xml(version, prettyprint)
+        result = super(Gpx, self).to_xml()
         result = result.replace('</trkpt><', '</trkpt>\n<')
         result = result.replace('<copyright ></copyright>', '')   # gpxviewer does not accept such illegal xml
         result = result.replace('<link ></link>', '')

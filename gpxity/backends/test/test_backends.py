@@ -496,7 +496,7 @@ class TestBackends(BasicTest):
                     with self.assertRaises(Exception):
                         track1._dirty = False
                     self.assertFalse(track1._dirty)
-                    # version 1.1 should perhaps be a test on its own, see Track.to_xml()
+                    # version 1.1 should perhaps be a test on its own, see Track.xml()
                     track1.category = test_category
                     track1._dirty = 'gpx'
                     self.assertFalse(track1._dirty)

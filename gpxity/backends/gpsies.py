@@ -461,7 +461,7 @@ class GPSIES(Backend):
 
         """
         files = {'formFile': (
-            '{}.gpx'.format(self._html_encode(track.title)), track.to_xml(), 'application/gpx+xml')}
+            '{}.gpx'.format(self._html_encode(track.title)), track.xml(), 'application/gpx+xml')}
         data = {
             'fileDescription': track.description,
             'filename': track.title,

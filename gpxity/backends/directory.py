@@ -410,7 +410,7 @@ class Directory(Backend):
         with Backup(track):
             track.id_in_backend = new_ident
             with open(self.gpx_path(new_ident), 'w', encoding='utf-8') as out_file:
-                out_file.write(track.to_xml())
+                out_file.write(track.xml())
             self._set_filetime(track)
         return new_ident
 

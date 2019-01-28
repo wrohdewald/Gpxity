@@ -168,7 +168,7 @@ class TrackTests(BasicTest):
     def test_one_line_per_trkpt(self):
         """One line per trackpoint."""
         track = self.create_test_track()
-        xml = track.to_xml()
+        xml = track.xml()
         self.assertNotIn('<link ></link>', xml)
         lines = xml.split('\n')
         self.logger.debug('xml is:%s', xml)
@@ -183,7 +183,7 @@ class TrackTests(BasicTest):
         """check for Track parsing xml correctly."""
         track = self.create_test_track()
         track.keywords = ['Here are some keywords']
-        xml = track.to_xml()
+        xml = track.xml()
         track2 = Track()
         track2.parse(None)
         track2.parse('')
@@ -199,7 +199,7 @@ class TrackTests(BasicTest):
         # Here, category is always from the domain Track.category, no backend involved.
         # first, does it overwrite?
         track = self.create_test_track()
-        xml = track.to_xml()
+        xml = track.xml()
         if track.category == 'Cycling':
             other_category = 'Running'
         else:
@@ -218,7 +218,7 @@ class TrackTests(BasicTest):
         self.assertEqual(track2.keywords, list())
 
         track.public = True
-        xml = track2.to_xml()
+        xml = track2.xml()
         self.assertIn('Status:public', xml)
         track2 = Track()
         track2.category = Track.categories[3]
@@ -230,7 +230,7 @@ class TrackTests(BasicTest):
         track = self.create_test_track()
         track.title = ''
         track.description = ''
-        xml = track.to_xml()
+        xml = track.xml()
         if track.category == 'Cycling':
             other_category = 'Running'
         else:
@@ -618,7 +618,7 @@ class TrackTests(BasicTest):
         gpx_track = self.create_test_track()
         track._set_distance(5000)
         self.assertEqual(track.distance, 5000)
-        track.parse(gpx_track.to_xml())
+        track.parse(gpx_track.xml())
         self.assertEqual(track.distance, gpx_track.distance)
 
     def test_merge_track(self):

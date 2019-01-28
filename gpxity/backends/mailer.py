@@ -101,7 +101,7 @@ class MailQueue:
         for key, track in self.tracks.items():
             if not key.endswith('.gpx'):
                 key += '.gpx'
-            mail.add_attachment(track.to_xml(), filename=key)
+            mail.add_attachment(track.xml(), filename=key)
         host = account.smtp or 'localhost'
         port = int(account.port or '25')
         timeout = self.mailer.timeout

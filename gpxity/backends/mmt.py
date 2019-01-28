@@ -689,7 +689,7 @@ class MMT(Backend):
         if not track.gpx.get_track_points_no():
             raise self.BackendException('MMT does not accept a track without trackpoints:{}'.format(track))
         response = self.__post(
-            request='upload_activity', gpx_file=track.to_xml(),
+            request='upload_activity', gpx_file=track.xml(),
             status='public' if track.public else 'private',
             description=track.description, activity=self.encode_category(track.category))
         new_ident = response.find('id').text

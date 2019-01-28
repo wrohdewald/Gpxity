@@ -117,7 +117,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self.__backend = None
         self._loaded = False
         self._header_data = dict()  # only for internal use because we clear data on _full_load()
-        self.__gpx = gpx or Gpx()  # we need __gpx: backend.add(Track()) would fail in to_xml()
+        self.__gpx = gpx or Gpx()  # we need __gpx: backend.add(Track()) would fail in xml()
         self.__backend = None
         self.__cached_distance = None
         self.__cached_time = None
@@ -684,17 +684,17 @@ class Track:  # pylint: disable=too-many-public-methods
             _.longitude = round(_.longitude, 6)
             _.latitude = round(_.latitude, 6)
 
-    def to_xml(self) ->str:
+    def xml(self) ->str:
         """Produce exactly one line per trackpoint for easier editing (like removal of unwanted points).
 
-        Returns:
+        Returns: The xml string.
 
-            The xml string."""
+        """
         self._load_full()
         old_keywords = self.__gpx.keywords
         try:
             self.__gpx.keywords = self._encode_keywords()
-            result = self.__gpx.to_xml()
+            result = self.__gpx.xml()
         finally:
             self.__gpx.keywords = old_keywords
         return result
@@ -764,7 +764,7 @@ class Track:  # pylint: disable=too-many-public-methods
             uses ", " (with a space after the comma) as separator.
 
             However this is transparent for you. When parsing theGPX file, those are removed
-            from keywords, and the are re-added in when exporting in :meth:`to_xml`. So
+            from keywords, and the are re-added in when exporting in :meth:`xml`. So
             :attr:`Track.keywords` will never show those special values.
 
             Some backends may change keywords. :class:`~gpxity.backends.mmt.MMT` converts the
