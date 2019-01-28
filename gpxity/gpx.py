@@ -229,11 +229,13 @@ class Gpx(GPX):
         norm_long = delta_long / 180.0
         try:
             result = degrees(asin(norm_long / sqrt(norm_lat**2 + norm_long ** 2)))
+            if norm_lat >= 0.0:
+                result = (360.0 + result) % 360.0
+            else:
+                result = 180.0 - result
         except ZeroDivisionError:
-            return 0
-        if norm_lat >= 0.0:
-            return (360.0 + result) % 360.0
-        return 180.0 - result
+            result = 0
+        return result
 
     def segments(self):
         """
