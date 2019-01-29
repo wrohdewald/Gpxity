@@ -315,7 +315,7 @@ class BasicTest(unittest.TestCase):
     def setup_backend(  # pylint: disable=too-many-arguments
             self, cls_, test_name: str = None, url: str = None, count: int = 0,
             clear_first: bool = None, category: str = None,
-            public: bool = False):
+            public: bool = None):
         """set up an instance of a backend with count tracks.
 
         If count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
@@ -333,7 +333,8 @@ class BasicTest(unittest.TestCase):
                 call for all backend classes and they support different categories. So: If category is int, this is an
                 index into Backend.supported_categories which will be decoded into Track.categories
 
-            public: should the tracks be public or private? Default is False
+            public: should the tracks be public or private? Default is False.
+                Exception: MMT with subscription free has default True
 
         Returns:
             the prepared Backend
@@ -361,6 +362,9 @@ class BasicTest(unittest.TestCase):
         result = cls_(account)
         if clear_first and'scan' in cls_.supported and 'write' in cls_.supported:
             result.remove_all()
+        if public is None:
+            public = cls_ is MMT and result.subscription == 'free'
+
         if count:
             # if count == 0, skip this. Needed for write-only backends like Mailer.
             while count > len(result):
@@ -429,7 +433,7 @@ class BasicTest(unittest.TestCase):
     @contextmanager
     def temp_backend(self, cls_, url=None, count=0,  # pylint: disable=too-many-arguments
                      cleanup=True, clear_first=None, category=None,
-                     public: bool = False, test_name=None):
+                     public: bool = None, test_name=None):
         """Just like setup_backend but usable as a context manager. which will call detach() when done."""
         tmp_backend = self.setup_backend(cls_, test_name, url, count, clear_first, category, public)
         try:
