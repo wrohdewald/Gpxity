@@ -73,6 +73,18 @@ class TestBackends(BasicTest):
         expected = [x for x in expected if not x.is_disabled()]
         self.assertEqual(backends, expected)
 
+    def test_subscription(self):
+        """Test backend.subscription."""
+        for cls in Backend.all_backend_classes():
+            with self.tst_backend(cls):
+                with self.temp_backend(cls) as backend:
+                    if cls in (MMT, Openrunner):
+                        self.assertEqual(backend.subscription, 'free')
+                    elif cls == TrackMMT:
+                        self.assertEqual(backend.subscription, 'full')
+                    else:
+                        self.assertIsNone(backend.subscription)
+
     def test_save_empty(self):
         """Save empty track."""
         for cls in Backend.all_backend_classes(needs={'write'}):
