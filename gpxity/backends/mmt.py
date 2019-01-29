@@ -573,7 +573,7 @@ class MMT(Backend):
 
     def _remove_single_keyword(self, track, value):
         """Remove a specific keyword from track. Does not work correctly, see above."""
-        tag = value.strip()
+        tag = value.strip().capitalize()
         if tag not in self.__tag_ids:
             self.__tag_ids.update(self._scan_track_page(track)['tags'])
             self._check_tag_ids()

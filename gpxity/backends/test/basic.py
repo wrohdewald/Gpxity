@@ -260,6 +260,15 @@ class BasicTest(unittest.TestCase):
             message = ','.join(str(x) for x in backend)
             self.assertEqual(len(backend), length, 'Should have {} tracks: {}'.format(backend, message))
 
+    def assertHasKeywords(self, track, expected):  # noqa pylint: disable=invalid-name
+        """MMT shows keywords on the website lowercase but internally it capitalizes them."""
+        if isinstance(track.backend, MMT):
+            original = expected
+            expected = []
+            for _ in original:
+                expected.append(' '.join(x.capitalize() for x in _.split(' ')))
+        self.assertEqual(track.keywords, sorted(expected))
+
     def assertSameTracks(self, backend1, backend2, msg=None, with_category=True, with_last_time=None):  # noqa pylint: disable=invalid-name
         """both backends must hold identical tracks."""
         self.maxDiff = None  # pylint: disable=invalid-name

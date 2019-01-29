@@ -947,7 +947,7 @@ class Track:  # pylint: disable=too-many-public-methods
         self._load_full()
         return 'title:{} description:{} keywords:{} category:{}: public:{} last_time:{} angle:{} points:{}'.format(
             self.title, self.description,
-            ','.join(self.keywords), self.category if with_category else '',
+            ','.join(self.keywords).lower(), self.category if with_category else '',
             self.public, self.last_time if with_last_time else '',
             self.angle(precision), self.gpx.get_track_points_no())
 

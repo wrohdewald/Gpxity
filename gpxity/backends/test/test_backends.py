@@ -279,10 +279,7 @@ class TestBackends(BasicTest):
                 self.assertEqualTracks(track, track2, with_category=True)
 
     def test_z2_keywords(self):
-        """save and load keywords.
-
-        For now, all test keywords start with uppercase, avoiding MMT problems
-        """         # noqa hides bug in eric6 style checker
+        """save and load keywords."""  # noqa
 
         kw_a = 'A'
         kw_b = 'Berlin'
@@ -308,31 +305,31 @@ class TestBackends(BasicTest):
                     track.keywords = ([kw_a, kw_b, kw_c])
                     track.change_keywords(minus(kw_b))
                     self.assertTrue(track is backend[0])
-                    self.assertEqual(track.keywords, ([kw_a, kw_c]))
+                    self.assertHasKeywords(track, (kw_a, kw_c))
                     with self.assertRaises(Exception):
                         track.change_keywords('Category:whatever')
                     track.change_keywords(kw_d)
-                    self.assertEqual(set(track.keywords), {kw_a, kw_c, kw_d})
+                    self.assertHasKeywords(track, (kw_a, kw_c, kw_d))
                     backend2 = backend.clone()
                     track2 = backend2[track.id_in_backend]
                     self.assertTrue(track is backend[0])
                     track2.change_keywords(minus(kw_d))
-                    self.assertEqual(backend[0].keywords, ([kw_a, kw_c, kw_d]))
+                    self.assertHasKeywords(backend[0], (kw_a, kw_c, kw_d))
                     # change_keywords may have change id_in_backend in some backend classes, so reload track
                     backend.scan()
                     track = backend[0]
-                    self.assertEqual(track2.keywords, ([kw_a, kw_c]))
-                    self.assertEqual(track.keywords, ([kw_a, kw_c]))
+                    self.assertHasKeywords(track2, (kw_a, kw_c))
+                    self.assertHasKeywords(track, (kw_a, kw_c))
                     self.assertTrue(track is backend[0])
                     backend.scan()
-                    self.assertEqual(track.keywords, ([kw_a, kw_c]))
+                    self.assertHasKeywords(track, (kw_a, kw_c))
                     track.change_keywords(minus(kw_a))
-                    self.assertEqual(track.keywords, ([kw_c]))
+                    self.assertHasKeywords(track, [kw_c])
                     # track2.change_keywords(minus(kw_a))
                     track.change_keywords(minus(kw_c))
                     track.change_keywords(minus(kw_d))
                     backend.scan()
-                    self.assertEqual(backend[0].keywords, list())
+                    self.assertHasKeywords(backend[0], list())
 
     def test_z_unicode(self):
         """Can we up- and download unicode characters in all text attributes?."""
