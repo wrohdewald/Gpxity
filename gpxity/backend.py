@@ -155,6 +155,8 @@ class Backend(BackendBase):
         Returns: The url
 
         """
+        if self.account.url is None:
+            self.account.config['url'] = self.default_url
         return self.account.url
 
     def _has_default_url(self) ->bool:
@@ -179,7 +181,7 @@ class Backend(BackendBase):
         """
         author = self.account.username
         if not author:
-            raise Backend.BackendException('{} needs a username'.format(self.account))
+            raise Backend.BackendException('{} needs a username'.format(self.url))
         return author
 
     def __str__(self) ->str:

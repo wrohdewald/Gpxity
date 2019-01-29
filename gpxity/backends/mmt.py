@@ -294,16 +294,17 @@ class MMT(Backend):
         """
         ident = str(self)
         if ident not in self._session:
+            author = self._get_author()
             self._session[ident] = requests.Session()
             # I have no idea what ACT=9 does but it seems to be needed
-            payload = {'username': self.account.username, 'password': self.account.password, 'ACT': '9'}
+            payload = {'username': author, 'password': self.account.password, 'ACT': '9'}
             login_url = '{}/login'.format(self.https_url)
             headers = {'User-Agent': 'Gpxity'}  # see https://github.com/MapMyTracks/api/issues/26
             response = self._session[ident].post(
                 login_url, data=payload, headers=headers, timeout=self.timeout)
             if 'You are now logged in.' not in response.text:
                 raise self.BackendException('Login as {} / {} failed, I got {}'.format(
-                    self.account.username, self.account.password, response.text))
+                    author, self.account.password, response.text))
             else:
                 cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
