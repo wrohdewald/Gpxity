@@ -820,9 +820,9 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__gpx.real_keywords = new
             with self.batch_changes():
                 if remove:
-                    self._dirty = 'remove_keywords:{}'.format(', '.join(remove))
+                    self._dirty = 'remove_keywords{}{}'.format(BackendBase._dirty_separator, ', '.join(remove))
                 if add:
-                    self._dirty = 'add_keywords:{}'.format(', '.join(add))
+                    self._dirty = 'add_keywords{}{}'.format(BackendBase._dirty_separator, ', '.join(add))
         assert new == self.keywords, (
             'change_keywords failed. Expected: {}, got: {}'.format(new, self.keywords))
         return new

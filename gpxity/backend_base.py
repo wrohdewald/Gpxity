@@ -32,6 +32,8 @@ class BackendBase:
 
     __all_backend_classes = None
 
+    _dirty_separator = '__DIRTY_PAR__'
+
     class BackendException(Exception):
         """Is raised for general backend exceptions, especially error messages from a remote server"""
 

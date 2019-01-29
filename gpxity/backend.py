@@ -565,7 +565,7 @@ class Backend(BackendBase):
             track.id_in_backend = new_id
         else:
             for change in changes:
-                _ = change.split(':')
+                _ = change.split(self._dirty_separator)
                 write_name = '_write_{}'.format(_[0])
                 if len(_) == 1:
                     getattr(self, write_name)(track)
