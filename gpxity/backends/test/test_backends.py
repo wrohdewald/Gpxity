@@ -73,6 +73,16 @@ class TestBackends(BasicTest):
         expected = [x for x in expected if not x.is_disabled()]
         self.assertEqual(backends, expected)
 
+    def test_account_none(self):
+        """Test access with Account=None."""
+        for cls in Backend.all_backend_classes():
+            with self.tst_backend(cls):
+                backend = cls(Account())
+                if cls in (GPSIES, MMT, Openrunner):
+                    with self.assertRaises(backend.BackendException) as context:
+                        backend.scan(now=True)
+                    self.assertEqual(str(context.exception), '{} needs a username'.format(backend.url))
+
     def test_subscription(self):
         """Test backend.subscription."""
         for cls in Backend.all_backend_classes():
@@ -699,22 +709,6 @@ class TestBackends(BasicTest):
                         decoded = backend._decode_description(track.gpx, encoded)
                         self.assertEqual(len(encoded), max_length)
                         self.assertTrue(try_description.startswith(decoded))
-
-    def test_no_username(self):
-        """Some backends must fail if given no username."""
-        for cls in Backend.all_backend_classes(needs={'scan'}):
-            if cls is Directory:
-                continue
-            if cls is TrackMMT:
-                # TODO: this raises no exception
-                continue
-            with self.tst_backend(cls):
-                with self.assertRaises(Backend.BackendException) as context:
-                    with self.temp_backend(cls, test_name='no_username'):
-                        pass
-                self.assertEqual(
-                    str(context.exception),
-                    '{}_no_username_unittest: needs a username'.format(cls.__name__))
 
     def test_can_encode_all_categories(self):
         """Check if we can encode all internal categories to a given backend value for all backends."""
