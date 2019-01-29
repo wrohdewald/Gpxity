@@ -135,6 +135,10 @@ class Backend(BackendBase):
         self._tracks_fully_listed = False
         self.__match = None
         self.logger = logging.getLogger(str(self))
+        # do not want to see "Resetting dropped connection"
+        logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
+        logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
         self._cached_subscription = None  # to be used by specific Backend classes
 
     @property
