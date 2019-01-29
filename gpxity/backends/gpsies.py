@@ -495,6 +495,10 @@ class GPSIES(Backend):
 
     @classmethod
     def _define_support(cls):
-        """GPSIES special case."""
+        """GPSIES does not support keywords.
+
+        TODO: encode them in the description.
+
+        """
         super(GPSIES, cls)._define_support()
         cls.supported.remove('keywords')
