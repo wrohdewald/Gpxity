@@ -579,7 +579,8 @@ class MMT(Backend):
             self._check_tag_ids()
             if tag not in self.__tag_ids:
                 raise self.BackendException(
-                    '{}: Cannot remove tag {}, MMT does not have an id'.format(track, tag))
+                    '{}: Cannot remove tag {}, it is not one of {}'.format(
+                        track, tag, self.__tag_ids))
         if tag in self.__tag_ids:
             self.__post(
                 with_session=True, url='handler/delete-tag.php',
@@ -604,7 +605,6 @@ class MMT(Backend):
             chunk = response.find('activities')
             if not chunk:
                 return
-            self.logger.debug('got chunk %s %s', type(chunk), chunk)
             for _ in chunk:
                 raw_data = MMTRawTrack(_)
                 gpx = Gpx()

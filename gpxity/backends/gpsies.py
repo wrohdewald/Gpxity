@@ -411,15 +411,12 @@ class GPSIES(Backend):
         page_parser = ParseGPIESEditPage()
         page_parser.feed(response.text)
         track.category = self.decode_category(page_parser.category)
-        self.logger.debug('GPSIES._read_category: %s -> %s', page_parser.category, track.category)
 
     def _read_all(self, track):
         """get the entire track. For gpies, we only need the gpx file."""
         data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data, track=track)
-        self.logger.debug('GPSIES read_all vor Gpx.parse')
         track.gpx = Gpx.parse(response.text)
-        self.logger.debug('GPSIES read_all nach Gpx.parse und vor _read_category')
         self._read_category(track)
 
     def _check_response(self, response, track=None):

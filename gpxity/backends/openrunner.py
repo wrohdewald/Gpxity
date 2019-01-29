@@ -624,7 +624,6 @@ class Openrunner(Backend):
         track.time = datetime.datetime.strptime(route['updatedDate'], '%Y/%m/%d')
         track.public = not route['private']
         track.category = self.decode_category(route['activity'])
-        self.logger.debug('_read_all category: %s -> %s', route['activity'], track.category)
 
     def _check_response(self, response, data):
         """are there error messages?."""
@@ -686,7 +685,6 @@ class Openrunner(Backend):
         if old_ident:
             self._remove_ident(old_ident)
         track.id_in_backend = new_ident
-        self.logger.debug('%s fully written', track)
         return new_ident
 
     def _remove_ident(self, ident: str):

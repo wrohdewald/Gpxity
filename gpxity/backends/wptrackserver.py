@@ -21,8 +21,6 @@ last part of the strings will be thrown away silently when writing into the data
 
 # pylint: disable=protected-access
 
-import logging
-
 from gpxpy import gpx as mod_gpx
 
 from ..backend import Backend
