@@ -1405,12 +1405,13 @@ class Track:  # pylint: disable=too-many-public-methods
             logging.debug('ids: %s -> %s', original, result)
         return result
 
-    def split(self):
+    def split_segments(self):
         """Create separate tracks for every track/segment."""
         backend = self.backend
+        clone = self.clone()
         self.remove()
         try:
-            for segment in self.segments():
+            for segment in clone.segments():
                 track = self.clone()
                 gpx_track = GPXTrack()
                 gpx_track.segments.append(segment)
@@ -1418,4 +1419,4 @@ class Track:  # pylint: disable=too-many-public-methods
                 backend.add(track)
         except BaseException as exc:
             logging.error('split:%s', exc)
-            backend.add(self)
+            backend.add(clone)

@@ -517,7 +517,7 @@ class Utility:
     def split(self):
         """Split tracks."""
         for _ in self.source_tracks:
-            _.split()
+            _.split_segments()
 
     def join(self):
         """Join tracks."""
