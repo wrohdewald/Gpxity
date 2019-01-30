@@ -456,6 +456,7 @@ class BasicTest(unittest.TestCase):
     @classmethod
     def create_db_for_wptrackserver(cls):
         """Create the mysql database for the WPTrackserver tests."""
+        count = 0
         while True:
             try:
                 server = MySQLdb.connect(
@@ -465,6 +466,9 @@ class BasicTest(unittest.TestCase):
                 break
             except _mysql_exceptions.OperationalError:
                 # wait until the docker instance is ready
+                count += 1
+                if count > 50:
+                    raise
                 time.sleep(1)
         cursor = server.cursor()
         cursor.execute('drop database if exists gpxitytest_db')
