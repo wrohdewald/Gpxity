@@ -297,7 +297,7 @@ class Directory(Backend):
                 except GPXXMLSyntaxException:
                     self.logger.info(
                         '%s: Track metadata cannot be extracted, there is too much',
-                        Track.identifier(self.backend, self.id_in_backend))
+                        Track.identifier(self, ident))
         return result
 
     def _load_track_headers(self):
