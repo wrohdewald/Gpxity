@@ -282,7 +282,8 @@ class Directory(Backend):
     def _gpx_from_headers(self, ident):
         """Quick scan of file for getting some header fields.
 
-        We do this by removing <trk></trk>
+        We do this by removing everything after the first point
+        (or if no point is given everthin after metadata).
 
         Returns: Gpx
 
@@ -290,10 +291,17 @@ class Directory(Backend):
         result = Gpx()
         with open(self.gpx_path(ident), encoding='utf8') as raw_file:
             data = raw_file.read(100000)
-            parts = data.split('<trk>')
+            head = None
+            parts = data.split('</trkpt>')
             if len(parts) > 1:
+                head = parts[0] + '</trkpt></trkseg></trk></gpx>'
+            else:
+                parts = data.split('</metadata>')
+                if len(parts) > 1:
+                    head = parts[0] + '</metadata></gpx>'
+            if head:
                 try:
-                    result = Gpx.parse(parts[0] + '</gpx>', is_complete=False)
+                    result = Gpx.parse(head, is_complete=False)
                 except GPXXMLSyntaxException:
                     self.logger.info(
                         '%s: Track metadata cannot be extracted, there is too much',
