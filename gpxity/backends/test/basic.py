@@ -114,7 +114,8 @@ class BasicTest(unittest.TestCase):
             raise Exception('MMTTests needs a GPX file named {}.gpx for testing in {}'.format(
                 name, os.getcwd()))
         filename = '{}.gpx'.format(name)
-        result = Track(gpx=Gpx.parse(io.StringIO(get_data(__package__, filename).decode('utf-8'))))
+        data = io.StringIO(get_data(__package__, filename).decode('utf-8'))
+        result = Track(gpx=Gpx.parse(data))
         if backend_cls:
             result.category = backend_cls.decode_category(random.choice(backend_cls.supported_categories))
         return result
