@@ -715,6 +715,19 @@ class Utility:
                     fix_track.id_in_backend = str(fix_track.first_time).replace(' ', '_')
             if self.options.orux:
                 result_lines.extend(fix_track.fix_orux())
+            if self.options.clear_times:
+                for point in fix_track.points():
+                    point.time = None
+                fix_track.rewrite()
+            if self.options.set_first_time:
+                next(fix_track.points()).time = self.options.set_first_time
+                fix_track.rewrite()
+            if self.options.set_last_time:
+                fix_track.last_point().time = self.options.set_last_time
+                fix_track.rewrite()
+            if self.options.add_times:
+                fix_track.gpx.add_missing_times()
+                fix_track.rewrite()
             if self.options.add_minutes:
                 fix_track.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
             if self.options.simplify:
@@ -1141,6 +1154,17 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             help='Reduce track points. The new track may move MAX meters away from the original',
             metavar='MAX', type=int, default=None)
         fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
+        fix_parser.add_argument(
+            '--clear-times', help='Remove all point times', action='store_true', default=False)
+        fix_parser.add_argument(
+            '--set-first-time', help='Set time of first point, Does not change any other point',
+            type=lambda x: valid_date_argument(x, False), default=None)
+        fix_parser.add_argument(
+            '--set-last-time', help='Set time of last point, Does not change any other point',
+            type=lambda x: valid_date_argument(x, False), default=None)
+        fix_parser.add_argument(
+            '--add-times', help='Add a time to all points without',
+            action='store_true', default=False)
         self.add_common_args(fix_parser)
         self.add_multi_source(fix_parser)
 
@@ -1227,6 +1251,12 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                 logging.error('gpxdo: only one out of %s is allowed', ', '.join(exclusive).replace('_', '-'))
                 self.exit_code = 2
                 return
+            if self.options.set_first_time:
+                self.options.set_first_time = valid_date_argument(
+                    self.options.set_first_time, last=False, return_raw=False)
+            if self.options.set_last_time:
+                self.options.set_last_time = valid_date_argument(
+                    self.options.set_last_time, last=False, return_raw=False)
         if self.options.only_keywords:
             self.options.only_keywords = set(x.strip() for x in self.options.only_keywords.split(','))
         if self.options.only_category:
