@@ -508,6 +508,9 @@ class Backend(BackendBase):
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         self.matches(track, 'add')
         if track.backend is not self and track.backend is not None:
+            # we do not want clone() loading the track because
+            # that cannot be done with fences applied
+            track._load_full()
             with track.fenced(self.account.fences):
                 new_track = track.clone()
         else:
