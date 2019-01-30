@@ -471,7 +471,9 @@ class BasicTest(unittest.TestCase):
                     raise
                 time.sleep(1)
         cursor = server.cursor()
+        cursor._defer_warnings = True
         cursor.execute('drop database if exists gpxitytest_db')
+        cursor._defer_warnings = False
         cursor.execute('create database gpxitytest_db')
         cursor.execute('use gpxitytest_db')
         cursor.execute("""
