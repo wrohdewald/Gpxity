@@ -367,7 +367,9 @@ class Track:  # pylint: disable=too-many-public-methods
 
         """
         if self.__cached_time is None:
-            self.__cached_time = self.gpx.first_time
+            self.__cached_time = self.__gpx.first_time
+            if self.__cached_time is None:
+                self.__cached_time = self.gpx.first_time
         return self.__cached_time
 
     @property
