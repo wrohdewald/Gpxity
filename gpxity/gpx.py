@@ -455,12 +455,11 @@ class Gpx(GPX):
         """Return True if distance < delta_meter."""
         return abs(last_point.distance_2d(point)) < delta_meter
 
-    def fix_jumps(self) ->bool:  # noqa pylint: disable=too-many-branches
+    def fix_jumps(self, minutes=30) ->bool:  # noqa pylint: disable=too-many-branches
         """Split segments at jumps.
 
-        Whenever the time jumps back or more than 30
+        Whenever the time jumps back or more than X
         minutes into the future or the distance exceeds 5km,
-
         split the segment at that point.
 
         Returns: True if a split happened
@@ -486,7 +485,7 @@ class Gpx(GPX):
                             needs_break = True
                     elif point.time is not None and prev_point.time is None:
                         needs_break = True
-                    elif point.time - prev_point.time > datetime.timedelta(minutes=30):
+                    elif point.time - prev_point.time > datetime.timedelta(minutes=minutes):
                         needs_break = True
                     elif point.time < prev_point.time:
                         needs_break = True

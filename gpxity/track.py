@@ -1284,28 +1284,32 @@ class Track:  # pylint: disable=too-many-public-methods
                 other.remove()
         return msg
 
-    def fix(self, orux: bool = False, jumps: bool = False):
-        """Fix bugs. This may fix them or produce more bugs.
+    def fix_orux(self):
+        """Older Oruxmaps switched the day back by one day after exactly 24 hours.
+
+        Try fixing that.
 
         Please backup your track before doing this.
 
-        Args:
-            orux: Older Oruxmaps switched the day back by one
-                day after exactly 24 hours.
-            jumps: Whenever the time jumps back or more than 30
-            minutes into the future, split the segment at that point.
+        Returns: A list with messages. Currently nothing.
+
+        """
+        if self.gpx.fix_orux():
+            self._dirty = 'gpx'
+        return []
+
+    def split_at_stops(self, minutes):
+        """Split where things happen.
+
+        Whenever the time jumps back or more than 30
+        minutes into the future, split the segment at that point.
 
         Returns:
             A list of message strings, usable for verbose output.
 
-            """
-        if orux:
-            if self.gpx.fix_orux():
-                self._dirty = 'gpx'
-        if jumps:
-            if self.gpx.fix_jumps():
-                self._dirty = 'gpx'
-        return []
+        """
+        if self.gpx.fix_jumps(minutes=minutes):
+            self._dirty = 'gpx'
 
     def __similarity_to(self, other):
         """Return a float 0..1: 1 is identity."""
