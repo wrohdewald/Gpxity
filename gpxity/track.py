@@ -112,6 +112,10 @@ class Track:  # pylint: disable=too-many-public-methods
         'Wintersports',
         'Miscellaneous')
 
+    _obsolete_categories = {
+        'Mountain biking': 'Cycling - MTB',
+    }
+
     def __init__(self, gpx=None):
         """See class docstring."""
         if gpx is None:
