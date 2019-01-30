@@ -19,6 +19,7 @@ import argparse
 import os
 import sys
 import datetime
+import calendar
 from collections import defaultdict
 import logging
 import textwrap
@@ -45,35 +46,48 @@ from gpxity.util import uniq, collect_tracks, pairs
 from gpxity.gpx import Gpx
 
 def __last_month_day(date):
-    """Change to the last day of month"""
-    year, month, day = date.year, date.month, date.day
-    month1 = month + 1
-    if month1 == 13:
-        year += 1
-        month = 1
-    next_month_1 = datetime.date(year, month+1, day)
-    last_day = (next_month_1 - datetime.timedelta(days=1)).day
-    return date + datetime.timedelta(days=last_day - day)
+    """Return last day of month.
+
+    Returns: As I said
+
+    """
+    year, month, _ = date.year, date.month, date.day
+    return calendar.monthrange(year, month)[1]
 
 def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
     """custom argparse type for date as YYYY-MM-DD"""
+    last_delta = datetime.timedelta(microseconds=999999)
     try:
-        result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
+        result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%dT%H:%M:%S")
     except ValueError:
+        last_delta += datetime.timedelta(seconds=59)
         try:
-            result = datetime.datetime.strptime(arg_date_str, "%Y-%m")
-            if last:
-                result = __last_month_day(result)
+            result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%dT%H:%M")
         except ValueError:
+            last_delta += datetime.timedelta(minutes=59)
             try:
-                result = datetime.datetime.strptime(arg_date_str, "%Y")
-                if last:
-                    result = datetime.datetime(year=result.year+1, month=1, day=1)
-                    result -= datetime.timedelta(days=1)
-            except ValueError as exc:
-                logging.error(exc)
-                msg = "Given Date ({0}) not valid! Expected format YYYY-MM-DD or YYYY-MM or YYYY".format(arg_date_str)
-                raise argparse.ArgumentTypeError(msg)
+                result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%dT%H")
+            except ValueError:
+                last_delta += datetime.timedelta(hours=23)
+                try:
+                    result = datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
+                except ValueError:
+                    try:
+                        result = datetime.datetime.strptime(arg_date_str, "%Y-%m")
+                        if last:
+                            result += datetime.timedelta(days=__last_month_day(result) - 1)
+                    except ValueError:
+                        try:
+                            result = datetime.datetime.strptime(arg_date_str, "%Y")
+                            if last:
+                                result += datetime.timedelta(days=365 if calendar.isleap(result.year) else 364)
+                        except ValueError as exc:
+                            logging.error(exc)
+                            msg = "Given Date ({0}) not valid! Expecting YYYY-MM-DDThh:mm:ss"  \
+                                "or any abbreviation like 2019-01-13T15:34".format(arg_date_str)
+                            raise argparse.ArgumentTypeError(msg)
+    if last:
+        result += last_delta
     return arg_date_str if return_raw else result
 
 class LsField:
@@ -923,7 +937,7 @@ defines the account. Example: ::
         Username gpsies_username
         Password xxxx
 
-Dates are expected as YYYY-MM-DD, YYYY-MM or YYYY.
+Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13T15 or 2019
 
 """
 
