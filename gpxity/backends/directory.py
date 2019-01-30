@@ -293,7 +293,7 @@ class Directory(Backend):
             parts = data.split('<trk>')
             if len(parts) > 1:
                 try:
-                    result = Gpx.parse(parts[0] + '</gpx>')
+                    result = Gpx.parse(parts[0] + '</gpx>', is_complete=False)
                 except GPXXMLSyntaxException:
                     self.logger.info(
                         '%s: Track metadata cannot be extracted, there is too much',

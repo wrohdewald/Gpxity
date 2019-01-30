@@ -45,6 +45,7 @@ class Gpx(GPX):
             the wanted value is already known (by loading the list of tracks
             in the backend) or if the full track needs to be read.
         real_keywords: As decoded from keywords
+        is_complete: False while we hold only metadata for the track.
 
         category: As decoded from keywords, no translation done
         public: Decoded from keywords
@@ -72,6 +73,7 @@ class Gpx(GPX):
         self.category = Gpx.undefined_str
         self.public = Gpx.undefined_str
         self.ids = list()
+        self.is_complete = False
 
     def encode(self):
         """Set keywords from real_keywords, category, public, ids."""
@@ -157,16 +159,18 @@ class Gpx(GPX):
             self.tracks[-1].segments[-1].points.extend(points)
 
     @classmethod
-    def parse(cls, indata):
+    def parse(cls, indata, is_complete: bool = True):
         """Parse xml data.
 
         Args:
             indata: may be a file descriptor or str
+            is_complete: indata holds the entire track info, not just metadata
 
         Returns: Gpx()
 
         """
         result = Gpx()
+        result.is_complete = is_complete
         if hasattr(indata, 'read'):
             indata = indata.read()
         if indata:

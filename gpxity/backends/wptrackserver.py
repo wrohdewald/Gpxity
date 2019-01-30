@@ -204,6 +204,7 @@ class WPTrackserver(Backend):
         cursor = self.__exec_mysql(
             'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [track.id_in_backend])
         track.add_points([self.__point(x) for x in cursor.fetchall()])
+        track.gpx.is_complete = True
 
     @staticmethod
     def __needs_insert(cursor, ident) -> bool:

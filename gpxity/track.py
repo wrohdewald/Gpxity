@@ -122,7 +122,6 @@ class Track:  # pylint: disable=too-many-public-methods
         self.__ids = list()  # TODO: remove
         self.__id_in_backend = None
         self.__backend = None
-        self._loaded = False
         self.__gpx = None
         self.__backend = None
         self.__cached_time = None
@@ -248,7 +247,7 @@ class Track:  # pylint: disable=too-many-public-methods
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`."""
-        if not self._loaded:
+        if not self.__gpx.is_complete:
             raise Exception('Track.rewrite: The track must already be loaded fully')
         self._dirty = 'gpx'
 
@@ -389,7 +388,7 @@ class Track:  # pylint: disable=too-many-public-methods
     @distance.setter
     def distance(self, value):
         """The setter."""
-        if self._loaded:
+        if self.__gpx.is_complete:
             raise Exception('Setting Track.distance is only allowed while the full track has not yet been loaded')
         self.__cached_distance = value
 
@@ -560,7 +559,7 @@ class Track:  # pylint: disable=too-many-public-methods
             self.__encode_gpx()
             self._dirty = 'category'
 
-    def _load_full(self) ->bool:
+    def _load_full(self):
         """Load the full track from source_backend if not yet loaded and if not decoupled.
 
         The backend may
@@ -576,15 +575,9 @@ class Track:  # pylint: disable=too-many-public-methods
         Returns: True for success
 
         """
-        if (self.backend is not None and self.id_in_backend and not self._loaded
+        if (self.backend is not None and self.id_in_backend and not self.__gpx.is_complete
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)
-            self.__finalize_load()
-        return self._loaded
-
-    def __finalize_load(self):
-        """Track is now fully loaded. Resolve header data."""
-        self._loaded = True
 
     def add_points(self, points) ->None:
         """Round and add points to last segment in the last track.
@@ -690,8 +683,6 @@ class Track:  # pylint: disable=too-many-public-methods
         else:
             self.__encode_gpx()
         self._round_points(self.points())
-        if self.__gpx.tracks:
-            self.__finalize_load()
 
     @property
     def last_time(self) ->datetime.datetime:
