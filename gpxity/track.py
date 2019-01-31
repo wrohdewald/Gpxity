@@ -846,19 +846,28 @@ class Track:  # pylint: disable=too-many-public-methods
         """Return a list of strings with easy to find problems."""
         result = list()
         if self.last_time:
-            if self.speed() > self.moving_speed():
+            speed = self.speed()
+            moving_speed = self.moving_speed()
+            if speed > moving_speed:
                 result.append('Speed {:.3f} must not be above Moving speed {:.3f}'.format(
-                    self.speed(), self.moving_speed()))
-            if self.category == 'Cycling':
-                if not 3 <= self.speed() <= 60:
-                    result.append('Speed {:.3f} is out of expected range 3..60'.format(self.speed()))
-                if not 10 <= self.moving_speed() <= 50:
-                    result.append('Moving speed {:.3f} is out of expected range 10..50'.format(self.moving_speed()))
-            if self.category == 'Cycling - MTB':
-                if not 3 <= self.speed() <= 50:
-                    result.append('Speed {:.3f} is out of expected range 3..50'.format(self.speed()))
-                if not 10 <= self.moving_speed() <= 40:
-                    result.append('Moving speed {:.3f} is out of expected range 10..40'.format(self.moving_speed()))
+                    speed, moving_speed))
+            expected_speeds = {
+                'Cycling - MTB': ((3, 50), (5, 50)),
+                'Cycling - Road': ((3, 60), (10, 60)),
+            }
+            expected_speed = expected_speeds.get(self.category)
+            if expected_speed:
+                template = None
+                if speed < expected_speed[0][0]:
+                    template = 'Speed {speed:.3f} is very low'
+                elif speed > expected_speed[0][1]:
+                    template = 'Speed {speed:.3f} is very high'
+                elif moving_speed < expected_speed[1][0]:
+                    template = 'Moving speed {moving_speed:.3f} is very low'
+                elif moving_speed > expected_speed[1][1]:
+                    template = 'Moving speed {moving_speed:.3f} is very high'
+                if template:
+                    result.append(template.format(speed=speed, moving_speed=moving_speed))
         return result
 
     def __repr__(self) ->str:
