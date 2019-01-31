@@ -10,7 +10,6 @@
 
 import os
 import re
-import logging
 import copy
 import tempfile
 
@@ -91,7 +90,6 @@ class Accounts:
         """Parse an accounts file."""
         if path not in cls.__account_files:
             if not os.path.exists(path):
-                logging.error('%s not found', path)
                 return
             cls.__account_files[path] = cls.__parse_accounts(path)
 
@@ -128,18 +126,15 @@ class Accounts:
     @classmethod
     def __yield_accounts(cls, file_obj):
         """Generate all accounts."""
-        account = None
+        account = {'name': 'global'}
         for match in cls.__yield_matches(file_obj):
             key = match.group(1).lower()
             value = match.group(2)
 
             if key == 'account':
-                value = value.lower()
                 if account is not None:
                     yield account
-                account = {
-                    'name': value,
-                }
+                account = {'name': value.lower()}
                 continue
 
             if value.startswith('"') and value.endswith('"'):
@@ -215,7 +210,6 @@ class Account:
         for key, value in kwargs.items():
             self.config[key.lower()] = value
         self._resolve_fences()
-    #    logging.error('%s: Using account data from %s kwargs=%s', self.name, accounts.filename, kwargs)
 
     def _resolve_fences(self):
         """create self.fences as a Fences instance."""
@@ -300,15 +294,19 @@ class DirectoryAccount(Account):
             raise Exception('Directory / is not allowed')
         if url.endswith('/') and url != '/':
             raise Exception('DirectoryAccount: url {} must not end with /'.format(url))
+        self.config = dict()
         if not os.path.exists(url):
             os.makedirs(url)
-        self.config = {'url': url}
+        else:
+            config_name = os.path.join(url, '.gpxity_config')
+            if os.path.exists(config_name):
+                self.config = Accounts.lookup(config_name, 'global')
         self.config['backend'] = 'Directory'
+        self.config['url'] = url
         for key, value in kwargs.items():
             self.config[key.lower()] = value
         self.name = url
         self._resolve_fences()
-        logging.error('%s: Using account data kwargs=%s -> config=%s', self.name, kwargs, self.config)
 
     def __repr__(self):
         """For debugging output.
