@@ -572,14 +572,13 @@ class Gpx(GPX):
                 return start_time_delta
         return None
 
-    def locate_point(self, point=0, segment=0, track=0, location_provider='osm', default_country=None):
+    def locate_point(self, point=0, segment=0, track=0, default_country=None):
         """Determine name of place for point.
 
         Saves that in point.name for caching.
 
         Args:
             point_idx: Index into point_list()
-            location_provider: For possible values, see :literal:`gpxdo ls --help`
 
         Returns: tuple(point, located)
             located is True if locating was needed, False if we had it cached
@@ -589,7 +588,7 @@ class Gpx(GPX):
         result = not point.name
         if result:
             _ = Geocoder_location([point.latitude, point.longitude])
-            place = geocoder.get(location=_, provider=location_provider, method='reverse')
+            place = geocoder.get(location=_, provider='osm', method='reverse')
             for _ in ('city', 'town', 'village', 'hamlet'):
                 if hasattr(place, _):
                     name = getattr(place, _)

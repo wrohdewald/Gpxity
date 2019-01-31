@@ -336,7 +336,7 @@ class BasicTest(unittest.TestCase):
             cls_ (Backend): the class of the backend to be created
             username: use this to for a specific accout name. Default is 'gpxitytest'.
                 Special case WPTrackserver: pass the IP address of the mysql test server
-            url: for the backend, only for cls_ Directory
+            url: for the backend, only for Directory
             count: how many random tracks should be inserted?
             clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
             category: The wanted category, one out of Track.categories. But this is a problem because we do the same

@@ -31,8 +31,6 @@ try:
 except ImportError:
     pass
 
-import geocoder
-
 from gpxpy import gpx as mod_gpx
 GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
@@ -536,10 +534,6 @@ class Utility:
             new_track.id_in_backend = new_track.title
         new_track.rewrite()
 
-    def start_place(self, track):
-        """Determine the starting place."""
-        return track.locate_point(location_provider=self.options.location_provider)
-
     def __fill_groups(self, rows, mainsort):
         """Returns groups containing matching rows."""
         result = defaultdict(list)
@@ -580,7 +574,7 @@ class Utility:
             for track in self.source_tracks:
                 # must be done first because --segments will create separate
                 # Track() objects for each segment without connection to backend.
-                track.add_locations(segments=self.options.segments, location_provider=self.options.location_provider)
+                track.add_locations(segments=self.options.segments)
 
 
         list(LsField(*x) for x in (
@@ -602,7 +596,7 @@ class Utility:
             (False, 'Moving duration', lambda x: x.moving_duration, '{}', datetime.timedelta),
             (False, 'Moving distance', lambda x: x.moving_distance, '{}', float),
             (self.options.similarity, 'Similarity', lambda x: x.similarity(self.similar_to), '{:>1.2f}', float),
-            (self.options.location, 'Location', self.start_place),
+            (self.options.location, 'Location', lambda x: x.locate_point()),
             (self.options.warnings, 'Warnings', lambda x: x.warnings(), 'warnings')))
 
         if 'speed' in LsRow.visible_headers():
@@ -629,7 +623,7 @@ class Utility:
             group_keys = sorted(set(self.__yield_all_group_keys(mainsort)), key=lambda x: '' if x is None else x)
 
         if self.options.locate:
-            locator = Locate(self.options.locate, self.source_tracks, provider=self.options.location_provider)
+            locator = Locate(self.options.locate, self.source_tracks)
             self.source_tracks = locator.found(max_away=self.options.max_away)
 
         all_rows = [LsRow(x) for x in self.source_tracks]
@@ -1039,9 +1033,6 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                                action='store_true', default=False)
         ls_parser.add_argument('--warnings', help='show warnings',
                                action='store_true', default=False)
-        ls_parser.add_argument(
-            '--location-provider', help="data provider for --locate and --location",
-            choices=geocoder.api.options.keys(), default='osm')
         ls_parser.add_argument(
             '--locate', action='append',
             help='the name of a place. --locate can be repeated. '

@@ -21,7 +21,6 @@ class Locate:
     Args:
         places: A list of places that the tracks should pass
         tracks: The tracks to be searched
-        provider: The data provider for geolocation
 
     Attributes:
         locations: The list of found places. For each given value in arg **places**,
@@ -33,14 +32,13 @@ class Locate:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, places, tracks, provider='osm'):
+    def __init__(self, places, tracks):
         """See class docstring."""
         self.places = places
         self.tracks = tracks
-        self.provider = provider
         self.locations = list()
         for place in places:
-            _ = geocoder.get(place, provider=provider)
+            _ = geocoder.get(place, provider='osm')
             if not _:
                 raise Exception('Place not found: {}'.format(place))
             self.locations.append(_[0])
