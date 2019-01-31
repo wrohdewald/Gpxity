@@ -93,19 +93,19 @@ class Accounts:
             if not os.path.exists(path):
                 logging.error('%s not found', path)
                 return
-            with open(path) as account_file:
-                cls.__account_files[path] = cls.__parse_accounts(account_file)
+            cls.__account_files[path] = cls.__parse_accounts(path)
 
     @classmethod
-    def __parse_accounts(cls, file_obj):
-        """Parse all accounts from file_obj.
+    def __parse_accounts(cls, filename):
+        """Parse all accounts from filename.
 
         Returns: dict with all accounts.filename
 
         """
         result = dict()
-        for _ in cls.__yield_accounts(file_obj):
-            result[_['name']] = _
+        with open(filename) as file_obj:
+            for _ in cls.__yield_accounts(file_obj):
+                result[_['name']] = _
         return result
 
     @staticmethod
