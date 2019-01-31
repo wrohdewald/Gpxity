@@ -5,7 +5,7 @@ Changelog
   * Backend.subscription shows the name of the subscription model
   * gpxdo: dates may now contain a time
   * gpxdo split --stops MINUTES instead of fix --jumps
-  * gpxdo fix --clear-times, --set-first-time, --set-last-time, --add-times
+  * gpxdo fix --clear-times, --set-first-time, --set-last-time, --add-times, --clear-locations
   * new: Track.locate_point() and Track.add_locations()
   * split class Account into Account and DirectoryAccount
 
