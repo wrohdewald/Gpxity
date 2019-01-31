@@ -1430,3 +1430,35 @@ class Track:  # pylint: disable=too-many-public-methods
         except BaseException as exc:
             logging.error('split:%s', exc)
             backend.add(clone)
+
+    def locate_point(self, track=0, segment=0, point=0, location_provider='osm') ->str:
+        """Determine name of place for point.
+
+        Saves that in point.name for caching. If backend.account.country is given,
+        add the country name only if it is different.
+
+        Args:
+            track, segment, point: Indices into the respective arrays
+            location_provider: For possible values, see :literal:`gpxdo ls --help`
+
+        Returns: A string
+
+        """
+        country = self.backend.account.country if self.backend is not None else None
+        result, located = self.gpx.locate_point(track, segment, point, location_provider, default_country=country)
+        if located:
+            if self.backend is not None:
+                self.rewrite()
+        return result
+
+    def add_locations(self, segments=False, location_provider='osm'):
+        """Call locate_point for the first point.
+
+        Args: segments: Also do that for the first point of each segment.
+
+        """
+        self.locate_point(location_provider=location_provider)
+        if segments:
+            for track_idx, gpx_track in enumerate(self.gpx.tracks):
+                for seg_idx, _ in enumerate(gpx_track.segments):
+                    self.locate_point(track=track_idx, segment=seg_idx, location_provider=location_provider)

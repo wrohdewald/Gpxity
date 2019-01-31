@@ -20,6 +20,8 @@ import datetime
 from gpxpy import gpx as mod_gpx
 from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length, Location
+import geocoder
+from geocoder.location import Location as Geocoder_location
 
 from .util import repr_timespan, uniq, positions_equal
 
@@ -217,6 +219,7 @@ class Gpx(GPX):
         result = result.replace('\n      </trkpt>', '</trkpt>')
         result = result.replace('>\n        <ele>', '><ele>')
         result = result.replace('>\n        <time>', '><time>')
+        result = result.replace('>\n        <name>', '><name>')
         result = result.replace('\n\n', '\n')
         if not result.endswith('\n'):
             result += '\n'
@@ -568,3 +571,40 @@ class Gpx(GPX):
             if start_time_delta == end_time_delta:
                 return start_time_delta
         return None
+
+    def locate_point(self, point=0, segment=0, track=0, location_provider='osm', default_country=None):
+        """Determine name of place for point.
+
+        Saves that in point.name for caching.
+
+        Args:
+            point_idx: Index into point_list()
+            location_provider: For possible values, see :literal:`gpxdo ls --help`
+
+        Returns: tuple(point, located)
+            located is True if locating was needed, False if we had it cached
+
+        """
+        point = self.tracks[track].segments[segment].points[point]
+        result = not point.name
+        if result:
+            _ = Geocoder_location([point.latitude, point.longitude])
+            place = geocoder.get(location=_, provider=location_provider, method='reverse')
+            for _ in ('city', 'town', 'village', 'hamlet'):
+                if hasattr(place, _):
+                    name = getattr(place, _)
+                    if name:
+                        break
+            if not name and 'address' in place.raw:
+                name = place.raw['address'].get('city_district')
+            if 'address' in place.raw:
+                suburb = place.raw['address'].get('suburb')
+                if suburb:
+                    name += '-' + suburb
+            if not name:
+                name = place.address
+            if place.country.lower() != default_country.lower():
+                point.name = '{}, {}'.format(name, place.country)
+            else:
+                point.name = name
+        return point.name, result

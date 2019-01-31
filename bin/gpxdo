@@ -23,14 +23,14 @@ import calendar
 from collections import defaultdict
 import logging
 import textwrap
-import geocoder
-from geocoder.location import Location as Geocoder_location
 
 try:
     import argcomplete
     # pylint: disable=unused-import
 except ImportError:
     pass
+
+import geocoder
 
 from gpxpy import gpx as mod_gpx
 GPXTrack = mod_gpx.GPXTrack
@@ -537,12 +537,7 @@ class Utility:
 
     def start_place(self, track):
         """Determine the starting place."""
-        first_point = next(track.points())
-        if first_point:
-            _ = Geocoder_location([first_point.latitude, first_point.longitude])
-            place = geocoder.get(location=_, provider=self.options.location_provider, method='reverse')
-            return '{}, {}'.format(place.city, place.country)
-        return ''
+        return track.locate_point(location_provider=self.options.location_provider)
 
     def __fill_groups(self, rows, mainsort):
         """Returns groups containing matching rows."""
@@ -579,6 +574,14 @@ class Utility:
     def list_them(self):
         """list tracks"""
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+
+        if self.options.location:
+            for track in self.source_tracks:
+                # must be done first because --segments will create separate
+                # Track() objects for each segment without connection to backend.
+                track.add_locations(segments=self.options.segments, location_provider=self.options.location_provider)
+
+
         list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.gpxdo_identifier),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
