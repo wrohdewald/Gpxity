@@ -1,20 +1,19 @@
 Changelog
 =========
 
-  * WPTrackserver and Directory allow renaming by assinging new id_in_backend
+1.6.0 release 2019-01-xx
+------------------------
+
+  * replace auth_cfg with accounts, new syntax for identifiers
+  * Directory: the file .gpxity_config may define account settings
+  * WPTrackserver and Directory allow renaming by assigning new id_in_backend
   * Backend.subscription shows the name of the subscription model
   * gpxdo: dates may now contain a time
   * gpxdo split --stops MINUTES instead of fix --jumps
   * gpxdo fix --clear-times, --set-first-time, --set-last-time, --add-times, --clear-locations
   * new: Track.locate_point() and Track.add_locations()
   * split class Account into Account and DirectoryAccount
-  * Directory: the file .gpxity_config may define account settings
-
-1.6.0 release 2019-01-xx
-------------------------
-
   * integrate ServerDirectory into Directory
-  * replace auth_cfg with accounts, new syntax for identifiers
 
 1.5.1 release 2019-01-02
 ------------------------
