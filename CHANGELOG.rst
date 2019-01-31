@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.6.0 release 2019-01-xx
+1.6.0 release 2019-01-31
 ------------------------
 
   * replace auth_cfg with accounts, new syntax for identifiers
