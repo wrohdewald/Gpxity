@@ -649,7 +649,9 @@ class Utility:
                     for track_idx, track in enumerate(gpx.tracks):
                         for seg_idx, segment in enumerate(track.segments):
                             segment_line = SegmentRow(segment)
-                            segment_line['identifier'] = '  Track/Segment {}/{}'.format(track_idx + 1, seg_idx + 1)
+                            seg_title = 'Track/Segment {}/{}'.format(track_idx + 1, seg_idx + 1)
+                            segment_line['identifier'] = ''
+                            segment_line['title' if self.options.title else 'identifier'] = seg_title
                             seg_lines.append(segment_line)
                     if len(seg_lines) > 1:
                         group_lines.extend(seg_lines)
