@@ -17,7 +17,7 @@ from unittest import skipIf
 
 from .basic import BasicTest, disabled
 from .. import Directory, MMT, GPSIES, TrackMMT, Mailer, WPTrackserver, Openrunner
-from ... import Track, Lifetrack, Backend, Account
+from ... import Track, Lifetrack, Backend, Account, DirectoryAccount
 from ...util import remove_directory
 
 # pylint: disable=attribute-defined-outside-init
@@ -77,7 +77,10 @@ class TestBackends(BasicTest):
         """Test access with Account=None."""
         for cls in Backend.all_backend_classes():
             with self.tst_backend(cls):
-                backend = cls(Account())
+                if cls is Directory:
+                    backend = cls(DirectoryAccount())
+                else:
+                    backend = cls(Account())
                 if cls in (GPSIES, MMT, Openrunner):
                     with self.assertRaises(backend.BackendException) as context:
                         backend.scan(now=True)
@@ -549,6 +552,7 @@ class TestBackends(BasicTest):
         """directory creation/deletion."""
 
         with self.temp_backend(Directory) as dir_a:
+            self.assertTrue(dir_a.account.is_temporary)
             a_url = dir_a.url
             self.assertTrue(os.path.exists(a_url), a_url)
         self.assertFalse(os.path.exists(a_url), a_url)
@@ -559,7 +563,7 @@ class TestBackends(BasicTest):
         self.assertTrue(os.path.exists(test_url), test_url)
         remove_directory(test_url)
 
-        dir_c = Directory(Account())
+        dir_c = Directory(DirectoryAccount())
 
         self.assertIn('/gpxity.TestBackends.test_directory_', dir_c.url)
         dir_c.detach()

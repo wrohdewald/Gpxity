@@ -28,7 +28,7 @@ import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 from gpxpy.geo import LocationDelta
 
-from ... import Track, Backend, Account
+from ... import Track, Backend, Account, DirectoryAccount
 from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner, MMT
 from ...util import remove_directory
 from ...gpx import Gpx
@@ -62,7 +62,7 @@ class BasicTest(unittest.TestCase):
     mysql_docker_name = 'gpxitytest_mysql'
 
     def setUp(self):  # noqa
-        """define test specific Directory.prefix."""
+        """define test specific DirectoryAccount.prefix."""
         self.maxDiff = None  # pylint: disable=invalid-name
         Account.path = os.path.join(os.path.dirname(__file__), 'test_accounts')
         self.logger = logging.getLogger()
@@ -71,12 +71,12 @@ class BasicTest(unittest.TestCase):
         self.start_time = datetime.datetime.now()
         self.unicode_string1 = 'unicode szlig: ß'
         self.unicode_string2 = 'something japanese:の諸問題'
-        self.org_dirprefix = Directory.prefix
-        Directory.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '_'  # noqa
-        path = tempfile.mkdtemp(prefix=Directory.prefix)
+        self.org_dirprefix = DirectoryAccount.prefix
+        DirectoryAccount.prefix = 'gpxity.' + '.'.join(self.id().split('.')[-2:]) + '_'  # noqa
+        path = tempfile.mkdtemp(prefix=DirectoryAccount.prefix)
         Backend._session.clear()
 
-        Directory.prefix = path
+        DirectoryAccount.prefix = path
 
         if not Mailer.is_disabled():
             self.start_mailserver()
@@ -85,8 +85,8 @@ class BasicTest(unittest.TestCase):
         """Check if there are still /tmp/gpxitytest.* directories."""
         if not Mailer.is_disabled():
             self.stop_mailserver()
-        remove_directory(Directory.prefix)
-        Directory.prefix = self.org_dirprefix
+        remove_directory(DirectoryAccount.prefix)
+        DirectoryAccount.prefix = self.org_dirprefix
         timedelta = datetime.datetime.now() - self.start_time
         self.logger.debug('%s seconds ', timedelta.seconds)
         logging.shutdown()
@@ -259,7 +259,7 @@ class BasicTest(unittest.TestCase):
         """Check length of backend."""
         if len(backend) != length:
             message = ','.join(str(x) for x in backend)
-            self.assertEqual(len(backend), length, 'Should have {} tracks: {}'.format(backend, message))
+            self.assertEqual(len(backend), length, '{} should have {} tracks: {}'.format(backend, length, message))
 
     def assertHasKeywords(self, track, expected):  # noqa pylint: disable=invalid-name
         """MMT shows keywords on the website lowercase but internally it capitalizes them."""
@@ -336,7 +336,7 @@ class BasicTest(unittest.TestCase):
             cls_ (Backend): the class of the backend to be created
             username: use this to for a specific accout name. Default is 'gpxitytest'.
                 Special case WPTrackserver: pass the IP address of the mysql test server
-            url: for the backend
+            url: for the backend, only for cls_ Directory
             count: how many random tracks should be inserted?
             clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
             category: The wanted category, one out of Track.categories. But this is a problem because we do the same
@@ -356,19 +356,21 @@ class BasicTest(unittest.TestCase):
         if isinstance(category, int):
             category = cls_.decode_category(cls_.supported_categories[category])
 
-        kwargs = dict()
-        if cls_ is WPTrackserver:
-            if not self.find_mysql_docker():
-                self.create_temp_mysqld()  # only once for all tests
-            self.create_db_for_wptrackserver()  # recreate for each test
-            kwargs['Url'] = self.mysql_ip_address
-        if url:
-            kwargs['Url'] = url
-        if test_name:
-            account_name = '{}_{}_unittest'.format(cls_.__name__, test_name)
+        if cls_ is Directory:
+            account = DirectoryAccount(url)
         else:
-            account_name = '{}_unittest'.format(cls_.__name__)
-        account = Account(account_name, **kwargs)
+            assert url is None
+            kwargs = dict()
+            if cls_ is WPTrackserver:
+                if not self.find_mysql_docker():
+                    self.create_temp_mysqld()  # only once for all tests
+                self.create_db_for_wptrackserver()  # recreate for each test
+                kwargs['Url'] = self.mysql_ip_address
+            if test_name:
+                account_name = '{}_{}_unittest'.format(cls_.__name__, test_name)
+            else:
+                account_name = '{}_unittest'.format(cls_.__name__)
+            account = Account(account_name, **kwargs)
         result = cls_(account)
         if clear_first and'scan' in cls_.supported and 'write' in cls_.supported:
             result.remove_all()
@@ -415,22 +417,22 @@ class BasicTest(unittest.TestCase):
                 logging.debug('SRV: Directory exists but not gpxity_server.log')
             else:
                 logging.debug('SRV: Directory %s does not exist', directory)
-            Directory(Account(url=directory)).remove_all()
+            Directory(DirectoryAccount(directory)).remove_all()
             process.kill()
 
     def start_mailserver(self):
         """Start an smptd server for mail testing."""
         self.mailserver_process = Popen(
             'aiosmtpd -u -n -d -l 127.0.0.1:8025'.split(),
-            stdout=open('{}/smtpd_stdout'.format(Directory.prefix), 'w'),
-            stderr=open('{}/smtpd_stderr'.format(Directory.prefix), 'w'))
+            stdout=open('{}/smtpd_stdout'.format(DirectoryAccount.prefix), 'w'),
+            stderr=open('{}/smtpd_stderr'.format(DirectoryAccount.prefix), 'w'))
         time.sleep(1)  # give the server time to start
 
     def stop_mailserver(self):
         """Stop the smtp server for mail testing."""
         self.mailserver_process.kill()
         for _ in ('out', 'err'):
-            filename = '{}/smtpd_std{}'.format(Directory.prefix, _)
+            filename = '{}/smtpd_std{}'.format(DirectoryAccount.prefix, _)
             if not os.path.exists(filename):
                 logging.debug('MAIL: %s not found', filename)
                 continue

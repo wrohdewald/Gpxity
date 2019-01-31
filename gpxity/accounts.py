@@ -12,10 +12,11 @@ import os
 import re
 import logging
 import copy
+import tempfile
 
 from gpxpy.geo import Location
 
-__all__ = ['Account']
+__all__ = ['Account', 'DirectoryAccount']
 
 
 class Fences:  # pylint: disable=too-few-public-methods
@@ -141,10 +142,6 @@ class Accounts:
                 }
                 continue
 
-            if key == 'url':
-                if value.endswith('/') and value != '/':
-                    raise Exception('Account {}: url {} must not end with /'.format(account['name'], value))
-
             if value.startswith('"') and value.endswith('"'):
                 value = value[1:-1]
 
@@ -180,9 +177,9 @@ class Account:
     Args:
         name: The name of the account. Must exist in the accounts file.
         filename: Name of the accounts file. Default is Account.path
+        kwargs: Additional parameters added to the account. They have precedence.
 
-    Alternatively, if both name and file are None, :literal:`**kwargs` is used as
-    source instead of the entry in the accounts file.
+    If both name and file are None, only :literal:`**kwargs` are used.
 
     Attributes:
         path: Default value for the accounts file
@@ -217,11 +214,6 @@ class Account:
             raise Exception('Account({}, {}, {}) defines no Backend'.format(name, filename, kwargs))
         for key, value in kwargs.items():
             self.config[key.lower()] = value
-        self.config['from_name'] = name
-        if self.name.lower().startswith('directory:'):
-            self.name = self.name[len('directory:'):]
-        if self.name == '':
-            self.name = '.'
         self._resolve_fences()
     #    logging.error('%s: Using account data from %s kwargs=%s', self.name, accounts.filename, kwargs)
 
@@ -252,7 +244,7 @@ class Account:
         Returns: the str
 
         """
-        result = 'Account({} -> {}: backend={}'.format(self.from_name, self.account, self.backend)
+        result = 'Account({}): backend={}'.format(self.account, self.backend)
         if 'url' in self.config:
             result += ' url={}'.format(self.url)
         if 'username' in self.config:
@@ -265,10 +257,75 @@ class Account:
         Returns: The string
 
         """
-        if self.backend == 'Directory':
-            if self.name == '.':
-                return ''
-            if self.name == '/':
-                return '/'
-            return self.name + '/'
         return self.name + ':'
+
+
+class DirectoryAccount(Account):
+
+    """This will not use an acocunts file but the optional file :literal:`.config`.
+
+    Args:
+        url: The name of the directory. If it does not exist, create it.
+            "" will translate into ".".
+            A trailing "/" will raise an Exception.
+            None will create a temporary directory.
+        kwargs: Additional parameters added to the account. They have precedence.
+
+    Attributes:
+        path: Default value for the accounts file
+        name: The name of the account
+        config: A dict with all config values
+        backend: The name of the backend class
+        is_temporary: True for temporary directories.
+        fences: The backend will never write points within fences.
+            You can define any number of fences separated by spaces. Every fence is a circle.
+            It has the form Lat/Long/meter.
+            Lat and Long are the center position in decimal degrees, meter is the radius.
+        prefix (str):  Class attribute, may be changed. The default prefix for
+            temporary directories. Default value is :literal:`gpxity.`
+
+    """
+
+    path = None
+    prefix = 'gpxity.'
+
+    def __init__(self, url=None, **kwargs):  # pylint: disable=super-init-not-called
+        """Create an Account."""
+        self.is_temporary = url is None
+        if self.is_temporary:
+            url = tempfile.mkdtemp(prefix=self.__class__.prefix)
+        if url == '':
+            url = '.'
+        if url == '/':
+            raise Exception('Directory / is not allowed')
+        if url.endswith('/') and url != '/':
+            raise Exception('DirectoryAccount: url {} must not end with /'.format(url))
+        if not os.path.exists(url):
+            os.makedirs(url)
+        self.config = {'url': url}
+        self.config['backend'] = 'Directory'
+        for key, value in kwargs.items():
+            self.config[key.lower()] = value
+        self.name = url
+        self._resolve_fences()
+        logging.error('%s: Using account data kwargs=%s -> config=%s', self.name, kwargs, self.config)
+
+    def __repr__(self):
+        """For debugging output.
+
+        Returns: the str
+
+        """
+        return 'DirectoryAccount({})'.format(self.name)
+
+    def __str__(self):
+        """The account in a parseable form.
+
+        Returns: The string
+
+        """
+        if self.name == '.':
+            return ''
+        if self.name == '/':
+            return '/'
+        return self.name + '/'

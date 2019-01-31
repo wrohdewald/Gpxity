@@ -7,6 +7,7 @@ Changelog
   * gpxdo split --stops MINUTES instead of fix --jumps
   * gpxdo fix --clear-times, --set-first-time, --set-last-time, --add-times
   * new: Track.locate_point() and Track.add_locations()
+  * split class Account into Account and DirectoryAccount
 
 1.6.0 release 2019-01-xx
 ------------------------

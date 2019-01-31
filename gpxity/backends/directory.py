@@ -17,7 +17,7 @@ from collections import defaultdict
 
 from gpxpy.gpx import GPXXMLSyntaxException
 
-from .. import Backend, Track
+from .. import Backend, Track, DirectoryAccount
 from ..util import remove_directory
 from ..gpx import Gpx
 
@@ -101,8 +101,6 @@ class Directory(Backend):
             directory named :attr:`prefix`.X where X are some random characters.
             It will be removed in __exit__ / detach.
     Attributes:
-        prefix (str):  Class attribute, may be changed. The default prefix for
-            temporary directories. Default value is :literal:`gpxity.`
         fs_encoding (str): The encoding for file system names. By default, we
             expect the file system being able to handle arbitrary UTF-8 encoded names
             except character '/' and special names '.' and '..'. If needed, we will introduce
@@ -115,19 +113,12 @@ class Directory(Backend):
 
     # pylint: disable=abstract-method
 
-    prefix = 'gpxity.'
-
     test_is_expensive = False
 
     def __init__(self, account):
         """See class docstring."""
-        if account.name == '/':
-            raise Backend.BackendException('Directory: / is not allowed')
+        assert isinstance(account, DirectoryAccount)
         super(Directory, self).__init__(account)
-        self.is_temporary = not account.url
-        if self.is_temporary:
-            url = tempfile.mkdtemp(prefix=self.__class__.prefix)
-            account.config['url'] = url
 
         self.fs_encoding = sys.getfilesystemencoding()
         if not self.fs_encoding.lower().startswith('utf-8'):
@@ -135,9 +126,7 @@ class Directory(Backend):
                 'Backend Directory needs a unicode file system encoding, {} has {}.'
                 ' Please change your locale settings.'.format(self, self.fs_encoding))
 
-        if not os.path.exists(self.url):
-            os.makedirs(self.url)
-        self._symlinks = defaultdict(list)
+        self._symlinks = defaultdict(list)  # TODO: account.symlinks True
         self._load_symlinks()
 
     def __str__(self) ->str:
@@ -428,7 +417,7 @@ class Directory(Backend):
     def detach(self):
         """also remove temporary directory."""
         super(Directory, self).detach()
-        if self.is_temporary:
+        if self.account.is_temporary:
             remove_directory(self.url)
 
     @classmethod

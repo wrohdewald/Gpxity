@@ -48,7 +48,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track, Directory, MMT, Account, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
+from gpxity import Track, Directory, MMT, Account, DirectoryAccount, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
 
 try:
     import argcomplete
@@ -520,7 +520,7 @@ class LifeServerMMT(HTTPServer):
         if offer_https:
             self.socket = ssl.wrap_socket(
                 self.socket, certfile=options.certfile, keyfile=options.keyfile, server_side=True)
-        self.targets = [Directory(Account(url=options.target[0], id_method='counter'))]
+        self.targets = [Directory(DirectoryAccount(options.target[0], id_method='counter'))]
         Account.path = self.targets[0].url + '/accounts'
         self.targets.extend(Backend.instantiate(x) for x in options.target[1:])
         self.start_second = datetime.datetime.now().timestamp()

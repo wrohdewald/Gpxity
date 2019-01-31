@@ -25,7 +25,7 @@ from unittest import skipIf
 from gpxpy import gpx as mod_gpx
 
 from .basic import BasicTest, disabled
-from ... import Track, Backend, Account
+from ... import Track, Backend, Account, DirectoryAccount
 from ...backend_base import BackendBase
 from ...gpx import Gpx
 from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
@@ -57,7 +57,7 @@ class TrackTests(BasicTest):
             backend.add(Track())
             self.assertEqual(len(backend), 3)
 
-        test_url = tempfile.mkdtemp(prefix=Directory.prefix)
+        test_url = tempfile.mkdtemp(prefix=DirectoryAccount.prefix)
         self.assertTrue(os.path.exists(test_url))
         remove_directory(test_url)
         self.assertFalse(os.path.exists(test_url))
@@ -598,11 +598,11 @@ class TrackTests(BasicTest):
             backend2[0].description = 'test'
             self.assertTrackFileContains(backend2[0], '<trk>')
         with self.temp_backend(Directory, count=1) as backend:
-            backend2 = Directory(Account(url=backend.url))
+            backend2 = Directory(DirectoryAccount(backend.url))
             backend2[0].title = 'test title'
             self.assertTrackFileContains(backend2[0], '<trk>')
         with self.temp_backend(Directory, count=1) as backend:
-            backend2 = Directory(Account(url=backend.url))
+            backend2 = Directory(DirectoryAccount(backend.url))
             backend2[0].category = backend2.supported_categories[2]
             self.assertTrackFileContains(backend2[0], '<trk>')
 
@@ -696,7 +696,7 @@ class TrackTests(BasicTest):
         """Test Backend.parse_objectname for directory."""
         save = os.getenv('HOME'), os.getcwd()
         try:
-            prefix = Directory.prefix
+            prefix = DirectoryAccount.prefix
             abs_prefix = os.path.abspath(prefix)
             os.chdir(prefix)
             test_home = os.path.abspath('subdir')
@@ -760,7 +760,7 @@ class TrackTests(BasicTest):
         with self.temp_backend(Directory) as directory:
             accounts = (
                 directory.account,
-                Account(fences=None),  # Directory
+                DirectoryAccount('.', fences=None),
                 Account(fences=' '.join("{}/{}/{}".format(
                     x.latitude, x.longitude, 500) for x in random.sample(points, 3))),
             )

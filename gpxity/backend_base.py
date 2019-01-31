@@ -13,7 +13,7 @@ from inspect import getmembers, isclass, getmro
 import dis
 import importlib
 
-from .accounts import Account
+from .accounts import Account, DirectoryAccount
 
 __all__ = ['BackendBase']
 
@@ -131,18 +131,16 @@ class BackendBase:
                 url, track_id = os.path.split(expanded)
                 if not url and not os.path.exists(track_id):
                     url = '.'
-            account = Account(url=url)
+            account = DirectoryAccount(url)
         elif ':' not in name:
             url, track_id = os.path.split(name)
             if track_id.endswith('.gpx'):
                 track_id = track_id[:-4]
-            account = Account(url=url)
+            account = DirectoryAccount(url)
         else:
             _ = name.split(':')
             account_name = _[0]
             track_id = ':'.join(_[1:]) or None
-            if 'directory' in account_name.lower() and not track_id:
-                account_name += ':.'
             account = Account(account_name)
             # backend name in accounts is case insensitive, we want the exact name
             account.backend = cls.find_class(account.backend).__name__
