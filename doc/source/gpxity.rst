@@ -18,7 +18,7 @@ Track
     :show-inheritance:
     :exclude-members: loading, is_loading, legal_categories, append, skip_test
 
-Account
+Accounts
 --------
 
 .. automodule:: gpxity.accounts
