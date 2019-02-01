@@ -687,8 +687,6 @@ class MMT(Backend):
             The new id_in_backend
 
         """
-        if self.subscription == 'free' and not track.public:
-            raise self.BackendException('MMT: A free account does not allow public=False')
         if not track.gpx.get_track_points_no():
             raise self.BackendException('MMT does not accept a track without trackpoints:{}'.format(track))
         response = self.__post(
