@@ -747,6 +747,12 @@ class Utility:
                 for point in fix_track.points():
                     point.name = None
                 fix_track.rewrite()
+            if self.options.clear_segments:
+                for track in fix_track.gpx.tracks:
+                    for segment in track.segments[1:]:
+                        track.segments[0].points.extend(segment.points)
+                    track.segments = track.segments[:1]
+                fix_track.rewrite()
             if self.options.set_first_time:
                 next(fix_track.points()).time = self.options.set_first_time
                 fix_track.rewrite()
@@ -1203,6 +1209,9 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         fix_parser.add_argument(
             '--clear-locations', default=False,
             help='Remove all point locations (point.name). ls --location adds them', action='store_true')
+        fix_parser.add_argument(
+            '--clear-segments', default=False,
+            help='Join all segments to a single segment', action='store_true')
         fix_parser.add_argument(
             '--set-first-time', help='Set time of first point, Does not change any other point',
             type=lambda x: valid_date_argument(x, False), default=None)
