@@ -573,13 +573,13 @@ class Gpx(GPX):
                 return start_time_delta
         return None
 
-    def locate_point(self, point=0, segment=0, track=0, default_country=None):
+    def locate_point(self, track=0, segment=0, point=0, default_country=None):
         """Determine name of place for point.
 
         Saves that in point.name for caching.
 
         Args:
-            point_idx: Index into point_list()
+            track, segment, point: Indices into the list
 
         Returns: tuple(point, located)
             located is True if locating was needed, False if we had it cached
@@ -588,23 +588,31 @@ class Gpx(GPX):
         point = self.tracks[track].segments[segment].points[point]
         result = not point.name
         if result:
+            parts = []
             _ = Geocoder_location([point.latitude, point.longitude])
             place = geocoder.get(location=_, provider='osm', method='reverse')
+            if place.raw is None:
+                point.name = 'Water'
+                return point.name, True
+            fields = dict()
             for _ in ('city', 'town', 'village', 'hamlet'):
                 if hasattr(place, _):
-                    name = getattr(place, _)
-                    if name:
-                        break
-            if not name and 'address' in place.raw:
-                name = place.raw['address'].get('city_district')
+                    value = getattr(place, _)
+                    if value:
+                        fields[_] = value
             if 'address' in place.raw:
-                suburb = place.raw['address'].get('suburb')
-                if suburb:
-                    name += '-' + suburb
+                fields.update(place.raw['address'])
+            name = None
+            prefer = ['town', 'suburb', 'village', 'hamlet', 'town', 'city', 'school']
+            for _ in prefer:
+                if _ in fields:
+                    name = fields[_]
+                    break
             if not name:
                 name = place.address
-            if place.country.lower() != default_country.lower():
-                point.name = '{}, {}'.format(name, place.country)
-            else:
-                point.name = name
+            if name:
+                parts.append(name)
+            if not default_country or place.country.lower() != default_country.lower():
+                parts.append(place.country)
+            point.name = ','.join(parts)
         return point.name, result
