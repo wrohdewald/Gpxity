@@ -772,6 +772,9 @@ class Utility:
                         '%s: reduced points from %s to %s',
                         fix_track, point_count, fix_track.gpx.get_track_points_no())
                     fix_track.rewrite()
+            if self.options.add_waypoints:
+                fix_track.add_segment_waypoints()
+                fix_track.rewrite()
         for _ in result_lines:
             logging.error(_)
 
@@ -1221,6 +1224,10 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         fix_parser.add_argument(
             '--add-times', help='Add a time to all points without',
             action='store_true', default=False)
+        fix_parser.add_argument(
+            '--add-waypoints', default=False, help="""Gives every segment start a waypoint
+            like "Trk/Seg 2/5 place-name", removes such waypoints if they are no more segment starts""",
+            action='store_true')
         self.add_common_args(fix_parser)
         self.add_multi_source(fix_parser)
 

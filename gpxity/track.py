@@ -1462,3 +1462,17 @@ class Track:  # pylint: disable=too-many-public-methods
             for track_idx, gpx_track in enumerate(self.gpx.tracks):
                 for seg_idx, _ in enumerate(gpx_track.segments):
                     self.locate_point(track=track_idx, segment=seg_idx)
+
+    def add_segment_waypoints(self):
+        """Every segment start gets a waypoint.
+
+        The name looks like :literal:`Trk/Seg 2/4 Mainz-Wiesbaden`.
+        Existing such waypoints are removed if the no longer belong
+        to a segment start.
+
+        For the involved points (first and last of each segment) see
+        :meth:`locate_point`.
+
+        """
+        if self.gpx.add_segment_waypoints():
+            self._dirty = 'gpx'

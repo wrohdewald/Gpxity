@@ -15,6 +15,7 @@ Changelog
   * new: Track.locate_point() and Track.add_locations()
   * split class Account into Account and DirectoryAccount
   * integrate ServerDirectory into Directory
+  * gpxdo fix --add-waypoints adds waypoints to all segment starts
 
 1.5.1 release 2019-01-02
 ------------------------

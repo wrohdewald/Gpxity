@@ -28,6 +28,7 @@ from .util import repr_timespan, uniq, positions_equal
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
+GPXWaypoint = mod_gpx.GPXWaypoint
 GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 
 # see https://github.com/tkrajina/gpxpy/issues/150
@@ -60,8 +61,11 @@ class Gpx(GPX):
 
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     undefined_str = '__UXNXDXEXFXIXNXEXD__'
     undefined_date = datetime.datetime(year=1970, month=1, day=3, hour=1)
+    _seg_wpt_prefix = 'Trk/Seg '
 
     def __init__(self):
         """Put 'undefined' markers into all fields of relevance for gpxity."""
@@ -90,6 +94,7 @@ class Gpx(GPX):
 
     def decode(self):
         """Extract real_keywords, category, public,ids from keywords."""
+        self.__update_segment_waypoints()
         if self.keywords is None:
             self.keywords = ''
         if self.keywords == Gpx.undefined_str:
@@ -616,3 +621,73 @@ class Gpx(GPX):
                 parts.append(place.country)
             point.name = ','.join(parts)
         return point.name, result
+
+    @staticmethod
+    def _wpt_equal(left, right):
+        """Compare two waypoints.
+
+        Returns: True if identical
+
+        """
+        return (
+            left.latitude == right.latitude and  # noqa
+            left.longitude == right.longitude and  # noqa
+            left.elevation == right.elevation and  # noqa
+            left.time == right.time and  # noqa
+            left.name == right.name and  # noqa
+            left.symbol == right.symbol and  # noqa
+            left.description == right.description and  # noqa
+            left.type == right.type
+        )
+
+    def __update_segment_waypoints(self):
+        """If the track has such waypoints, update them.
+
+        See :meth:`add_segment_waypoints`
+
+        Returns: True if a change happened
+
+        """
+        if any(x.name.startswith(self._seg_wpt_prefix) for x in self.waypoints):
+            return self.add_segment_waypoints()
+        return False
+
+    def add_segment_waypoints(self):
+        """Every segment start gets a waypoint.
+
+        The name looks like :literal:`Trk/Seg 2/4 Mainz-Wiesbaden`.
+        Existing such waypoints are removed if the no longer belong
+        to a segment start.
+
+        For the involved points (first and last of each segment) see
+        :meth:`locate_point`.
+
+        Returns: True if a change happened
+
+        """
+        old_seg_wp = [x for x in self.waypoints if x.name.startswith(self._seg_wpt_prefix)]
+        new_seg_wp = list()
+        for trk_idx, trk in enumerate(self.tracks):
+            for seg_idx, seg in enumerate(trk.segments):
+                self.locate_point(trk_idx, seg_idx, 0)
+                self.locate_point(trk_idx, seg_idx, -1)
+                first_pt = seg.points[0]
+                last_pt = seg.points[-1]
+                name = '{}{}/{} {}'.format(
+                    self._seg_wpt_prefix, trk_idx + 1, seg_idx + 1,
+                    ' - '.join([first_pt.name, last_pt.name])
+                )
+                wpt = GPXWaypoint(
+                    latitude=first_pt.latitude, longitude=first_pt.longitude,
+                    elevation=first_pt.elevation, time=first_pt.time, name=name,
+                    symbol='Waypoint', type='Startpunkt')
+                assert wpt.symbol == 'Waypoint'
+                new_seg_wp.append(wpt)
+        if (len(old_seg_wp) != len(new_seg_wp)
+                or any(not self._wpt_equal(old_seg_wp[x], new_seg_wp[x]) for x in range(len(old_seg_wp)))):  # noqa
+            self.waypoints = [
+                x for x in self.waypoints
+                if hasattr(x, 'name') and not x.name.startswith(self._seg_wpt_prefix)]
+            self.waypoints.extend(new_seg_wp)
+            return True
+        return False
