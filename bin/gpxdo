@@ -548,8 +548,7 @@ class Utility:
         if mainsort == 'category':
             yield track.category
         elif mainsort == 'keywords' and track.keywords:
-            for _ in track.keywords:
-                yield _
+            yield ','.join(track.keywords)
         elif mainsort == 'time' and track.first_time:
             yield '{:4}-{:02}'.format(track.first_time.year, track.first_time.month)
         elif mainsort == 'status':
