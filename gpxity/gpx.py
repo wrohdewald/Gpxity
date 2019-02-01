@@ -260,7 +260,7 @@ class Gpx(GPX):
         """
         bounds = self.get_moving_data()
         if bounds.moving_time:
-            return bounds.moving_distance / bounds.moving_time * 3.6
+            return round(bounds.moving_distance) / bounds.moving_time * 3.6
         return 0.0
 
     def __repr__(self) ->str:
