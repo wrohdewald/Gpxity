@@ -39,6 +39,23 @@ class GPSIESRawTrack:
         self.distance = None
         self.public = True
 
+    def __str__(self):
+        """Self speaking.
+
+        Returns: str()
+
+        """
+        return '{} GPSIESRawTrack({}) title={} time={} distance={} public={}'.format(
+            id(self), self.track_id, self.title, self.time, self.distance, self.public)
+
+    def __repr__(self):
+        """Self speaking.
+
+        Returns: repr()
+
+        """
+        return self.__str__()
+
 
 class ParseGPSIESCategories(HTMLParser):  # pylint: disable=abstract-method
 
@@ -125,7 +142,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
         elif self.after_list and tag == 'a':
             self.seeing_a = True
             value = attributes['value'].strip()
-        elif tag == 'a' and 'href' in attributes and self.track.track_id is None:
+        elif tag == 'a' and 'href' in attributes and 'map.do?'in attributes['href'] and self.track.track_id is None:
             self.track.track_id = attributes['href'].split('fileId=')[1]
         elif tag == 'img' and self.track and 'lock.png' in attributes['src']:
             self.track.public = False
@@ -152,8 +169,10 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
                 if data.endswith('km'):
                     self.track.distance = float(data.replace(' km', '').replace(',', ''))
             elif self.column == 5:
-                self.track.time = datetime.datetime.strptime(data, '%m/%d/%y')
-                self.result['tracks'].append(self.track)
+                if self.track not in self.result['tracks']:
+                    data = data.replace('Last change:: ', '')  # gpsies has changed
+                    self.track.time = datetime.datetime.strptime(data, '%m/%d/%y')
+                    self.result['tracks'].append(self.track)
 
 
 class GPSIES(Backend):
@@ -314,8 +333,8 @@ class GPSIES(Backend):
             data[key] = self._html_encode(data[key])
         if data.get('fileDescription'):
             data['fileDescription'] = '<p>{}</p>'.format(data['fileDescription'])
-        response = self.session.post(
-            '{}/{}.do'.format(self.url, action), data=data, files=files, timeout=self.timeout)
+        action_url = '{}/{}.do'.format(self.url, action)
+        response = self.session.post(action_url, data=data, files=files, timeout=self.timeout)
         self._check_response(response, track)
         return response
 
