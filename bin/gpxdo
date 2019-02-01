@@ -962,6 +962,9 @@ defines the account. Example: ::
 Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13T15 or 2019
 
 """
+    sort_choice = (
+        'identifier', 'title', 'category', 'time', 'distance',
+        'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity')
 
     def define_attr_parser(self, cmd, helptext, func, arg_name=None, arg_help=None, choices=None):
         """Common code for defining a command for attributes"""
@@ -972,6 +975,21 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.add_common_args(result)
         self.add_multi_source(result)
         return result
+
+    @classmethod
+    def valid_sort_argument(cls, sort):
+        """Use ths in create_parser.
+
+        Returns: bool
+
+        """
+        parts = [x.strip() for x in sort.split(',')]
+        for part in parts:
+            if part not in cls.sort_choice:
+                raise argparse.ArgumentTypeError(
+                    '--sort: {} is not in {}'.format(
+                        part, ','.join(cls.sort_choice)))
+        return ','.join(parts)
 
     def create_parser(self):
         """into self.options"""
@@ -992,10 +1010,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         ls_parser.add_argument(
             '--sort',
             help="""sort by one ore more columns, separated by commas (no spaces allowed)""",
-            choices=(
-                'identifier', 'title', 'category', 'time', 'distance',
-                'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity'),
-            default='identifier')
+            type=self.valid_sort_argument, default='identifier')
         ls_parser.add_argument('--total',
                                help="""Show a total line""",
                                action='store_true', default=False)
