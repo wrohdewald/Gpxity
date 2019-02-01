@@ -11,6 +11,7 @@ Changelog
   * gpxdo: dates may now contain a time
   * gpxdo split --stops MINUTES instead of fix --jumps
   * gpxdo fix --clear-times, --set-first-time, --set-last-time, --add-times, --clear-locations
+  * gpxdo ls --gap
   * new: Track.locate_point() and Track.add_locations()
   * split class Account into Account and DirectoryAccount
   * integrate ServerDirectory into Directory

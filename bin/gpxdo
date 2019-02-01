@@ -594,6 +594,7 @@ class Utility:
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
             (self.options.time, 'Time', lambda x: x.first_time, '{}', datetime.datetime),
             (self.options.last_time, 'Last time', self.get_last_time),
+            (self.options.gap, 'Gap', str, '{}m'),
             (self.options.category, 'Category', lambda x: x.category),
             (self.options.ids, 'Ids', lambda x: ','.join(x.ids)),
             (self.options.keywords, 'Keywords', lambda x: ','.join(x.keywords)),
@@ -648,13 +649,14 @@ class Utility:
         track_groups = self.__fill_groups(all_rows, mainsort)
 
         all_lines = list()
-        for group_key in group_keys:
+        for group_key in group_keys:  # pylint: disable=too-many-nested-blocks
             group_tracks = track_groups[group_key][:]
             group_lines = list()
             if sort_fields and not self.options.locate:
                 group_tracks.sort(
                     key=lambda x: tuple(x.comparable[y.head_ident] for y in sort_fields))
             for line in group_tracks:
+                line['gap'] = ''
                 group_lines.append(line)
                 if self.options.segments:
                     gpx = line['track'].gpx
@@ -665,6 +667,15 @@ class Utility:
                             seg_title = 'Track/Segment {}/{}'.format(track_idx + 1, seg_idx + 1)
                             segment_line['identifier'] = ''
                             segment_line['title' if self.options.title else 'identifier'] = seg_title
+                            segment_line['gap'] = ''
+                            if seg_idx < len(track.segments) - 1:
+                                end_time = segment.points[-1].time
+                                next_start = track.segments[seg_idx + 1].points[0].time
+                                if end_time and next_start:
+                                    segment_line['gap'] = '{}m'.format(
+                                        round((next_start - end_time).total_seconds() / 60))
+
+
                             seg_lines.append(segment_line)
                     if len(seg_lines) > 1:
                         group_lines.extend(seg_lines)
@@ -1043,6 +1054,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                                action='store_true', default=False)
         ls_parser.add_argument('--last-time', help='show the last time',
                                action='store_true', default=False)
+        ls_parser.add_argument('--gap', help='show minutes after a segment before the next one starts',
+                               action='store_true', default=False)
         ls_parser.add_argument('--distance', help='show the distance',
                                action='store_true', default=False)
         ls_parser.add_argument('--location', help='show the starting location',
@@ -1271,6 +1284,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                 self.options.source = ['.']
             if self.options.locate and self.options.sort != 'identifier':
                 logging.error('gpxdo: --locate implies an order, do not use --sort')
+            if self.options.gap and not self.options.segments:
+                logging.error('--gap only works with --segments')
                 self.exit_code = 2
                 return
         elif self.options.func == self.merge:  # pylint: disable=comparison-with-callable
