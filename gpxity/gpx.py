@@ -248,7 +248,7 @@ class Gpx(GPX):
         duration = time_range[1] - time_range[0]
         seconds = duration.days * 24 * 3600 + duration.seconds
         if seconds:
-            return self.distance / seconds * 3600
+            return round(gpx_length(self.point_list()) / seconds * 3.6, 3)
         return 0.0
 
     def moving_speed(self) ->float:
@@ -258,9 +258,12 @@ class Gpx(GPX):
             The moving speed
 
         """
+        if self.get_track_points_no() < 20:
+            # this is a magic number from gpxpy: segment too small to compute speed
+            return self.speed()
         bounds = self.get_moving_data()
         if bounds.moving_time:
-            return round(bounds.moving_distance) / bounds.moving_time * 3.6
+            return round(bounds.moving_distance / bounds.moving_time * 3.6, 3)
         return 0.0
 
     def __repr__(self) ->str:
