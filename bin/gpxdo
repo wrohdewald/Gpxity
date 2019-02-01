@@ -551,6 +551,8 @@ class Utility:
             yield ','.join(track.keywords)
         elif mainsort == 'time' and track.first_time:
             yield '{:4}-{:02}'.format(track.first_time.year, track.first_time.month)
+        elif mainsort == 'last time' and track.last_time:
+            yield '{:4}-{:02}'.format(track.last_time.year, track.last_time.month)
         elif mainsort == 'status':
             yield 'public' if track.public else 'private'
         else:
@@ -564,6 +566,17 @@ class Utility:
                 if groupkey not in seen:
                     yield groupkey
                     seen.add(groupkey)
+
+    @staticmethod
+    def get_last_time(track):
+        """Get the last time without date or empty string.
+
+        Returns: A string
+
+        """
+        if track.last_time:
+            return str(track.last_time.time())
+        return ''
 
     def list_them(self):
         """list tracks"""
@@ -580,6 +593,7 @@ class Utility:
             (True, 'Identifier', lambda x: x.gpxdo_identifier),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
             (self.options.time, 'Time', lambda x: x.first_time, '{}', datetime.datetime),
+            (self.options.last_time, 'Last time', self.get_last_time),
             (self.options.category, 'Category', lambda x: x.category),
             (self.options.ids, 'Ids', lambda x: ','.join(x.ids)),
             (self.options.keywords, 'Keywords', lambda x: ','.join(x.keywords)),
@@ -962,7 +976,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
 """
     sort_choice = (
-        'identifier', 'title', 'category', 'time', 'distance',
+        'identifier', 'title', 'category', 'time', 'last-time', 'distance',
         'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity')
 
     def define_attr_parser(self, cmd, helptext, func, arg_name=None, arg_help=None, choices=None):
@@ -1026,6 +1040,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         ls_parser.add_argument('--ids', help='show the ids',
                                action='store_true', default=False)
         ls_parser.add_argument('--time', help='show the time',
+                               action='store_true', default=False)
+        ls_parser.add_argument('--last-time', help='show the last time',
                                action='store_true', default=False)
         ls_parser.add_argument('--distance', help='show the distance',
                                action='store_true', default=False)
@@ -1293,8 +1309,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                 self.options.first_date = valid_date_argument(self.options.first_date, last=False, return_raw=False)
             if self.options.last_date:
                 self.options.last_date = valid_date_argument(self.options.last_date, last=True, return_raw=False)
-        if hasattr(self.options, 'sort') and self.options.sort == 'moving-speed':
-            self.options.sort = 'moving_speed'
+        if hasattr(self.options, 'sort'):
+            self.options.sort = self.options.sort.replace('-', '_')
         if hasattr(self.options, 'dry_run') and self.options.dry_run:
             if self.options.loglevel != 'debug':
                 self.options.loglevel = 'info'
