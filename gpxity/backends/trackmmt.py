@@ -33,7 +33,7 @@ class TrackMMT(MMT):
 
     # pylint: disable=abstract-method
 
-    def _load_track_headers(self):
+    def _load_gpxfile_headers(self):
         """not implemented."""
         raise NotImplementedError()
 

@@ -297,13 +297,13 @@ class Directory(Backend):
                         GpxFile.identifier(self, ident))
         return result
 
-    def _load_track_headers(self):
+    def _load_gpxfile_headers(self):
         """get all gpxfiles for this user."""
         self._symlinks = defaultdict(list)
         self._load_symlinks()
         for _ in self._list_gpx():
             gpx = self._gpx_from_headers(_)
-            self._found_track(_, gpx)
+            self._found_gpxfile(_, gpx)
 
     def _read_all(self, gpxfile):
         """fill the gpxfile with all its data from source."""

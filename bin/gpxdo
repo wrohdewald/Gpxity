@@ -41,7 +41,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 from gpxity import GpxFile, Directory, Backend, BackendDiff, Locate
-from gpxity.util import uniq, collect_tracks, pairs
+from gpxity.util import uniq, collect_gpxfiles, pairs
 from gpxity.gpx import Gpx
 
 def __last_month_day(date):
@@ -349,7 +349,7 @@ class Utility:
         try:
             if hasattr(self.options, 'similar') and self.options.similar:
                 self.similar_to = [Backend.instantiate(x) for x in self.options.similar.split(',')]
-            self.source_tracks = self.parse_sources()
+            self.source_gpxfiles = self.parse_sources()
             self.destination_backend, self.destination_track_id = self.parse_destination()
             self.options.func()
         except Exception as _: # pylint: disable=broad-except
@@ -369,7 +369,7 @@ class Utility:
                     _ = _[:-1]
                 sources.append(Backend.instantiate(_))
 
-            gpxfiles = collect_tracks(sources)
+            gpxfiles = collect_gpxfiles(sources)
             for gpxfile in gpxfiles:
                 msg = self.match(gpxfile)
                 if msg:
@@ -388,7 +388,7 @@ class Utility:
         if hasattr(self.options, 'destination'):
             # if destination is in a backend which is already instantiated for a source, re-use it
             result = Backend.instantiate_backend(self.options.destination)
-            for source in self.source_tracks:
+            for source in self.source_gpxfiles:
                 if str(source.backend.account) == str(result[0].account):
                     result = (source.backend, result[1])
                     break
@@ -403,10 +403,10 @@ class Utility:
         Returns: the gpxfile
 
         """
-        if len(self.source_tracks) != 1:
+        if len(self.source_gpxfiles) != 1:
             self.error('Only one source gpxfile is allowed because destination gpxfile id is given')
             return None
-        return self.source_tracks[0]
+        return self.source_gpxfiles[0]
 
     def destination_must_be_backend(self):
         """If it is not, raise an exception."""
@@ -454,20 +454,20 @@ class Utility:
         the source might have gotten new gpxfiles meanwhile, and
         they would disappear for good."""
         if self.destination_track_id:
-            self.rename_track()
+            self.rename_gpxfile()
         else:
             self.move_to_another_backend()
 
     def move_to_another_backend(self):
         """Move all source gpxfiles to another backend. Try to keep the id_in_backend."""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             new_gpxfile = self.destination_backend.add(_)
             if 'rename' in self.destination_backend.supported:
                 new_gpxfile.id_in_backend = _.id_in_backend
             _.remove()
             logging.info('moved %s to %s', _, new_gpxfile)
 
-    def rename_track(self):
+    def rename_gpxfile(self):
         """Rename a gpxfile."""
         if self.destination_must_support_rename():
             gpxfile = self.must_have_single_source()
@@ -480,11 +480,11 @@ class Utility:
     def copy(self):
         """Copy"""
         if self.destination_track_id:
-            self.copy_track()
+            self.copy_gpxfile()
         else:
             self.copy_to_another_backend()
 
-    def copy_track(self):
+    def copy_gpxfile(self):
         """Copy a gpxfile, using a given target gpxfile id."""
         if self.destination_must_support_rename():
             gpxfile = self.must_have_single_source()
@@ -499,14 +499,14 @@ class Utility:
     def copy_to_another_backend(self):
         """Copy all sources to another backend."""
         msg = self.destination_backend.merge(
-            self.source_tracks, dry_run=self.options.dry_run, copy=True)
+            self.source_gpxfiles, dry_run=self.options.dry_run, copy=True)
         self.destination_backend.flush()
         for _ in msg:
             logging.info(_)
 
     def remove(self):
         """remove gpxfiles"""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             if self.options.dry_run:
                 logging.info('would remove %s', _)
             else:
@@ -515,7 +515,7 @@ class Utility:
 
     def split(self):
         """Split gpxfiles."""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             if self.options.segments:
                 _.split_segments()
             else:
@@ -524,9 +524,9 @@ class Utility:
     def join(self):
         """Join gpxfiles."""
         self.destination_must_be_backend()
-        new_gpxfile = self.destination_backend.add(self.source_tracks[0].clone())
+        new_gpxfile = self.destination_backend.add(self.source_gpxfiles[0].clone())
         new_gpxfile.gpx.tracks[0].name = new_gpxfile.title
-        for _ in self.source_tracks[1:]:
+        for _ in self.source_gpxfiles[1:]:
             _.gpx.tracks[0].name = _.title
             new_gpxfile.gpx.tracks.extend(_.gpx.tracks)
         if self.options.title:
@@ -561,7 +561,7 @@ class Utility:
     def __yield_all_group_keys(self, mainsort):
         """Yields all group keys for all gpxfiles"""
         seen = set()
-        for gpxfile in self.source_tracks:
+        for gpxfile in self.source_gpxfiles:
             for groupkey in self.__yield_track_group_keys(gpxfile, mainsort):
                 if groupkey not in seen:
                     yield groupkey
@@ -583,7 +583,7 @@ class Utility:
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 
         if self.options.location:
-            for gpxfile in self.source_tracks:
+            for gpxfile in self.source_gpxfiles:
                 # must be done first because --segments will create separate
                 # GpxFile() objects for each segment without connection to backend.
                 gpxfile.add_locations(segments=self.options.segments)
@@ -637,10 +637,10 @@ class Utility:
             group_keys = sorted(set(self.__yield_all_group_keys(mainsort)), key=lambda x: '' if x is None else x)
 
         if self.options.locate:
-            locator = Locate(self.options.locate, self.source_tracks)
-            self.source_tracks = locator.found(max_away=self.options.max_away)
+            locator = Locate(self.options.locate, self.source_gpxfiles)
+            self.source_gpxfiles = locator.found(max_away=self.options.max_away)
 
-        all_rows = [LsRow(x) for x in self.source_tracks]
+        all_rows = [LsRow(x) for x in self.source_gpxfiles]
         if all(x.gpxfile.id_in_backend.isnumeric() for x in all_rows):
             for row in all_rows:
                 row.comparable['identifier'] = '{}:{:>10f}'.format(
@@ -710,78 +710,78 @@ class Utility:
         for line in all_lines:
             line.print_row()
 
-    def _fix_id_from_account(self, fix_track):
+    def _fix_id_from_account(self, fix_gpxfile):
         """Set id from other account."""
-        logging.debug('gpxfile has ids %s', fix_track.ids)
-        for _ in fix_track.ids:
+        logging.debug('gpxfile has ids %s', fix_gpxfile.ids)
+        for _ in fix_gpxfile.ids:
             acc, ident = Backend.parse_objectname(_)
             if str(acc) == self.options.id_from_account:
-                fix_track.id_in_backend = ident
+                fix_gpxfile.id_in_backend = ident
                 break
         else:
             logging.info(
                 '--id-from-account: Account %s not found, gpxfile %s only has %s',
-                self.options.id_from_account, _, ','.join(fix_track.ids))
+                self.options.id_from_account, _, ','.join(fix_gpxfile.ids))
 
     def fix(self):
         """fix gpxfiles"""
         # pylint: disable=too-many-branches
         result_lines = []
-        for fix_track in self.source_tracks:
+        for fix_gpxfile in self.source_gpxfiles:
             if self.options.title_from_id:
-                fix_track.title = fix_track.id_in_backend
+                fix_gpxfile.title = fix_gpxfile.id_in_backend
             if self.options.id_from_title:
-                fix_track.id_in_backend = fix_track.title
+                fix_gpxfile.id_in_backend = fix_gpxfile.title
             elif self.options.id_from_account:
-                self._fix_id_from_account(fix_track)
+                self._fix_id_from_account(fix_gpxfile)
             elif self.options.id_from_time:
-                if fix_track.first_time:
-                    fix_track.id_in_backend = str(fix_track.first_time).replace(' ', '_')
+                if fix_gpxfile.first_time:
+                    fix_gpxfile.id_in_backend = str(fix_gpxfile.first_time).replace(' ', '_')
             if self.options.orux:
-                result_lines.extend(fix_track.fix_orux())
+                result_lines.extend(fix_gpxfile.fix_orux())
             if self.options.clear_times:
-                for point in fix_track.points():
+                for point in fix_gpxfile.points():
                     point.time = None
-                fix_track.rewrite()
+                fix_gpxfile.rewrite()
             if self.options.clear_locations:
-                for point in fix_track.points():
+                for point in fix_gpxfile.points():
                     point.name = None
-                fix_track.rewrite()
+                fix_gpxfile.rewrite()
             if self.options.clear_segments:
-                for track in fix_track.gpx.tracks:
+                for track in fix_gpxfile.gpx.tracks:
                     for segment in track.segments[1:]:
                         track.segments[0].points.extend(segment.points)
                     track.segments = track.segments[:1]
-                fix_track.rewrite()
+                fix_gpxfile.rewrite()
             if self.options.set_first_time:
-                next(fix_track.points()).time = self.options.set_first_time
-                fix_track.rewrite()
+                next(fix_gpxfile.points()).time = self.options.set_first_time
+                fix_gpxfile.rewrite()
             if self.options.set_last_time:
-                fix_track.last_point().time = self.options.set_last_time
-                fix_track.rewrite()
+                fix_gpxfile.last_point().time = self.options.set_last_time
+                fix_gpxfile.rewrite()
             if self.options.add_times:
-                fix_track.gpx.add_missing_times()
-                fix_track.rewrite()
+                fix_gpxfile.gpx.add_missing_times()
+                fix_gpxfile.rewrite()
             if self.options.add_minutes:
-                fix_track.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
+                fix_gpxfile.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
             if self.options.simplify:
-                point_count = fix_track.gpx.get_track_points_no()
-                fix_track.gpx.simplify(self.options.simplify)
-                if fix_track.gpx.get_track_points_no() != point_count:
+                point_count = fix_gpxfile.gpx.get_track_points_no()
+                fix_gpxfile.gpx.simplify(self.options.simplify)
+                if fix_gpxfile.gpx.get_track_points_no() != point_count:
                     logging.info(
                         '%s: reduced points from %s to %s',
-                        fix_track, point_count, fix_track.gpx.get_track_points_no())
-                    fix_track.rewrite()
+                        fix_gpxfile, point_count, fix_gpxfile.gpx.get_track_points_no())
+                    fix_gpxfile.rewrite()
             if self.options.add_waypoints:
-                fix_track.add_segment_waypoints()
-                fix_track.rewrite()
+                fix_gpxfile.add_segment_waypoints()
+                fix_gpxfile.rewrite()
         for _ in result_lines:
             logging.error(_)
 
     def dump(self):
         """Dump data."""
         result_lines = []
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             result_lines.append('------- {} -------'.format(_))
             if self.options.points:
                 for point0, point1 in pairs(_.points()):
@@ -796,32 +796,32 @@ class Utility:
 
     def keyword(self):
         """add/remove a list of keywords"""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             old_kw = _.keywords
             _.change_keywords(self.options.keywords, dry_run=self.options.dry_run)
             logging.info('%s: %s --> %s', _, old_kw, _.keywords)
 
     def title(self):
         """Sets the title."""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             _.title = self.options.title
             logging.info('set title %s for %s', self.options.title, _)
 
     def description(self):
         """Sets the description."""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             _.description = self.options.description
             logging.info('set description %s for %s', self.options.description, _)
 
     def category(self):
         """Sets the category."""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             _.category = self.options.category
             logging.info('set category %s for %s', self.options.category, _)
 
     def set_public(self, value=True):
         """Sets the status."""
-        for _ in self.source_tracks:
+        for _ in self.source_gpxfiles:
             _.public = value
             logging.info('set status %s for %s', 'public' if value else 'private', _)
 
@@ -832,7 +832,7 @@ class Utility:
     def merge(self):
         """Merge"""
         if any(x.backend is self.destination_backend and x.id_in_backend == self.destination_track_id
-               for x in self.source_tracks):
+               for x in self.source_gpxfiles):
             if not self.options.remove:  # pylint: disable=comparison-with-callable
                 msg = 'CAUTION: merging something with itself does nothing. Did you forget --remove?'
                 if len(self.options.source) == 1:
@@ -842,11 +842,11 @@ class Utility:
                     logging.error(msg)
         if not self.destination_track_id:
             msg = self.destination_backend.merge(
-                self.source_tracks, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
+                self.source_gpxfiles, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
                 partial_tracks=self.options.partial_tracks)
         else:
             msg = list()
-            for _ in self.source_tracks:
+            for _ in self.source_gpxfiles:
                 try:
                     msg.extend(self.destination_backend[self.destination_track_id].merge(
                         _, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
@@ -873,7 +873,7 @@ class Utility:
             right_side = self.destination_backend[self.destination_track_id]
         else:
             right_side = self.destination_backend
-        differ = BackendDiff(self.source_tracks, right_side)
+        differ = BackendDiff(self.source_gpxfiles, right_side)
         show_exclusive(differ.left)
         show_exclusive(differ.right)
 
@@ -1047,7 +1047,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         ls_parser.add_argument('--total',
                                help="""Show a total line""",
                                action='store_true', default=False)
-        ls_parser.add_argument('--segments', help='show track segments',
+        ls_parser.add_argument('--segments', help='show tracks and segments',
                                action='store_true', default=False)
         ls_parser.add_argument('--long', help='show most useful info',
                                action='store_true', default=False)
@@ -1168,7 +1168,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.add_multi_source(split_parser)
 
         join_parser = self.subparsers.add_parser(
-            'join', help='join gpxfiles into one single track',
+            'join', help='join gpxfiles into one single gpxfile',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         join_parser.set_defaults(func=self.join)
         join_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
@@ -1204,7 +1204,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         fix_parser.add_argument('--id-from-account', help='use last known id for a gpxfile in account')
         fix_parser.add_argument(
             '--simplify',
-            help='Reduce track points. The new track may move MAX meters away from the original',
+            help='Reduce points. The new track may move MAX meters away from the original',
             metavar='MAX', type=int, default=None)
         fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
         fix_parser.add_argument(

@@ -137,8 +137,6 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     Attributes:
         subject_template: This builds the mail subject. {title} and {distance} will
             be replaced by their respective values. Other placeholders are not yet defined.
-        outstanding_tracks: Do not change this dict. Key is gpxfile.id_in_backend, value is
-            a clone of the gpxfile. This freezes the current title in the clone.
         url: Holds the address of the recipient.
         account.mailfrom: The name of the mail sender. Default "gpxity".
         account.port: The port of the smtp server to talk to. Default 25

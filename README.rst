@@ -1,8 +1,8 @@
 Gpxity is a Python - library making it easy to move GPS-based tracks between different backends.
-In this context, a backend is a place where tracks can be stored.
+In this context, a backend is a place where gpxfiles can be stored.
 
-And there is a command line utility **gpxdo** helping you organize your tracks.
-It lets you list, copy, merge, remove, edit, fix, compare backends and tracks.
+And there is a command line utility **gpxdo** helping you organize your gpxfiles.
+It lets you list, copy, merge, remove, edit, fix, compare backends and gpxfiles.
 
 Find the documentation here: https://gpxity.readthedocs.io/en/latest/
 
@@ -10,13 +10,13 @@ The library currently implements those backends:
 
   * :class:`~gpxity.backends.directory.Directory`: Directory for .gpx files on an accessible file system
   * :class:`~gpxity.backends.server_directory.ServerDirectory`: Directory suited for server implementations
-  * :class:`~gpxity.backends.gpsies.GPSIES`: For tracks on https://gpsies.com
-  * :class:`~gpxity.backends.openrunner.Openrunner`: For tracks on https://openrunner.com
-  * :class:`~gpxity.backends.mmt.MMT`: For tracks on http://mapmytracks.com
-  * :class:`~gpxity.backends.trackmmt.TrackMMT`: For tracks on a very simple server emulating a
+  * :class:`~gpxity.backends.gpsies.GPSIES`: For gpxfiles on https://gpsies.com
+  * :class:`~gpxity.backends.openrunner.Openrunner`: For gpxfiles on https://openrunner.com
+  * :class:`~gpxity.backends.mmt.MMT`: For gpxfiles on http://mapmytracks.com
+  * :class:`~gpxity.backends.trackmmt.TrackMMT`: For gpxfiles on a very simple server emulating a
     few MMT commands (just what oruxmaps uses for uploading)
   * :class:`~gpxity.backends.wptrackserver.WPTrackserver`: For the Wordpress plugin Trackserver
-  * :class:`~gpxity.backends.mailer.Mailer`: Mails tracks
+  * :class:`~gpxity.backends.mailer.Mailer`: Mails gpxfiles
 
 Some backends might not support everything Gxpity wants and you will get the
 exception NotImplementedError().

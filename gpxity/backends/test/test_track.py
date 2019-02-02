@@ -72,37 +72,37 @@ class TrackTests(BasicTest):
         """test list of gpxfiles."""
         with self.temp_backend(Directory) as directory:
             self.assertEqual(len(directory), 0)
-            track1 = GpxFile()
-            directory.add(track1)
-            self.assertIn(track1, directory)
-            self.assertIsNotNone(track1.id_in_backend)
-            track1.description = 'x'
-            self.assertIsNotNone(track1.id_in_backend)
+            gpxfile1 = GpxFile()
+            directory.add(gpxfile1)
+            self.assertIn(gpxfile1, directory)
+            self.assertIsNotNone(gpxfile1.id_in_backend)
+            gpxfile1.description = 'x'
+            self.assertIsNotNone(gpxfile1.id_in_backend)
 
     def test_clone(self):
         """True if the clone is identical."""
-        track1 = self.create_test_track()
-        track2 = track1.clone()
-        self.assertEqualTracks(track1, track2)
-        count1 = track1.gpx.get_track_points_no()
-        del track1.gpx.tracks[0].segments[0].points[0]
-        self.assertEqual(count1, track1.gpx.get_track_points_no() + 1)
-        self.assertNotEqualTracks(track1, track2)
-        track2 = track1.clone()
-        track2.gpx.tracks[-1].segments[-1].points[-1].latitude = 5
-        self.assertNotEqualTracks(track1, track2)
-        track2 = track1.clone()
-        track2.gpx.tracks[-1].segments[-1].points[-1].longitude = 5
-        self.assertNotEqual(track1, track2)
-        track2 = track1.clone()
-        last_point2 = track2.gpx.tracks[-1].segments[-1].points[-1]
+        gpxfile1 = self.create_test_track()
+        gpxfile2 = gpxfile1.clone()
+        self.assertEqualTracks(gpxfile1, gpxfile2)
+        count1 = gpxfile1.gpx.get_track_points_no()
+        del gpxfile1.gpx.tracks[0].segments[0].points[0]
+        self.assertEqual(count1, gpxfile1.gpx.get_track_points_no() + 1)
+        self.assertNotEqualTracks(gpxfile1, gpxfile2)
+        gpxfile2 = gpxfile1.clone()
+        gpxfile2.gpx.tracks[-1].segments[-1].points[-1].latitude = 5
+        self.assertNotEqualTracks(gpxfile1, gpxfile2)
+        gpxfile2 = gpxfile1.clone()
+        gpxfile2.gpx.tracks[-1].segments[-1].points[-1].longitude = 5
+        self.assertNotEqual(gpxfile1, gpxfile2)
+        gpxfile2 = gpxfile1.clone()
+        last_point2 = gpxfile2.gpx.tracks[-1].segments[-1].points[-1]
         last_point2.elevation = 500000
         self.assertEqual(last_point2.elevation, 500000)
         # here assertNotEqualTracks is wrong because keys() are still identical
-        self.assertTrue(track1.points_equal(track2))
-        track1.gpx.tracks.clear()
-        track2.gpx.tracks.clear()
-        self.assertEqualTracks(track1, track2)
+        self.assertTrue(gpxfile1.points_equal(gpxfile2))
+        gpxfile1.gpx.tracks.clear()
+        gpxfile2.gpx.tracks.clear()
+        self.assertEqualTracks(gpxfile1, gpxfile2)
 
     def test_no_category(self):
         """category must return default value if not present in gpx.keywords."""
@@ -186,13 +186,13 @@ class TrackTests(BasicTest):
         gpxfile.keywords = ['Here are some keywords']
         xml = gpxfile.xml()
         gpx = Gpx.parse(xml)
-        track2 = GpxFile()
-        track2.gpx = gpx
-        self.assertEqualTracks(gpxfile, track2)
-        self.assertEqual(gpxfile.keywords, track2.keywords)
-        track2 = GpxFile()
-        track2.gpx = Gpx.parse(io.StringIO(xml))
-        self.assertEqualTracks(gpxfile, track2)
+        gpxfile2 = GpxFile()
+        gpxfile2.gpx = gpx
+        self.assertEqualTracks(gpxfile, gpxfile2)
+        self.assertEqual(gpxfile.keywords, gpxfile2.keywords)
+        gpxfile2 = GpxFile()
+        gpxfile2.gpx = Gpx.parse(io.StringIO(xml))
+        self.assertEqualTracks(gpxfile, gpxfile2)
 
     def test_combine(self):
         """combine values in gpxfile with newly parsed."""
@@ -207,28 +207,28 @@ class TrackTests(BasicTest):
             other_category = 'Running'
         else:
             other_category = 'Cycling'
-        track2 = GpxFile()
-        track2.title = 'Title2'
-        track2.description = 'Description2'
-        track2.category = other_category
-        track2.public = True
-        track2.gpx = Gpx.parse(xml)
-        self.assertEqual(track2.title, gpxfile.title)
-        self.assertEqual(track2.description, gpxfile.description)
-        self.assertEqual(track2.category, gpxfile.category)
-        self.assertFalse(track2.public)
-        self.assertEqual(track2.keywords, list())
+        gpxfile2 = GpxFile()
+        gpxfile2.title = 'Title2'
+        gpxfile2.description = 'Description2'
+        gpxfile2.category = other_category
+        gpxfile2.public = True
+        gpxfile2.gpx = Gpx.parse(xml)
+        self.assertEqual(gpxfile2.title, gpxfile.title)
+        self.assertEqual(gpxfile2.description, gpxfile.description)
+        self.assertEqual(gpxfile2.category, gpxfile.category)
+        self.assertFalse(gpxfile2.public)
+        self.assertEqual(gpxfile2.keywords, list())
 
         gpxfile.public = True
-        xml = track2.xml()
+        xml = gpxfile2.xml()
         self.assertIn('Status:private', xml)
-        track2 = GpxFile()
-        track2.category = GpxFile.categories[3]
-        self.assertEqual(track2.gpx.keywords, 'Category:{}, Status:private'.format(GpxFile.categories[3]))
-        track2.public = True
-        self.assertEqual(track2.gpx.keywords, 'Category:{}, Status:public'.format(GpxFile.categories[3]))
-        track2.gpx = Gpx.parse(xml)
-        self.assertFalse(track2.public)
+        gpxfile2 = GpxFile()
+        gpxfile2.category = GpxFile.categories[3]
+        self.assertEqual(gpxfile2.gpx.keywords, 'Category:{}, Status:private'.format(GpxFile.categories[3]))
+        gpxfile2.public = True
+        self.assertEqual(gpxfile2.gpx.keywords, 'Category:{}, Status:public'.format(GpxFile.categories[3]))
+        gpxfile2.gpx = Gpx.parse(xml)
+        self.assertFalse(gpxfile2.public)
 
         # second, does it keep old values if there are no new values?
         gpxfile = self.create_test_track()
@@ -240,13 +240,13 @@ class TrackTests(BasicTest):
         else:
             other_category = 'Cycling'
 
-        track2 = GpxFile()
-        track2.title = 'Title2'
-        track2.description = 'Description2'
-        self.assertIn('<desc>Description2</desc>', track2.xml())
-        track2.gpx = Gpx.parse(xml)
-        self.assertEqual(track2.title, '')
-        self.assertEqual(track2.description, 'xx')
+        gpxfile2 = GpxFile()
+        gpxfile2.title = 'Title2'
+        gpxfile2.description = 'Description2'
+        self.assertIn('<desc>Description2</desc>', gpxfile2.xml())
+        gpxfile2.gpx = Gpx.parse(xml)
+        self.assertEqual(gpxfile2.title, '')
+        self.assertEqual(gpxfile2.description, 'xx')
 
     @skipIf(*disabled(Directory))
     def test_save_dir(self):
@@ -280,18 +280,18 @@ class TrackTests(BasicTest):
 
                 self.assertEqual(len(dir2), 1)
 
-                track2 = gpxfile.clone()
-                self.assertEqualTracks(gpxfile, track2)
-                directory.add(track2)
+                gpxfile2 = gpxfile.clone()
+                self.assertEqualTracks(gpxfile, gpxfile2)
+                directory.add(gpxfile2)
                 self.assertEqual(len(directory), 2)
-                dir2.add(track2)
+                dir2.add(gpxfile2)
                 self.assertEqual(len(dir2), 2)
 
-                track2_copy = dir2.add(track2.clone())
+                track2_copy = dir2.add(gpxfile2.clone())
                 self.assertEqualTracks(gpxfile, track2_copy)
-                self.assertEqualTracks(track2, track2_copy)
+                self.assertEqualTracks(gpxfile2, track2_copy)
                 self.assertIs(gpxfile.backend, directory)
-                self.assertIs(track2.backend, directory)
+                self.assertIs(gpxfile2.backend, directory)
                 self.assertIs(track2_copy.backend, dir2)
                 self.assertEqual(len(directory), 2)
                 self.assertEqual(len(dir2), 3)
@@ -332,48 +332,48 @@ class TrackTests(BasicTest):
         """test GpxFile.points_equal."""
         for _ in range(100):
             points = self._random_points(count=7)
-            track1 = GpxFile()
-            track1.add_points(points)
-            track2 = track1.clone()
-            points2 = list(track2.points())  # those are cloned points
-            self.assertTrue(track1.points_equal(track2))
-            track2.gpx.tracks.clear()
-            track2.add_points(points2[:5])
-            self.assertFalse(track1.points_equal(track2))
-            track2.add_points(points2[5:])
-            self.assertTrue(track1.points_equal(track2))
+            gpxfile1 = GpxFile()
+            gpxfile1.add_points(points)
+            gpxfile2 = gpxfile1.clone()
+            points2 = list(gpxfile2.points())  # those are cloned points
+            self.assertTrue(gpxfile1.points_equal(gpxfile2))
+            gpxfile2.gpx.tracks.clear()
+            gpxfile2.add_points(points2[:5])
+            self.assertFalse(gpxfile1.points_equal(gpxfile2))
+            gpxfile2.add_points(points2[5:])
+            self.assertTrue(gpxfile1.points_equal(gpxfile2))
 
-            old_long = track2.gpx.tracks[-1].segments[-1].points[-2].longitude
-            track2.gpx.tracks[-1].segments[-1].points[-2].longitude += 1
-            self.assertFalse(track1.points_equal(track2))
-            track2.gpx.tracks[-1].segments[-1].points[-2].longitude = old_long
-            self.assertTrue(track1.points_equal(track2))
+            old_long = gpxfile2.gpx.tracks[-1].segments[-1].points[-2].longitude
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-2].longitude += 1
+            self.assertFalse(gpxfile1.points_equal(gpxfile2))
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-2].longitude = old_long
+            self.assertTrue(gpxfile1.points_equal(gpxfile2))
 
-            old_lat = track2.gpx.tracks[-1].segments[-1].points[-2].latitude
-            track2.gpx.tracks[-1].segments[-1].points[-2].latitude += 1
-            self.assertFalse(track1.points_equal(track2))
-            track2.gpx.tracks[-1].segments[-1].points[-2].latitude = old_lat
-            self.assertTrue(track1.points_equal(track2))
+            old_lat = gpxfile2.gpx.tracks[-1].segments[-1].points[-2].latitude
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-2].latitude += 1
+            self.assertFalse(gpxfile1.points_equal(gpxfile2))
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-2].latitude = old_lat
+            self.assertTrue(gpxfile1.points_equal(gpxfile2))
 
-            track2.gpx.tracks[-1].segments[-1].points[-2].elevation += 1
-            self.assertTrue(track1.points_equal(track2))
-            track2.gpx.tracks[-1].segments[-1].points[-2].elevation -= 1
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-2].elevation += 1
+            self.assertTrue(gpxfile1.points_equal(gpxfile2))
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-2].elevation -= 1
 
-            old_long = track2.gpx.tracks[-1].segments[-1].points[-1].longitude
-            track2.gpx.tracks[-1].segments[-1].points[-1].longitude += 1
-            self.assertFalse(track1.points_equal(track2))
-            a1_points = list(track1.points())
-            a2_points = list(track2.points())
+            old_long = gpxfile2.gpx.tracks[-1].segments[-1].points[-1].longitude
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-1].longitude += 1
+            self.assertFalse(gpxfile1.points_equal(gpxfile2))
+            a1_points = list(gpxfile1.points())
+            a2_points = list(gpxfile2.points())
             a1_first = a1_points[0]
             a1_last = a1_points[-1]
             a2_first = a2_points[0]
             a2_last = a2_points[-1]
             self.assertNotEqual(
-                track1.angle(), track2.angle(),
+                gpxfile1.angle(), gpxfile2.angle(),
                 'a1.first:{} a1.last:{} a2.first:{} a2.last:{}'.format(
                     a1_first, a1_last, a2_first, a2_last))
-            track2.gpx.tracks[-1].segments[-1].points[-1].longitude = old_long
-            self.assertTrue(track1.points_equal(track2))
+            gpxfile2.gpx.tracks[-1].segments[-1].points[-1].longitude = old_long
+            self.assertTrue(gpxfile1.points_equal(gpxfile2))
 
     @skipIf(*disabled(Directory))
     def test_repr(self):
@@ -406,30 +406,30 @@ class TrackTests(BasicTest):
 
     def test_angle(self):
         """test GpxFile.angle."""
-        track1 = GpxFile()
-        track1.add_points(list())
-        self.assertEqual(len(track1.gpx.tracks), 0)
-        self.assertEqual(track1.angle(), 0)
-        track1.add_points(self._random_points(1))
-        del track1.gpx.tracks[0].segments[0]
-        self.assertEqual(track1.angle(), 0)
+        gpxfile1 = GpxFile()
+        gpxfile1.add_points(list())
+        self.assertEqual(len(gpxfile1.gpx.tracks), 0)
+        self.assertEqual(gpxfile1.angle(), 0)
+        gpxfile1.add_points(self._random_points(1))
+        del gpxfile1.gpx.tracks[0].segments[0]
+        self.assertEqual(gpxfile1.angle(), 0)
         for _ in range(1000):
-            track1 = GpxFile()
-            track1.add_points(self._random_points(2))
-            angle = track1.angle()
+            gpxfile1 = GpxFile()
+            gpxfile1.add_points(self._random_points(2))
+            angle = gpxfile1.angle()
             self.assertLess(angle, 360.001)
             self.assertGreater(angle, -0.001)
 
-        track1 = GpxFile()
-        track1.add_points(self._random_points(2))
+        gpxfile1 = GpxFile()
+        gpxfile1.add_points(self._random_points(2))
         first_point = None
-        for point in track1.points():
+        for point in gpxfile1.points():
             if first_point is None:
                 first_point = point
             else:
                 point.latitude = first_point.latitude
                 point.longitude = first_point.longitude
-        self.assertEqual(track1.angle(), 0)
+        self.assertEqual(gpxfile1.angle(), 0)
 
     def test_key(self):
         """GpxFile.key()."""
@@ -528,15 +528,15 @@ class TrackTests(BasicTest):
     def test_keyword_args(self):
         """'GpxFile.keywords' must accept any variant of iterable."""
         gpxfile = GpxFile()
-        test_tracks = list(sorted(['a', self.unicode_string2]))
-        gpxfile.keywords = set(test_tracks)
-        self.assertEqual(gpxfile.keywords, test_tracks)
-        gpxfile.keywords = reversed(test_tracks)
-        self.assertEqual(gpxfile.keywords, test_tracks)
-        gpxfile.change_keywords(test_tracks[0])
-        self.assertEqual(gpxfile.keywords, test_tracks)
-        gpxfile.keywords = test_tracks * 2
-        self.assertEqual(gpxfile.keywords, test_tracks)
+        test_keywords = list(sorted(['a', self.unicode_string2]))
+        gpxfile.keywords = set(test_keywords)
+        self.assertEqual(gpxfile.keywords, test_keywords)
+        gpxfile.keywords = reversed(test_keywords)
+        self.assertEqual(gpxfile.keywords, test_keywords)
+        gpxfile.change_keywords(test_keywords[0])
+        self.assertEqual(gpxfile.keywords, test_keywords)
+        gpxfile.keywords = test_keywords * 2
+        self.assertEqual(gpxfile.keywords, test_keywords)
 
     @skipIf(*disabled(Directory))
     def test_in(self):
@@ -578,16 +578,16 @@ class TrackTests(BasicTest):
     def test_overlapping_times(self):
         """GpxFile.overlapping_times(gpxfiles)."""
         now = datetime.datetime.now()
-        track1 = self.create_test_track(start_time=now)
+        gpxfile1 = self.create_test_track(start_time=now)
         seconds10 = datetime.timedelta(seconds=10)
-        track2 = self.create_test_track(start_time=track1.last_time - seconds10)
-        track3 = self.create_test_track(start_time=track1.last_time)
-        self.assertEqual(track1.last_time - seconds10, track2.first_time)
-        group1 = list([track1, track2, track3])
-        track4 = self.create_test_track(start_time=track3.last_time + seconds10)
-        group2 = list([track4, track4])
+        gpxfile2 = self.create_test_track(start_time=gpxfile1.last_time - seconds10)
+        gpxfile3 = self.create_test_track(start_time=gpxfile1.last_time)
+        self.assertEqual(gpxfile1.last_time - seconds10, gpxfile2.first_time)
+        group1 = list([gpxfile1, gpxfile2, gpxfile3])
+        gpxfile4 = self.create_test_track(start_time=gpxfile3.last_time + seconds10)
+        group2 = list([gpxfile4, gpxfile4])
         self.assertEqual(list(GpxFile.overlapping_times(group1 + group2)), list([group1, group2]))
-        group2 = list([track4])
+        group2 = list([gpxfile4])
         self.assertEqual(list(GpxFile.overlapping_times(group1 + group2)), list([group1]))
 
     @skipIf(*disabled(Directory))
@@ -612,9 +612,9 @@ class TrackTests(BasicTest):
         with self.temp_backend(Directory, count=1) as backend:
             gpxfile = backend[0]
             track_id = gpxfile.id_in_backend
-            track2 = gpxfile.clone()
-            backend.add(track2)
-            backend.remove(track2)
+            gpxfile2 = gpxfile.clone()
+            backend.add(gpxfile2)
+            backend.remove(gpxfile2)
             self.assertEqual(backend[0].id_in_backend, track_id)
 
     def test_header_data(self):
@@ -630,48 +630,48 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(WPTrackserver))
     def test_merge_track(self):
         """Check if everything is correctly merged."""
-        track1 = self.create_test_track()
-        track1.title = '44432321'
-        track1.keywords = 'KeyA,KeyB,KeyA'
-        track1.ids = ['wptrackserver_unittest:5', '/tmp/x.gpx']
-        track2 = track1.clone()
-        track2.title = 'Track2-title'
-        track2.ids = ['wptrackserver_unittest:5', 'wptrackserver_unittest:6', 'tmp/y.gpx']
-        msg = track1.merge(track2, partial_tracks=True)
+        gpxfile1 = self.create_test_track()
+        gpxfile1.title = '44432321'
+        gpxfile1.keywords = 'KeyA,KeyB,KeyA'
+        gpxfile1.ids = ['wptrackserver_unittest:5', '/tmp/x.gpx']
+        gpxfile2 = gpxfile1.clone()
+        gpxfile2.title = 'Track2-title'
+        gpxfile2.ids = ['wptrackserver_unittest:5', 'wptrackserver_unittest:6', 'tmp/y.gpx']
+        msg = gpxfile1.merge(gpxfile2, partial_tracks=True)
         for _ in msg:
             self.logger.debug(_)
-        self.assertEqual(track1.gpx.get_track_points_no(), track2.gpx.get_track_points_no())
-        self.assertTrue(track1.points_equal(track2, digits=9))
-        self.assertEqual(track1.title, 'Track2-title')
+        self.assertEqual(gpxfile1.gpx.get_track_points_no(), gpxfile2.gpx.get_track_points_no())
+        self.assertTrue(gpxfile1.points_equal(gpxfile2, digits=9))
+        self.assertEqual(gpxfile1.title, 'Track2-title')
         self.assertEqual(
-            track1.ids,
+            gpxfile1.ids,
             ['wptrackserver_unittest:5', '/tmp/x.gpx', 'wptrackserver_unittest:6', 'tmp/y.gpx'])
 
     def test_merge_partial_tracks(self):
         """Test GpxFile.merge(partial_tracks=True)."""
 
-        track1 = self.create_test_track()
-        track1.title = '44432321'
-        track1.keywords = 'KeyA,KeyB,KeyA'
-        track2 = track1.clone()
-        track2.title = 'Track2-title'
-        self.assertTrue(track1.points_equal(track2, digits=9))
+        gpxfile1 = self.create_test_track()
+        gpxfile1.title = '44432321'
+        gpxfile1.keywords = 'KeyA,KeyB,KeyA'
+        gpxfile2 = gpxfile1.clone()
+        gpxfile2.title = 'Track2-title'
+        self.assertTrue(gpxfile1.points_equal(gpxfile2, digits=9))
 
-        track2.add_points(self._random_points(5, root=track1.last_point()))
-        msg = track1.merge(track2, partial_tracks=True)
+        gpxfile2.add_points(self._random_points(5, root=gpxfile1.last_point()))
+        msg = gpxfile1.merge(gpxfile2, partial_tracks=True)
         for _ in msg:
             self.logger.debug(_)
-        self.assertEqual(track1.gpx.get_track_points_no(), track2.gpx.get_track_points_no())
-        self.assertTrue(track1.points_equal(track2, digits=9))
-        self.assertEqual(track1.title, 'Track2-title')
+        self.assertEqual(gpxfile1.gpx.get_track_points_no(), gpxfile2.gpx.get_track_points_no())
+        self.assertTrue(gpxfile1.points_equal(gpxfile2, digits=9))
+        self.assertEqual(gpxfile1.title, 'Track2-title')
 
-        points2 = track2.point_list()
+        points2 = gpxfile2.point_list()
         points2[2].latitude = 5
         with self.assertRaises(Exception) as context:
-            msg = track1.merge(track2, partial_tracks=True)
+            msg = gpxfile1.merge(gpxfile2, partial_tracks=True)
         self.assertEqual(
             str(context.exception),
-            'Cannot merge {} with 27 points into {} with 27 points'.format(track2, track1))
+            'Cannot merge {} with 27 points into {} with 27 points'.format(gpxfile2, gpxfile1))
 
     def test_all_backend_classes(self):
         """Test Backend.all_backend_classes."""

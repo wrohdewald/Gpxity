@@ -77,7 +77,7 @@ class ParseGPSIESCategories(HTMLParser):  # pylint: disable=abstract-method
 
 class ParseGPIESEditPage(HTMLParser):  # pylint: disable=abstract-method
 
-    """Parse the category value for a gpxfile from html."""
+    """Parse the category value for a GpxFile from html."""
 
     def __init__(self):
         """See class docstring."""
@@ -148,7 +148,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
             self.gpxfile.public = False
 
     def handle_endtag(self, tag):
-        """handle end of gpxfile list."""
+        """handle end of track list."""
         if tag == 'tbody':
             self.seeing_list = False
             self.after_list = True
@@ -184,7 +184,7 @@ class GPSIES(Backend):
     Searching arbitrary gpxfiles is not supported. GPSIES only looks at the
     gpxfiles of a specific user.
 
-    GPSIES does not support keywords. If you upload a gpxfile with keywords,
+    GPSIES does not support keywords. If you upload a GpxFile with keywords,
     they will silently be ignored.
 
     Args:
@@ -394,7 +394,7 @@ class GPSIES(Backend):
                     'GPSIES: _edit fails to change gpxfile {}: {}'.format(gpxfile, msg))
             time.sleep(2)
 
-    def _load_track_headers(self):
+    def _load_gpxfile_headers(self):
         """get all gpxfiles for this user."""
     #    return
         response = self.__post('trackList', data={'username': self._get_author()})
@@ -419,7 +419,7 @@ class GPSIES(Backend):
             if str(self) not in self._session:  # anonymous, no login
                 public = True
             gpx.keywords = 'Status:{}, Category:{}'.format('public' if public else 'private', Gpx.undefined_str)
-            gpxfile = self._found_track(raw_data.track_id, gpx)
+            gpxfile = self._found_gpxfile(raw_data.track_id, gpx)
             if raw_data.distance:
                 gpxfile.distance = raw_data.distance
 

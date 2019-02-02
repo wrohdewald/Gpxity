@@ -14,7 +14,7 @@ from math import isclose
 
 from gpxpy.geo import length as gpx_length
 
-__all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_gpxfile', 'collect_tracks',
+__all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_gpxfile', 'collect_gpxfiles',
            'positions_equal', 'pairs', 'add_speed', 'utc_to_local_delta']
 
 
@@ -88,7 +88,7 @@ def is_gpxfile(value):
     return hasattr(value, 'id_in_backend')
 
 
-def collect_tracks(sources):
+def collect_gpxfiles(sources):
     """A copied list with gpxfiles combined from all sources, to be used in 'for'-loops.
 
     Returns:

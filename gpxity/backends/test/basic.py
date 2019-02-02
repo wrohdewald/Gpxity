@@ -282,7 +282,7 @@ class BasicTest(unittest.TestCase):
             keys2 = sorted(x.key(with_category, with_last_time, precision=precision) for x in backend2)
             self.assertEqual(keys1, keys2, msg)
 
-    def assertEqualTracks(self, track1, track2, msg=None, xml: bool = False, with_category: bool = True):  # noqa pylint: disable=invalid-name
+    def assertEqualTracks(self, gpxfile1, gpxfile2, msg=None, xml: bool = False, with_category: bool = True):  # noqa pylint: disable=invalid-name
         """both gpxfiles must be identical. We test more than necessary for better test coverage.
 
         Args:
@@ -297,24 +297,24 @@ class BasicTest(unittest.TestCase):
         # the same gpxfile changes the point times.
         no_time_backend = (GPSIES, Openrunner, MMT)
         with_last_time = not (
-            isinstance(track1.backend, no_time_backend) or isinstance(track2.backend, no_time_backend))
+            isinstance(gpxfile1.backend, no_time_backend) or isinstance(gpxfile2.backend, no_time_backend))
         precision = Backend.point_precision
-        if track1.backend and track1.backend.point_precision < precision:
-            precision = track1.backend.precision
-        if track2.backend and track2.backend.point_precision < precision:
-            precision = track2.backend.precision
+        if gpxfile1.backend and gpxfile1.backend.point_precision < precision:
+            precision = gpxfile1.backend.precision
+        if gpxfile2.backend and gpxfile2.backend.point_precision < precision:
+            precision = gpxfile2.backend.precision
         self.assertEqual(
-            track1.key(with_category, with_last_time, precision=precision),
-            track2.key(with_category, with_last_time, precision=precision), msg)
-        self.assertTrue(track1.points_equal(track2), msg)
+            gpxfile1.key(with_category, with_last_time, precision=precision),
+            gpxfile2.key(with_category, with_last_time, precision=precision), msg)
+        self.assertTrue(gpxfile1.points_equal(gpxfile2), msg)
         if xml:
-            self.assertEqual(track1.gpx.xml(), track2.gpx.xml(), msg)
+            self.assertEqual(gpxfile1.gpx.xml(), gpxfile2.gpx.xml(), msg)
 
-    def assertNotEqualTracks(self, track1, track2, msg=None, with_category: bool = True):  # noqa pylint: disable=invalid-name
+    def assertNotEqualTracks(self, gpxfile1, gpxfile2, msg=None, with_category: bool = True):  # noqa pylint: disable=invalid-name
         """both gpxfiles must be different. We test more than necessary for better test coverage."""
-        self.assertNotEqual(track1.key(with_category), track2.key(with_category), msg)
-        self.assertFalse(track1.points_equal(track2), msg)
-        self.assertNotEqual(track1.gpx.xml(), track2.gpx.xml(), msg)
+        self.assertNotEqual(gpxfile1.key(with_category), gpxfile2.key(with_category), msg)
+        self.assertFalse(gpxfile1.points_equal(gpxfile2), msg)
+        self.assertNotEqual(gpxfile1.gpx.xml(), gpxfile2.gpx.xml(), msg)
 
     def assertTrackFileContains(self, gpxfile, string, msg=None):  # noqa pylint: disable=invalid-name
         """Assert that string is in the physical file. Works only for Directory backend."""

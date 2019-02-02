@@ -35,11 +35,7 @@ __all__ = ['GpxFile']
 @total_ordering
 class GpxFile:  # pylint: disable=too-many-public-methods
 
-    """Represents a track.
-
-    A GpxFile is essentially a GPX file.  A GPX file may contain multiple gpxfiles but whenever
-    this documentation says track or GpxFile it does not refer to one of possibly multiple entities in
-    the GPX file. It refers to this class GpxFile.
+    """Represents a file with Gpx data.
 
     If a :class:`~gpxity.backend.Backend` supports attributes not directly
     supported by the GPX format like the MapMyTracks track type, they will
@@ -50,9 +46,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     The GPX part is done by https://github.com/tkrajina/gpxpy.
 
-    If a track is assigned to a backend, all changes will by default be written directly to the backend.
+    If a gpxfile is assigned to a backend, all changes will by default be written directly to the backend.
     Some backends are able to change only one attribute with little time overhead, others always have
-    to rewrite the entire track. Assigning a track with :literal:`gpx == None` will raise an Exception.
+    to rewrite the entire gpxfile.
 
     You can use the context manager :meth:`batch_changes`. This holds back updating the backend until
     leaving the context.
@@ -62,7 +58,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     Not all backends support everything, you could get the exception NotImplementedError.
 
     The data will only be loaded from the backend when it is needed. Backends have two ways
-    of loading data: Either load a list of Tracks or load all information about a specific track. Often
+    of loading data: Either load a list of gpxfiles or load all information about a specific gpxfile. Often
     loading the list of gpxfiles gives us some attributes for free, so listing
     those gpxfiles may be much faster if you do not want everything listed.
 
@@ -156,7 +152,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         3. lazy: compute and cache only when needed. Examples: distance, time
             Those are set to None here.
 
-        If an attribute is changed, the full track is always loaded first.
+        If an attribute is changed, the full gpxfile is always loaded first.
 
         """
         self.__gpx.decode()
@@ -174,24 +170,24 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @property
     def backend(self):
-        """The backend this track lives in. If the track was constructed in memory, backend is None.
+        """The backend this gpxfile lives in. If the gpxfile was constructed in memory, backend is None.
 
         This is a read-only property. It is set with :meth:`Backend.add <gpxity.backend.Backend.add>`.
 
-        It is not possible to decouple a track from its backend, use :meth:`clone()`.
+        It is not possible to decouple a gpxfile from its backend, use :meth:`clone()`.
 
         Returns:
             The backend
 
         """
         return self.__backend
-        # :attr:`GpxFile.id_in_backend <gpxity.track.GpxFile.id_in_backend>`.
+        # :attr:`GpxFile.id_in_backend <gpxity.gpxfile.GpxFile.id_in_backend>`.
 
     @property
     def id_in_backend(self) ->str:
-        """Every backend has its own scheme for unique track ids.
+        """Every backend has its own scheme for unique ids.
 
-        Some backends may change this if the track data changes.
+        Some backends may change this if the gpxfile data changes.
 
         Some backends support assigning a new value. Those are
         currently :class:`~gpxity.backends.directory.Directory` and
@@ -229,9 +225,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self.__id_in_backend = value
         else:
             if not self.__id_in_backend:
-                raise ValueError('Cannot set id_in_backend for yet unsaved track {}'.format(self))
+                raise ValueError('Cannot set id_in_backend for yet unsaved gpxfile {}'.format(self))
             if not value:
-                raise ValueError('Cannot remove id_in_backend for saved track {}'.format(self))
+                raise ValueError('Cannot remove id_in_backend for saved gpxfile {}'.format(self))
             with self._decouple():
                 self.backend._change_ident(self, value)
 
@@ -252,19 +248,19 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`."""
         if not self.__gpx.is_complete:
-            raise Exception('GpxFile.rewrite: The track must already be loaded fully')
+            raise Exception('GpxFile.rewrite: The gpxfile must already be loaded fully')
         self._dirty = 'gpx'
 
     @property
     def _dirty(self) ->list:
         """
-        Check if  the track is in sync with the backend.
+        Check if  the gpxfile is in sync with the backend.
 
         Setting :attr:`_dirty` will directly write the changed data into the backend.
 
         :attr:`_dirty` can receive an arbitrary string like 'title'. If the backend
         has a method _write_title, that one will be called. Otherwise the
-        entire track will be written by the backend.
+        entire gpxfile will be written by the backend.
 
         Returns:
             list: The names of the attributes currently marked as dirty.
@@ -301,10 +297,10 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         self.__dirty = list()
 
     def clone(self):
-        """Create a new track with the same content but without backend.
+        """Create a new gpxfile with the same content but without backend.
 
         Returns:
-            ~gpxity.track.GpxFile: the new track
+            ~gpxity.gpxfile.GpxFile: the new gpxfile
 
         """
         self._load_full()
@@ -322,7 +318,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         - batch_changes is active
         - we have no backend
 
-        Otherwise the backend will save this track.
+        Otherwise the backend will save this gpxfile.
 
         """
         if 'gpx' in self.__dirty:
@@ -345,9 +341,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self._clear_dirty()
 
     def remove(self):
-        """Remove this track in the associated backend.
+        """Remove this gpxfile in the associated backend.
 
-        If the track is not coupled with a backend, raise an Exception.
+        If the gpxfile is not coupled with a backend, raise an Exception.
 
         """
         if self.backend is None:
@@ -356,7 +352,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @property
     def first_time(self) ->datetime.datetime:
-        """datetime.datetime: start time of track.
+        """datetime.datetime: start time of gpxfile.
 
         For a simpler implementation of backends, notably :class:`~gpxity.backends.mmt.MMT`
         we ignore gpx.time. Instead we return the time of the earliest track point.
@@ -380,7 +376,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def distance(self) ->float:
         """For me, the earth is flat.
 
-        This property can only be set while the full track has not yet
+        This property can only be set while the full gpxfile has not yet
         been loaded. The setter is used by the backends when scanning for all gpxfiles.
 
         Returns:
@@ -395,7 +391,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def distance(self, value):
         """The setter."""
         if self.__gpx.is_complete:
-            raise Exception('Setting GpxFile.distance is only allowed while the full track has not yet been loaded')
+            raise Exception('Setting GpxFile.distance is only allowed while the full gpxfile has not yet been loaded')
         self.__cached_distance = value
 
     @property
@@ -494,7 +490,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """True if we are currently decoupled from the backend.
 
         In that state, changes to GpxFile are not written to the backend and
-        the track is not marked dirty.
+        the gpxfile is not marked dirty.
 
         Returns:
             True if we are decoupled
@@ -506,7 +502,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @contextmanager
     def batch_changes(self):
-        """Context manager: disable the direct update in the backend and saves the entire track when done.
+        """Context manager: disable the direct update in the backend and saves the entire gpxfile when done.
 
         This may or may not make things faster.
         :class:`~gpxity.backends.directory.Directory` and
@@ -524,7 +520,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @property
     def category(self) ->str:
-        """str: What is this track doing? If we have no current value, return the default.
+        """str: What is this gpxfile doing? If we have no current value, return the default.
 
         The value is automatically translated between our internal value and
         the value used by the backend. This happens when reading from
@@ -543,7 +539,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         return self.backend.decode_category(self.__gpx.category)
 
     def __default_category(self) ->str:
-        """The default for either an unsaved track or for the corresponding backend.
+        """The default for either an unsaved gpxfile or for the corresponding backend.
 
         Returns: The category
 
@@ -566,7 +562,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self._dirty = 'category'
 
     def _load_full(self):
-        """Load the full track from source_backend if not yet loaded and if not decoupled.
+        """Load the full gpxfile from source_backend if not yet loaded and if not decoupled.
 
         The backend may
          -  add values to self.__gpx
@@ -574,9 +570,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
          The backend is allowed and expected to replace already known values. This may
          happen
-         - if the backend has a mistake and returns different values in the list of the track
-           and in the full downloaded track
-         - if somebody else changed the track in the backend meanwhile
+         - if the backend has a mistake and returns different values in the list of the gpxfile
+           and in the full downloaded gpxfile
+         - if somebody else changed the gpxfile in the backend meanwhile
 
         Returns: True for success
 
@@ -586,7 +582,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self.backend._read_all_decoupled(self)
 
     def add_points(self, points) ->None:
-        """Round and add points to last segment in the last track.
+        """Round and add points to last segment in the last gpxfile.
 
         If no track is allocated yet and points is not an empty list, allocates a track.
 
@@ -637,12 +633,12 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     @property
     def public(self):
         """
-        bool: Is this a private track (can only be seen by the account holder) or is it public?.
+        bool: Is this a private gpxfile (can only be seen by the account holder) or is it public?.
 
             Default value is False
 
         Returns:
-            True if track is public, False if it is private
+            True if gpxfile is public, False if it is private
 
         """
         if self.__gpx.keywords == Gpx.undefined_str:
@@ -720,7 +716,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
             Some backends may change keywords. :class:`~gpxity.backends.mmt.MMT` converts the
             first character into upper case and will return it like that. Gpxity will not try to hide such
-            problems. So if you save a track in :class:`~gpxity.backends.mmt.MMT`, its keywords
+            problems. So if you save a gpxfile in :class:`~gpxity.backends.mmt.MMT`, its keywords
             will change. But they will not change if you copy from :class:`~gpxity.backends.mmt.MMT`
             to :class:`~gpxity.backends.directory.Directory` - so if you copy from DirectoryA
             to :class:`~gpxity.backends.mmt.MMT` to DirectoryB, the keywords in
@@ -878,7 +874,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         """
         with self._decouple():
-            # this should not automatically load the entire track
+            # this should not automatically load the entire gpxfile
             parts = []
             parts.append('public' if self.public else 'private')
             if self.__gpx:
@@ -897,13 +893,13 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def identifier(backend, ident: str) ->str:
-        """The full identifier for a track.
+        """The full identifier for a gpxfile.
 
-        Since we may want to do this without instantiating a track,
+        Since we may want to do this without instantiating a gpxfile,
         this must be staticmethod or classmethod.
 
-        str(track) uses this. However if a track has no id_in_backend,
-        str(track will create one using title, time, id(track).
+        str(gpxfile) uses this. However if a gpxfile has no id_in_backend,
+        str(gpxfile will create one using title, time, id(gpxfile).
 
         Args:
             backend: May be :class:`~gpxity.backend.Backend` or :class:`~gpxity.accounts.Account`
@@ -1058,7 +1054,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         return self.gpx.points_equal(other.gpx, digits)
 
     def index(self, other, digits=4):
-        """Check if this track contains other track.gpx.
+        """Check if this gpxfile contains other gpxfile.
 
         This only works if all values for latitude and longitude are
         nearly identical.
@@ -1100,7 +1096,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             yield sorted(group, key=lambda x: x.first_time)
 
     def _has_default_title(self) ->bool:
-        """Try to check if track has the default title given by a backend.
+        """Try to check if gpxfile has the default title given by a backend.
 
         Returns:
 
@@ -1164,7 +1160,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
                 the other one.
 
         Returns: (int, str)
-            int is either None or the starting index of the shorter track in the longer track
+            int is either None or the starting index of the shorter gpxfile in the longer gpxfile
             str is either None or a string explaing why this is not mergeable
 
         """
@@ -1213,7 +1209,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             return ['{} got {} waypoints from {}'.format(self, merged_count, other)]
         return []
 
-    def __merge_tracks(self, other, dry_run, shorter_at) ->list:
+    def __merge_gpxfiles(self, other, dry_run, shorter_at) ->list:
         """Merge gpxfiles from other.
 
         Returns: list(str)
@@ -1229,7 +1225,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         changed_point_times = 0
         self_points = self.point_list()[shorter_at:]
         for self_point, other_point in zip(self_points, other.points()):
-            # TODO: unittest with shorter track
+            # TODO: unittest with shorter gpxfile
             if not self_point.time:
                 if not dry_run:
                     self_point.time = other_point.time
@@ -1244,9 +1240,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def merge(  # noqa pylint: disable=unused-argument
             self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
             partial_tracks: bool = False) ->list:
-        """Merge other track into this one.
+        """Merge other gpxfile into this one.
 
-        Either the track points must be identical or the other track
+        Either the track points must be identical or the other gpxfile
         may only contain waypoints.
 
         If merging is not possible, raise GpxFile.CannotMerge.
@@ -1257,14 +1253,14 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         Merge waypoints as defined by _merge_waypoints().
 
         Args:
-            other (:class:`~gpxity.track.GpxFile`): The track to be merged
+            other (:class:`~gpxity.gpxfile.GpxFile`): The gpxfile to be merged
             remove: After merging succeeded, remove other
             dry_run: if True, do not really apply the merge
             copy: This argument is ignored. It is only here to give
-                :meth:`GpxFile.merge() <gpxity.track.GpxFile.merge>`
+                :meth:`GpxFile.merge() <gpxity.gpxfile.GpxFile.merge>`
                 and :meth:`Backend.merge() <gpxity.backend.Backend.merge>` the same interface.
-            partial_tracks: merges other track
-                if either track is part of the other one
+            partial_tracks: merges other gpxfile
+                if either gpxfile is part of the other one
 
         Returns: list(str)
             Messages about what has been done.
@@ -1276,7 +1272,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         if shorter_at is None:
             raise GpxFile.CannotMerge(_)
         with self.batch_changes():
-            msg.extend(self.__merge_tracks(other, dry_run, shorter_at))
+            msg.extend(self.__merge_gpxfiles(other, dry_run, shorter_at))
             msg.extend(self.__merge_waypoints(other, dry_run))
             msg.extend(self.__merge_metadata(other, dry_run))
         if msg:
@@ -1296,7 +1292,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         Try fixing that.
 
-        Please backup your track before doing this.
+        Please backup your gpxfile before doing this.
 
         Returns: A list with messages. Currently nothing.
 
@@ -1321,10 +1317,10 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def __similarity_to(self, other):
         """Return a float 0..1: 1 is identity."""
 
-        def simple(track):
-            """Simplified track"""
+        def simple(gpxfile):
+            """Simplified gpxfile"""
             return [(round(x.latitude, 3), round(x.longitude, 3))
-                    for x in simplify_polyline(list(track.points()), max_distance=50)]
+                    for x in simplify_polyline(list(gpxfile.points()), max_distance=50)]
 
         if id(other) not in self._similarity_others:
             simple1 = simple(self)
@@ -1358,17 +1354,17 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @property
     def ids(self):
-        """Return ids for all backends where this track has already been.
+        """Return ids for all backends where this gpxfile has already been.
 
         You can modify it but your changes will only be saved if and when
-        the entire track is saved.
+        the entire gpxfile is saved.
 
         They are sorted by ascending age.
         Only the 5 youngest are kept.
         If the same id_in_backend appears in more than one directory, keep only the youngest.
 
         Returns: list( (str))
-            a list of track ids
+            a list of gpxfile ids
 
         """
         if self.__gpx.keywords == Gpx.undefined_str:
@@ -1417,7 +1413,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         return result
 
     def split_segments(self):
-        """Create separate tracks for every track/segment."""
+        """Create separate gpxfiles for every track/segment."""
         backend = self.backend
         clone = self.clone()
         self.remove()

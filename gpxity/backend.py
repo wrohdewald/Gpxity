@@ -16,7 +16,7 @@ from copy import deepcopy
 
 from .accounts import Account
 from .gpxfile import GpxFile
-from .util import collect_tracks
+from .util import collect_gpxfiles
 from .gpx import Gpx
 
 from .backend_base import BackendBase
@@ -132,7 +132,7 @@ class Backend(BackendBase):
             self.account.config['backend'] = self.__class__.__name__
         self._decoupled = False
         self.__gpxfiles = list()
-        self._tracks_fully_listed = False
+        self._gpxfiles_fully_listed = False
         self.__match = None
         self.logger = logging.getLogger(str(self))
         # do not want to see "Resetting dropped connection"
@@ -252,7 +252,7 @@ class Backend(BackendBase):
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
             '_change_ident': 'rename',
-            '_load_track_headers': 'scan',
+            '_load_gpxfile_headers': 'scan',
             '_remove_ident': 'remove',
             '_write_all': 'write'}
         cls.supported = set()
@@ -369,7 +369,7 @@ class Backend(BackendBase):
             now: If True, do not delay scanning.
 
         """
-        self._tracks_fully_listed = False
+        self._gpxfiles_fully_listed = False
         if now:
             self._scan()
 
@@ -381,14 +381,14 @@ class Backend(BackendBase):
             The answer
 
         """
-        return self._tracks_fully_listed
+        return self._gpxfiles_fully_listed
 
     def _scan(self) ->None:
         """load the list of all gpxfiles in the backend if not yet done.
         Enforce this by calling :meth:`scan` first.
         """
-        if not self._tracks_fully_listed and not self._decoupled:
-            self._tracks_fully_listed = True
+        if not self._gpxfiles_fully_listed and not self._decoupled:
+            self._gpxfiles_fully_listed = True
             unsaved = [x for x in self.__gpxfiles if x.id_in_backend is None]
             if self.__match is not None:
                 for gpxfile in unsaved:
@@ -398,17 +398,17 @@ class Backend(BackendBase):
                 match_function = self.__match
                 self.__match = None
                 try:
-                    # _load_track_headers loads ALL gpxfiles, match will be
+                    # _load_gpxfile_headers loads ALL gpxfiles, match will be
                     # applied in a second loop. This way the Backend implementations
                     # do not have to worry about the match code.
                     with self._decouple():
-                        self._load_track_headers()
+                        self._load_gpxfile_headers()
                 finally:
                     self.__match = match_function
             if self.__match is not None:
                 self.__gpxfiles = [x for x in self.__gpxfiles if self.matches(x)]
 
-    def _found_track(self, ident: str, gpx=None):
+    def _found_gpxfile(self, ident: str, gpx=None):
         """Create an empty gpxfile for ident and inserts it into this backend.
 
         Returns:
@@ -424,7 +424,7 @@ class Backend(BackendBase):
         self._append(result)
         return result
 
-    def _load_track_headers(self):
+    def _load_gpxfile_headers(self):
         """Load all gpxfile headers and append them to the backend.
 
         The gpxfiles will not be loaded if possible.
@@ -791,21 +791,21 @@ class Backend(BackendBase):
         """
         return {x.key() for x in self} == {x.key() for x in other}
 
-    def __copy(self, other_tracks, remove, dry_run):
-        """Copy other_tracks into self. Used only by self.merge().
+    def __copy(self, other_gpxfiles, remove, dry_run):
+        """Copy other_gpxfiles into self. Used only by self.merge().
 
         Returns:
             verbose messages
 
         """
         result = list()
-        for old_track in other_tracks:
+        for old_gpxfile in other_gpxfiles:
             if not dry_run:
-                new_gpxfile = self.add(old_track)
+                new_gpxfile = self.add(old_gpxfile)
             result.append('{} {} -> {}'.format(
-                'blind move' if remove else 'blind copy', old_track, self.account if dry_run else new_gpxfile))
+                'blind move' if remove else 'blind copy', old_gpxfile, self.account if dry_run else new_gpxfile))
             if remove and not dry_run:
-                old_track.remove()
+                old_gpxfile.remove()
         return result
 
     def __find_mergable_groups(self, gpxfiles, partial_tracks: bool = False):
@@ -852,9 +852,9 @@ class Backend(BackendBase):
         # TODO: test for merging a backend or a gpxfile with itself. Where
         # they may be identical instantiations or not. For all backends.
         result = list()
-        other_tracks = collect_tracks(other)
+        other_gpxfiles = collect_gpxfiles(other)
         if copy:
-            return self.__copy(other_tracks, remove, dry_run)
+            return self.__copy(other_gpxfiles, remove, dry_run)
 
         null_datetime = datetime.datetime(year=1, month=1, day=1)
         groups = self.__find_mergable_groups(other, partial_tracks)

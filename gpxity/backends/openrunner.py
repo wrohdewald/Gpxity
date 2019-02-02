@@ -592,7 +592,7 @@ class Openrunner(Backend):
                 pass
             raise cls.BackendException('Openrunner gave us an unknown gpxfile type {}'.format(value))
 
-    def _load_track_headers(self):
+    def _load_gpxfile_headers(self):
         """get all gpxfiles for this user."""
         if self.account.password:
             response = self.__get(action='user/myroute')
@@ -601,7 +601,7 @@ class Openrunner(Backend):
         page_parser = ParseOpenrunnerList()
         page_parser.feed(response.text)
         for raw_data in page_parser.result['gpxfiles']:
-            gpxfile = self._found_track(raw_data.track_id)
+            gpxfile = self._found_gpxfile(raw_data.track_id)
             gpxfile.title = raw_data.title
             gpxfile.time = raw_data.time
             if raw_data.distance:

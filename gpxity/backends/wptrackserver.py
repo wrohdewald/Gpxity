@@ -175,13 +175,13 @@ class WPTrackserver(Backend):
         self._decode_description(result, row[3].replace('\r', ''))
         return result
 
-    def _load_track_headers(self):
+    def _load_gpxfile_headers(self):
         """."""
         cmd = 'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s'
         args = (self._user_id, )  # noqa
         cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
-            gpxfile = self._found_track(str(int(_[0])), self._gpx_from_headers(_))
+            gpxfile = self._found_gpxfile(str(int(_[0])), self._gpx_from_headers(_))
             gpxfile.distance = _[4] / 1000.0
 
     @staticmethod

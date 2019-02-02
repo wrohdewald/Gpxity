@@ -8,8 +8,8 @@
 This implements :class:`gpxity.mmt.MMT` for http://www.mapmytracks.com.
 
 There are some problems with the server running at mapmytracks.com:
-    * it is not possible to change an existing gpxfile - if the gpxfile changes, the
-      gpxfile must be re-uploaded and gets a new gpxfile id This invalididates
+    * it is not possible to change an existing GpxFile - if the GpxFile changes, the
+      GpxFile must be re-uploaded and gets a new id. This invalididates
       references held by other backend instances (maybe on other clients).
       But I could imagine that most similar services have this problem too.
     * does not support GPX very well beyond gpxfile data. One problem is that
@@ -595,7 +595,7 @@ class MMT(Backend):
         """
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
-    def _load_track_headers(self):
+    def _load_gpxfile_headers(self):
         """get all gpxfiles for this user."""
         while True:
             old_len = self.real_len()
@@ -610,7 +610,7 @@ class MMT(Backend):
                 gpx = Gpx()
                 gpx.name = raw_data.title
                 gpx.time = raw_data.time
-                gpxfile = self._found_track(raw_data.track_id, gpx)
+                gpxfile = self._found_gpxfile(raw_data.track_id, gpx)
                 gpxfile.category = self.decode_category(raw_data.category)
                 gpxfile.distance = raw_data.distance
             assert self.real_len() > old_len

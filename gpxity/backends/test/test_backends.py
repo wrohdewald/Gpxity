@@ -126,7 +126,7 @@ class TestBackends(BasicTest):
                 directory2.scan()
                 self.assertBackendLength(directory2, 1)
 
-    def test_duplicate_tracks(self):
+    def test_duplicate_gpxfiles(self):
         """What happens if we save the same gpxfile twice?."""
         for cls in Backend.all_backend_classes(needs={'remove', 'write'}):
             with self.tst_backend(cls):
@@ -227,10 +227,10 @@ class TestBackends(BasicTest):
                     gpxfile.description = 'A new description'
                     # make sure there is no cache in the way
                     backend2 = backend.clone()
-                    track2 = backend2[0]
-                    self.assertEqualTracks(gpxfile, track2)
-                    self.assertNotEqual(first_title, track2.title)
-                    self.assertNotEqual(first_description, track2.description)
+                    gpxfile2 = backend2[0]
+                    self.assertEqualTracks(gpxfile, gpxfile2)
+                    self.assertNotEqual(first_title, gpxfile2.title)
+                    self.assertNotEqual(first_description, gpxfile2.description)
 
     def test_write_category(self):
         """If we change category in gpxfile, is the backend updated?."""
@@ -244,9 +244,9 @@ class TestBackends(BasicTest):
                     gpxfile.category = test_category2
                     # make sure there is no cache in the way
                     backend2 = backend.clone()
-                    track2 = backend2[0]
-                    self.assertEqualTracks(gpxfile, track2, 'category should be {}'.format(test_category2))
-                    self.assertEqual(track2.category, test_category2, 'category should be {}'.format(test_category2))
+                    gpxfile2 = backend2[0]
+                    self.assertEqualTracks(gpxfile, gpxfile2, 'category should be {}'.format(test_category2))
+                    self.assertEqual(gpxfile2.category, test_category2, 'category should be {}'.format(test_category2))
 
     def test_write_public(self):
         """If we change public in gpxfile, is the backend updated?."""
@@ -262,13 +262,13 @@ class TestBackends(BasicTest):
                     self.assertEqual(gpxfile.category, orig_cat)
                     # make sure there is no cache in the way
                     backend2 = backend.clone()
-                    track2 = backend2[0]
-                    self.assertEqual(track2.category, orig_cat)
-                    self.assertEqualTracks(gpxfile, track2)
-                    self.assertEqual(track2.public, test_public2)
+                    gpxfile2 = backend2[0]
+                    self.assertEqual(gpxfile2.category, orig_cat)
+                    self.assertEqualTracks(gpxfile, gpxfile2)
+                    self.assertEqual(gpxfile2.public, test_public2)
 
     def xtest_gpsies_bug(self):
-        """We have this bug only sometimes: title, category or time will be wrong in track2.
+        """We have this bug only sometimes: title, category or time will be wrong in gpxfile2.
         Workaround is in GPSIES._edit."""
         for _ in range(20):
             with self.temp_backend(GPSIES, count=1, category=GPSIES.supported_categories[3]) as backend:
@@ -278,8 +278,8 @@ class TestBackends(BasicTest):
                 gpxfile.category = backend.decode_category(backend.supported_categories[8])
                 # make sure there is no cache in the way
                 backend2 = backend.clone()
-                track2 = backend2[0]
-                self.assertEqualTracks(gpxfile, track2, with_category=True)
+                gpxfile2 = backend2[0]
+                self.assertEqualTracks(gpxfile, gpxfile2, with_category=True)
 
     def test_z2_keywords(self):
         """save and load keywords."""  # noqa
@@ -314,21 +314,21 @@ class TestBackends(BasicTest):
                     gpxfile.change_keywords(kw_d)
                     self.assertHasKeywords(gpxfile, (kw_a, kw_c, kw_d))
                     backend2 = backend.clone()
-                    track2 = backend2[gpxfile.id_in_backend]
+                    gpxfile2 = backend2[gpxfile.id_in_backend]
                     self.assertTrue(gpxfile is backend[0])
-                    track2.change_keywords(minus(kw_d))
+                    gpxfile2.change_keywords(minus(kw_d))
                     self.assertHasKeywords(backend[0], (kw_a, kw_c, kw_d))
                     # change_keywords may have change id_in_backend in some backend classes, so reload gpxfile
                     backend.scan()
                     gpxfile = backend[0]
-                    self.assertHasKeywords(track2, (kw_a, kw_c))
+                    self.assertHasKeywords(gpxfile2, (kw_a, kw_c))
                     self.assertHasKeywords(gpxfile, (kw_a, kw_c))
                     self.assertTrue(gpxfile is backend[0])
                     backend.scan()
                     self.assertHasKeywords(gpxfile, (kw_a, kw_c))
                     gpxfile.change_keywords(minus(kw_a))
                     self.assertHasKeywords(gpxfile, [kw_c])
-                    # track2.change_keywords(minus(kw_a))
+                    # gpxfile2.change_keywords(minus(kw_a))
                     gpxfile.change_keywords(minus(kw_c))
                     gpxfile.change_keywords(minus(kw_d))
                     backend.scan()
@@ -347,10 +347,10 @@ class TestBackends(BasicTest):
                     self.assertIsNotNone(gpxfile.backend)
                     self.assertEqual(gpxfile.backend, backend)
                     backend2.scan()  # because backend2 does not know about changes thru backend
-                    track2 = backend2[0]
-                    # gpxfile and track2 may not be identical. If the original gpxfile
-                    # contains gpx xml data ignored by MMT, it will not be in track2.
-                    self.assertEqual(gpxfile.title, track2.title)
+                    gpxfile2 = backend2[0]
+                    # gpxfile and gpxfile2 may not be identical. If the original gpxfile
+                    # contains gpx xml data ignored by MMT, it will not be in gpxfile2.
+                    self.assertEqual(gpxfile.title, gpxfile2.title)
                     gpxfile.description = tstdescr
                     self.assertEqual(gpxfile.description, tstdescr)
                     if cls is Directory:
@@ -506,39 +506,39 @@ class TestBackends(BasicTest):
                                     self.assertSameTracks(local_serverdirectory, uplink)
 
     def test_backend_dirty(self):
-        """track1._dirty."""
+        """gpxfile1._dirty."""
         for cls in Backend.all_backend_classes(needs={'scan', 'write'}):
             with self.tst_backend(cls):
                 # category in the GpxFile domain:
                 test_category_backend = cls.supported_categories[1]
                 test_category = cls.decode_category(test_category_backend)
                 with self.temp_backend(cls, count=1) as backend1:
-                    track1 = backend1[0]
-                    self.assertFalse(track1._dirty)
+                    gpxfile1 = backend1[0]
+                    self.assertFalse(gpxfile1._dirty)
                     # version 1.1 should perhaps be a test on its own, see GpxFile.xml()
-                    track1.category = test_category
-                    self.assertEqual(track1.category, test_category)
-                    track1._dirty = 'gpx'
-                    self.assertEqual(track1.category, test_category)
+                    gpxfile1.category = test_category
+                    self.assertEqual(gpxfile1.category, test_category)
+                    gpxfile1._dirty = 'gpx'
+                    self.assertEqual(gpxfile1.category, test_category)
                     backend2 = backend1.clone()
                     self.assertEqual(backend2[0].category, test_category)
-                    b2track = backend2[0]
-                    self.assertEqual(b2track.category, test_category)
-                    b2track.title = 'another new title'
-                    self.assertEqual(b2track.category, test_category)
+                    b2gpxfile = backend2[0]
+                    self.assertEqual(b2gpxfile.category, test_category)
+                    b2gpxfile.title = 'another new title'
+                    self.assertEqual(b2gpxfile.category, test_category)
                     self.assertEqual(backend2[0].category, test_category)
-                    track1.title = 'new title'
-                    self.assertEqual(track1.category, test_category)
+                    gpxfile1.title = 'new title'
+                    self.assertEqual(gpxfile1.category, test_category)
                     backend3 = backend1.clone()
                     self.assertEqual(backend3[0].category, test_category)
-                    self.assertFalse(track1._dirty)
-                    with track1.batch_changes():
-                        track1.title = 'new 2'
-                        self.assertEqual(track1._dirty, ['title'])
-                    self.assertFalse(track1._dirty)
-                    with track1.batch_changes():
-                        track1.title = 'new 3'
-                        track1.keywords = ['Something', 'something xlse']
+                    self.assertFalse(gpxfile1._dirty)
+                    with gpxfile1.batch_changes():
+                        gpxfile1.title = 'new 2'
+                        self.assertEqual(gpxfile1._dirty, ['title'])
+                    self.assertFalse(gpxfile1._dirty)
+                    with gpxfile1.batch_changes():
+                        gpxfile1.title = 'new 3'
+                        gpxfile1.keywords = ['Something', 'something xlse']
                     backend4 = backend1.clone()
                     self.assertEqual(backend4[0].title, 'new 3')
 
