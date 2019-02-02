@@ -98,14 +98,14 @@ class BackendDiff:
                 times = list()
                 positions = list()
                 for _ in gpxfile.points():
-                    times.append(_.first_time or datetime.datetime(year=1970, month=1, day=1))
+                    times.append(_.time or datetime.datetime(year=1970, month=1, day=1))
                     positions.append(tuple([_.latitude or 0, _.longitude or 0, _.elevation or 0]))  # noqa
                 return times, positions
 
             def pretty_times(time1, time2):
                 """If time2 has the same date, use only the time."""
                 if time1.date() == time2.date():
-                    time2 = time2.first_time()
+                    time2 = time2.time()
                 return time1, time2
 
             left_times, left_positions = lists(self.left)
