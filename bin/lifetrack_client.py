@@ -35,7 +35,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import Track, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT  # noqa
+from gpxity import GpxFile, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT  # noqa
 
 
 class Main:
@@ -56,7 +56,7 @@ class Main:
         self.source = None
         try:
             source = Backend.instantiate(self.options.source)
-            assert isinstance(source, Track)
+            assert isinstance(source, GpxFile)
             backend = Backend.instantiate(self.options.backend)
             assert isinstance(backend, Backend)
             life = Lifetrack('127.0.0.1', [backend])
@@ -83,7 +83,7 @@ class Main:
         """into self.options."""
         # pylint: disable=too-many-statements, too-many-branches
         parser = argparse.ArgumentParser('lifetrack_client')
-        parser.add_argument('--source', help='the track with test data')
+        parser.add_argument('--source', help='the gpxfile with test data')
         parser.add_argument('--backend', help='the server')
         parser.add_argument(
             '--loglevel', help='set the loglevel',

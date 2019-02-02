@@ -77,7 +77,7 @@ class ParseGPSIESCategories(HTMLParser):  # pylint: disable=abstract-method
 
 class ParseGPIESEditPage(HTMLParser):  # pylint: disable=abstract-method
 
-    """Parse the category value for a track from html."""
+    """Parse the category value for a gpxfile from html."""
 
     def __init__(self):
         """See class docstring."""
@@ -102,7 +102,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
         super(ParseGPSIESList, self).__init__()
         self.result = dict()
         self.result['tracks'] = list()
-        self.track = None
+        self.gpxfile = None
         self.column = 0
         self.current_tag = None
         self.seeing_list = False
@@ -112,7 +112,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
 
     def feed(self, data):
         """get data."""
-        self.track = None
+        self.gpxfile = None
         self.column = 0
         self.current_tag = None
         self.seeing_list = False
@@ -134,7 +134,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
         if not self.seeing_list:
             return
         if tag == 'tr':
-            self.track = GPSIESRawTrack()
+            self.gpxfile = GPSIESRawTrack()
             self.column = 0
             self.seeing_a = False
         elif tag == 'td':
@@ -142,13 +142,13 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
         elif self.after_list and tag == 'a':
             self.seeing_a = True
             value = attributes['value'].strip()
-        elif tag == 'a' and 'href' in attributes and 'map.do?'in attributes['href'] and self.track.track_id is None:
-            self.track.track_id = attributes['href'].split('fileId=')[1]
-        elif tag == 'img' and self.track and 'lock.png' in attributes['src']:
-            self.track.public = False
+        elif tag == 'a' and 'href' in attributes and 'map.do?'in attributes['href'] and self.gpxfile.track_id is None:
+            self.gpxfile.track_id = attributes['href'].split('fileId=')[1]
+        elif tag == 'img' and self.gpxfile and 'lock.png' in attributes['src']:
+            self.gpxfile.public = False
 
     def handle_endtag(self, tag):
-        """handle end of track list."""
+        """handle end of gpxfile list."""
         if tag == 'tbody':
             self.seeing_list = False
             self.after_list = True
@@ -163,28 +163,28 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
 
         if self.seeing_list:
             if self.column == 3:
-                if self.current_tag == 'i' and self.track.title is None:
-                    self.track.title = data
+                if self.current_tag == 'i' and self.gpxfile.title is None:
+                    self.gpxfile.title = data
             elif self.column == 4:
                 if data.endswith('km'):
-                    self.track.distance = float(data.replace(' km', '').replace(',', ''))
+                    self.gpxfile.distance = float(data.replace(' km', '').replace(',', ''))
             elif self.column == 5:
-                if self.track not in self.result['tracks']:
+                if self.gpxfile not in self.result['tracks']:
                     data = data.replace('Last change:: ', '')  # gpsies has changed
-                    self.track.time = datetime.datetime.strptime(data, '%m/%d/%y')
-                    self.result['tracks'].append(self.track)
+                    self.gpxfile.time = datetime.datetime.strptime(data, '%m/%d/%y')
+                    self.result['tracks'].append(self.gpxfile)
 
 
 class GPSIES(Backend):
 
     """The implementation for gpsies.com.
 
-    The track ident is the fileId given by gpsies.
+    The gpxfile ident is the fileId given by gpsies.
 
     Searching arbitrary tracks is not supported. GPSIES only looks at the
     tracks of a specific user.
 
-    GPSIES does not support keywords. If you upload a track with keywords,
+    GPSIES does not support keywords. If you upload a gpxfile with keywords,
     they will silently be ignored.
 
     Args:
@@ -322,7 +322,7 @@ class GPSIES(Backend):
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
         return self._session[ident]
 
-    def __post(self, action: str, data, files=None, track=None):
+    def __post(self, action: str, data, files=None, gpxfile=None):
         """common code for a POST within the session.
 
         Returns:
@@ -335,63 +335,63 @@ class GPSIES(Backend):
             data['fileDescription'] = '<p>{}</p>'.format(data['fileDescription'])
         action_url = '{}/{}.do'.format(self.url, action)
         response = self.session.post(action_url, data=data, files=files, timeout=self.timeout)
-        self._check_response(response, track)
+        self._check_response(response, gpxfile)
         return response
 
-    def _write_category(self, track):
+    def _write_category(self, gpxfile):
         """change category on gpsies."""
-        self._edit(track)
+        self._edit(gpxfile)
 
-    def _write_description(self, track):
+    def _write_description(self, gpxfile):
         """change description on gpsies."""
-        self._edit(track)
+        self._edit(gpxfile)
 
-    def _write_title(self, track):
+    def _write_title(self, gpxfile):
         """change title on gpsies."""
-        self._edit(track)
+        self._edit(gpxfile)
 
-    def _write_public(self, track):
+    def _write_public(self, gpxfile):
         """change public on gpsies."""
-        self._edit(track)
+        self._edit(gpxfile)
 
-    def _edit(self, track):
+    def _edit(self, gpxfile):
         """edit directly on gpsies."""
-        assert track.id_in_backend
+        assert gpxfile.id_in_backend
         data = {
             'edit': '',
-            'fileDescription': track.description,
-            'fileId': track.id_in_backend,
-            'filename': track.title,
-            'status': '1' if track.public else '3',
-            'trackTypes': self.encode_category(track.category),
+            'fileDescription': gpxfile.description,
+            'fileId': gpxfile.id_in_backend,
+            'filename': gpxfile.title,
+            'status': '1' if gpxfile.public else '3',
+            'trackTypes': self.encode_category(gpxfile.category),
             'websiteUrl': ''}
 
         # in about 1 out of 10 cases this update does not work.
         # Doing that on the website with firefox shows the same problem.
         # So reload and compare until both are identical.
-        copy = track.clone()
-        copy.id_in_backend = track.id_in_backend
+        copy = gpxfile.clone()
+        copy.id_in_backend = gpxfile.id_in_backend
         ctr = 0
         while True:
-            self.__post('editTrack', data, track=track)
+            self.__post('editTrack', data, gpxfile=gpxfile)
             self._read_all(copy)
-            if track.description != copy.description:
-                msg = 'description: {} -> {}'.format(copy.description, track.description)
-            elif track.title != copy.title:
-                msg = 'title: {} -> {}'.format(copy.title, track.title)
-            elif track.public != copy.public:
-                msg = 'public: {} -> {}'.format(copy.public, track.public)
-            elif self.encode_category(track.category) != self.encode_category(copy.category):
+            if gpxfile.description != copy.description:
+                msg = 'description: {} -> {}'.format(copy.description, gpxfile.description)
+            elif gpxfile.title != copy.title:
+                msg = 'title: {} -> {}'.format(copy.title, gpxfile.title)
+            elif gpxfile.public != copy.public:
+                msg = 'public: {} -> {}'.format(copy.public, gpxfile.public)
+            elif self.encode_category(gpxfile.category) != self.encode_category(copy.category):
                 msg = 'category: {}/{} -> {}/{}'.format(
                     copy.category, self.encode_category(copy.category),
-                    track.category, self.encode_category(track.category))
+                    gpxfile.category, self.encode_category(gpxfile.category))
             else:
                 return
             ctr += 1
             time.sleep(1)
             if ctr > 50:
                 raise Backend.BackendException(
-                    'GPSIES: _edit fails to change track {}: {}'.format(track, msg))
+                    'GPSIES: _edit fails to change gpxfile {}: {}'.format(gpxfile, msg))
             time.sleep(2)
 
     def _load_track_headers(self):
@@ -419,28 +419,28 @@ class GPSIES(Backend):
             if str(self) not in self._session:  # anonymous, no login
                 public = True
             gpx.keywords = 'Status:{}, Category:{}'.format('public' if public else 'private', Gpx.undefined_str)
-            track = self._found_track(raw_data.track_id, gpx)
+            gpxfile = self._found_track(raw_data.track_id, gpx)
             if raw_data.distance:
-                track.distance = raw_data.distance
+                gpxfile.distance = raw_data.distance
 
-    def _read_category(self, track):
+    def _read_category(self, gpxfile):
         """I found no way to download all attributes in one go."""
-        data = {'fileId': track.id_in_backend}
-        response = self.__post('editTrack', data, track=track)
+        data = {'fileId': gpxfile.id_in_backend}
+        response = self.__post('editTrack', data, gpxfile=gpxfile)
         page_parser = ParseGPIESEditPage()
         page_parser.feed(response.text)
-        track.category = self.decode_category(page_parser.category)
+        gpxfile.category = self.decode_category(page_parser.category)
 
-    def _read_all(self, track):
-        """get the entire track. For gpies, we only need the gpx file."""
-        data = {'fileId': track.id_in_backend, 'keepOriginalTimestamps': 'true'}
-        response = self.__post('download', data=data, track=track)
-        track.gpx = Gpx.parse(response.text)
-        self._read_category(track)
+    def _read_all(self, gpxfile):
+        """get the entire gpxfile. For gpies, we only need the gpx file."""
+        data = {'fileId': gpxfile.id_in_backend, 'keepOriginalTimestamps': 'true'}
+        response = self.__post('download', data=data, gpxfile=gpxfile)
+        gpxfile.gpx = Gpx.parse(response.text)
+        self._read_category(gpxfile)
 
-    def _check_response(self, response, track=None):
+    def _check_response(self, response, gpxfile=None):
         """are there error messages?."""
-        trk_str = '{}: '.format(track) if track is not None else ''
+        trk_str = '{}: '.format(gpxfile) if gpxfile is not None else ''
         if response.status_code != 200:
             raise self.BackendException(response.text)
         if 'alert-danger' in response.text:
@@ -451,8 +451,8 @@ class GPSIES(Backend):
         if 'alert-warning' in response.text:
             _ = response.text.split('alert-warning">')[1].split('<')[0].strip()
             ignore_messages = (
-                'This track is deleted and only shown by a direct URL call.',
-                'Track is not public, can be seen only by me',
+                'This gpxfile is deleted and only shown by a direct URL call.',
+                'GpxFile is not public, can be seen only by me',
                 'GPSies is my hobby website and is funded by advertising'
             )
             if not any(x in _ for x in ignore_messages):
@@ -470,27 +470,27 @@ class GPSIES(Backend):
             'websiteUrl': ''}
         self.__post('editTrack', data=data)
 
-    def _write_all(self, track) ->str:
-        """save full gpx track on the GPSIES server.
+    def _write_all(self, gpxfile) ->str:
+        """save full gpx gpxfile on the GPSIES server.
 
         Returns:
             The new id_in_backend
 
         """
         files = {'formFile': (
-            '{}.gpx'.format(self._html_encode(track.title)), track.xml(), 'application/gpx+xml')}
+            '{}.gpx'.format(self._html_encode(gpxfile.title)), gpxfile.xml(), 'application/gpx+xml')}
         data = {
-            'fileDescription': track.description,
-            'filename': track.title,
-            'status': '1' if track.public else '3',
+            'fileDescription': gpxfile.description,
+            'filename': gpxfile.title,
+            'status': '1' if gpxfile.public else '3',
             'trackClassification': 'withoutClassification',
             'trackSimplification': '0',
-            'trackTypes': self.encode_category(track.category),
+            'trackTypes': self.encode_category(gpxfile.category),
             'uploadButton': ''}
-        response = self.__post('upload', files=files, data=data, track=track)
+        response = self.__post('upload', files=files, data=data, gpxfile=gpxfile)
         if 'Created' not in response.text:
             # not created
-            raise self.BackendException('{}: {}'.format(track, response.text))
+            raise self.BackendException('{}: {}'.format(gpxfile, response.text))
         new_ident = None
         for line in response.text.split('\n'):
             if 'fileId=' in line:
@@ -498,9 +498,9 @@ class GPSIES(Backend):
                 break
         if not new_ident:
             raise self.BackendException('No fileId= found in response')
-        if track.id_in_backend and track.id_in_backend != new_ident:
-            self._remove_ident(track.id_in_backend)
-        track.id_in_backend = new_ident
+        if gpxfile.id_in_backend and gpxfile.id_in_backend != new_ident:
+            self._remove_ident(gpxfile.id_in_backend)
+        gpxfile.id_in_backend = new_ident
         return new_ident
 
     def detach(self):

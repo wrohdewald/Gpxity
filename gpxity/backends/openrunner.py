@@ -78,7 +78,7 @@ class ParseOpenrunnerCategories(HTMLParser):  # pylint: disable=abstract-method
                 self.result_ids.append(int(attributes['value']))
 
     def handle_endtag(self, tag):
-        """handle end of track list."""
+        """handle end of gpxfile list."""
         if tag == 'select':
             self.seeing_list = False
 
@@ -126,7 +126,7 @@ class ParseOpenrunnerSubscription(HTMLParser):  # pylint: disable=abstract-metho
 
 class ParseOpenrunnerActivity(HTMLParser):  # pylint: disable=abstract-method
 
-    """Parse the category value for a track from html."""
+    """Parse the category value for a gpxfile from html."""
 
     def __init__(self):
         """See class docstring."""
@@ -156,7 +156,7 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
         super(ParseOpenrunnerList, self).__init__()
         self.result = dict()
         self.result['tracks'] = list()
-        self.track = None
+        self.gpxfile = None
         self.column = 0
         self.current_tag = None
         self.seeing_list = False
@@ -165,7 +165,7 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
 
     def feed(self, data):
         """get data."""
-        self.track = None
+        self.gpxfile = None
         self.column = 0
         self.current_tag = None
         self.seeing_list = False
@@ -184,7 +184,7 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
         if not self.seeing_list:
             return
         if tag == 'tr':
-            self.track = OpenrunnerRawTrack()
+            self.gpxfile = OpenrunnerRawTrack()
             self.column = 0
             self.seeing_a = False
         elif tag == 'td':
@@ -194,7 +194,7 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
             value = attributes['value'].strip()
 
     def handle_endtag(self, tag):
-        """handle end of track list."""
+        """handle end of gpxfile list."""
         if tag == 'tbody':
             self.seeing_list = False
             self.after_list = True
@@ -206,24 +206,24 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
             return
         if self.seeing_list:
             if self.column == 2:
-                self.track.track_id = data
+                self.gpxfile.track_id = data
             elif self.column == 3:
-                if self.current_tag == 'h6' and self.track.title is None:
-                    self.track.title = data
+                if self.current_tag == 'h6' and self.gpxfile.title is None:
+                    self.gpxfile.title = data
             elif self.column == 4:
-                self.track.category = data
+                self.gpxfile.category = data
             elif self.column == 7:
-                self.track.distance = float(data)
+                self.gpxfile.distance = float(data)
             elif self.column == 10:
-                self.track.time = datetime.datetime.strptime(data, '%d-%m-%Y')
-                self.result['tracks'].append(self.track)
+                self.gpxfile.time = datetime.datetime.strptime(data, '%d-%m-%Y')
+                self.result['tracks'].append(self.gpxfile)
 
 
 class Openrunner(Backend):
 
     """The implementation for openrunner.com.
 
-    The track ident is the ID given by openrunner.
+    The gpxfile ident is the ID given by openrunner.
 
     Searching arbitrary tracks is not supported. Openrunner only looks at the
     tracks of a specific user.
@@ -590,7 +590,7 @@ class Openrunner(Backend):
                     return cls.decode_category(reverse_nbr[int(value)])
             except ValueError:
                 pass
-            raise cls.BackendException('Openrunner gave us an unknown track type {}'.format(value))
+            raise cls.BackendException('Openrunner gave us an unknown gpxfile type {}'.format(value))
 
     def _load_track_headers(self):
         """get all tracks for this user."""
@@ -601,17 +601,17 @@ class Openrunner(Backend):
         page_parser = ParseOpenrunnerList()
         page_parser.feed(response.text)
         for raw_data in page_parser.result['tracks']:
-            track = self._found_track(raw_data.track_id)
-            track.title = raw_data.title
-            track.time = raw_data.time
+            gpxfile = self._found_track(raw_data.track_id)
+            gpxfile.title = raw_data.title
+            gpxfile.time = raw_data.time
             if raw_data.distance:
-                track.distance = raw_data.distance
+                gpxfile.distance = raw_data.distance
             if raw_data.category:
-                track.category = self.decode_category(raw_data.category)
+                gpxfile.category = self.decode_category(raw_data.category)
 
-    def _read_all(self, track):
-        """Get the entire track."""
-        response = self.__get(action='route/{}'.format(track.id_in_backend))
+    def _read_all(self, gpxfile):
+        """Get the entire gpxfile."""
+        response = self.__get(action='route/{}'.format(gpxfile.id_in_backend))
         route = response.json()['route']
         points = self._decode_points(route['shape']['full_encoded'])
         gpx = Gpx()
@@ -619,11 +619,11 @@ class Openrunner(Backend):
         gpx.name = route['name']
         gpx.description = route['description']
         gpx.keywords = route['keyword']
-        track.gpx = gpx
+        gpxfile.gpx = gpx
         # the date format seems to depend on the language. fr would be %d-%m-%Y
-        track.time = datetime.datetime.strptime(route['updatedDate'], '%Y/%m/%d')
-        track.public = not route['private']
-        track.category = self.decode_category(route['activity'])
+        gpxfile.time = datetime.datetime.strptime(route['updatedDate'], '%Y/%m/%d')
+        gpxfile.public = not route['private']
+        gpxfile.category = self.decode_category(route['activity'])
 
     def _check_response(self, response, data):
         """are there error messages?."""
@@ -636,29 +636,29 @@ class Openrunner(Backend):
                 raise self.BackendException('{}: Needs authentication data'.format(self.url))
             raise self.BackendException(response.text)
 
-    def _write_all(self, track) ->str:
-        """save full gpx track at Openrunner.
+    def _write_all(self, gpxfile) ->str:
+        """save full gpx gpxfile at Openrunner.
 
         Returns:
             The new id_in_backend
 
         """
-        if not track.gpx.get_track_points_no():
-            raise self.BackendException('Openrunner does not accept a track without trackpoints:{}'.format(track))
-        points = list(track.points())
+        if not gpxfile.gpx.get_track_points_no():
+            raise self.BackendException('Openrunner does not accept a gpxfile without trackpoints:{}'.format(gpxfile))
+        points = list(gpxfile.points())
         data = {
-            'route[activity]': self._legal_categories_numbers[self.encode_category(track.category)],
-            'route[description]': track.description,
+            'route[activity]': self._legal_categories_numbers[self.encode_category(gpxfile.category)],
+            'route[description]': gpxfile.description,
             'route[elevation][sampleEncoded]': self._encode_points(points),
-            'route[elevation][sampleIntervalInMeter]': track.distance / len(points),
+            'route[elevation][sampleIntervalInMeter]': gpxfile.distance / len(points),
             'route[end][lat]': points[-1].latitude,
             'route[end][lng]': points[-1].longitude,
-            'route[is_private]': 0 if track.public else 1,
+            'route[is_private]': 0 if gpxfile.public else 1,
             'route[is_tested]': 1,
-            'route[keyword]': ', '.join(track.keywords),
+            'route[keyword]': ', '.join(gpxfile.keywords),
             'route[labelColor]': '#ffffff',
-            'route[lengthInMeter]': min(track.distance, 1200) * 1000,  # TODO: unittest: is max length still 1200km?
-            'route[name]': track.title,
+            'route[lengthInMeter]': min(gpxfile.distance, 1200) * 1000,  # TODO: unittest: is max length still 1200km?
+            'route[name]': gpxfile.title,
             'route[official]': 0,
             'route[shape][pointShapeEncoded]': '',
             'route[shape][pointShapeReducedEncoded]': self._encode_points(points[:20]),
@@ -680,11 +680,11 @@ class Openrunner(Backend):
         new_ident = str(json['id'])
         if not new_ident:
             raise self.BackendException('No id found in response')
-        old_ident = track.id_in_backend
-        track.id_in_backend = new_ident
+        old_ident = gpxfile.id_in_backend
+        gpxfile.id_in_backend = new_ident
         if old_ident:
             self._remove_ident(old_ident)
-        track.id_in_backend = new_ident
+        gpxfile.id_in_backend = new_ident
         return new_ident
 
     def _remove_ident(self, ident: str):

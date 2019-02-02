@@ -17,7 +17,7 @@ from collections import defaultdict
 
 from gpxpy.gpx import GPXXMLSyntaxException
 
-from .. import Backend, Track, DirectoryAccount
+from .. import Backend, GpxFile, DirectoryAccount
 from ..util import remove_directory
 from ..gpx import Gpx
 
@@ -35,13 +35,13 @@ class Backup:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, track):
+    def __init__(self, gpxfile):
         """See class docstring."""
-        self.track = track
-        self.old_id = track.id_in_backend
+        self.gpxfile = gpxfile
+        self.old_id = gpxfile.id_in_backend
         self.old_pathname = None
         if self.old_id is not None:
-            self.old_pathname = track.backend.gpx_path(self.old_id)
+            self.old_pathname = gpxfile.backend.gpx_path(self.old_id)
             if os.path.exists(self.old_pathname):
                 os.rename(self.old_pathname, self.old_pathname + '.old')
 
@@ -58,8 +58,8 @@ class Backup:
         """See class docstring."""
         if exc_value:
             self.undo_rename()
-            with self.track._decouple():
-                self.track.id_in_backend = self.old_id
+            with self.gpxfile._decouple():
+                self.gpxfile.id_in_backend = self.old_id
         else:
             if self.old_pathname is not None:
                 if os.path.exists(self.old_pathname + '.old'):
@@ -79,12 +79,12 @@ class Directory(Backend):
     """Uses a directory for storage.
 
     The filename minus the .gpx ending is used
-    as :attr:`Track.id_in_backend <gpxity.track.Track.id_in_backend>`.
+    as :attr:`GpxFile.id_in_backend <gpxity.gpxfile.GpxFile.id_in_backend>`.
 
     If the :class:`~gpxity.directory.Directory` has a title but no id_in_backend,
     use the title as id_in_backend.
     Make the storage id unique by attaching a number if needed.
-    A track without title gets a random name.
+    A gpxfile without title gets a random name.
 
     The main directory (given by account.url) will have
     subdirectories YYYY/MM (year/month) with only the tracks for one month.
@@ -92,8 +92,8 @@ class Directory(Backend):
 
     If :meth:`~gpxity.backend.Backend.save` is given a value for ident, this
     is used as id, the file name will be :literal:`id.gpx`.
-    Otherwise, this backend uses :attr:`Track.title <gpxity.track.Track.title>` for the id.
-    If a track has no title, it uses a random sequence of characters.
+    Otherwise, this backend uses :attr:`GpxFile.title <gpxity.gpxfile.GpxFile.title>` for the id.
+    If a gpxfile has no title, it uses a random sequence of characters.
     Changing the title also changes the id.
 
     Args:
@@ -158,7 +158,7 @@ class Directory(Backend):
     def _load_symlinks(self, directory=None):
         """scan the subdirectories with the symlinks.
 
-        If the content of a track changes, the symlinks might have to
+        If the content of a gpxfile changes, the symlinks might have to
         be adapted. But we do not know the name of the existing symlink anymore.
 
         So just scan them all and assign them to id_in_backend."""
@@ -229,7 +229,7 @@ class Directory(Backend):
         return value.replace('/', '_')
 
     def gpx_path(self, ident) ->str:
-        """The full path name for the local copy of a track.
+        """The full path name for the local copy of a gpxfile.
 
         Returns:
             The full path name
@@ -293,8 +293,8 @@ class Directory(Backend):
                     result = Gpx.parse(head, is_complete=False)
                 except GPXXMLSyntaxException:
                     self.logger.info(
-                        '%s: Track metadata cannot be extracted, there is too much',
-                        Track.identifier(self, ident))
+                        '%s: GpxFile metadata cannot be extracted, there is too much',
+                        GpxFile.identifier(self, ident))
         return result
 
     def _load_track_headers(self):
@@ -305,10 +305,10 @@ class Directory(Backend):
             gpx = self._gpx_from_headers(_)
             self._found_track(_, gpx)
 
-    def _read_all(self, track):
-        """fill the track with all its data from source."""
-        with open(self.gpx_path(track.id_in_backend), encoding='utf-8') as in_file:
-            track.gpx = Gpx.parse(in_file.read())
+    def _read_all(self, gpxfile):
+        """fill the gpxfile with all its data from source."""
+        with open(self.gpx_path(gpxfile.id_in_backend), encoding='utf-8') as in_file:
+            gpxfile.gpx = Gpx.parse(in_file.read())
 
     def _remove_symlinks(self, ident: str):
         """Remove its symlinks, empty symlink parent directories."""
@@ -329,7 +329,7 @@ class Directory(Backend):
         if os.path.exists(gpx_file):
             os.remove(gpx_file)
 
-    def _symlink_path(self, track) ->str:
+    def _symlink_path(self, gpxfile) ->str:
         """The path for the speaking symbolic link: YYYY/MM/title.gpx.
 
         Missing directories YYYY/MM are created.
@@ -338,7 +338,7 @@ class Directory(Backend):
             The path
 
         """
-        ident = track.id_in_backend
+        ident = gpxfile.id_in_backend
         time = datetime.datetime.fromtimestamp(os.path.getmtime(self.gpx_path(ident)))
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))  # noqa
         if not os.path.exists(by_month_dir):
@@ -346,16 +346,16 @@ class Directory(Backend):
         else:
             # make sure there is no dead symlink with our wanted name.
             self._load_symlinks(by_month_dir)
-        name = track.title or ident
+        name = gpxfile.title or ident
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
-    def _new_ident(self, track):
-        """Create an id for track.
+    def _new_ident(self, gpxfile):
+        """Create an id for gpxfile.
 
         Returns: The new ident.
 
         """
-        ident = track.id_in_backend
+        ident = gpxfile.id_in_backend
         if ident is None:
             if self.account.id_method == 'counter':
                 try:
@@ -366,52 +366,52 @@ class Directory(Backend):
                 ident = self._new_id_from(None)
         return ident
 
-    def _make_symlinks(self, track):
-        """Make all symlinks for track."""
-        ident = track.id_in_backend
+    def _make_symlinks(self, gpxfile):
+        """Make all symlinks for gpxfile."""
+        ident = gpxfile.id_in_backend
         gpx_pathname = self.gpx_path(ident)
-        link_name = self._symlink_path(track)
+        link_name = self._symlink_path(gpxfile)
         basename = os.path.basename(gpx_pathname)
         link_target = os.path.join('..', '..', basename)
         os.symlink(link_target, link_name)
         if link_name not in self._symlinks[ident]:
             self._symlinks[ident].append(link_name)
 
-    def _set_filetime(self, track):
-        """Set the file modification time to track start time.
-        If the track has no start time, do nothing."""
-        time = track.first_time
+    def _set_filetime(self, gpxfile):
+        """Set the file modification time to gpxfile start time.
+        If the gpxfile has no start time, do nothing."""
+        time = gpxfile.first_time
         if time:
-            _ = self.gpx_path(track.id_in_backend)
+            _ = self.gpx_path(gpxfile.id_in_backend)
             os.utime(_, (time.timestamp(), time.timestamp()))
 
-    def _change_ident(self, track, new_ident: str):
+    def _change_ident(self, gpxfile, new_ident: str):
         """Change the id in the backend. Make it unique if needed."""
-        assert track.id_in_backend != new_ident
+        assert gpxfile.id_in_backend != new_ident
         unique_id = self._new_id_from(new_ident)
-        self._remove_symlinks(track.id_in_backend)
-        self.logger.info('%s: renamed %s to %s', self.account, track.id_in_backend, unique_id)
-        os.rename(self.gpx_path(track.id_in_backend), self.gpx_path(unique_id))
-        track.id_in_backend = unique_id
-        self._make_symlinks(track)
+        self._remove_symlinks(gpxfile.id_in_backend)
+        self.logger.info('%s: renamed %s to %s', self.account, gpxfile.id_in_backend, unique_id)
+        os.rename(self.gpx_path(gpxfile.id_in_backend), self.gpx_path(unique_id))
+        gpxfile.id_in_backend = unique_id
+        self._make_symlinks(gpxfile)
 
-    def _write_all(self, track) ->str:
-        """save full gpx track.
+    def _write_all(self, gpxfile) ->str:
+        """save full gpx gpxfile.
 
         Since the file name uses title and title may have changed,
-        compute new file name and remove the old files. We also adapt track.id_in_backend.
+        compute new file name and remove the old files. We also adapt gpxfile.id_in_backend.
 
         Returns:
-            the new track.id_in_backend
+            the new gpxfile.id_in_backend
 
         """
-        new_ident = self._new_ident(track)
+        new_ident = self._new_ident(gpxfile)
 
-        with Backup(track):
-            track.id_in_backend = new_ident
+        with Backup(gpxfile):
+            gpxfile.id_in_backend = new_ident
             with open(self.gpx_path(new_ident), 'w', encoding='utf-8') as out_file:
-                out_file.write(track.xml())
-            self._set_filetime(track)
+                out_file.write(gpxfile.xml())
+            self._set_filetime(gpxfile)
         return new_ident
 
     def detach(self):

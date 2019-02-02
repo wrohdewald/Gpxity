@@ -9,10 +9,10 @@ Subpackages
 
     gpxity.backends
 
-Track
------
+gpxfile
+-------
 
-.. automodule:: gpxity.track
+.. automodule:: gpxity.gpxfile
     :members:
     :undoc-members:
     :show-inheritance:

@@ -7,7 +7,7 @@
 """
 This implements only a minimum of what MMT can do.
 
-Upload entire tracks and extend a track. That is
+Upload entire tracks and extend a gpxfile. That is
 what oruxmaps does - see examples/mmt_server.
 
 TrackMMT is used to test mmt_server.
@@ -37,31 +37,31 @@ class TrackMMT(MMT):
         """not implemented."""
         raise NotImplementedError()
 
-    def _write_attribute(self, track, attribute):
+    def _write_attribute(self, gpxfile, attribute):
         """not implemented."""
         raise NotImplementedError()
 
-    def _write_title(self, track):
+    def _write_title(self, gpxfile):
         """not implemented."""
         raise NotImplementedError()
 
-    def _write_description(self, track):
+    def _write_description(self, gpxfile):
         """not implemented."""
         raise NotImplementedError()
 
-    def _write_public(self, track):
+    def _write_public(self, gpxfile):
         """not implemented."""
         raise NotImplementedError()
 
-    def _write_category(self, track):
+    def _write_category(self, gpxfile):
         """not implemented."""
         raise NotImplementedError()
 
-    def _write_add_keywords(self, track, values):
+    def _write_add_keywords(self, gpxfile, values):
         """not implemented."""
         raise NotImplementedError()
 
-    def _write_remove_keywords(self, track, values):
+    def _write_remove_keywords(self, gpxfile, values):
         """not implemented."""
         raise NotImplementedError()
 

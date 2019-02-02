@@ -35,17 +35,17 @@ class MailQueue:
         self.tracks = dict()
         self.last_sent_time = datetime.datetime.now() - datetime.timedelta(days=5)
 
-    def append(self, track):
-        """Append a track to the mailing queue."""
-        self.tracks[track.id_in_backend] = track.clone()
-        if hasattr(track, 'mail_subject'):
-            self.tracks[track.id_in_backend].mail_subject = track.mail_subject
+    def append(self, gpxfile):
+        """Append a gpxfile to the mailing queue."""
+        self.tracks[gpxfile.id_in_backend] = gpxfile.clone()
+        if hasattr(gpxfile, 'mail_subject'):
+            self.tracks[gpxfile.id_in_backend].mail_subject = gpxfile.mail_subject
 
-    def subject(self, track=None) ->str:
+    def subject(self, gpxfile=None) ->str:
         """Build the mail subject.
 
         Args:
-            track: If given, use only track. Otherwise use self.tracks
+            gpxfile: If given, use only gpxfile. Otherwise use self.tracks
 
         Returns:
             The subject
@@ -53,11 +53,11 @@ class MailQueue:
         """
         if len(self.tracks) == 1:
             for _ in self.tracks.values():
-                track = _
-        if track is not None:
-            subject = track.mail_subject if hasattr(track, 'mail_subject') else track.title
+                gpxfile = _
+        if gpxfile is not None:
+            subject = gpxfile.mail_subject if hasattr(gpxfile, 'mail_subject') else gpxfile.title
             return self.mailer.subject_template.format(
-                title=subject, distance='{:8.3f}km'.format(track.distance))
+                title=subject, distance='{:8.3f}km'.format(gpxfile.distance))
         return '{} tracks'.format(len(self.tracks))
 
     def content(self) ->str:
@@ -69,17 +69,17 @@ class MailQueue:
         """
         is_single = len(self.tracks) == 1
         result = list()
-        for key, track in self.tracks.items():
+        for key, gpxfile in self.tracks.items():
             if not key.endswith('.gpx'):
                 key += '.gpx'
             if is_single:
-                result.append(track.description)
+                result.append(gpxfile.description)
                 result.append('See the attached GPX file {}'.format(key))
             else:
-                result.append(self.subject(track))
+                result.append(self.subject(gpxfile))
                 indent = '   '
                 result.append('{}See the attached GPX file {}'.format(indent, key))
-                result.append('{}{}'.format(indent, track.description))
+                result.append('{}{}'.format(indent, gpxfile.description))
             result.append('')
             result.append('')
         return result
@@ -98,10 +98,10 @@ class MailQueue:
         mail['to'] = account.url.split()
         mail.set_content('\n'.join(self.content()))
 
-        for key, track in self.tracks.items():
+        for key, gpxfile in self.tracks.items():
             if not key.endswith('.gpx'):
                 key += '.gpx'
-            mail.add_attachment(track.xml(), filename=key)
+            mail.add_attachment(gpxfile.xml(), filename=key)
         host = account.smtp or 'localhost'
         port = int(account.port or '25')
         timeout = self.mailer.timeout
@@ -137,8 +137,8 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     Attributes:
         subject_template: This builds the mail subject. {title} and {distance} will
             be replaced by their respective values. Other placeholders are not yet defined.
-        outstanding_tracks: Do not change this dict. Key is track.id_in_backend, value is
-            a clone of the track. This freezes the current title in the clone.
+        outstanding_tracks: Do not change this dict. Key is gpxfile.id_in_backend, value is
+            a clone of the gpxfile. This freezes the current title in the clone.
         url: Holds the address of the recipient.
         account.mailfrom: The name of the mail sender. Default "gpxity".
         account.port: The port of the smtp server to talk to. Default 25
@@ -146,8 +146,8 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         account.interval (str): seconds. Mails are not sent more often. Default is None. If None, always send when
             Mailer.flush() is called. This is used for bundling several writes into one single mail:
             gpxdo merge --copy will send all tracks with one single mail.
-            Lifetracking uses this to send mails with the current track only every X seconds, the
-            mail will only contain the latest version of the track.
+            Lifetracking uses this to send mails with the current gpxfile only every X seconds, the
+            mail will only contain the latest version of the gpxfile.
 
     """
 
@@ -164,7 +164,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         self.queue = MailQueue(self)
 
     def _new_ident(self, _) ->str:
-        """Build a unique id for track.
+        """Build a unique id for gpxfile.
 
         Returns:
             A new unique id.
@@ -173,25 +173,25 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         self.id_count += 1
         return str(self.id_count)
 
-    def _write_all(self, track) ->str:
-        """Mail the track.
+    def _write_all(self, gpxfile) ->str:
+        """Mail the gpxfile.
 
         Returns:
-            track.id_in_backend
+            gpxfile.id_in_backend
 
         """
-        if track.id_in_backend is None:
-            new_ident = self._new_ident(track)
-            with track._decouple():
-                track.id_in_backend = new_ident
-        self.queue.append(track)
+        if gpxfile.id_in_backend is None:
+            new_ident = self._new_ident(gpxfile)
+            with gpxfile._decouple():
+                gpxfile.id_in_backend = new_ident
+        self.queue.append(gpxfile)
         if self.account.interval is not None:
             seconds = int(self.account.interval)
             if self.queue.last_sent_time + datetime.timedelta(seconds=seconds) < datetime.datetime.now():
                 self.queue.send()
             else:
                 self._start_timer()
-        return track.id_in_backend
+        return gpxfile.id_in_backend
 
     def detach(self):
         """Mail the rest."""
@@ -215,28 +215,28 @@ class Mailer(Backend):  # pylint: disable=abstract-method
             self.timer = Timer(interval, self.flush)
             self.timer.start()
 
-    def _lifetrack_start(self, track, points) ->str:
+    def _lifetrack_start(self, gpxfile, points) ->str:
         """flush.
 
         Returns: The new id_in_backend.
 
         """
-        track.mail_subject = 'Lifetracking starts: {}'.format(track.title)
-        new_ident = self._write_all(track)
-        self._append(track)
+        gpxfile.mail_subject = 'Lifetracking starts: {}'.format(gpxfile.title)
+        new_ident = self._write_all(gpxfile)
+        self._append(gpxfile)
         assert self._has_item(new_ident), '{} not in {}'.format(new_ident, self)
         self.flush()
         return new_ident
 
-    def _lifetrack_update(self, track, points):
+    def _lifetrack_update(self, gpxfile, points):
         """flush."""
-        track.mail_subject = 'Lifetracking continues: {}'.format(track.title)
-        self._write_all(track)
+        gpxfile.mail_subject = 'Lifetracking continues: {}'.format(gpxfile.title)
+        self._write_all(gpxfile)
 
-    def _lifetrack_end(self, track):
+    def _lifetrack_end(self, gpxfile):
         """flush."""
-        track.mail_subject = 'Lifetracking ends: {}'.format(track.title)
-        self._write_all(track)
+        gpxfile.mail_subject = 'Lifetracking ends: {}'.format(gpxfile.title)
+        self._write_all(gpxfile)
         self.flush()
 
     def __str__(self) ->str:

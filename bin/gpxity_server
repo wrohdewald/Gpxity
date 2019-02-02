@@ -47,7 +47,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 
-from gpxity import Track, Directory, MMT, Account, DirectoryAccount, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
+from gpxity import GpxFile, Directory, MMT, Account, DirectoryAccount, Backend, Lifetrack  # noqa pylint: disable=no-name-in-module
 
 try:
     import argcomplete
@@ -209,7 +209,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             # the client wants to find out legal categories
             xml = self.answer_with_categories()
         elif self.path.startswith('//assets/php/gpx.php'):
-            # the client wants the entire track
+            # the client wants the entire gpxfile
             parameters = self.path.split('?')[1]
             request = parse_qs(parameters)
             wanted_id = request['tid'][0]
@@ -347,12 +347,12 @@ class MMTHandler(BaseHTTPRequestHandler):
             Our answer
 
         """
-        track = Track()
-        track.parse(parsed['gpx_file'])
-        self.server.targets[0].add(track)  # TODO this was self.targets and no unittest triggered
-        new_ident = track.id_in_backend
+        gpxfile = GpxFile()
+        gpxfile.parse(parsed['track'])
+        self.server.targets[0].add(gpxfile)  # TODO this was self.targets and no unittest triggered
+        new_ident = gpxfile.id_in_backend
         for _ in self.server.targets[1:]:
-            _.add(track)
+            _.add(gpxfile)
         return '<type>success</type><id>{}</id>'.format(new_ident)
 
     @staticmethod

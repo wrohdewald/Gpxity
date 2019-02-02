@@ -10,7 +10,7 @@
 
 import datetime
 
-from .track import Track
+from .gpxfile import GpxFile
 
 __all__ = ['Lifetrack']
 
@@ -24,17 +24,17 @@ class LifetrackTarget:
         self.backend = backend
         if use_id in backend:
             existing_track = backend[use_id]
-            self.track = existing_track.clone()
-            self.track.id_in_backend = use_id
+            self.gpxfile = existing_track.clone()
+            self.gpxfile.id_in_backend = use_id
         else:
-            self.track = Track()
-            self.track.id_in_backend = use_id
+            self.gpxfile = GpxFile()
+            self.gpxfile.id_in_backend = use_id
         self.started = False
-        assert self.track.backend is None, 'TrackerTarget.track {} has backend {}'.format(
-            self.track, self.track.backend)
+        assert self.gpxfile.backend is None, 'TrackerTarget.gpxfile {} has backend {}'.format(
+            self.gpxfile, self.gpxfile.backend)
 
     def update(self, points) ->str:
-        """Update lifetrack into a specific track.
+        """Update lifetrack into a specific gpxfile.
 
         Returns:
             the new id_in_backend if not yet started else None
@@ -47,24 +47,24 @@ class LifetrackTarget:
                 raise Exception('Lifetrack.update needs points')
         new_ident = None
         points = self._prepare_points(points)
-        self.track.add_points(points)
+        self.gpxfile.add_points(points)
         if not self.started:
             # TODO: a unittest where points are empty here because of fences
-            new_ident = self.backend._lifetrack_start(self.track, points)
-            self.track.id_in_backend = new_ident
+            new_ident = self.backend._lifetrack_start(self.gpxfile, points)
+            self.gpxfile.id_in_backend = new_ident
             self.started = True
         elif points:
-            self.backend._lifetrack_update(self.track, points)
-        assert self.track.id_in_backend
-        assert self.track.backend is None, 'LifetrackTarget.track {} has backend {}'.format(
-            self.track, self.track.backend)
+            self.backend._lifetrack_update(self.gpxfile, points)
+        assert self.gpxfile.id_in_backend
+        assert self.gpxfile.backend is None, 'LifetrackTarget.gpxfile {} has backend {}'.format(
+            self.gpxfile, self.gpxfile.backend)
         return new_ident
 
     def end(self):
         """End lifetracking for a specific backend."""
         if not self.started:
             raise Exception('Lifetrack not yet started')
-        self.backend._lifetrack_end(self.track)
+        self.backend._lifetrack_end(self.gpxfile)
 
     def _prepare_points(self, points):
         """Round points and remove those within fences.
@@ -76,7 +76,7 @@ class LifetrackTarget:
         result = [x for x in points if self.backend.account.fences.outside(x)]
         if len(result) < len(points):
             self.backend.logger.debug("Fences removed %d out of %d points", len(points) - len(result), len(points))
-        self.track._round_points(result)
+        self.gpxfile._round_points(result)
         return result
 
 
@@ -114,7 +114,7 @@ class Lifetrack:
 
         """
         try:
-            return '----'.join(x.track.id_in_backend for x in self.targets)
+            return '----'.join(x.gpxfile.id_in_backend for x in self.targets)
         except TypeError:
             return None
 
@@ -130,19 +130,19 @@ class Lifetrack:
             public = False
 
         for _ in self.targets:
-            with _.track._decouple():
+            with _.gpxfile._decouple():
                 # decouple because the _life* methods will put data into the backend
-                _.track.title = title
-                _.track.public = public
-                _.track.category = category
-                _.started = _.track.id_in_backend is not None
+                _.gpxfile.title = title
+                _.gpxfile.public = public
+                _.gpxfile.category = category
+                _.started = _.gpxfile.id_in_backend is not None
         self.update(points)
         return self.formatted_ids()
 
     def update(self, points):
         """Start or update lifetrack.
 
-        If the backend does not support lifetrack, this just saves the track in the backend.
+        If the backend does not support lifetrack, this just saves the gpxfile in the backend.
 
         Args:
             points(list): New points

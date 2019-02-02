@@ -14,7 +14,7 @@ from collections import defaultdict
 from difflib import SequenceMatcher
 
 from .backend import Backend
-from .track import Track
+from .gpxfile import GpxFile
 
 __all__ = ['BackendDiff']
 
@@ -24,13 +24,13 @@ class BackendDiff:
     """Compares two backends.directory.
 
     Args:
-        left (Backend): A backend, a track or a list of either
+        left (Backend): A backend, a gpxfile or a list of either
         right (Backend): Same as for the left side
 
     Attributes:
         left(:class:`BackendDiffSide`): Attributes for the left side
         right(:class:`BackendDiffSide`): Attributes for the right side
-        identical(list(Track)): Tracks appearing on both sides.
+        identical(list(GpxFile)): Tracks appearing on both sides.
         similar(list(Pair)): Pairs of Tracks are on both sides with
             differences. This includes all tracks having at least
             100 identical positions without being identical.
@@ -93,11 +93,11 @@ class BackendDiff:
 
             result = self.__compare_metadata()
 
-            def lists(track):
+            def lists(gpxfile):
                 """Returns two lists of tuples: once with time, once without time."""
                 times = list()
                 positions = list()
-                for _ in track.points():
+                for _ in gpxfile.points():
                     times.append(_.first_time or datetime.datetime(year=1970, month=1, day=1))
                     positions.append(tuple([_.latitude or 0, _.longitude or 0, _.elevation or 0]))  # noqa
                 return times, positions
@@ -167,7 +167,7 @@ class BackendDiff:
         """Represents a side (left or right) in BackendDiff.
 
         Attributes:
-            tracks: An Track, a list of tracks, a backend or a list of backends
+            tracks: An GpxFile, a list of tracks, a backend or a list of backends
             exclusive(list): Acivities existing only on this side
         """
 
@@ -184,13 +184,13 @@ class BackendDiff:
             """Flatten Backends or Tracks into a list of tracks."""
             if isinstance(whatever, list):
                 for list_item in whatever:
-                    if isinstance(list_item, Track):
+                    if isinstance(list_item, GpxFile):
                         yield list_item
                     elif isinstance(list_item, Backend):
                         for _ in list_item:
                             yield _
             else:
-                if isinstance(whatever, Track):
+                if isinstance(whatever, GpxFile):
                     yield whatever
                 elif isinstance(whatever, Backend):
                     for _ in whatever:

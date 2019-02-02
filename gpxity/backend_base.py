@@ -22,7 +22,7 @@ class BackendBase:
 
     """Classmethods.
 
-    Track cannot import Backend because Backend imports Track.
+    GpxFile cannot import Backend because Backend imports GpxFile.
 
     BackendBase is imported by both, containing what both need.
 
@@ -108,14 +108,14 @@ class BackendBase:
 
     @classmethod
     def parse_objectname(cls, name):
-        """Parse the full identifier for a track.
+        """Parse the full identifier for a gpxfile.
 
         1. if name is an existing file or directory, or if name.gpx is an existing file, Backend will be Directory
         2. if ":" is not in name: Backend will be Directory, url=None, track_id=name without .gpx
         3. the part before the first ":" is used as key into accounts. Not case sensitive.
 
         Args:
-            name: the full identifier for a Track
+            name: the full identifier for a GpxFile
 
         Returns:
             A tuple with account, track_id

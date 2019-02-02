@@ -8,11 +8,11 @@
 This implements :class:`gpxity.mmt.MMT` for http://www.mapmytracks.com.
 
 There are some problems with the server running at mapmytracks.com:
-    * it is not possible to change an existing track - if the track changes, the
-      track must be re-uploaded and gets a new track id This invalididates
+    * it is not possible to change an existing gpxfile - if the gpxfile changes, the
+      gpxfile must be re-uploaded and gets a new gpxfile id This invalididates
       references held by other backend instances (maybe on other clients).
       But I could imagine that most similar services have this problem too.
-    * does not support GPX very well beyond track data. One problem is that
+    * does not support GPX very well beyond gpxfile data. One problem is that
       it does not support gpx.time, it ignores it in uploads and uses the time
       of the earliest trackpoint. To be consistent, Gpxity follows that for now
       and does not respect gpx.time either.
@@ -139,9 +139,9 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
             self.seeing_status = True
         elif tag == 'title':
             self.seeing_category = True
-        elif tag == 'h2' and attributes['id'] == 'track-title':
+        elif tag == 'h2' and attributes['id'] == 'gpxfile-title':
             self.seeing_title = True
-        elif tag == 'p' and attributes['id'] == 'track-desc':
+        elif tag == 'p' and attributes['id'] == 'gpxfile-desc':
             self.seeing_description = True
         elif tag == 'a' and attributes['class'] == 'tag-link' and attributes['rel'] == 'tag':
             assert attributes['id'].startswith('tag-')
@@ -186,11 +186,11 @@ class MMT(Backend):
 
     """The implementation for MapMyTracks.
 
-    The track ident is the number given by MapMyTracks.
+    The gpxfile ident is the number given by MapMyTracks.
 
-    MMT knows tags. We map :attr:`Track.keywords <gpxity.track.Track.keywords>` to MMT tags. MMT will
+    MMT knows tags. We map :attr:`GpxFile.keywords <gpxity.gpxfile.GpxFile.keywords>` to MMT tags. MMT will
     change keywords: It converts the first character to upper case. See
-    :attr:`Track.keywords <gpxity.track.Track.keywords>` for how Gpxity handles this.
+    :attr:`GpxFile.keywords <gpxity.gpxfile.GpxFile.keywords>` for how Gpxity handles this.
 
     Args:
         account (:class:`~gpxity.accounts.Account`): The account to be used.
@@ -405,7 +405,7 @@ class MMT(Backend):
         # pylint: disable=too-many-branches
 
         full_url = self.url + '/' + (url if url else 'api/')
-        headers = {'DNT': '1'}  # do not track
+        headers = {'DNT': '1'}  # do not gpxfile
         headers['User-Agent'] = 'Gpxity'  # see https://github.com/MapMyTracks/api/issues/26
         if not self.account.username or not self.account.password:
             raise self.BackendException('{}: Needs authentication data'.format(self.url))
@@ -458,13 +458,13 @@ class MMT(Backend):
                 _ = data
             raise cls.BackendException('{}: {} {} {}'.format(exc, url, _, result.text))
 
-    def _write_attribute(self, track, attribute):
+    def _write_attribute(self, gpxfile, attribute):
         """change an attribute directly on mapmytracks.
 
         Note that we specify iso-8859-1 but use utf-8. If we correctly specify utf-8 in
 
         the xml encoding, mapmytracks.com aborts our connection."""
-        attr_value = getattr(track, attribute)
+        attr_value = getattr(gpxfile, attribute)
         if attribute == 'description' and attr_value == self._default_description:
             attr_value = ''
         # MMT returns 500 Server Error if we set the title to an empty string
@@ -475,30 +475,30 @@ class MMT(Backend):
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<{attr}>{value}</{attr}></message>'.format(
                 attr=attribute,
-                eid=track.id_in_backend,
+                eid=gpxfile.id_in_backend,
                 usrid=self.account.username,
                 value=attr_value,
                 uid=self.session.cookies['exp_uniqueid'])
         self.__post(with_session=True, url='assets/php/interface.php', data=data, expect='success')
 
-    def _write_title(self, track):
+    def _write_title(self, gpxfile):
         """change title on remote server."""
-        self._write_attribute(track, 'title')
+        self._write_attribute(gpxfile, 'title')
 
-    def _write_description(self, track):
+    def _write_description(self, gpxfile):
         """change description on remote server."""
-        self._write_attribute(track, 'description')
+        self._write_attribute(gpxfile, 'description')
 
-    def _write_public(self, track):
+    def _write_public(self, gpxfile):
         """change public/private on remote server."""
         self.__post(
-            with_session=True, url='user-embeds/statuschange-track', expect='access granted',
-            mid=self.mid, tid=track.id_in_backend,
+            with_session=True, url='user-embeds/statuschange-gpxfile', expect='access granted',
+            mid=self.mid, tid=gpxfile.id_in_backend,
             hash=self.session.cookies['exp_uniqueid'],
-            status=1 if track.public else 2)
+            status=1 if gpxfile.public else 2)
         # what a strange answer
 
-    def _write_category(self, track):
+    def _write_category(self, gpxfile):
         """change category directly on mapmytracks.
 
         Note that we specify iso-8859-1 but use utf-8. If we correctly specify utf-8 in
@@ -506,18 +506,18 @@ class MMT(Backend):
         the xml encoding, mapmytracks.com aborts our connection."""
         self.__post(
             with_session=True, url='handler/change_activity', expect='ok',
-            eid=track.id_in_backend, activity=self.encode_category(track.category))
+            eid=gpxfile.id_in_backend, activity=self.encode_category(gpxfile.category))
 
-    def _current_tags(self, track):
+    def _current_tags(self, gpxfile):
         """Return all current MMT tags.
 
         Returns:
 
             A sorted unique list"""
-        page_scan = self._scan_track_page(track)
+        page_scan = self._scan_track_page(gpxfile)
         return list(sorted(set(page_scan['tags'])))
 
-    def _write_add_keywords(self, track, values):
+    def _write_add_keywords(self, gpxfile, values):
         """Add keyword as MMT tag.
 
         MMT allows adding several at once, comma separated,
@@ -530,7 +530,7 @@ class MMT(Backend):
             '<message><nature>add_tag</nature><eid>{eid}</eid>' \
             '<usr>{usrid}</usr><uid>{uid}</uid>' \
             '<tagnames>{value}</tagnames></message>'.format(
-                eid=track.id_in_backend,
+                eid=gpxfile.id_in_backend,
                 usrid=self.account.username,
                 value=values,
                 uid=self.session.cookies['exp_uniqueid'])
@@ -542,49 +542,49 @@ class MMT(Backend):
             if values != tags:
                 raise self.BackendException(
                     '{}: _write_add_keywords({}): MMT does not like some of your keywords: mmt tags={}'.format(
-                        track, ','.join(values), ','.join(tags)))
+                        gpxfile, ','.join(values), ','.join(tags)))
             if len(ids) != len(values):
                 raise self.BackendException(
                     '{}: _write_add_keywords({}): MMT does not like some of your keywords: mmt ids={}'.format(
-                        track, ','.join(values), ','.join(ids)))
+                        gpxfile, ','.join(values), ','.join(ids)))
         for tag, id_ in zip(values, ids):
             self._found_tag_id(tag, id_)
 
-    def _write_remove_keywords(self, track, values):
-        """Remove keywords from track."""
-        # with Track.batch_changes() active, track.keywords is already in the future
+    def _write_remove_keywords(self, gpxfile, values):
+        """Remove keywords from gpxfile."""
+        # with GpxFile.batch_changes() active, gpxfile.keywords is already in the future
         # state after all batched changes have been applied, but we need the current
         # state. Ask MMT.
-        current = self._get_current_keywords(track)
+        current = self._get_current_keywords(gpxfile)
         wanted = set(current) - {x.strip() for x in values.split(',')}
         if True:  # pylint: disable=using-constant-test
             # First remove all keywords and then re-add the still wanted ones. This works!
             # Because even if MMT does not remove the correct keyword, it always does
             # remove one of them.
             for value in current:
-                self._remove_single_keyword(track, value)
-            self._write_add_keywords(track, ','.join(wanted))
+                self._remove_single_keyword(gpxfile, value)
+            self._write_add_keywords(gpxfile, ','.join(wanted))
         else:
             # Specifically remove unwanted keywords. This does not work, MMT does not
             # always remove the correct keyword. No idea why.
             for value in values.split(','):
                 if value in current:
-                    self._remove_single_keyword(track, value)
+                    self._remove_single_keyword(gpxfile, value)
 
-    def _remove_single_keyword(self, track, value):
-        """Remove a specific keyword from track. Does not work correctly, see above."""
+    def _remove_single_keyword(self, gpxfile, value):
+        """Remove a specific keyword from gpxfile. Does not work correctly, see above."""
         tag = value.strip().capitalize()
         if tag not in self.__tag_ids:
-            self.__tag_ids.update(self._scan_track_page(track)['tags'])
+            self.__tag_ids.update(self._scan_track_page(gpxfile)['tags'])
             self._check_tag_ids()
             if tag not in self.__tag_ids:
                 raise self.BackendException(
                     '{}: Cannot remove tag {}, it is not one of {}'.format(
-                        track, tag, self.__tag_ids))
+                        gpxfile, tag, self.__tag_ids))
         if tag in self.__tag_ids:
             self.__post(
                 with_session=True, url='handler/delete-tag.php',
-                tag_id=self.__tag_ids[tag], entry_id=track.id_in_backend)
+                tag_id=self.__tag_ids[tag], entry_id=gpxfile.id_in_backend)
 
     def get_time(self) ->datetime.datetime:
         """get MMT server time.
@@ -610,67 +610,67 @@ class MMT(Backend):
                 gpx = Gpx()
                 gpx.name = raw_data.title
                 gpx.time = raw_data.time
-                track = self._found_track(raw_data.track_id, gpx)
-                track.category = self.decode_category(raw_data.category)
-                track.distance = raw_data.distance
+                gpxfile = self._found_track(raw_data.track_id, gpx)
+                gpxfile.category = self.decode_category(raw_data.category)
+                gpxfile.distance = raw_data.distance
             assert self.real_len() > old_len
 
-    def _scan_track_page(self, track):
+    def _scan_track_page(self, gpxfile):
         """The MMT api does not deliver all attributes we want.
         This gets some more by scanning the web page and
         returns it in page_parser.result"""
         response = self.__get(
-            with_session=True, url='{}/explore/activity/{}'.format(self.url, track.id_in_backend))
+            with_session=True, url='{}/explore/activity/{}'.format(self.url, gpxfile.id_in_backend))
         page_parser = ParseMMTTrack(self)
         page_parser.feed(response.text)
         return page_parser.result
 
-    def _get_current_keywords(self, track):
+    def _get_current_keywords(self, gpxfile):
         """Ask MMT for current keywords, return them as a list."""
-        page_scan = self._scan_track_page(track)
+        page_scan = self._scan_track_page(gpxfile)
         if page_scan['tags']:
             return sorted(page_scan['tags'].keys())
         return list()
 
-    def _use_webpage_results(self, track):
+    def _use_webpage_results(self, gpxfile):
         """Get things directly.
 
-        if the title has not been set, get_activities says something like "Track 2016-09-04 ..."
+        if the title has not been set, get_activities says something like "GpxFile 2016-09-04 ..."
             while the home page says "Cycling activity". We prefer the value from the home page
             and silently ignore this inconsistency.
 
          """
-        page_scan = self._scan_track_page(track)
+        page_scan = self._scan_track_page(gpxfile)
         if page_scan['title']:
-            track.title = page_scan['title']
+            gpxfile.title = page_scan['title']
         if page_scan['description']:
             _ = html.unescape(page_scan['description'])
             if _ == self._default_description:
                 _ = ''
-            track.description = _
+            gpxfile.description = _
         if page_scan['tags']:
-            track.keywords = page_scan['tags'].keys()
-        # MMT sends different values of the current track type, hopefully category_3 is always the
+            gpxfile.keywords = page_scan['tags'].keys()
+        # MMT sends different values of the current gpxfile type, hopefully category_3 is always the
         # correct one.
         if page_scan['category_3']:
-            track.category = self.decode_category(page_scan['category_3'])
+            gpxfile.category = self.decode_category(page_scan['category_3'])
         if page_scan['public'] is not None:
-            track.public = page_scan['public']
+            gpxfile.public = page_scan['public']
 
-    def _read_all(self, track):
-        """get the entire track."""
+    def _read_all(self, gpxfile):
+        """get the entire gpxfile."""
         session = self.session
         if session is None:
             # https access not implemented for TrackMMT
             return
         response = self.__get(with_session=True, url='{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
-            self.url, track.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
+            self.url, gpxfile.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
         # some tracks download only a few points if mid/uid are not given, but I
         # have not been able to write a unittest triggering that ...
-        track.gpx = Gpx.parse(response.text)
-        # but this does not give us track type and other things,
+        gpxfile.gpx = Gpx.parse(response.text)
+        # but this does not give us gpxfile type and other things,
         # get them from the web page.
-        self._use_webpage_results(track)
+        self._use_webpage_results(gpxfile)
 
     def _remove_ident(self, ident: str):
         """remove on the server."""
@@ -678,8 +678,8 @@ class MMT(Backend):
             with_session=True, url='handler/delete_track', expect='access granted',
             tid=ident, hash=self.session.cookies['exp_uniqueid'])
 
-    def _write_all(self, track) ->str:
-        """save full gpx track on the MMT server.
+    def _write_all(self, gpxfile) ->str:
+        """save full gpx gpxfile on the MMT server.
 
         We must upload the title separately.
 
@@ -687,26 +687,26 @@ class MMT(Backend):
             The new id_in_backend
 
         """
-        if not track.gpx.get_track_points_no():
-            raise self.BackendException('MMT does not accept a track without trackpoints:{}'.format(track))
+        if not gpxfile.gpx.get_track_points_no():
+            raise self.BackendException('MMT does not accept a gpxfile without trackpoints:{}'.format(gpxfile))
         response = self.__post(
-            request='upload_activity', gpx_file=track.xml(),
-            status='public' if track.public else 'private',
-            description=track.description, activity=self.encode_category(track.category))
+            request='upload_activity', gpx_file=gpxfile.xml(),
+            status='public' if gpxfile.public else 'private',
+            description=gpxfile.description, activity=self.encode_category(gpxfile.category))
         new_ident = response.find('id').text
         if not new_ident:
             raise self.BackendException('No id found in response')
-        old_ident = track.id_in_backend
-        track.id_in_backend = new_ident
+        old_ident = gpxfile.id_in_backend
+        gpxfile.id_in_backend = new_ident
         # the caller will do the above too, never mind
         if 'write_title' in self.supported:
-            self._write_title(track)
+            self._write_title(gpxfile)
         # MMT can add several keywords at once
-        if track.keywords and 'write_add_keywords' in self.supported:
-            self._write_add_keywords(track, ', '.join(track.keywords))
+        if gpxfile.keywords and 'write_add_keywords' in self.supported:
+            self._write_add_keywords(gpxfile, ', '.join(gpxfile.keywords))
         if old_ident:
             self._remove_ident(old_ident)
-        track.id_in_backend = new_ident
+        gpxfile.id_in_backend = new_ident
         return new_ident
 
     @staticmethod
@@ -726,63 +726,63 @@ class MMT(Backend):
                 calendar.timegm(point.time.utctimetuple())))
         return ' '.join(_)
 
-    def _lifetrack_start(self, track, points) ->str:
+    def _lifetrack_start(self, gpxfile, points) ->str:
         """Start a new lifetrack with initial points.
 
         Returns:
-            new_ident: New track id
+            new_ident: New gpxfile id
 
         """
         if self.subscription == 'free':
-            self.logger.info('Your free MMT account does not allow lifetracking, I will send the entire track')
-            return super(MMT, self)._lifetrack_start(track, points)
+            self.logger.info('Your free MMT account does not allow lifetracking, I will send the entire gpxfile')
+            return super(MMT, self)._lifetrack_start(gpxfile, points)
         if MMT._current_lifetrack is not None:
             raise Exception('start: MMT only accepts one simultaneous lifetracker per username')
-        MMT._current_lifetrack = track
+        MMT._current_lifetrack = gpxfile
         result = self.__post(
             request='start_activity',
-            title=track.title,
-            privacy='public' if track.public else 'private',
-            activity=self.encode_category(track.category),
+            title=gpxfile.title,
+            privacy='public' if gpxfile.public else 'private',
+            activity=self.encode_category(gpxfile.category),
             points=self.__formatted_lifetrack_points(points),
             source='Gpxity',
             version=VERSION,
             expect='activity_started',
             # tags='TODO',
-            unique_token='{}'.format(id(track)))
+            unique_token='{}'.format(id(gpxfile)))
         result = result.find('activity_id').text
         self.logger.error('%s: lifetracking started', self)
         return result
 
-    def _lifetrack_update(self, track, points):
+    def _lifetrack_update(self, gpxfile, points):
         """Update a lifetrack with points.
 
         Args:
-            track: The lifetrack
+            gpxfile: The lifetrack
             points: The new points
 
         """
         if self.subscription == 'free':
-            super(MMT, self)._lifetrack_update(track, points)
+            super(MMT, self)._lifetrack_update(gpxfile, points)
             return
-        if MMT._current_lifetrack != track:
+        if MMT._current_lifetrack != gpxfile:
             raise Exception('update: MMT only accepts one simultaneous lifetracker per username')
         self.__post(
-            request='update_activity', activity_id=track.id_in_backend,
+            request='update_activity', activity_id=gpxfile.id_in_backend,
             points=self.__formatted_lifetrack_points(points),
             expect='activity_updated')
 
-    def _lifetrack_end(self, track):
+    def _lifetrack_end(self, gpxfile):
         """End a lifetrack.
 
         Args:
-            track: The lifetrack
+            gpxfile: The lifetrack
 
         """
         if self.subscription == 'free':
-            super(MMT, self)._lifetrack_end(track)
+            super(MMT, self)._lifetrack_end(gpxfile)
         else:
-            if MMT._current_lifetrack != track:
+            if MMT._current_lifetrack != gpxfile:
                 raise Exception('end: MMT only accepts one simultaneous lifetracker per username')
             self.__post(request='stop_activity')
             MMT._current_lifetrack = None

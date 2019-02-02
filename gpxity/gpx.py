@@ -44,11 +44,11 @@ class Gpx(GPX):
 
     Attributes:
         undefined_str_marker: A new Gpx() gets this value for all str attributes
-            relevant for Gpxity. This lets :class:`~gpxity.track.Track` know if
+            relevant for Gpxity. This lets :class:`~gpxity.gpxfile.GpxFile` know if
             the wanted value is already known (by loading the list of tracks
-            in the backend) or if the full track needs to be read.
+            in the backend) or if the full gpxfile needs to be read.
         real_keywords: As decoded from keywords
-        is_complete: False while we hold only metadata for the track.
+        is_complete: False while we hold only metadata for the gpxfile.
 
         category: As decoded from keywords, no translation done
         public: Decoded from keywords
@@ -171,7 +171,7 @@ class Gpx(GPX):
 
         Args:
             indata: may be a file descriptor or str
-            is_complete: indata holds the entire track info, not just metadata
+            is_complete: indata holds the entire gpxfile info, not just metadata
 
         Returns: Gpx()
 
@@ -194,7 +194,7 @@ class Gpx(GPX):
         return result
 
     def workaround_for_gpxpy_issue_140(self):
-        """Remove empty track extension elements.
+        """Remove empty gpx extension elements.
 
         Maybe we have to do that for other extension elements too.
         But I hope gpxity can soon enough depend on a fixed stable
@@ -366,7 +366,6 @@ class Gpx(GPX):
 
     def last_point(self):
         """Return the last point of the track. None if none."""
-        # TODO: unittest for track without __gpx or without points
         try:
             return self.tracks[-1].segments[-1].points[-1]
         except IndexError:
@@ -386,7 +385,7 @@ class Gpx(GPX):
         self.time += delta
 
     def points_hash(self) -> float:
-        """A hash that is hopefully different for every possible track.
+        """A hash that is hopefully different for every possible Gpx().
 
         It is built using the combination of all points.
 
@@ -433,7 +432,7 @@ class Gpx(GPX):
         return True
 
     def index(self, other, digits=4):
-        """Check if this gpx contains other track gpx.
+        """Check if this gpx contains other track.
 
         This only works if all values for latitude and longitude are
         nearly identical.

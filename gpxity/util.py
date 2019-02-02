@@ -84,7 +84,7 @@ def remove_directory(path):
 
 
 def is_track(value):
-    """Return True or False without looking at the type, so we do not need to import Track."""
+    """Return True or False without looking at the type, so we do not need to import GpxFile."""
     return hasattr(value, 'id_in_backend')
 
 

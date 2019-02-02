@@ -25,8 +25,8 @@ class Locate:
     Attributes:
         locations: The list of found places. For each given value in arg **places**,
             locations holds one result, even if the provider returns more than one.
-        distances: A list with a tuple for every track. The tuple holds the track
-            and a list of distances between that track and places.
+        distances: A list with a tuple for every gpxfile. The tuple holds the gpxfile
+            and a list of distances between that gpxfile and places.
 
     """
 
@@ -47,9 +47,9 @@ class Locate:
             logging.info('  %s', _.address)
         self.distances = list()
         gpx_points = [GPXTrackPoint(latitude=x.lat, longitude=x.lng) for x in self.locations]
-        for track in tracks:
+        for gpxfile in tracks:
             self.distances.append(
-                (track, [track.gpx.get_nearest_location(x).location.distance_2d(x) for x in gpx_points]))
+                (gpxfile, [gpxfile.gpx.get_nearest_location(x).location.distance_2d(x) for x in gpx_points]))
         self.distances.sort(key=lambda x: sum(x[1]))
 
     def found(self, max_away: float = 1e10):

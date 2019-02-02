@@ -28,7 +28,7 @@ import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 from gpxpy.geo import LocationDelta
 
-from ... import Track, Backend, Account, DirectoryAccount
+from ... import GpxFile, Backend, Account, DirectoryAccount
 from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner, MMT
 from ...util import remove_directory
 from ...gpx import Gpx
@@ -115,7 +115,7 @@ class BasicTest(unittest.TestCase):
                 name, os.getcwd()))
         filename = '{}.gpx'.format(name)
         data = io.StringIO(get_data(__package__, filename).decode('utf-8'))
-        result = Track(gpx=Gpx.parse(data))
+        result = GpxFile(gpx=Gpx.parse(data))
         if backend_cls:
             result.category = backend_cls.decode_category(random.choice(backend_cls.supported_categories))
         return result
@@ -124,10 +124,10 @@ class BasicTest(unittest.TestCase):
     def create_test_track(
             cls, backend_class=None, count: int = 1, idx: int = 0, category: str = None, public: bool = False,
             start_time=None, end_time=None):
-        """create a :class:`~gpxity.track.Track`.
+        """create a :class:`~gpxity.gpxfile.GpxFile`.
 
         It starts off with **test.gpx** and appends a
-        last track point, it also changes the time stamp of the last point.
+        last gpxfile point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
         looking at the tracks, they all go in a different direction clockwise, with an angle
         in degrees of :literal:`360 * idx / count`.
@@ -136,8 +136,8 @@ class BasicTest(unittest.TestCase):
             backend_class: If given, use it as source for a random category
             count: See above. Using 1 as default if not given.
             idx: See above. Using 0 as default if not given.
-            category: The wanted value for the track.
-                Default: if count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
+            category: The wanted value for the gpxfile.
+                Default: if count == len(:attr:`GpxFile.categories <gpxity.gpxfile.GpxFile.categories>`),
                 the default value will be backend_class.supported_categories[idx].
                 Otherwise a random value from backend_class.supported_categories will be applied.
             public: should the tracks be public or private?
@@ -145,7 +145,7 @@ class BasicTest(unittest.TestCase):
             end_time: explicit time for the last point. If None: See above.
 
         Returns:
-            (~gpxity.track.Track): A new track not bound to a backend
+            (~gpxity.gpxfile.GpxFile): A new gpxfile not bound to a backend
 
         """
         # pylint: disable=too-many-locals
@@ -161,7 +161,7 @@ class BasicTest(unittest.TestCase):
         new_point.move(_)
         result.add_points([new_point])
 
-        # now set all times such that they are in order with this track and do not overlap
+        # now set all times such that they are in order with this gpxfile and do not overlap
         # with other test tracks
         _ = result.first_time
         duration = new_point.time - _ + datetime.timedelta(seconds=10)
@@ -171,13 +171,13 @@ class BasicTest(unittest.TestCase):
         result.title = 'Random GPX # {}'.format(idx)
         result.description = 'Description to {}'.format(result.title)
         if backend_class is None:
-            cat_source = Track.categories
+            cat_source = GpxFile.categories
         else:
             cat_source = backend_class.supported_categories
             cat_source = [backend_class.decode_category(x) for x in cat_source]
         if category:
             result.category = category
-        elif count == len(Track.categories):
+        elif count == len(GpxFile.categories):
             result.category = cat_source[idx]
         else:
             result.category = random.choice(cat_source)
@@ -261,14 +261,14 @@ class BasicTest(unittest.TestCase):
             message = ','.join(str(x) for x in backend)
             self.assertEqual(len(backend), length, '{} should have {} tracks: {}'.format(backend, length, message))
 
-    def assertHasKeywords(self, track, expected):  # noqa pylint: disable=invalid-name
+    def assertHasKeywords(self, gpxfile, expected):  # noqa pylint: disable=invalid-name
         """MMT shows keywords on the website lowercase but internally it capitalizes them."""
-        if isinstance(track.backend, MMT):
+        if isinstance(gpxfile.backend, MMT):
             original = expected
             expected = []
             for _ in original:
                 expected.append(' '.join(x.capitalize() for x in _.split(' ')))
-        self.assertEqual(track.keywords, sorted(expected))
+        self.assertEqual(gpxfile.keywords, sorted(expected))
 
     def assertSameTracks(self, backend1, backend2, msg=None, with_category=True, with_last_time=None):  # noqa pylint: disable=invalid-name
         """both backends must hold identical tracks."""
@@ -294,7 +294,7 @@ class BasicTest(unittest.TestCase):
         # starting at 2010-01-01 00:00. Until I find the reason, ignore point times for comparison.
         # Openrunner always does.
         # MMT now seems to convert times between utc and local time. UP- and downloading
-        # the same track changes the point times.
+        # the same gpxfile changes the point times.
         no_time_backend = (GPSIES, Openrunner, MMT)
         with_last_time = not (
             isinstance(track1.backend, no_time_backend) or isinstance(track2.backend, no_time_backend))
@@ -316,9 +316,9 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(track1.points_equal(track2), msg)
         self.assertNotEqual(track1.gpx.xml(), track2.gpx.xml(), msg)
 
-    def assertTrackFileContains(self, track, string, msg=None):  # noqa pylint: disable=invalid-name
+    def assertTrackFileContains(self, gpxfile, string, msg=None):  # noqa pylint: disable=invalid-name
         """Assert that string is in the physical file. Works only for Directory backend."""
-        with open(track.backend.gpx_path(track.id_in_backend), encoding='utf8') as trackfile:
+        with open(gpxfile.backend.gpx_path(gpxfile.id_in_backend), encoding='utf8') as trackfile:
             data = trackfile.read()
         self.assertIn(string, data, msg)
 
@@ -328,7 +328,7 @@ class BasicTest(unittest.TestCase):
             public: bool = None):
         """set up an instance of a backend with count tracks.
 
-        If count == len(:attr:`Track.categories <gpxity.track.Track.categories>`),
+        If count == len(:attr:`GpxFile.categories <gpxity.gpxfile.GpxFile.categories>`),
         the list of tracks will always be identical. For an example
         see :meth:`TestBackends.test_all_category <gpxity.backends.test.test_backends.TestBackends.test_all_category>`.
 
@@ -339,9 +339,9 @@ class BasicTest(unittest.TestCase):
             url: for the backend, only for Directory
             count: how many random tracks should be inserted?
             clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
-            category: The wanted category, one out of Track.categories. But this is a problem because we do the same
+            category: The wanted category, one out of GpxFile.categories. But this is a problem because we do the same
                 call for all backend classes and they support different categories. So: If category is int, this is an
-                index into Backend.supported_categories which will be decoded into Track.categories
+                index into Backend.supported_categories which will be decoded into GpxFile.categories
 
             public: should the tracks be public or private? Default is False.
                 Exception: MMT with subscription free has default True
@@ -380,8 +380,8 @@ class BasicTest(unittest.TestCase):
         if count:
             # if count == 0, skip this. Needed for write-only backends like Mailer.
             while count > len(result):
-                track = self.create_test_track(cls_, count, len(result), category=category, public=public)
-                result.add(track)
+                gpxfile = self.create_test_track(cls_, count, len(result), category=category, public=public)
+                result.add(gpxfile)
             self.assertGreaterEqual(len(result), count)
             if clear_first:
                 self.assertEqual(len(result), count)

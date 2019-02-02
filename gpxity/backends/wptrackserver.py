@@ -9,9 +9,9 @@ This implements :class:`gpxity.wptrackserver.WPTrackserver`.
 
 WPTrackserver talks directly to the WP mysql database holding the trackserver data.
 
-This backend does not directly support Track.category, Track.status, Track.keywords.
+This backend does not directly support GpxFile.category, GpxFile.status, GpxFile.keywords.
 All this is added to the description when writing and extracted when reading. So
-the description in the backend will contain all keywords, but Track.description
+the description in the backend will contain all keywords, but GpxFile.description
 does not.
 
 The database has a maximum field length of 255 for strings. If it is exceeded, the
@@ -126,7 +126,7 @@ class WPTrackserver(Backend):
             self.__cached_user_id = row[0]
         return self.__cached_user_id
 
-    def _encode_description(self, track):
+    def _encode_description(self, gpxfile):
         """Encode keywords in description.
 
         If description exceeds its maximum length, first remove keywords and then
@@ -137,10 +137,10 @@ class WPTrackserver(Backend):
         """
         def fmt_result():
             return '{}{}{}'.format(
-                track.description, self._keywords_marker, ', '.join(kw_parts))
+                gpxfile.description, self._keywords_marker, ', '.join(kw_parts))
 
         max_length = self._max_length['description']
-        kw_parts = track.gpx.keywords.split(', ')  # they already included encoded Category:  etc
+        kw_parts = gpxfile.gpx.keywords.split(', ')  # they already included encoded Category:  etc
         result = fmt_result()
         if len(result) > max_length:
             while kw_parts and len(result) > max_length:
@@ -181,8 +181,8 @@ class WPTrackserver(Backend):
         args = (self._user_id, )  # noqa
         cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
-            track = self._found_track(str(int(_[0])), self._gpx_from_headers(_))
-            track.distance = _[4] / 1000.0
+            gpxfile = self._found_track(str(int(_[0])), self._gpx_from_headers(_))
+            gpxfile.distance = _[4] / 1000.0
 
     @staticmethod
     def __point(row):
@@ -198,17 +198,17 @@ class WPTrackserver(Backend):
             longitude=float(row[1]),
             time=row[2] - time_delta)
 
-    def _read_all(self, track) ->None:
-        """Read the full track."""
-        assert track.id_in_backend
+    def _read_all(self, gpxfile) ->None:
+        """Read the full gpxfile."""
+        assert gpxfile.id_in_backend
         cursor = self.__exec_mysql(
-            'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [track.id_in_backend])
-        track.add_points([self.__point(x) for x in cursor.fetchall()])
-        track.gpx.is_complete = True
+            'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [gpxfile.id_in_backend])
+        gpxfile.add_points([self.__point(x) for x in cursor.fetchall()])
+        gpxfile.gpx.is_complete = True
 
     @staticmethod
     def __needs_insert(cursor, ident) -> bool:
-        """Check if the header exists in the track table.
+        """Check if the header exists in the gpxfile table.
 
         Returns: True or False.
 
@@ -218,62 +218,62 @@ class WPTrackserver(Backend):
         cursor.execute('select 1 from wp_ts_tracks where id=%s', (ident, ))  # noqa
         return len(cursor.fetchall()) == 0
 
-    def _save_header(self, track):
-        """Write all header fields. May set track.id_in_backend.
+    def _save_header(self, gpxfile):
+        """Write all header fields. May set gpxfile.id_in_backend.
 
-        Be aware that the track may still have 0 points (all fenced away).
+        Be aware that the gpxfile may still have 0 points (all fenced away).
         Returns: The new id_in_backend.
 
         """
-        description = self._encode_description(track)
-        title = track.title[:self._max_length['title']]
+        description = self._encode_description(gpxfile)
+        title = gpxfile.title[:self._max_length['title']]
         # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
-        track_time = track.first_time or Gpx.undefined_date
-        track_distance = track.distance * 1000
+        track_time = gpxfile.first_time or Gpx.undefined_date
+        track_distance = gpxfile.distance * 1000
         cursor = self._db.cursor()
-        if self.__needs_insert(cursor, track.id_in_backend):
-            if track.id_in_backend is None:
+        if self.__needs_insert(cursor, gpxfile.id_in_backend):
+            if gpxfile.id_in_backend is None:
                 cmd = 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source)' \
                     ' values(%s,%s,%s,%s,%s,%s)'
                 args = (self._user_id, title, track_time, description, track_distance, '')
                 cursor = self.__exec_mysql(cmd, args)
-                track.id_in_backend = str(int(cursor.lastrowid))
+                gpxfile.id_in_backend = str(int(cursor.lastrowid))
             else:
                 self.__exec_mysql(
                     'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) '
                     ' values(%s,%s,%s,%s,%s,%s,%s)',
-                    (track.id_in_backend, self._user_id, title, track_time, description, track_distance, ''))
-                self.logger.error('wptrackserver wrote missing header with id=%s', track.id_in_backend)
+                    (gpxfile.id_in_backend, self._user_id, title, track_time, description, track_distance, ''))
+                self.logger.error('wptrackserver wrote missing header with id=%s', gpxfile.id_in_backend)
         else:
             self.__exec_mysql(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
-                (title, track_time, description, track_distance, track.id_in_backend))
-        return track.id_in_backend
+                (title, track_time, description, track_distance, gpxfile.id_in_backend))
+        return gpxfile.id_in_backend
 
-    def _write_all(self, track) ->str:
-        """save full gpx track.
+    def _write_all(self, gpxfile) ->str:
+        """save full gpx gpxfile.
 
         Since the file name uses title and title may have changed,
-        compute new file name and remove the old files. We also adapt track.id_in_backend.
+        compute new file name and remove the old files. We also adapt gpxfile.id_in_backend.
 
         Returns:
-            the new track.id_in_backend
+            the new gpxfile.id_in_backend
 
         """
-        result = self._save_header(track)
+        result = self._save_header(gpxfile)
         self.__exec_mysql('delete from wp_ts_locations where trip_id=%s', [int(result)])
-        self.__write_points(track, track.points())
+        self.__write_points(gpxfile, gpxfile.points())
         return result
 
-    def __write_points(self, track, points):
-        """save points in the track."""
+    def __write_points(self, gpxfile, points):
+        """save points in the gpxfile."""
         points = list(points)
         time_delta = utc_to_local_delta()  # WPTrackserver wants local time
         cmd = 'insert into wp_ts_locations(trip_id, latitude, longitude, altitude,' \
             ' occurred, speed, comment, heading)' \
             ' values(%s, %s, %s, %s, %s, %s, "", 0.0)'
         args = [(
-            track.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
+            gpxfile.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
             x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0) for x in points]
         if args:
             self.__exec_mysql(cmd, args, many=True)
@@ -285,9 +285,9 @@ class WPTrackserver(Backend):
         cmd = 'delete from wp_ts_tracks where id=%s'
         self.__exec_mysql(cmd, [int(ident)])
 
-    def _change_ident(self, track, new_ident: str):
+    def _change_ident(self, gpxfile, new_ident: str):
         """Change the id in the backend."""
-        assert track.id_in_backend != new_ident
+        assert gpxfile.id_in_backend != new_ident
         if new_ident in self:
             raise ValueError(
                 'New id_in_backend {} already exists in {}'.format(
@@ -295,15 +295,15 @@ class WPTrackserver(Backend):
         try:
             self.__exec_mysql(
                 'update wp_ts_tracks set id=%s where id=%s',
-                (new_ident, track.id_in_backend))
+                (new_ident, gpxfile.id_in_backend))
         except _mysql_exceptions.DataError as exc:
             raise ValueError(str(exc))
         self.__exec_mysql(
             'update wp_ts_locations set trip_id=%s where trip_id=%s',
-            (new_ident, track.id_in_backend))
+            (new_ident, gpxfile.id_in_backend))
 
-        self.logger.info('%s: renamed %s to %s', self.account, track.id_in_backend, new_ident)
-        track.id_in_backend = new_ident
+        self.logger.info('%s: renamed %s to %s', self.account, gpxfile.id_in_backend, new_ident)
+        gpxfile.id_in_backend = new_ident
 
     @classmethod
     def is_disabled(cls) ->bool:
@@ -321,31 +321,31 @@ class WPTrackserver(Backend):
             return True
         return super(WPTrackserver, cls).is_disabled()
 
-    def _lifetrack_start(self, track, points) ->str:
+    def _lifetrack_start(self, gpxfile, points) ->str:
         """Start a new lifetrack with initial points.
 
         Returns:
-            new_ident: New track id
+            new_ident: New gpxfile id
 
         """
-        new_ident = self._save_header(track)
-        self._lifetrack_update(track, points)
+        new_ident = self._save_header(gpxfile)
+        self._lifetrack_update(gpxfile, points)
         return new_ident
 
-    def _lifetrack_update(self, track, points):
+    def _lifetrack_update(self, gpxfile, points):
         """Update a lifetrack with points.
 
         Args:
-            track: The lifetrack
+            gpxfile: The lifetrack
             points: The new points
 
         """
         points = list(points)
-        add_speed(list(track.points()), window=10)
+        add_speed(list(gpxfile.points()), window=10)
         cmd = 'update wp_ts_tracks set distance=%s where id=%s'
-        args = (track.distance * 1000, track.id_in_backend)
+        args = (gpxfile.distance * 1000, gpxfile.id_in_backend)
         self.__exec_mysql(cmd, args)
-        self.__write_points(track, points)
+        self.__write_points(gpxfile, points)
 
     def __exec_mysql(self, cmd, args, many=False):
         """Wrapper.
