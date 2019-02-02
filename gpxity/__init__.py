@@ -8,6 +8,7 @@
 # pylint: disable=protected-access
 
 from .accounts import *
+from .gpx import *
 from .gpxfile import *
 from .lifetrack import *
 from .backend import *
@@ -17,7 +18,7 @@ from .backends import *
 from .version import *
 
 __all__ = [
-    'GpxFile', 'Fences', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'Openrunner',
+    'Gpx', 'GpxFile', 'Fences', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'Openrunner',
     'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION', 'Account', 'DirectoryAccount']
 
 

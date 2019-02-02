@@ -781,6 +781,9 @@ class Utility:
                         track.segments[0].points.extend(segment.points)
                     track.segments = track.segments[:1]
                 fix_gpxfile.rewrite()
+            if self.options.tracks:
+                for line in fix_gpxfile.join_tracks(force=self.options.force):
+                    print(line)
 
     def dump(self):
         """Dump data."""
@@ -1244,6 +1247,13 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         clear_parser.add_argument(
             '--segments', default=False,
             help='Join all segments to a single segment', action='store_true')
+        clear_parser.add_argument(
+            '--tracks', default=False, action='store_true',
+            help="""Join all tracks to a single track. Metadata from all but the first track is thrown away.
+                If metadata will be lost, it is printed and nothing is done. Repeat with --force.""")
+        clear_parser.add_argument(
+            '--force', default=False, action='store_true',
+            help='Executes --tracks even if metadata will be lost')
         self.add_common_args(clear_parser)
         self.add_multi_source(clear_parser)
 

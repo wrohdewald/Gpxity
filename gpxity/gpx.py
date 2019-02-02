@@ -6,10 +6,10 @@
 
 """This module defines :class:`~gpxity.gpx`."""
 
-
 from math import asin, sqrt, degrees
 import datetime
 
+from lxml import etree
 
 # This code would speed up parsing GPX by about 30%. When doing
 # that, GPX will only return str instead of datetime for times.
@@ -691,3 +691,63 @@ class Gpx(GPX):
             self.waypoints.extend(new_seg_wp)
             return True
         return False
+
+    def __trackfieldnames(self):
+        """The names of track fields.
+
+        Returns: a list
+
+        """
+        if self.version == '1.1':
+            fields = GPXTrack.gpx_11_fields
+        else:
+            fields = GPXTrack.gpx_10_fields
+        return [x.name for x in fields if not isinstance(x, str) and x.name != 'segments']
+
+    def __losing_metadata_when_joining_tracks(self):
+        """Check if metadata would be lost.
+
+        Returns: list()
+
+        """
+        losing = list()
+        for name in self.__trackfieldnames():
+            seen = list()
+            for _ in self.tracks:
+                if name == 'extensions':
+                    # pylint: disable=c-extension-no-member
+                    value = '///'.join(etree.tostring(x, pretty_print=False).decode('utf-8') for x in _.extensions)
+                    value = value.replace('\n', '').replace('>        <', '><')
+                else:
+                    value = getattr(_, name)
+                if value:
+                    seen.append(value)
+            if len(set(seen)) > 1:
+                for _ in seen[1:]:
+                    losing.append('{}: {}'.format(name, _))
+        return losing
+
+    def join_tracks(self, force=False):
+        """Join all tracks to a single track.
+
+        Differring metadata will not be combined.
+        If metadata will be lost, it is printed and nothing is done unless force is True
+
+        Args: force if True, join even if metadata is lost
+
+        Returns: list()
+            A list with text strings about lost metadata
+
+        """
+        losing = self.__losing_metadata_when_joining_tracks()
+        if not losing or force:
+            track0 = self.tracks[0]
+            for other in self.tracks[1:]:
+                track0.segments.extend(other.segments)
+                for name in self.__trackfieldnames():
+                    value0 = getattr(track0, name)
+                    value1 = getattr(other, name)
+                    if not value0 and value1:
+                        setattr(track0, name, value1)
+            self.tracks = [track0]
+        return losing

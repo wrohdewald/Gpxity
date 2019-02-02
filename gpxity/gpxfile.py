@@ -1473,3 +1473,28 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """
         if self.gpx.add_segment_waypoints():
             self._dirty = 'gpx'
+
+    def join_tracks(self, force=False):
+        """Join all tracks to a single track.
+
+        Metadata from all but the first track is thrown away.
+        If metadata will be lost, it is printed and nothing is done unless force is True
+
+        Args: force if True, join even if metadata is lost
+
+        Returns: list()
+            A list with text strings about lost metadata
+
+        """
+
+        result = self.gpx.join_tracks(force)
+        if result:
+            result = ['  ' + x for x in result]
+            if force:
+                msg = 'Joining tracks in {trk} lost metadata from joined tracks:'
+            else:
+                msg = 'Joining tracks in {trk} would lose metadata from joined tracks, use the force option:'
+            result.insert(0, msg.format(trk=self))
+        if not result or force:
+            self.rewrite()
+        return result
