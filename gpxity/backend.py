@@ -25,9 +25,9 @@ __all__ = ['Backend']
 
 class Backend(BackendBase):
 
-    """A place where tracks live. Something like the filesystem or http://mapmytracks.com.
+    """A place where gpxfiles live. Something like the filesystem or http://mapmytracks.com.
 
-    A Backend should hold only tracks for one person, and they
+    A Backend should hold only gpxfiles for one person, and they
     should not overlap in time. This is not enforced but sometimes
     behaviour is undefined if you ignore this.
 
@@ -36,7 +36,7 @@ class Backend(BackendBase):
     A Backend allows indexing by normal int index, by :class:`GpxFile <gpxity.gpxfile.GpxFile>`
     and by :attr:`GpxFile.id_in_backend <gpxity.gpxfile.GpxFile.id_in_backend>`.
     :literal:`if 'ident' in backend` is possible.
-    len(backend) shows the number of tracks. Please note that Code
+    len(backend) shows the number of gpxfiles. Please note that Code
     like :literal:`if backend:` may not behave as expected. This will be False if the backend
     has no gpxfile. If that is not what you want, consider :literal:`if backend is not None`
 
@@ -131,7 +131,7 @@ class Backend(BackendBase):
         if 'backend' not in self.account.config:
             self.account.config['backend'] = self.__class__.__name__
         self._decoupled = False
-        self.__tracks = list()
+        self.__gpxfiles = list()
         self._tracks_fully_listed = False
         self.__match = None
         self.logger = logging.getLogger(str(self))
@@ -222,10 +222,10 @@ class Backend(BackendBase):
 
     @property
     def match(self):
-        """Filter tracks.
+        """Filter gpxfiles.
 
         A function with one argument returning None or str. The backend will call
-            this with every gpxfile and ignore tracks where match does not return None.
+            this with every gpxfile and ignore gpxfiles where match does not return None.
             The returned str should explain why the gpxfile does not match.
 
             If you change a gpxfile such that it does not match anymore, the exception
@@ -357,7 +357,7 @@ class Backend(BackendBase):
         raise NotImplementedError
 
     def scan(self, now: bool = False) ->None:
-        """Enforce a reload of the list of all tracks in the backend.
+        """Enforce a reload of the list of all gpxfiles in the backend.
 
         This will be delayed until the list is actually needed again.
 
@@ -375,7 +375,7 @@ class Backend(BackendBase):
 
     @property
     def is_scanned(self) ->bool:
-        """Check if the backend has already been scanned for tracks.
+        """Check if the backend has already been scanned for gpxfiles.
 
         Returns: (bool)
             The answer
@@ -384,21 +384,21 @@ class Backend(BackendBase):
         return self._tracks_fully_listed
 
     def _scan(self) ->None:
-        """load the list of all tracks in the backend if not yet done.
+        """load the list of all gpxfiles in the backend if not yet done.
         Enforce this by calling :meth:`scan` first.
         """
         if not self._tracks_fully_listed and not self._decoupled:
             self._tracks_fully_listed = True
-            unsaved = [x for x in self.__tracks if x.id_in_backend is None]
+            unsaved = [x for x in self.__gpxfiles if x.id_in_backend is None]
             if self.__match is not None:
                 for gpxfile in unsaved:
                     self.matches(gpxfile, 'scan')
-            self.__tracks = unsaved
+            self.__gpxfiles = unsaved
             if 'scan' in self.supported:
                 match_function = self.__match
                 self.__match = None
                 try:
-                    # _load_track_headers loads ALL tracks, match will be
+                    # _load_track_headers loads ALL gpxfiles, match will be
                     # applied in a second loop. This way the Backend implementations
                     # do not have to worry about the match code.
                     with self._decouple():
@@ -406,7 +406,7 @@ class Backend(BackendBase):
                 finally:
                     self.__match = match_function
             if self.__match is not None:
-                self.__tracks = [x for x in self.__tracks if self.matches(x)]
+                self.__gpxfiles = [x for x in self.__gpxfiles if self.matches(x)]
 
     def _found_track(self, ident: str, gpx=None):
         """Create an empty gpxfile for ident and inserts it into this backend.
@@ -427,7 +427,7 @@ class Backend(BackendBase):
     def _load_track_headers(self):
         """Load all gpxfile headers and append them to the backend.
 
-        The tracks will not be loaded if possible.
+        The gpxfiles will not be loaded if possible.
 
         """
         raise NotImplementedError()
@@ -492,7 +492,7 @@ class Backend(BackendBase):
         the Backend may use it or not. Some always assign it themselves like
         :class:`~gpxity.backends.mmt.MMT`.
 
-        If the gpxfile object is already in the list of tracks, raise ValueError.
+        If the gpxfile object is already in the list of gpxfiles, raise ValueError.
 
         If the gpxfile does not pass the current match function, raise an exception.
 
@@ -513,30 +513,30 @@ class Backend(BackendBase):
             # that cannot be done with fences applied
             gpxfile._load_full()
             with gpxfile.fenced(self.account.fences):
-                new_track = gpxfile.clone()
+                new_gpxfile = gpxfile.clone()
         else:
-            if any(x is gpxfile for x in self.__tracks):
+            if any(x is gpxfile for x in self.__gpxfiles):
                 raise ValueError(
                     'Already in list: GpxFile {} with id={}, have={}'.format(
                         gpxfile, id(gpxfile), ','.join(str(x) for x in self)))
-            new_track = gpxfile
+            new_gpxfile = gpxfile
         try:
             with self._decouple():
-                new_track._set_backend(self)
-                self._write_all(new_track)
-            self._append(new_track)
+                new_gpxfile._set_backend(self)
+                self._write_all(new_gpxfile)
+            self._append(new_gpxfile)
             gpxfile._clear_dirty()
-            return new_track
+            return new_gpxfile
         except Exception:
             # do not do self.remove. If we try to upload the same gpxfile to gpsies,
-            # gpsies will assign the same trackid, and we come here. __tracks will
+            # gpsies will assign the same trackid, and we come here. __gpxfiles will
             # only hold the first uploaded gpxfile, and remove would remove that
             # instance instead of this one.
             # TODO: do we have a unittest for that case?
-            self.__tracks = [x for x in self.__tracks if x is not new_track]
+            self.__gpxfiles = [x for x in self.__gpxfiles if x is not new_gpxfile]
             with self._decouple():
-                new_track.id_in_backend = None
-                new_track._set_backend(None)
+                new_gpxfile.id_in_backend = None
+                new_gpxfile._set_backend(None)
             raise
 
     def _new_ident(self, gpxfile) ->str:
@@ -591,7 +591,7 @@ class Backend(BackendBase):
 
     def remove(self, value) ->None:
         """
-        Remove gpxfile. This can also be done for tracks not passing the current match function.
+        Remove gpxfile. This can also be done for gpxfiles not passing the current match function.
 
         Args:
             value: If it is not an :class:`~gpxity.gpxfile.GpxFile`, :meth:`remove` looks
@@ -604,7 +604,7 @@ class Backend(BackendBase):
         with self._decouple():
             gpxfile._set_backend(None)
             try:
-                self.__tracks = [x for x in self.__tracks if x.id_in_backend != gpxfile.id_in_backend]
+                self.__gpxfiles = [x for x in self.__gpxfiles if x.id_in_backend != gpxfile.id_in_backend]
             except ValueError:
                 pass
 
@@ -651,14 +651,14 @@ class Backend(BackendBase):
         """Default: Nothing needs to be done."""
 
     def remove_all(self):
-        """Remove all tracks we know about.
+        """Remove all gpxfiles we know about.
 
         If their :attr:`id_in_backend` has meanwhile been changed
         through another backend instance or another process, we
-        cannot find it anymore. We do **not** rescan all tracks in the backend.
+        cannot find it anymore. We do **not** rescan all gpxfiles in the backend.
         If you want to make sure it will be empty, call :meth:`scan` first.
 
-        If you use a match function, only matching tracks will be removed."""
+        If you use a match function, only matching gpxfiles will be removed."""
         for gpxfile in list(self):
             if self.matches(gpxfile):
                 self.remove(gpxfile)
@@ -669,7 +669,7 @@ class Backend(BackendBase):
     def __contains__(self, value) ->bool:
         """value is either an a gpxfile or a gpxfile id.
 
-        Does NOT load tracks, only checks what is already known.
+        Does NOT load gpxfiles, only checks what is already known.
 
         Returns:
             True if we have the item
@@ -687,9 +687,9 @@ class Backend(BackendBase):
             True if we have the item
 
         """
-        if hasattr(index, 'id_in_backend') and index in self.__tracks:
+        if hasattr(index, 'id_in_backend') and index in self.__gpxfiles:
             return True
-        if isinstance(index, str) and index in [x.id_in_backend for x in self.__tracks]:
+        if isinstance(index, str) and index in [x.id_in_backend for x in self.__gpxfiles]:
             return True
         return False
 
@@ -706,8 +706,8 @@ class Backend(BackendBase):
         """
         self._scan()
         if isinstance(index, int):
-            return self.__tracks[index]
-        for _ in self.__tracks:
+            return self.__gpxfiles[index]
+        for _ in self.__gpxfiles:
             if _ is index or _.id_in_backend == index:
                 return _
         raise IndexError
@@ -720,7 +720,7 @@ class Backend(BackendBase):
 
         """
         self._scan()
-        return len(self.__tracks)
+        return len(self.__gpxfiles)
 
     def real_len(self) ->int:
         """len(backend) without calling scan() first.
@@ -728,26 +728,27 @@ class Backend(BackendBase):
         Returns:
 
             the length"""
-        return len(self.__tracks)
+        return len(self.__gpxfiles)
 
     def _append(self, gpxfile):
         """Append a gpxfile to the cached list."""
         if gpxfile.id_in_backend is not None and not isinstance(gpxfile.id_in_backend, str):
             raise Exception('{}: id_in_backend must be str'.format(gpxfile))
-        tracks_with_this_id = [x for x in self.__tracks if x.id_in_backend == gpxfile.id_in_backend]
+        tracks_with_this_id = [x for x in self.__gpxfiles if x.id_in_backend == gpxfile.id_in_backend]
         if tracks_with_this_id:
             assert len(tracks_with_this_id) == 1
             track_with_this_id = tracks_with_this_id[0]
             if track_with_this_id.backend is None:
                 # we actually replace the unsaved gpxfile with the new one
-                del self.__tracks[track_with_this_id]
-        if gpxfile.id_in_backend is not None and any(x.id_in_backend == gpxfile.id_in_backend for x in self.__tracks):
+                del self.__gpxfiles[track_with_this_id]
+        if gpxfile.id_in_backend is not None and any(
+                x.id_in_backend == gpxfile.id_in_backend for x in self.__gpxfiles):
             # cannot do "in self" because we are not decoupled, so that would call _scan()
             raise ValueError(
                 'Backend.append(gpxfile {}): its id_in_backend {} is already in list: GpxFile={}, list={}'.format(
-                    str(gpxfile), gpxfile.id_in_backend, self[gpxfile.id_in_backend], self.__tracks))
+                    str(gpxfile), gpxfile.id_in_backend, self[gpxfile.id_in_backend], self.__gpxfiles))
         self.matches(gpxfile, 'append')
-        self.__tracks.append(gpxfile)
+        self.__gpxfiles.append(gpxfile)
 
     def __repr__(self):
         """do not call len(self) because that does things.
@@ -756,7 +757,7 @@ class Backend(BackendBase):
             The repr str
 
         """
-        return '{}({} in {})'.format(self.__class__.__name__, len(self.__tracks), self.account)
+        return '{}({} in {})'.format(self.__class__.__name__, len(self.__gpxfiles), self.account)
 
     def __enter__(self):
         """See class docstring.
@@ -775,17 +776,17 @@ class Backend(BackendBase):
         """See class docstring.
 
         Returns:
-            iterator over tracks
+            iterator over gpxfiles
 
         """
         self._scan()
-        return iter(self.__tracks)
+        return iter(self.__gpxfiles)
 
     def __eq__(self, other) ->bool:  # TODO: use str
-        """True if both backends have the same tracks.
+        """True if both backends have the same gpxfiles.
 
         Returns:
-            True if both backends have the same tracks
+            True if both backends have the same gpxfiles
 
         """
         return {x.key() for x in self} == {x.key() for x in other}
@@ -800,23 +801,23 @@ class Backend(BackendBase):
         result = list()
         for old_track in other_tracks:
             if not dry_run:
-                new_track = self.add(old_track)
+                new_gpxfile = self.add(old_track)
             result.append('{} {} -> {}'.format(
-                'blind move' if remove else 'blind copy', old_track, self.account if dry_run else new_track))
+                'blind move' if remove else 'blind copy', old_track, self.account if dry_run else new_gpxfile))
             if remove and not dry_run:
                 old_track.remove()
         return result
 
-    def __find_mergable_groups(self, tracks, partial_tracks: bool = False):
+    def __find_mergable_groups(self, gpxfiles, partial_tracks: bool = False):
         """Find mergable groups.
 
         Returns:
-            A list of tracks. The first one is the sink for the others
+            A list of gpxfiles. The first one is the sink for the others
 
         """
         result = list()
         rest = list(self)
-        rest.extend(x for x in tracks if str(x.backend) != str(self))
+        rest.extend(x for x in gpxfiles if str(x.backend) != str(self))
         while rest:
             root = rest[0]
             group = list([root])
@@ -832,14 +833,14 @@ class Backend(BackendBase):
               partial_tracks: bool = False) ->list:  # noqa
         """merge other backend or a single gpxfile into this one. Tracks within self are also merged.
 
-        If two tracks have identical points, or-ify their other attributes.
+        If two gpxfiles have identical points, or-ify their other attributes.
 
         Args:
             other: The backend or a single gpxfile to be merged
-            remove: If True, remove merged tracks
+            remove: If True, remove merged gpxfiles
             dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching gpxfile, just copy other into this Backend
-            partial_tracks: If True, two tracks are mergeable if one of them contains the other one.
+            partial_tracks: If True, two gpxfiles are mergeable if one of them contains the other one.
 
         Returns:
             list(str) A list of messages for verbose output
@@ -892,7 +893,7 @@ class Backend(BackendBase):
         """Some backends delay actual writing. This enforces writing.
 
         Currently, only the Mailer backend can delay, it will bundle all
-        mailed tracks into one mail instead of sending separate mails
+        mailed gpxfiles into one mail instead of sending separate mails
         for every gpxfile. Needed for lifetracking.
 
         """

@@ -509,9 +509,9 @@ class Gpx(GPX):
                         new_segment = GPXTrackSegment()
                     new_segment.points.append(point)
                 new_segments.append(new_segment)
-            new_track = GPXTrack()
-            new_track.segments.extend(new_segments)
-            new_tracks.append(new_track)
+            new_gpxfile = GPXTrack()
+            new_gpxfile.segments.extend(new_segments)
+            new_tracks.append(new_gpxfile)
         if result:
             self.tracks = new_tracks
         return result

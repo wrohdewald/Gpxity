@@ -87,7 +87,7 @@ class Directory(Backend):
     A gpxfile without title gets a random name.
 
     The main directory (given by account.url) will have
-    subdirectories YYYY/MM (year/month) with only the tracks for one month.
+    subdirectories YYYY/MM (year/month) with only the gpxfiles for one month.
     Those are symbolic links to the main file and have the same file name.
 
     If :meth:`~gpxity.backend.Backend.save` is given a value for ident, this
@@ -298,7 +298,7 @@ class Directory(Backend):
         return result
 
     def _load_track_headers(self):
-        """get all tracks for this user."""
+        """get all gpxfiles for this user."""
         self._symlinks = defaultdict(list)
         self._load_symlinks()
         for _ in self._list_gpx():

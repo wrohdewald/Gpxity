@@ -37,7 +37,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     """Represents a track.
 
-    A GpxFile is essentially a GPX file.  A GPX file may contain multiple tracks but whenever
+    A GpxFile is essentially a GPX file.  A GPX file may contain multiple gpxfiles but whenever
     this documentation says track or GpxFile it does not refer to one of possibly multiple entities in
     the GPX file. It refers to this class GpxFile.
 
@@ -63,8 +63,8 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     The data will only be loaded from the backend when it is needed. Backends have two ways
     of loading data: Either load a list of Tracks or load all information about a specific track. Often
-    loading the list of tracks gives us some attributes for free, so listing
-    those tracks may be much faster if you do not want everything listed.
+    loading the list of gpxfiles gives us some attributes for free, so listing
+    those gpxfiles may be much faster if you do not want everything listed.
 
     Absolutely all attributes (like :attr:`title`, :attr:`distance`) are encoded in :attr:`gpx`.
     However you can always assign values to them even if :attr:`gpx` is None. As soon
@@ -288,7 +288,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
                 self._rewrite()
 
     def _clear_similarity_cache(self):
-        """Clear similarities cache, also in the other similar tracks."""
+        """Clear similarities cache, also in the other similar gpxfiles."""
         for other in self._similarity_others.values():
             del other._similarity_others[id(self)]
             # TODO: unittest where other does not exist anymore
@@ -381,7 +381,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """For me, the earth is flat.
 
         This property can only be set while the full track has not yet
-        been loaded. The setter is used by the backends when scanning for all tracks.
+        been loaded. The setter is used by the backends when scanning for all gpxfiles.
 
         Returns:
             the distance in km, rounded to m. 0.0 if not computable.
@@ -940,7 +940,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         Args:
             with_category: If False, do not use self.category. Needed for comparing
-                tracks for equality like in unittests because values can change
+                gpxfiles for equality like in unittests because values can change
                 and information can get lost while copying between different
                 backends
             with_last_time: If False, do not use self.last_time.
@@ -1050,9 +1050,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             digits: Number of after comma digits to compare
 
         Returns:
-            True if both tracks have identical points.
+            True if both gpxfiles have identical points.
 
-        All points of all tracks and segments are combined. Elevations are ignored.
+        All points of all gpxfiles and segments are combined. Elevations are ignored.
 
         """
         return self.gpx.points_equal(other.gpx, digits)
@@ -1063,7 +1063,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         This only works if all values for latitude and longitude are
         nearly identical.
 
-        Useful if one of the tracks had geofencing applied.
+        Useful if one of the gpxfiles had geofencing applied.
 
         Args:
             digits: How many after point digits are used
@@ -1075,18 +1075,18 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         return self.gpx.index(other.gpx, digits)
 
     @staticmethod
-    def overlapping_times(tracks):
-        """Find tracks with overlapping times.
+    def overlapping_times(gpxfiles):
+        """Find gpxfiles with overlapping times.
 
         Yields:
-            groups of tracks with overlapping times. Sorted by time.
+            groups of gpxfiles with overlapping times. Sorted by time.
 
-        This may be very slow for many long tracks.
+        This may be very slow for many long gpxfiles.
 
         """
         previous = None
         group = list()  # GpxFile is  mutable, so a set is no possible
-        for current in sorted(tracks, key=lambda x: x.first_time):
+        for current in sorted(gpxfiles, key=lambda x: x.first_time):
             if previous and current.first_time <= previous.last_time:
                 if previous not in group:
                     group.append(previous)
@@ -1169,7 +1169,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         """
         if str(self) == str(other):
-            return None, 'Cannot merge identical tracks {}'.format(self)
+            return None, 'Cannot merge identical gpxfiles {}'.format(self)
 
         if (other.gpx.get_track_points_no()) == 0 and other.gpx.waypoints:
             # mergable
@@ -1214,7 +1214,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         return []
 
     def __merge_tracks(self, other, dry_run, shorter_at) ->list:
-        """Merge tracks from other.
+        """Merge gpxfiles from other.
 
         Returns: list(str)
             Messages about what has been done.
@@ -1352,7 +1352,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         return max(self.__similarity_to(x) for x in others)
 
     def time_offset(self, other):
-        """If time and last_time have the same offset between both tracks, return that time difference.
+        """If time and last_time have the same offset between both gpxfiles, return that time difference.
         Otherwise return None."""
         return self.gpx.time_offset(other.gpx)
 
@@ -1423,11 +1423,11 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         self.remove()
         try:
             for segment in clone.segments():
-                track = self.clone()
+                gpxfile = self.clone()
                 gpx_track = GPXTrack()
                 gpx_track.segments.append(segment)
-                track.gpx.tracks = [gpx_track]
-                backend.add(track)
+                gpxfile.gpx.tracks = [gpx_track]
+                backend.add(gpxfile)
         except BaseException as exc:
             logging.error('split:%s', exc)
             backend.add(clone)

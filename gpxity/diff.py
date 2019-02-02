@@ -32,7 +32,7 @@ class BackendDiff:
         right(:class:`BackendDiffSide`): Attributes for the right side
         identical(list(GpxFile)): Tracks appearing on both sides.
         similar(list(Pair)): Pairs of Tracks are on both sides with
-            differences. This includes all tracks having at least
+            differences. This includes all gpxfiles having at least
             100 identical positions without being identical.
         diff_flags: T=time, D=description, C=category, S=status,
             K=keywords, P=positions, Z=time offset
@@ -82,7 +82,7 @@ class BackendDiff:
             return result
 
         def __compare(self):  # noqa
-            """Compare both tracks.
+            """Compare both gpxfiles.
 
             Returns:
                 defaultdict(list): Keys are Flags for differences, see BackendDiff.diff_flags.
@@ -167,21 +167,21 @@ class BackendDiff:
         """Represents a side (left or right) in BackendDiff.
 
         Attributes:
-            tracks: An GpxFile, a list of tracks, a backend or a list of backends
+            gpxfiles: An GpxFile, a list of gpxfiles, a backend or a list of backends
             exclusive(list): Acivities existing only on this side
         """
 
         # pylint: disable=too-few-public-methods
 
-        def __init__(self, tracks):
+        def __init__(self, gpxfiles):
             """See class docstring."""
-            self.tracks = list(self.flatten(tracks))
+            self.gpxfiles = list(self.flatten(gpxfiles))
             self.build_positions()
             self.exclusive = []
 
         @staticmethod
         def flatten(whatever):
-            """Flatten Backends or Tracks into a list of tracks."""
+            """Flatten Backends or Tracks into a list of gpxfiles."""
             if isinstance(whatever, list):
                 for list_item in whatever:
                     if isinstance(list_item, GpxFile):
@@ -198,12 +198,12 @@ class BackendDiff:
 
         def build_positions(self):
             """Return a set of long/lat tuples."""
-            for _ in self.tracks:
+            for _ in self.gpxfiles:
                 _.positions = {(x.longitude, x.latitude) for x in _.points()}
 
         def _find_exclusives(self, matched):
             """use data from the other side."""
-            for _ in self.tracks:
+            for _ in self.gpxfiles:
                 if _ not in matched:
                     self.exclusive.append(_)
 
@@ -215,8 +215,8 @@ class BackendDiff:
         self.left = BackendDiff.BackendDiffSide(left)
         self.right = BackendDiff.BackendDiffSide(right)
         # pylint: disable=too-many-nested-blocks
-        for left_track in self.left.tracks:
-            for right_track in self.right.tracks:
+        for left_track in self.left.gpxfiles:
+            for right_track in self.right.gpxfiles:
                 if left_track == right_track:
                     self.identical.append(left_track)
                     matched.append(left_track)

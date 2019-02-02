@@ -185,13 +185,13 @@ class TestBackends(BasicTest):
             with self.temp_backend(cls, count=3) as backend:
                 for idx, _ in enumerate(backend):
                     _.adjust_time(datetime.timedelta(hours=4 + idx))
-                new_track = backend[0].clone()
-                self.assertIsNotNone(match_date(new_track))
+                new_gpxfile = backend[0].clone()
+                self.assertIsNotNone(match_date(new_gpxfile))
                 self.assertBackendLength(backend, 3)
                 backend.match = match_date
                 self.assertBackendLength(backend, 1)
                 with self.assertRaises(cls.NoMatch):
-                    backend.add(new_track)
+                    backend.add(new_gpxfile)
                 self.assertBackendLength(backend, 1)
                 orig_time = backend[0].first_time
                 delta = datetime.timedelta(days=-5)
@@ -368,13 +368,13 @@ class TestBackends(BasicTest):
 
     @skipIf(True, "enable manually if needed")
     def test_download_many_from_mmt(self):
-        """Download many tracks."""
+        """Download many gpxfiles."""
         many = 150
         with self.temp_backend(MMT, test_name='gpxstoragemany', count=many, clear_first=True) as backend:
             self.assertBackendLength(backend, many)
 
     def test_duplicate_title(self):
-        """two tracks having the same title."""
+        """two gpxfiles having the same title."""
         for cls in Backend.all_backend_classes(needs={'remove'}):
             with self.tst_backend(cls):
                 with self.temp_backend(cls, count=2) as backend:
@@ -383,7 +383,7 @@ class TestBackends(BasicTest):
 
     @skipIf(*disabled(Directory))
     def test_private(self):
-        """Up- and download private tracks."""
+        """Up- and download private gpxfiles."""
         with self.temp_backend(Directory) as local:
             # TODO: make cls outer loop and count for expensive cls
             gpxfile = self._get_track_from_test_file('test2')
@@ -422,11 +422,11 @@ class TestBackends(BasicTest):
                 for _ in list(sink)[1:]:
                     _.adjust_time(datetime.timedelta(hours=100))
 
-                # let's have two identical tracks in source without match in sink:
+                # let's have two identical gpxfiles in source without match in sink:
                 next(source[0].points()).latitude += 0.06
                 source.add(source[0].clone())
 
-                # and two identical tracks in sink without match in source:
+                # and two identical gpxfiles in sink without match in source:
                 next(sink[1].points()).latitude += 0.07
                 sink.add(sink[1].clone())
 

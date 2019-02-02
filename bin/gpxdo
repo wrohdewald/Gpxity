@@ -235,7 +235,7 @@ class LsRow(dict):
 
 
 class TotalRow(LsRow):
-    """A row with totals over tracks."""
+    """A row with totals over gpxfiles."""
 
     def __init__(self, rows):
         super(TotalRow, self).__init__()
@@ -358,7 +358,7 @@ class Utility:
     def parse_sources(self):
         """Parse options.source.
 
-        Returns: The list of source tracks.append
+        Returns: The list of source gpxfiles.
 
         """
         result = []
@@ -369,8 +369,8 @@ class Utility:
                     _ = _[:-1]
                 sources.append(Backend.instantiate(_))
 
-            tracks = collect_tracks(sources)
-            for gpxfile in tracks:
+            gpxfiles = collect_tracks(sources)
+            for gpxfile in gpxfiles:
                 msg = self.match(gpxfile)
                 if msg:
                     logging.debug('%s: %s', gpxfile, msg)
@@ -394,7 +394,7 @@ class Utility:
                     break
             if not result[1] and not self.options.copy:
                 logging.debug('')
-                logging.debug('collecting tracks from destination %s', result)
+                logging.debug('collecting gpxfiles from destination %s', result)
         return result
 
     def must_have_single_source(self):
@@ -451,7 +451,7 @@ class Utility:
     def move(self):
         """move gpx files.
         We cannot just do merge() followed by remove() because
-        the source might have gotten new tracks meanwhile, and
+        the source might have gotten new gpxfiles meanwhile, and
         they would disappear for good."""
         if self.destination_track_id:
             self.rename_track()
@@ -459,21 +459,21 @@ class Utility:
             self.move_to_another_backend()
 
     def move_to_another_backend(self):
-        """Move all source tracks to another backend. Try to keep the id_in_backend."""
+        """Move all source gpxfiles to another backend. Try to keep the id_in_backend."""
         for _ in self.source_tracks:
-            new_track = self.destination_backend.add(_)
+            new_gpxfile = self.destination_backend.add(_)
             if 'rename' in self.destination_backend.supported:
-                new_track.id_in_backend = _.id_in_backend
+                new_gpxfile.id_in_backend = _.id_in_backend
             _.remove()
-            logging.info('moved %s to %s', _, new_track)
+            logging.info('moved %s to %s', _, new_gpxfile)
 
     def rename_track(self):
         """Rename a gpxfile."""
         if self.destination_must_support_rename():
             gpxfile = self.must_have_single_source()
             if gpxfile.backend is not self.destination_backend:
-                new_track = self.destination_backend.add(gpxfile)
-                new_track.id_in_backend = self.destination_track_id
+                new_gpxfile = self.destination_backend.add(gpxfile)
+                new_gpxfile.id_in_backend = self.destination_track_id
             else:
                 gpxfile.id_in_backend = self.destination_track_id
 
@@ -493,8 +493,8 @@ class Utility:
                     'copy %s to %s',
                     gpxfile, GpxFile.identifier(self.destination_backend, self.destination_track_id))
             else:
-                new_track = self.destination_backend.add(gpxfile)
-                new_track.id_in_backend = self.destination_track_id
+                new_gpxfile = self.destination_backend.add(gpxfile)
+                new_gpxfile.id_in_backend = self.destination_track_id
 
     def copy_to_another_backend(self):
         """Copy all sources to another backend."""
@@ -505,7 +505,7 @@ class Utility:
             logging.info(_)
 
     def remove(self):
-        """remove tracks"""
+        """remove gpxfiles"""
         for _ in self.source_tracks:
             if self.options.dry_run:
                 logging.info('would remove %s', _)
@@ -514,7 +514,7 @@ class Utility:
                 logging.info('removed %s', _)
 
     def split(self):
-        """Split tracks."""
+        """Split gpxfiles."""
         for _ in self.source_tracks:
             if self.options.segments:
                 _.split_segments()
@@ -522,17 +522,17 @@ class Utility:
                 _.split_at_stops(self.options.stops)
 
     def join(self):
-        """Join tracks."""
+        """Join gpxfiles."""
         self.destination_must_be_backend()
-        new_track = self.destination_backend.add(self.source_tracks[0].clone())
-        new_track.gpx.tracks[0].name = new_track.title
+        new_gpxfile = self.destination_backend.add(self.source_tracks[0].clone())
+        new_gpxfile.gpx.tracks[0].name = new_gpxfile.title
         for _ in self.source_tracks[1:]:
             _.gpx.tracks[0].name = _.title
-            new_track.gpx.tracks.extend(_.gpx.tracks)
+            new_gpxfile.gpx.tracks.extend(_.gpx.tracks)
         if self.options.title:
-            new_track.title = self.options.title
-            new_track.id_in_backend = new_track.title
-        new_track.rewrite()
+            new_gpxfile.title = self.options.title
+            new_gpxfile.id_in_backend = new_gpxfile.title
+        new_gpxfile.rewrite()
 
     def __fill_groups(self, rows, mainsort):
         """Returns groups containing matching rows."""
@@ -559,7 +559,7 @@ class Utility:
             yield None
 
     def __yield_all_group_keys(self, mainsort):
-        """Yields all group keys for all tracks"""
+        """Yields all group keys for all gpxfiles"""
         seen = set()
         for gpxfile in self.source_tracks:
             for groupkey in self.__yield_track_group_keys(gpxfile, mainsort):
@@ -579,7 +579,7 @@ class Utility:
         return ''
 
     def list_them(self):
-        """list tracks"""
+        """list gpxfiles"""
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 
         if self.options.location:
@@ -724,7 +724,7 @@ class Utility:
                 self.options.id_from_account, _, ','.join(fix_track.ids))
 
     def fix(self):
-        """fix tracks"""
+        """fix gpxfiles"""
         # pylint: disable=too-many-branches
         result_lines = []
         for fix_track in self.source_tracks:
@@ -861,7 +861,7 @@ class Utility:
     def diff(self):
         """Compare"""
         def show_exclusive(side):
-            """shows tracks appearing only on one side."""
+            """shows gpxfiles appearing only on one side."""
             backends = uniq(x.backend for x in side.exclusive)
             for backend in backends:
                 logging.error('only in %s:', backend.account)
@@ -931,29 +931,29 @@ class Utility:
     def add_common_args(parser, with_ranges=True):
         """Add common args to parser."""
         if with_ranges:
-            parser.add_argument('--first-date', help='Limit tracks by date',
+            parser.add_argument('--first-date', help='Limit gpxfiles by date',
                                 type=lambda x: valid_date_argument(x, False), default=None)
-            parser.add_argument('--last-date', help='Limit tracks by date',
+            parser.add_argument('--last-date', help='Limit gpxfiles by date',
                                 type=lambda x: valid_date_argument(x, True), default=None)
-            parser.add_argument('--date', help='Limit tracks by specific date',
+            parser.add_argument('--date', help='Limit gpxfiles by specific date',
                                 type=lambda x: valid_date_argument(x, False), default=None)
-            parser.add_argument('--min-points', help='Limit tracks by minimal number of points',
+            parser.add_argument('--min-points', help='Limit gpxfiles by minimal number of points',
                                 type=int, default=None)
-            parser.add_argument('--max-points', help='Limit tracks by maximal number of points',
+            parser.add_argument('--max-points', help='Limit gpxfiles by maximal number of points',
                                 type=int, default=None)
             parser.add_argument(
-                '--min-distance', help='Limit tracks by minimal distance in km', type=int, default=None)
+                '--min-distance', help='Limit gpxfiles by minimal distance in km', type=int, default=None)
             parser.add_argument(
-                '--max-distance', help='Limit tracks by maximal distance in km', type=int, default=None)
-            parser.add_argument('--min-speed', help='Limit tracks by minimal speed in km/h', type=int, default=None)
-            parser.add_argument('--max-speed', help='Limit tracks by maximal speed in km/h', type=int, default=None)
-            parser.add_argument('--only-keywords', help='Limit tracks by keywords', default=None)
-            parser.add_argument('--only-category', help='Limit tracks by category',
+                '--max-distance', help='Limit gpxfiles by maximal distance in km', type=int, default=None)
+            parser.add_argument('--min-speed', help='Limit gpxfiles by minimal speed in km/h', type=int, default=None)
+            parser.add_argument('--max-speed', help='Limit gpxfiles by maximal speed in km/h', type=int, default=None)
+            parser.add_argument('--only-keywords', help='Limit gpxfiles by keywords', default=None)
+            parser.add_argument('--only-category', help='Limit gpxfiles by category',
                                 default=None, choices=GpxFile.categories)
             parser.add_argument(
                 '--similar',
-                help='Limit tracks by similarity to one of tracks SIMILAR. '
-                'SIMILAR is a list of tracks separated with a comma and no space. '
+                help='Limit gpxfiles by similarity to one of gpxfiles SIMILAR. '
+                'SIMILAR is a list of gpxfiles separated with a comma and no space. '
                 'This will only work for gpxfile identifiers without comma.',
                 default=None)
 
@@ -964,8 +964,8 @@ class Utility:
 
     @staticmethod
     def add_multi_source(parser, must_have=False):
-        """add --source for one or more tracks or backends"""
-        parser.add_argument('source', help='one ore more tracks or backends', nargs='+' if must_have else '*')
+        """add --source for one or more gpxfiles or backends"""
+        parser.add_argument('source', help='one ore more gpxfiles or backends', nargs='+' if must_have else '*')
 
     @staticmethod
     def add_destination(parser):
@@ -975,11 +975,11 @@ class Utility:
     help_epilog = """
 
 source and destination arguments may be single
-tracks or entire backend instances.
+gpxfiles or entire backend instances.
 Local files and directories are given as usual.
 
 For all other backends, the syntax is:
-    * account: for all tracks in a backend. Example:  g:
+    * account: for all gpxfiles in a backend. Example:  g:
     * account:track_id for one specific gpxfile in a backend. Example: g:1234
 
 Available backends are Directory,MapMytracks, GPSIES, Openrunner, Mailer,WPTrackserver
@@ -1037,7 +1037,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.subparsers = parser.add_subparsers()
 
         ls_parser = self.subparsers.add_parser(
-            'ls', help='list tracks',
+            'ls', help='list gpxfiles',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument(
@@ -1090,10 +1090,10 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         ls_parser.add_argument(
             '--locate', action='append',
             help='the name of a place. --locate can be repeated. '
-            'Find tracks touching all locations, order by best match')
+            'Find gpxfiles touching all locations, order by best match')
         ls_parser.add_argument(
             '--max-away', type=float, default=100,
-            help="""to be used with --locate: show only tracks which are not more than MAX_AWAY
+            help="""to be used with --locate: show only gpxfiles which are not more than MAX_AWAY
                 kilometers farther away from given places.
                 The distance to all places is added to one value and the compared with MAX_AWAY.
                 Default is 100km.""")
@@ -1102,8 +1102,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         cp_parser = self.subparsers.add_parser(
             'cp', help="""
-            copy tracks. This can be much faster for remote backends because
-            tracks with the same points are not merged.""",
+            copy gpxfiles. This can be much faster for remote backends because
+            gpxfiles with the same points are not merged.""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         cp_parser.set_defaults(func=self.copy)
         cp_parser.add_argument(
@@ -1115,16 +1115,16 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         merge_parser = self.subparsers.add_parser(
             'merge', help="""
-            merge tracks: If their trackpoints are identical, add metadata like name,
+            merge gpxfiles: If their trackpoints are identical, add metadata like name,
             description or keywords from source to destination""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         merge_parser.set_defaults(func=self.merge)
         merge_parser.add_argument('--dry-run', help='only show what would change',
                                   action='store_true', default=False)
-        merge_parser.add_argument('--remove', help='remove merged tracks',
+        merge_parser.add_argument('--remove', help='remove merged gpxfiles',
                                   action='store_true', default=False)
-        merge_parser.add_argument('--partial-tracks',
-                                  help='merges two tracks if one is part of the other',
+        merge_parser.add_argument('--partial-gpxfiles',
+                                  help='merges two gpxfiles if one is part of the other',
                                   action='store_true', default=False)
         merge_parser.add_argument(
             '--copy', help='If the target is a backend, do not look for similar gpxfile. '
@@ -1143,7 +1143,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.add_destination(mv_parser)
 
         rm_parser = self.subparsers.add_parser(
-            'rm', help='remove tracks',
+            'rm', help='remove gpxfiles',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         rm_parser.set_defaults(func=self.remove)
         rm_parser.add_argument('--dry-run', help='only show what would be removed',
@@ -1160,7 +1160,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             action='store_true', default=False)
         split_parser.add_argument(
             '--stops', type=int,
-            help="""BACKUP your tracks first! This can destroy them!
+            help="""BACKUP your gpxfiles first! This can destroy them!
             Whenever the time jumps back or more than X minutes into the future
             or when the distance speed between two points exceed 5km,
             split into two segments at that point""")
@@ -1168,7 +1168,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.add_multi_source(split_parser)
 
         join_parser = self.subparsers.add_parser(
-            'join', help='join tracks into one single track',
+            'join', help='join gpxfiles into one single track',
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         join_parser.set_defaults(func=self.join)
         join_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
@@ -1178,7 +1178,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         diff_parser = self.subparsers.add_parser(
             'diff', help="""
-            compare tracks between source and destination""",
+            compare gpxfiles between source and destination""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         diff_parser.set_defaults(func=self.diff)
         self.add_common_args(diff_parser)
@@ -1186,13 +1186,13 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.add_destination(diff_parser)
 
         fix_parser = self.subparsers.add_parser(
-            'fix', help="""try to fix some GPX format bugs in tracks.
-                First BACKUP the tracks! This can destroy them!""",
+            'fix', help="""try to fix some GPX format bugs in gpxfiles.
+                First BACKUP the gpxfiles! This can destroy them!""",
             epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
         fix_parser.set_defaults(func=self.fix)
         fix_parser.add_argument(
             '--orux',
-            help="""BACKUP your tracks first! This can destroy them!
+            help="""BACKUP your gpxfiles first! This can destroy them!
             Try to fix old oruxmaps bug where the date jumps back by one day""",
             action='store_true', default=False)
         fix_parser.add_argument('--title-from-id', help='use id for title',

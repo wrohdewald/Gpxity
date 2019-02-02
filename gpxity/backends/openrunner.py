@@ -155,7 +155,7 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
         """See class docstring."""
         super(ParseOpenrunnerList, self).__init__()
         self.result = dict()
-        self.result['tracks'] = list()
+        self.result['gpxfiles'] = list()
         self.gpxfile = None
         self.column = 0
         self.current_tag = None
@@ -216,7 +216,7 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
                 self.gpxfile.distance = float(data)
             elif self.column == 10:
                 self.gpxfile.time = datetime.datetime.strptime(data, '%d-%m-%Y')
-                self.result['tracks'].append(self.gpxfile)
+                self.result['gpxfiles'].append(self.gpxfile)
 
 
 class Openrunner(Backend):
@@ -225,8 +225,8 @@ class Openrunner(Backend):
 
     The gpxfile ident is the ID given by openrunner.
 
-    Searching arbitrary tracks is not supported. Openrunner only looks at the
-    tracks of a specific user.
+    Searching arbitrary gpxfiles is not supported. Openrunner only looks at the
+    gpxfiles of a specific user.
 
     Args:
         account (:class:`~gpxity.accounts.Account`): The account to be used.
@@ -593,14 +593,14 @@ class Openrunner(Backend):
             raise cls.BackendException('Openrunner gave us an unknown gpxfile type {}'.format(value))
 
     def _load_track_headers(self):
-        """get all tracks for this user."""
+        """get all gpxfiles for this user."""
         if self.account.password:
             response = self.__get(action='user/myroute')
         else:
             response = self.__get(action='route/findby?author={}'.format(self._get_author()))
         page_parser = ParseOpenrunnerList()
         page_parser.feed(response.text)
-        for raw_data in page_parser.result['tracks']:
+        for raw_data in page_parser.result['gpxfiles']:
             gpxfile = self._found_track(raw_data.track_id)
             gpxfile.title = raw_data.title
             gpxfile.time = raw_data.time

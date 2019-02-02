@@ -101,7 +101,7 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
         """See class docstring."""
         super(ParseGPSIESList, self).__init__()
         self.result = dict()
-        self.result['tracks'] = list()
+        self.result['gpxfiles'] = list()
         self.gpxfile = None
         self.column = 0
         self.current_tag = None
@@ -169,10 +169,10 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
                 if data.endswith('km'):
                     self.gpxfile.distance = float(data.replace(' km', '').replace(',', ''))
             elif self.column == 5:
-                if self.gpxfile not in self.result['tracks']:
+                if self.gpxfile not in self.result['gpxfiles']:
                     data = data.replace('Last change:: ', '')  # gpsies has changed
                     self.gpxfile.time = datetime.datetime.strptime(data, '%m/%d/%y')
-                    self.result['tracks'].append(self.gpxfile)
+                    self.result['gpxfiles'].append(self.gpxfile)
 
 
 class GPSIES(Backend):
@@ -181,8 +181,8 @@ class GPSIES(Backend):
 
     The gpxfile ident is the fileId given by gpsies.
 
-    Searching arbitrary tracks is not supported. GPSIES only looks at the
-    tracks of a specific user.
+    Searching arbitrary gpxfiles is not supported. GPSIES only looks at the
+    gpxfiles of a specific user.
 
     GPSIES does not support keywords. If you upload a gpxfile with keywords,
     they will silently be ignored.
@@ -395,7 +395,7 @@ class GPSIES(Backend):
             time.sleep(2)
 
     def _load_track_headers(self):
-        """get all tracks for this user."""
+        """get all gpxfiles for this user."""
     #    return
         response = self.__post('trackList', data={'username': self._get_author()})
         page_parser = ParseGPSIESList()
@@ -411,7 +411,7 @@ class GPSIES(Backend):
             data = dict(x.split('=') for x in parts)  # noqa
             response = self.__post('userList', data=data)
             page_parser.feed(response.text)
-        for raw_data in page_parser.result['tracks']:
+        for raw_data in page_parser.result['gpxfiles']:
             gpx = Gpx()
             gpx.name = raw_data.title
             gpx.time = raw_data.time

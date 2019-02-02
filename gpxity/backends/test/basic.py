@@ -129,7 +129,7 @@ class BasicTest(unittest.TestCase):
         It starts off with **test.gpx** and appends a
         last gpxfile point, it also changes the time stamp of the last point.
         This is done using **count** and **idx**: The last point is set such that
-        looking at the tracks, they all go in a different direction clockwise, with an angle
+        looking at the gpxfiles, they all go in a different direction clockwise, with an angle
         in degrees of :literal:`360 * idx / count`.
 
         Args:
@@ -140,7 +140,7 @@ class BasicTest(unittest.TestCase):
                 Default: if count == len(:attr:`GpxFile.categories <gpxity.gpxfile.GpxFile.categories>`),
                 the default value will be backend_class.supported_categories[idx].
                 Otherwise a random value from backend_class.supported_categories will be applied.
-            public: should the tracks be public or private?
+            public: should the gpxfiles be public or private?
             start_time: If given, assign it to the first point and adjust all following times
             end_time: explicit time for the last point. If None: See above.
 
@@ -162,7 +162,7 @@ class BasicTest(unittest.TestCase):
         result.add_points([new_point])
 
         # now set all times such that they are in order with this gpxfile and do not overlap
-        # with other test tracks
+        # with other test gpxfiles
         _ = result.first_time
         duration = new_point.time - _ + datetime.timedelta(seconds=10)
         for point in result.gpx.walk(only_points=True):
@@ -259,7 +259,7 @@ class BasicTest(unittest.TestCase):
         """Check length of backend."""
         if len(backend) != length:
             message = ','.join(str(x) for x in backend)
-            self.assertEqual(len(backend), length, '{} should have {} tracks: {}'.format(backend, length, message))
+            self.assertEqual(len(backend), length, '{} should have {} gpxfiles: {}'.format(backend, length, message))
 
     def assertHasKeywords(self, gpxfile, expected):  # noqa pylint: disable=invalid-name
         """MMT shows keywords on the website lowercase but internally it capitalizes them."""
@@ -271,7 +271,7 @@ class BasicTest(unittest.TestCase):
         self.assertEqual(gpxfile.keywords, sorted(expected))
 
     def assertSameTracks(self, backend1, backend2, msg=None, with_category=True, with_last_time=None):  # noqa pylint: disable=invalid-name
-        """both backends must hold identical tracks."""
+        """both backends must hold identical gpxfiles."""
         self.maxDiff = None  # pylint: disable=invalid-name
         if with_last_time is None:
             with_last_time = not (
@@ -283,14 +283,14 @@ class BasicTest(unittest.TestCase):
             self.assertEqual(keys1, keys2, msg)
 
     def assertEqualTracks(self, track1, track2, msg=None, xml: bool = False, with_category: bool = True):  # noqa pylint: disable=invalid-name
-        """both tracks must be identical. We test more than necessary for better test coverage.
+        """both gpxfiles must be identical. We test more than necessary for better test coverage.
 
         Args:
 
             xml: if True, also compare xml()"""
         self.maxDiff = None
 
-        # GPSIES: when uploading tracks. GPSIES sometimes assigns new times to all points,
+        # GPSIES: when uploading gpxfiles. GPSIES sometimes assigns new times to all points,
         # starting at 2010-01-01 00:00. Until I find the reason, ignore point times for comparison.
         # Openrunner always does.
         # MMT now seems to convert times between utc and local time. UP- and downloading
@@ -311,7 +311,7 @@ class BasicTest(unittest.TestCase):
             self.assertEqual(track1.gpx.xml(), track2.gpx.xml(), msg)
 
     def assertNotEqualTracks(self, track1, track2, msg=None, with_category: bool = True):  # noqa pylint: disable=invalid-name
-        """both tracks must be different. We test more than necessary for better test coverage."""
+        """both gpxfiles must be different. We test more than necessary for better test coverage."""
         self.assertNotEqual(track1.key(with_category), track2.key(with_category), msg)
         self.assertFalse(track1.points_equal(track2), msg)
         self.assertNotEqual(track1.gpx.xml(), track2.gpx.xml(), msg)
@@ -326,10 +326,10 @@ class BasicTest(unittest.TestCase):
             self, cls_, test_name: str = None, url: str = None, count: int = 0,
             clear_first: bool = None, category: str = None,
             public: bool = None):
-        """set up an instance of a backend with count tracks.
+        """set up an instance of a backend with count gpxfiles.
 
         If count == len(:attr:`GpxFile.categories <gpxity.gpxfile.GpxFile.categories>`),
-        the list of tracks will always be identical. For an example
+        the list of gpxfiles will always be identical. For an example
         see :meth:`TestBackends.test_all_category <gpxity.backends.test.test_backends.TestBackends.test_all_category>`.
 
         Args:
@@ -337,13 +337,13 @@ class BasicTest(unittest.TestCase):
             username: use this to for a specific accout name. Default is 'gpxitytest'.
                 Special case WPTrackserver: pass the IP address of the mysql test server
             url: for the backend, only for Directory
-            count: how many random tracks should be inserted?
-            clear_first: if True, first remove all existing tracks. None: do if the backend supports it.
+            count: how many random gpxfiles should be inserted?
+            clear_first: if True, first remove all existing gpxfiles. None: do if the backend supports it.
             category: The wanted category, one out of GpxFile.categories. But this is a problem because we do the same
                 call for all backend classes and they support different categories. So: If category is int, this is an
                 index into Backend.supported_categories which will be decoded into GpxFile.categories
 
-            public: should the tracks be public or private? Default is False.
+            public: should the gpxfiles be public or private? Default is False.
                 Exception: MMT with subscription free has default True
 
         Returns:

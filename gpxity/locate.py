@@ -16,11 +16,11 @@ __all__ = ['Locate']
 
 class Locate:
 
-    """Locates tracks using https://github.com/DenisCarriere/geocoder#overview .
+    """Locates gpxfiles using https://github.com/DenisCarriere/geocoder#overview .
 
     Args:
-        places: A list of places that the tracks should pass
-        tracks: The tracks to be searched
+        places: A list of places that the gpxfiles should pass
+        gpxfiles: The gpxfiles to be searched
 
     Attributes:
         locations: The list of found places. For each given value in arg **places**,
@@ -32,10 +32,10 @@ class Locate:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, places, tracks):
+    def __init__(self, places, gpxfiles):
         """See class docstring."""
         self.places = places
-        self.tracks = tracks
+        self.gpxfiles = gpxfiles
         self.locations = list()
         for place in places:
             _ = geocoder.get(place, provider='osm')
@@ -47,18 +47,18 @@ class Locate:
             logging.info('  %s', _.address)
         self.distances = list()
         gpx_points = [GPXTrackPoint(latitude=x.lat, longitude=x.lng) for x in self.locations]
-        for gpxfile in tracks:
+        for gpxfile in gpxfiles:
             self.distances.append(
                 (gpxfile, [gpxfile.gpx.get_nearest_location(x).location.distance_2d(x) for x in gpx_points]))
         self.distances.sort(key=lambda x: sum(x[1]))
 
     def found(self, max_away: float = 1e10):
-        """The list of tracks sorted by affinity to the given places.
+        """The list of gpxfiles sorted by affinity to the given places.
 
         Args:
             max_away: The maximum distance in kilometers
 
-        Returns: list(tracks)
+        Returns: list(gpxfiles)
 
         """
         return [x[0] for x in self.distances if sum(x[1]) < max_away * 1000]

@@ -14,7 +14,7 @@ from math import isclose
 
 from gpxpy.geo import length as gpx_length
 
-__all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_track', 'collect_tracks',
+__all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_gpxfile', 'collect_tracks',
            'positions_equal', 'pairs', 'add_speed', 'utc_to_local_delta']
 
 
@@ -83,27 +83,27 @@ def remove_directory(path):
                 logging.error('  dir still has %s', _)
 
 
-def is_track(value):
+def is_gpxfile(value):
     """Return True or False without looking at the type, so we do not need to import GpxFile."""
     return hasattr(value, 'id_in_backend')
 
 
 def collect_tracks(sources):
-    """A copied list with tracks combined from all sources, to be used in 'for'-loops.
+    """A copied list with gpxfiles combined from all sources, to be used in 'for'-loops.
 
     Returns:
-        A list of tracks
+        A list of gpxfiles
 
     """
-    if is_track(sources):
+    if is_gpxfile(sources):
         return [sources]
     result = list()
     for source in sources:
-        if is_track(source):
+        if is_gpxfile(source):
             result.append(source)
         else:
             logging.debug('')
-            logging.debug('collecting tracks from %s %s', source.account.backend, source)
+            logging.debug('collecting gpxfiles from %s %s', source.account.backend, source)
             result.extend(source)
     return result
 

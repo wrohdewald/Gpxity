@@ -86,7 +86,7 @@ class Lifetrack:
 
     Args:
         sender_ip: The IP of the client.
-        target_backends (list): Those tracks will receive the lifetracking data.
+        target_backends (list): Those gpxfiles will receive the lifetracking data.
         ids (list(str)): If given, use as id_in_backend. One for every backend.
             May be list(str) or str
 

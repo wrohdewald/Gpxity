@@ -293,7 +293,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             int(datetime.datetime.now().timestamp()))
 
     def xml_get_activities(self, parsed) ->str:
-        """List all tracks as defined by the mapmytracks API.
+        """List all gpxfiles as defined by the mapmytracks API.
 
         # TODO: untested!
 

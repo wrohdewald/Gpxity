@@ -32,33 +32,33 @@ class MailQueue:
         """See class docstring."""
         self.mailer = mailer
         self.disabled = False
-        self.tracks = dict()
+        self.gpxfiles = dict()
         self.last_sent_time = datetime.datetime.now() - datetime.timedelta(days=5)
 
     def append(self, gpxfile):
         """Append a gpxfile to the mailing queue."""
-        self.tracks[gpxfile.id_in_backend] = gpxfile.clone()
+        self.gpxfiles[gpxfile.id_in_backend] = gpxfile.clone()
         if hasattr(gpxfile, 'mail_subject'):
-            self.tracks[gpxfile.id_in_backend].mail_subject = gpxfile.mail_subject
+            self.gpxfiles[gpxfile.id_in_backend].mail_subject = gpxfile.mail_subject
 
     def subject(self, gpxfile=None) ->str:
         """Build the mail subject.
 
         Args:
-            gpxfile: If given, use only gpxfile. Otherwise use self.tracks
+            gpxfile: If given, use only gpxfile. Otherwise use self.gpxfiles
 
         Returns:
             The subject
 
         """
-        if len(self.tracks) == 1:
-            for _ in self.tracks.values():
+        if len(self.gpxfiles) == 1:
+            for _ in self.gpxfiles.values():
                 gpxfile = _
         if gpxfile is not None:
             subject = gpxfile.mail_subject if hasattr(gpxfile, 'mail_subject') else gpxfile.title
             return self.mailer.subject_template.format(
                 title=subject, distance='{:8.3f}km'.format(gpxfile.distance))
-        return '{} tracks'.format(len(self.tracks))
+        return '{} gpxfiles'.format(len(self.gpxfiles))
 
     def content(self) ->str:
         """The content of the mail message.
@@ -67,9 +67,9 @@ class MailQueue:
             The content, a list with lines
 
         """
-        is_single = len(self.tracks) == 1
+        is_single = len(self.gpxfiles) == 1
         result = list()
-        for key, gpxfile in self.tracks.items():
+        for key, gpxfile in self.gpxfiles.items():
             if not key.endswith('.gpx'):
                 key += '.gpx'
             if is_single:
@@ -86,10 +86,10 @@ class MailQueue:
 
     def send(self):
         """Actually send the mail if there are any points."""
-        if not self.tracks:
+        if not self.gpxfiles:
             return
         if self.disabled:
-            self.tracks = dict()
+            self.gpxfiles = dict()
             return
         account = self.mailer.account
         mail = EmailMessage()
@@ -98,7 +98,7 @@ class MailQueue:
         mail['to'] = account.url.split()
         mail.set_content('\n'.join(self.content()))
 
-        for key, gpxfile in self.tracks.items():
+        for key, gpxfile in self.gpxfiles.items():
             if not key.endswith('.gpx'):
                 key += '.gpx'
             mail.add_attachment(gpxfile.xml(), filename=key)
@@ -123,11 +123,11 @@ class MailQueue:
             raise
         self.last_sent_time = datetime.datetime.now()
         self.mailer.history.append('to {}: {}'.format(mail['to'], mail['subject']))
-        self.tracks = dict()
+        self.gpxfiles = dict()
 
     def __repr__(self):
         """Return repr."""
-        return 'MailQueue({} to {}'.format(', '.join(str(x) for x in self.tracks.values()), self.mailer.url)  # noqa
+        return 'MailQueue({} to {}'.format(', '.join(str(x) for x in self.gpxfiles.values()), self.mailer.url)  # noqa
 
 
 class Mailer(Backend):  # pylint: disable=abstract-method
@@ -145,7 +145,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
         account.smtp: The name of the smtp server. Default "localhost".
         account.interval (str): seconds. Mails are not sent more often. Default is None. If None, always send when
             Mailer.flush() is called. This is used for bundling several writes into one single mail:
-            gpxdo merge --copy will send all tracks with one single mail.
+            gpxdo merge --copy will send all gpxfiles with one single mail.
             Lifetracking uses this to send mails with the current gpxfile only every X seconds, the
             mail will only contain the latest version of the gpxfile.
 
@@ -201,7 +201,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
 
     def flush(self):
         """Now is the time to write."""
-        # this dict reduces all tracks to just one instance
+        # this dict reduces all gpxfiles to just one instance
         self.queue.send()
         if self.timer:
             self.timer.cancel()

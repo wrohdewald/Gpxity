@@ -69,7 +69,7 @@ class TrackTests(BasicTest):
 
     @skipIf(*disabled(Directory))
     def test_track_list(self):
-        """test list of tracks."""
+        """test list of gpxfiles."""
         with self.temp_backend(Directory) as directory:
             self.assertEqual(len(directory), 0)
             track1 = GpxFile()
@@ -576,7 +576,7 @@ class TrackTests(BasicTest):
         self.assertEqual(next(gpxfile.points()).time, first_trkpt_time + seconds10)
 
     def test_overlapping_times(self):
-        """GpxFile.overlapping_times(tracks)."""
+        """GpxFile.overlapping_times(gpxfiles)."""
         now = datetime.datetime.now()
         track1 = self.create_test_track(start_time=now)
         seconds10 = datetime.timedelta(seconds=10)
@@ -608,7 +608,7 @@ class TrackTests(BasicTest):
 
     @skipIf(*disabled(Directory))
     def test_remove_track(self):
-        """If a backend has several identical tracks, make sure we remove the right one."""
+        """If a backend has several identical gpxfiles, make sure we remove the right one."""
         with self.temp_backend(Directory, count=1) as backend:
             gpxfile = backend[0]
             track_id = gpxfile.id_in_backend

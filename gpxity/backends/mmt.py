@@ -22,7 +22,7 @@ There are some problems with the server running at mapmytracks.com:
       :meth:`MMT._write_attribute`. Of course that could fail if MMT changes its site.
       Which is true for the api itself, it can and does get incompatible changes at
       any time without notice to users or deprecation periods.
-    * downloading tracks with that abi is very slow and hangs forever for big tracks
+    * downloading gpxfiles with that abi is very slow and hangs forever for big gpxfiles
       (at least this was so in Feb 2017, maybe have to test again occasionally).
     * not all parts of MMT data are supported like images (not interesting for me,
       at least not now).
@@ -596,7 +596,7 @@ class MMT(Backend):
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
     def _load_track_headers(self):
-        """get all tracks for this user."""
+        """get all gpxfiles for this user."""
         while True:
             old_len = self.real_len()
             response = self.__post(
@@ -665,7 +665,7 @@ class MMT(Backend):
             return
         response = self.__get(with_session=True, url='{}/assets/php/gpx.php?tid={}&mid={}&uid={}'.format(
             self.url, gpxfile.id_in_backend, self.mid, self.session.cookies['exp_uniqueid']))
-        # some tracks download only a few points if mid/uid are not given, but I
+        # some gpxfiles download only a few points if mid/uid are not given, but I
         # have not been able to write a unittest triggering that ...
         gpxfile.gpx = Gpx.parse(response.text)
         # but this does not give us gpxfile type and other things,
