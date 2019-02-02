@@ -382,7 +382,8 @@ class Gpx(GPX):
         super(Gpx, self).adjust_time(delta)
         for wpt in self.waypoints:
             wpt.time += delta
-        self.time += delta
+        if self.time:
+            self.time += delta
 
     def points_hash(self) -> float:
         """A hash that is hopefully different for every possible Gpx().
