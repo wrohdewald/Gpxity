@@ -739,20 +739,6 @@ class Utility:
                     fix_gpxfile.id_in_backend = str(fix_gpxfile.first_time).replace(' ', '_')
             if self.options.orux:
                 result_lines.extend(fix_gpxfile.fix_orux())
-            if self.options.clear_times:
-                for point in fix_gpxfile.points():
-                    point.time = None
-                fix_gpxfile.rewrite()
-            if self.options.clear_locations:
-                for point in fix_gpxfile.points():
-                    point.name = None
-                fix_gpxfile.rewrite()
-            if self.options.clear_segments:
-                for track in fix_gpxfile.gpx.tracks:
-                    for segment in track.segments[1:]:
-                        track.segments[0].points.extend(segment.points)
-                    track.segments = track.segments[:1]
-                fix_gpxfile.rewrite()
             if self.options.set_first_time:
                 next(fix_gpxfile.points()).time = self.options.set_first_time
                 fix_gpxfile.rewrite()
@@ -778,6 +764,24 @@ class Utility:
         for _ in result_lines:
             logging.error(_)
 
+    def clear(self):
+        """Clear things."""
+        for fix_gpxfile in self.source_gpxfiles:
+            if self.options.times:
+                for point in fix_gpxfile.points():
+                    point.time = None
+                fix_gpxfile.rewrite()
+            if self.options.locations:
+                for point in fix_gpxfile.points():
+                    point.name = None
+                fix_gpxfile.rewrite()
+            if self.options.segments:
+                for track in fix_gpxfile.gpx.tracks:
+                    for segment in track.segments[1:]:
+                        track.segments[0].points.extend(segment.points)
+                    track.segments = track.segments[:1]
+                fix_gpxfile.rewrite()
+
     def dump(self):
         """Dump data."""
         result_lines = []
@@ -792,7 +796,6 @@ class Utility:
 
         for _ in result_lines:
             logging.error(_)
-
 
     def keyword(self):
         """add/remove a list of keywords"""
@@ -1213,10 +1216,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             '--clear-locations', default=False,
             help='Remove all point locations (point.name). ls --location adds them', action='store_true')
         fix_parser.add_argument(
-            '--clear-segments', default=False,
-            help='Join all segments to a single segment', action='store_true')
-        fix_parser.add_argument(
-            '--set-first-time', help='Set time of first point, Does not change any other point',
+            '--set-first-time', metavar='TIME',
+            help='Set time of first point, Does not change any other point',
             type=lambda x: valid_date_argument(x, False), default=None)
         fix_parser.add_argument(
             '--set-last-time', help='Set time of last point, Does not change any other point',
@@ -1230,6 +1231,21 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             action='store_true')
         self.add_common_args(fix_parser)
         self.add_multi_source(fix_parser)
+
+        clear_parser = self.subparsers.add_parser(
+            'clear', help="""Clear things. Please backup first!""",
+            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+        clear_parser.set_defaults(func=self.clear)
+        clear_parser.add_argument(
+            '--times', help='Remove all point times', action='store_true', default=False)
+        clear_parser.add_argument(
+            '--locations', default=False,
+            help='Remove all point locations (point.name). ls --location adds them', action='store_true')
+        clear_parser.add_argument(
+            '--segments', default=False,
+            help='Join all segments to a single segment', action='store_true')
+        self.add_common_args(clear_parser)
+        self.add_multi_source(clear_parser)
 
         keyword_parser = self.define_attr_parser(
             'keywords', helptext="""add keywords. A keyword preceded with - will be removed. Examples: \n
