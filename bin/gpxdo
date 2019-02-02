@@ -643,8 +643,8 @@ class Utility:
         all_rows = [LsRow(x) for x in self.source_gpxfiles]
         if all(x.gpxfile.id_in_backend.isnumeric() for x in all_rows):
             for row in all_rows:
-                row.comparable['identifier'] = '{}:{:>10f}'.format(
-                    row.gpxfile.backend.account.name, float(row.gpxfile.id_in_backend))
+                row.comparable['identifier'] = '{}{:>10f}'.format(
+                    row.gpxfile.backend.account, float(row.gpxfile.id_in_backend))
 
         track_groups = self.__fill_groups(all_rows, mainsort)
 
