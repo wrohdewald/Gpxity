@@ -761,6 +761,9 @@ class Utility:
             if self.options.add_waypoints:
                 fix_gpxfile.add_segment_waypoints()
                 fix_gpxfile.rewrite()
+            if self.options.unique:
+                if fix_gpxfile.gpx.remove_duplicate_points():
+                    fix_gpxfile.rewrite()
         for _ in result_lines:
             logging.error(_)
 
@@ -1232,6 +1235,9 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             '--add-waypoints', default=False, help="""Gives every segment start a waypoint
             like "Trk/Seg 2/5 place-name", removes such waypoints if they are no more segment starts""",
             action='store_true')
+        fix_parser.add_argument(
+            '--unique', default=False, action='store_true',
+            help="""Adjacent points with identical position time: The 2nd point gets 1 second added""")
         self.add_common_args(fix_parser)
         self.add_multi_source(fix_parser)
 

@@ -8,6 +8,7 @@
 
 from math import asin, sqrt, degrees
 import datetime
+import logging
 
 from lxml import etree
 
@@ -751,3 +752,31 @@ class Gpx(GPX):
                         setattr(track0, name, value1)
             self.tracks = [track0]
         return losing
+
+    def __make_point_times_unique(self, points):
+        """Yield all points. If two adjacent points have the same time, add 1 second to the second one."""
+        prev = points[0]
+        yield points[0]
+        for point in points[1:]:
+            if prev.time == point.time:
+                point.time += datetime.timedelta(seconds=1)
+                self.dupchanged = True  # pylint:disable=attribute-defined-outside-init
+            yield point
+            prev = point
+
+    def remove_duplicate_points(self):
+        """Uniquify adjacent points if both have the same time and same position.
+        Treats each segment separately.
+
+        Returns: True if changes happened.
+
+        """
+        self.dupchanged = False  # pylint:disable=attribute-defined-outside-init
+        try:
+            for track in self.tracks:
+                for segment in track.segments:
+                    segment.points = list(self.__make_point_times_unique(segment.points))
+            return self.dupchanged
+        finally:
+            delattr(self, 'dupchanged')
+        logging.error('Unknown error in Gpx.remove_duplicate_points')
