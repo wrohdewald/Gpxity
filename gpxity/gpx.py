@@ -857,3 +857,17 @@ class Gpx(GPX):
         while len(points) >= idx + size:
             yield points[idx:idx + size]
             idx += 1
+
+    def point_index_by_id(self, wanted):
+        """Locate point by id.
+
+        Returns: (track_idx, seg_idx, point_idx) or None
+
+        """
+        for track_idx, track in enumerate(self.tracks):
+            for seg_idx, segment in enumerate(track.segments):
+                for point_idx, point in enumerate(segment.points):
+                    if id(wanted) == id(point):
+                        return track_idx, seg_idx, point_idx
+        assert False
+        return None
