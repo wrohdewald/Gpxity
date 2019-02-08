@@ -241,13 +241,17 @@ class Gpx(GPX):
         _ = self.last_point()
         return _.time if _ else None
 
-    def speed(self) ->float:
+    def speed(self, points=None) ->float:
         """Speed over the entire time in km/h or 0.0.
+
+        Args: If points is None, all are used
 
         Returns:
             The speed
 
         """
+        if points is None:
+            return self.speed(self.point_list())
         time_range = (self.first_time, self.last_time)
         if time_range[0] is None or time_range[1] is None:
             return 0.0
