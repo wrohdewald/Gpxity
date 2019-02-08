@@ -29,6 +29,7 @@ from .util import repr_timespan, uniq, positions_equal
 GPX = mod_gpx.GPX
 GPXTrack = mod_gpx.GPXTrack
 GPXTrackSegment = mod_gpx.GPXTrackSegment
+GPXTrackPoint = mod_gpx.GPXTrackPoint
 GPXWaypoint = mod_gpx.GPXWaypoint
 GPXXMLSyntaxException = mod_gpx.GPXXMLSyntaxException
 
@@ -612,7 +613,7 @@ class Gpx(GPX):
                 return start_time_delta
         return None
 
-    def locate_point(self, track=0, segment=0, point=0, default_country=None):
+    def locate_point(self, track=0, segment=0, point=0, default_country=None):  # noqa
         """Determine name of place for point.
 
         Saves that in point.name for caching.
@@ -620,13 +621,22 @@ class Gpx(GPX):
         Args:
             track, segment, point: Indices into the list
 
-        Returns: tuple(point, located)
+        track or point may also be a real GPXTrackPoint.
+
+        Returns: tuple(name, located)
+            name is the name of the location
             located is True if locating was needed, False if we had it cached
 
         """
-        point = self.tracks[track].segments[segment].points[point]
+        # pylint: disable=too-many-branches
+        if isinstance(track, GPXTrackPoint):
+            point = track
+        if not isinstance(point, GPXTrackPoint):
+            point = self.tracks[track].segments[segment].points[point]
         result = not point.name
         if result:
+            # point.name = 'dummy'  # for faster testing
+            # return point.name, True
             parts = []
             _ = Geocoder_location([point.latitude, point.longitude])
             place = geocoder.get(location=_, provider='osm', method='reverse')
