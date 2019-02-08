@@ -1306,8 +1306,10 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def split_at_stops(self, minutes):
         """Split where things happen.
 
-        Whenever the time jumps back or more than 30
+        Whenever the time jumps back or more than X
         minutes into the future, split the segment at that point.
+
+        minutes: Shortest possible stop for splitting
 
         Returns:
             A list of message strings, usable for verbose output.
