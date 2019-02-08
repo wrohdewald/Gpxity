@@ -8,6 +8,8 @@
 #
 [MASTER]
 
+jobs=4
+
 # Specify a configuration file.
 #rcfile=
 
