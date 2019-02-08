@@ -298,7 +298,7 @@ class Gpx(GPX):
             parts.append(str(self.first_time))
         if self.distance:
             parts.append('{:4.2f}km'.format(self.distance))
-        return '{}({})'.format(str(self), ' '.join(parts))
+        return 'Track({})'.format(' '.join(parts))
 
     def __str__(self) ->str:
         """The str.
