@@ -155,7 +155,7 @@ class Accounts:
             filename: The name of the accounts file
             wanted_account: The name to look for in the accounts file
 
-        Returns: :class:`~gpxity.accounts.Account`
+        Returns: dict
 
         """
         cls.__parse(filename)
