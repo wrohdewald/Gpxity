@@ -871,3 +871,123 @@ class Gpx(GPX):
                         return track_idx, seg_idx, point_idx
         assert False
         return None
+
+    def __prepare_point_data(self):
+        """Prepare point data needed for untangle()."""  # noqa
+        def turn(first, middle, last):
+            """The change of direction at middle point in abs(degrees): 0..180.
+
+            Since this is done to find points within the same ball, identical positions
+            should return a big degree. Both big turns and identical positions are parts of a ball.
+
+            formula 2 at https://en.wikipedia.org/wiki/Law_of_cosines#Applications is problematic.
+
+            Returns: 0..180
+            """
+
+            length_a = first.distance_2d(middle)
+            if round(length_a) < 5:
+                return 100
+            length_b = middle.distance_2d(last)
+            if round(length_b) < 5:
+                return 100
+            angle1 = self.angle(first, middle)
+            angle2 = self.angle(middle, last)
+            return abs(round(((angle1 - angle2) + 180) % 360 - 180))
+
+        self.all_points = self.point_list()  # pylint:disable=attribute-defined-outside-init
+        self.all_points[0].turn = 0
+        self.all_points[-1].turn = 0
+        for idx in range(0, len(self.all_points) - 2):
+            self.all_points[idx + 1].turn = turn(*self.all_points[idx:idx + 3])
+        for idx in range(0, len(self.all_points) - 1):
+            first = self.all_points[idx]
+            second = self.all_points[idx + 1]
+            if not first.time or not second.time:
+                timediff = datetime.timedelta(milliseconds=1)  # simulate high speed, so those points are kept
+            else:
+                timediff = second.time - first.time
+                if not timediff:
+                    raise Exception('{} has two adjacent points with identical time {}'.format(self, first.time))
+            first.time_after = timediff
+            second.time_before = timediff
+            way = first.distance_2d(second)
+            first.way_after = way
+            second.way_before = way
+            first.speed_after = round(way / timediff.total_seconds() * 3.6, 2)  # km/h
+            second.speed_before = first.speed_after
+        for src, dst in ((1, 0), (-2, -1)):
+            self.all_points[dst].way_before = self.all_points[src].way_before
+            self.all_points[dst].way_after = self.all_points[src].way_before
+            self.all_points[dst].time_before = self.all_points[src].time_before
+            self.all_points[dst].time_after = self.all_points[src].time_before
+            self.all_points[dst].speed_before = self.all_points[src].speed_before
+            self.all_points[dst].speed_after = self.all_points[src].speed_before
+        for point in self.all_points:
+            point.weight = round(point.speed_after * 5 - point.turn, 2)
+
+    def __remove_single_points(self, force):
+        """Remove a point if.
+
+        - there are time gaps of at least avg * 5 before and after
+        - way before and after is both < 50m
+        Returns: A list of messages
+
+        """
+        result = list()
+        avg_time = sum(
+            (x.time_after for x in self.all_points[:-1]),
+            datetime.timedelta()) / (len(self.all_points) - 1)
+        remove_points = list()
+        time_limit = avg_time * 5
+        # for first, middle, after in self._window(self.all_points):
+        for middle in self.all_points:  # TODO: TESTEN
+            if middle.time is None or middle.time_before is None or middle.time_after is None:
+                continue
+            if (middle.time_before > time_limit and middle.time_after > time_limit):
+                if middle.turn > 30 and middle.way_after < 50 and middle.way_before < 50:
+                    remove_points.append(middle)
+
+        for remove_point in reversed(remove_points):
+            self.locate_point(remove_point)
+            result.append(
+                'removing point {} {} time before/after {}/{}'.format(
+                    remove_point, remove_point.name,
+                    remove_point.time_before, remove_point.time_after))
+            track_idx, seg_idx, point_idx = self.point_index_by_id(remove_point)
+            if force:
+                # split segment after point to be removed
+                self.split_segment_after(track_idx, seg_idx, point_idx)
+                del self.tracks[track_idx].segments[seg_idx].points[point_idx]
+        # remove empty segments
+        if force:
+            for track in self.tracks:
+                track.segments = [x for x in track.segments if x.points]
+        return result
+
+    def untangle(self, force=False):
+        """Locate stops and clean away its local erratic movements.
+
+        Returns:A list of strings describing what happens/would happen
+
+        """
+        self.__prepare_point_data()
+        self.all_points = self.point_list()  # pylint:disable=attribute-defined-outside-init
+        try:
+            return self.__remove_single_points(force)
+        finally:
+            if force:
+                self.add_segment_waypoints(at_end=True)
+            for _ in self.all_points:
+                if logging.getLogger().level == logging.DEBUG:
+                    _.name = '{} turn={} speed_after={} weight={}'.format(
+                        _.name or '', _.turn, _.speed_after, _.weight)
+                delattr(_, 'turn')
+                delattr(_, 'way_before')
+                delattr(_, 'way_after')
+                delattr(_, 'time_before')
+                delattr(_, 'time_after')
+                delattr(_, 'speed_before')
+                delattr(_, 'speed_after')
+                delattr(_, 'weight')
+            delattr(self, 'all_points')

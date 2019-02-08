@@ -787,6 +787,11 @@ class Utility:
             if self.options.tracks:
                 for line in fix_gpxfile.join_tracks(force=self.options.force):
                     print(line)
+            if self.options.untangle:
+                lines = fix_gpxfile.untangle(
+                    force=self.options.force)
+                for line in lines:
+                    print(fix_gpxfile, ':', line)
 
     def dump(self):
         """Dump data."""
@@ -1219,8 +1224,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         fix_parser.add_argument(
             '--clear-times', help='Remove all point times', action='store_true', default=False)
         fix_parser.add_argument(
-            '--clear-locations', default=False,
-            help='Remove all point locations (point.name). ls --location adds them', action='store_true')
+            '--clear-locations', default=False, action='store_true',
+            help='Remove all point locations (point.name). ls --location and cloear --untangle add them')
         fix_parser.add_argument(
             '--set-first-time', metavar='TIME',
             help='Set time of first point, Does not change any other point',
@@ -1257,6 +1262,9 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             '--tracks', default=False, action='store_true',
             help="""Join all tracks to a single track. Metadata from all but the first track is thrown away.
                 If metadata will be lost, it is printed and nothing is done. Repeat with --force.""")
+        clear_parser.add_argument(
+            '--untangle', action='store_true', default=False,
+            help="""Locate and untangle rest poins: Remove their erratic local movements""")
         clear_parser.add_argument(
             '--force', default=False, action='store_true',
             help='Executes --tracks even if metadata will be lost')

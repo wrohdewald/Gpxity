@@ -1502,3 +1502,15 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         if not result or force:
             self.rewrite()
         return result
+
+    def untangle(self, force=False):
+        """Locate stops and clean away its local erratic movements.
+
+        Returns:A list of strings describing what happens/would happen
+
+        """
+        result = self.gpx.untangle(force)
+        if result and force:
+            self.rewrite()
+            result = [str(self) + ':' + x for x in result]
+        return result

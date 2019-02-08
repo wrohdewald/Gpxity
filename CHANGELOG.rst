@@ -10,6 +10,7 @@ Changelog
   * .gpxity_config files are also searched in parent directories
   * gpxdo fix --unique  makes points unique
   * Gpx.split_segment_after()
+  * gpxdo clear --untangle
 
 1.6.0 release 2019-01-31
 ------------------------
