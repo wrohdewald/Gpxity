@@ -486,6 +486,24 @@ class Gpx(GPX):
         """Return True if distance < delta_meter."""
         return abs(last_point.distance_2d(point)) < delta_meter
 
+    def split_segment_after(self, track_idx, segment_idx, point_idx):
+        """Split segment after point.
+
+        Args:
+            track_idx: Track index
+            segment_idx: Segment index
+            point_idx: Point index
+
+        """
+        track = self.tracks[track_idx]
+        if point_idx not in (0, len(track.segments[segment_idx].points) - 1):
+            new_segments = track.segments[:segment_idx + 1]
+            new_segments.append(GPXTrackSegment())
+            new_segments[-1].points = new_segments[-2].points[point_idx + 1:]
+            new_segments[-2].points = new_segments[-2].points[:point_idx + 1]
+            new_segments.extend(track.segments[segment_idx + 1:])
+            track.segments = new_segments
+
     def fix_jumps(self, minutes=30) ->bool:  # noqa pylint: disable=too-many-branches
         """Split segments at jumps.
 

@@ -9,6 +9,7 @@ Changelog
   * gpxdo clear --tracks using new GpxFile.join_tracks()
   * .gpxity_config files are also searched in parent directories
   * gpxdo fix --unique  makes points unique
+  * Gpx.split_segment_after()
 
 1.6.0 release 2019-01-31
 ------------------------
