@@ -7,6 +7,7 @@ Changelog
   * rename Track to GpxFile
   * gpxdo clear now does some tasks previously done by gpxdo fix
   * gpxdo clear --tracks using new GpxFile.join_tracks()
+  * .gpxity_config files are also searched in parent directories
 
 1.6.0 release 2019-01-31
 ------------------------

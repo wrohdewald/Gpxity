@@ -297,10 +297,13 @@ class DirectoryAccount(Account):
         self.config = dict()
         if not os.path.exists(url):
             os.makedirs(url)
-        else:
-            config_name = os.path.join(url, '.gpxity_config')
+        path_parts = os.path.abspath(url).split('/')  # TODO: should use os.path.separator
+        for _ in range(1, len(path_parts) + 1):
+            parts = path_parts[:_]
+            dirname = os.path.join(*parts)
+            config_name = '/' + os.path.join(dirname, '.gpxity_config')
             if os.path.exists(config_name):
-                self.config = Accounts.lookup(config_name, 'global')
+                self.config.update(Accounts.lookup(config_name, 'global'))
         self.config['backend'] = 'Directory'
         self.config['url'] = url
         for key, value in kwargs.items():
