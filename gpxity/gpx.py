@@ -656,6 +656,17 @@ class Gpx(GPX):
             left.type == right.type
         )
 
+    def has_waypoint_at(self, location):
+        """Check if we have a waypoint there.
+
+        Returns: the waypoint or None
+
+        """
+        for wpt in self.waypoints:
+            if wpt.latitude == location.latitude and wpt.longitude == location.longitude:
+                return True
+        return False
+
     def __update_segment_waypoints(self):
         """If the track has such waypoints, update them.
 
