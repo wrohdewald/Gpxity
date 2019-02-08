@@ -806,3 +806,15 @@ class Gpx(GPX):
         finally:
             delattr(self, 'dupchanged')
         logging.error('Unknown error in Gpx.remove_duplicate_points')
+
+    @staticmethod
+    def _window(points, size=3):
+        """Generate tuples with size elements.
+
+        Returns: A list of tuples
+
+        """
+        idx = 0
+        while len(points) >= idx + size:
+            yield points[idx:idx + size]
+            idx += 1
