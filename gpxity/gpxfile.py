@@ -951,7 +951,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self.title, self.description,
             ','.join(self.keywords).lower(), self.category if with_category else '',
             self.public, self.last_time if with_last_time else '',
-            self.angle(precision), self.gpx.get_track_points_no())
+            self.angle(precision=precision), self.gpx.get_track_points_no())
 
     def __eq__(self, other) ->bool:
         """equal.
@@ -973,18 +973,20 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """
         return self.key() < other.key()
 
-    def angle(self, precision=None) ->float:
+    def angle(self, first_point=None, last_point=None, precision=None) ->float:
         """For me, the earth is flat.
 
         Args:
+            first_point: if None, first point of GpxFile
+            last_point: if None, last point of GpxFile
             precision: After comma digits. Default is as defined by backend or 6.
 
         Returns:
             the angle in degrees 0..360 between start and end.
-            If we have no track, return 0
+            If we have no two points, return 0
 
         """
-        return self.gpx.angle(precision)
+        return self.gpx.angle(first_point=first_point, last_point=last_point, precision=precision)
 
     def segments(self):
         """

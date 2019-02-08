@@ -300,24 +300,31 @@ class Gpx(GPX):
         """
         return self.__repr__()
 
-    def angle(self, precision=None) ->float:
+    def angle(self, first_point=None, last_point=None, precision=None) ->float:
         """For me, the earth is flat.
 
         Args:
+            first_point: if None, first point of Gpx
+            last_point: if None, last point of Gpx
             precision: After comma digits. Default is  6.
 
         Returns:
             the angle in degrees 0..360 between start and end.
-            If we have no track, return 0
+            If we have no two points, return 0
 
         """
-        try:
-            first_point = next(self.points())
-        except StopIteration:
-            return 0
-        last_point = self.last_point()
+        if first_point is None:
+            try:
+                first_point = next(self.points())
+            except StopIteration:
+                return 0
+        if last_point is None:
+            last_point = self.last_point()
+            if last_point is None:
+                return 0
         if precision is None:
             precision = 6
+
         delta_lat = round(first_point.latitude, precision) - round(last_point.latitude, precision)
         delta_long = round(first_point.longitude, precision) - round(last_point.longitude, precision)
         norm_lat = delta_lat / 90.0
