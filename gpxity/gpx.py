@@ -697,7 +697,7 @@ class Gpx(GPX):
             return self.add_segment_waypoints()
         return False
 
-    def add_segment_waypoints(self):
+    def add_segment_waypoints(self, at_end: bool = True):
         """Every segment start gets a waypoint.
 
         The name looks like :literal:`Trk/Seg 2/4 Mainz-Wiesbaden`.
@@ -710,24 +710,35 @@ class Gpx(GPX):
         Returns: True if a change happened
 
         """
+
+        def make_wp(trk_idx, seg_idx, point, typename):
+            """Make waypoint for start or end of segment.points
+
+            Returns: GPXWaypoint
+
+            """
+            self.locate_point(point)
+            debug_info = list()
+            if hasattr(point, 'speed_after'):
+                debug_info.append('speed:{}'.format(point.speed_after))
+            if hasattr(point, 'turn'):
+                debug_info.append('turn:{}'.format(point.turn))
+            name = '{}{}/{} {}{}'.format(
+                self._seg_wpt_prefix, trk_idx + 1, seg_idx + 1,
+                ','.join(debug_info),
+                point.name)
+            return GPXWaypoint(
+                latitude=point.latitude, longitude=point.longitude,
+                elevation=point.elevation, time=point.time, name=name,
+                symbol='Waypoint', type=typename)
+
         old_seg_wp = [x for x in self.waypoints if x.name.startswith(self._seg_wpt_prefix)]
         new_seg_wp = list()
         for trk_idx, trk in enumerate(self.tracks):
             for seg_idx, seg in enumerate(trk.segments):
-                self.locate_point(trk_idx, seg_idx, 0)
-                self.locate_point(trk_idx, seg_idx, -1)
-                first_pt = seg.points[0]
-                last_pt = seg.points[-1]
-                name = '{}{}/{} {}'.format(
-                    self._seg_wpt_prefix, trk_idx + 1, seg_idx + 1,
-                    ' - '.join([first_pt.name, last_pt.name])
-                )
-                wpt = GPXWaypoint(
-                    latitude=first_pt.latitude, longitude=first_pt.longitude,
-                    elevation=first_pt.elevation, time=first_pt.time, name=name,
-                    symbol='Waypoint', type='Startpunkt')
-                assert wpt.symbol == 'Waypoint'
-                new_seg_wp.append(wpt)
+                new_seg_wp.append(make_wp(trk_idx, seg_idx, seg.points[0], 'Startpunkt'))
+                if at_end:
+                    new_seg_wp.append(make_wp(trk_idx, seg_idx, seg.points[-1], 'Endpunkt'))
         if (len(old_seg_wp) != len(new_seg_wp)
                 or any(not self._wpt_equal(old_seg_wp[x], new_seg_wp[x]) for x in range(len(old_seg_wp)))):  # noqa
             self.waypoints = [
