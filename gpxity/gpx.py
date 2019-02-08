@@ -75,6 +75,7 @@ class Gpx(GPX):
         self.description = Gpx.undefined_str
         self.keywords = Gpx.undefined_str
         self.time = Gpx.undefined_date
+        self.__cached_speed = None
 
         self.real_keywords = list()
         self.category = Gpx.undefined_str
@@ -95,6 +96,7 @@ class Gpx(GPX):
 
     def decode(self):
         """Extract real_keywords, category, public,ids from keywords."""
+        self.__cached_speed = None
         self.__update_segment_waypoints()
         if self.keywords is None:
             self.keywords = ''
@@ -251,7 +253,9 @@ class Gpx(GPX):
 
         """
         if points is None:
-            return self.speed(self.point_list())
+            if self.__cached_speed is None:
+                self.__cached_speed = self.speed(self.point_list())
+            return self.__cached_speed
         time_range = (self.first_time, self.last_time)
         if time_range[0] is None or time_range[1] is None:
             return 0.0
