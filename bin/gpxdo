@@ -367,7 +367,10 @@ class Utility:
             for _ in self.options.source:
                 if _.endswith('/') and _ != '/':
                     _ = _[:-1]
-                sources.append(Backend.instantiate(_))
+                try:
+                    sources.append(Backend.instantiate(_))
+                except FileNotFoundError as exc:
+                    print(exc)
 
             gpxfiles = collect_gpxfiles(sources)
             for gpxfile in gpxfiles:
