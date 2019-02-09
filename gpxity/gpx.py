@@ -831,6 +831,7 @@ class Gpx(GPX):
 
     def remove_duplicate_points(self):
         """Uniquify adjacent points if both have the same time and same position.
+
         Treats each segment separately.
 
         Returns: True if changes happened.
