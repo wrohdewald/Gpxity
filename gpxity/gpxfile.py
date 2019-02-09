@@ -1153,12 +1153,12 @@ class GpxFile:  # pylint: disable=too-many-public-methods
                 self.ids = new_ids
         return msg
 
-    def can_merge(self, other, partial_tracks: bool = False):
+    def can_merge(self, other, partial: bool = False):
         """Check if self and other are mergeable.
 
         args:
             other: The other GpxFile
-            partial_tracks: If True, they are mergeable if one of them contains
+            partial: If True, they are mergeable if one of them contains
                 the other one.
 
         Returns: (int, str)
@@ -1173,7 +1173,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             # mergable
             return 0, None
 
-        if partial_tracks:
+        if partial:
             other_in_self = self.index(other)
             if other_in_self is not None:
                 return other_in_self, None
@@ -1241,7 +1241,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     def merge(  # noqa pylint: disable=unused-argument
             self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
-            partial_tracks: bool = False) ->list:
+            partial: bool = False) ->list:
         """Merge other gpxfile into this one.
 
         Either the track points must be identical or the other gpxfile
@@ -1261,7 +1261,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             copy: This argument is ignored. It is only here to give
                 :meth:`GpxFile.merge() <gpxity.gpxfile.GpxFile.merge>`
                 and :meth:`Backend.merge() <gpxity.backend.Backend.merge>` the same interface.
-            partial_tracks: merges other gpxfile
+            partial: merges other gpxfile
                 if either gpxfile is part of the other one
 
         Returns: list(str)
@@ -1270,7 +1270,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """
         assert isinstance(other, GpxFile)
         msg = []
-        shorter_at, _ = self.can_merge(other, partial_tracks)
+        shorter_at, _ = self.can_merge(other, partial)
         if shorter_at is None:
             raise GpxFile.CannotMerge(_)
         with self.batch_changes():

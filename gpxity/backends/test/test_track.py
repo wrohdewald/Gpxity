@@ -637,7 +637,7 @@ class TrackTests(BasicTest):
         gpxfile2 = gpxfile1.clone()
         gpxfile2.title = 'Track2-title'
         gpxfile2.ids = ['wptrackserver_unittest:5', 'wptrackserver_unittest:6', 'tmp/y.gpx']
-        msg = gpxfile1.merge(gpxfile2, partial_tracks=True)
+        msg = gpxfile1.merge(gpxfile2, partial=True)
         for _ in msg:
             self.logger.debug(_)
         self.assertEqual(gpxfile1.gpx.get_track_points_no(), gpxfile2.gpx.get_track_points_no())
@@ -648,7 +648,7 @@ class TrackTests(BasicTest):
             ['wptrackserver_unittest:5', '/tmp/x.gpx', 'wptrackserver_unittest:6', 'tmp/y.gpx'])
 
     def test_merge_partial_tracks(self):
-        """Test GpxFile.merge(partial_tracks=True)."""
+        """Test GpxFile.merge(partial=True)."""
 
         gpxfile1 = self.create_test_track()
         gpxfile1.title = '44432321'
@@ -658,7 +658,7 @@ class TrackTests(BasicTest):
         self.assertTrue(gpxfile1.points_equal(gpxfile2, digits=9))
 
         gpxfile2.add_points(self._random_points(5, root=gpxfile1.last_point()))
-        msg = gpxfile1.merge(gpxfile2, partial_tracks=True)
+        msg = gpxfile1.merge(gpxfile2, partial=True)
         for _ in msg:
             self.logger.debug(_)
         self.assertEqual(gpxfile1.gpx.get_track_points_no(), gpxfile2.gpx.get_track_points_no())
@@ -668,7 +668,7 @@ class TrackTests(BasicTest):
         points2 = gpxfile2.point_list()
         points2[2].latitude = 5
         with self.assertRaises(Exception) as context:
-            msg = gpxfile1.merge(gpxfile2, partial_tracks=True)
+            msg = gpxfile1.merge(gpxfile2, partial=True)
         self.assertEqual(
             str(context.exception),
             'Cannot merge {} with 27 points into {} with 27 points'.format(gpxfile2, gpxfile1))

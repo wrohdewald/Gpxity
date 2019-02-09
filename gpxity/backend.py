@@ -808,7 +808,7 @@ class Backend(BackendBase):
                 old_gpxfile.remove()
         return result
 
-    def __find_mergable_groups(self, gpxfiles, partial_tracks: bool = False):
+    def __find_mergable_groups(self, gpxfiles, partial: bool = False):
         """Find mergable groups.
 
         Returns:
@@ -821,7 +821,7 @@ class Backend(BackendBase):
         while rest:
             root = rest[0]
             group = list([root])
-            group.extend(x for x in rest[1:] if root.can_merge(x, partial_tracks)[0] is not None)  # noqa
+            group.extend(x for x in rest[1:] if root.can_merge(x, partial)[0] is not None)  # noqa
             # merge target should be the longest gpxfile in self:
             group.sort(key=lambda x: (x.backend is self, x.gpx.get_track_points_no()), reverse=True)
             result.append(group)
@@ -830,7 +830,7 @@ class Backend(BackendBase):
         return result
 
     def merge(self, other, remove: bool = False, dry_run: bool = False, copy: bool = False,
-              partial_tracks: bool = False) ->list:  # noqa
+              partial: bool = False) ->list:  # noqa
         """merge other backend or a single gpxfile into this one. Tracks within self are also merged.
 
         If two gpxfiles have identical points, or-ify their other attributes.
@@ -840,7 +840,7 @@ class Backend(BackendBase):
             remove: If True, remove merged gpxfiles
             dry_run: If True, do not really merge or remove
             copy: Do not try to find a matching gpxfile, just copy other into this Backend
-            partial_tracks: If True, two gpxfiles are mergeable if one of them contains the other one.
+            partial: If True, two gpxfiles are mergeable if one of them contains the other one.
 
         Returns:
             list(str) A list of messages for verbose output
@@ -857,7 +857,7 @@ class Backend(BackendBase):
             return self.__copy(other_gpxfiles, remove, dry_run)
 
         null_datetime = datetime.datetime(year=1, month=1, day=1)
-        groups = self.__find_mergable_groups(other, partial_tracks)
+        groups = self.__find_mergable_groups(other, partial)
         merge_groups = [x for x in groups if len(x) > 1]
         merge_groups.sort(key=lambda x: x[0].first_time or null_datetime)
         if merge_groups:
@@ -874,7 +874,7 @@ class Backend(BackendBase):
                 destination = new_destination
             for source in sources:
                 result.extend(destination.merge(
-                    source, remove=remove, dry_run=dry_run, partial_tracks=partial_tracks))
+                    source, remove=remove, dry_run=dry_run, partial=partial))
         return result
 
     @staticmethod

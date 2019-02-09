@@ -860,14 +860,14 @@ class Utility:
         if not self.destination_track_id:
             msg = self.destination_backend.merge(
                 self.source_gpxfiles, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
-                partial_tracks=self.options.partial_tracks)
+                partial=self.options.partial)
         else:
             msg = list()
             for _ in self.source_gpxfiles:
                 try:
                     msg.extend(self.destination_backend[self.destination_track_id].merge(
                         _, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
-                        partial_tracks=self.options.partial_tracks))
+                        partial=self.options.partial))
                 except GpxFile.CannotMerge as exc:
                     msg.append(str(exc))
         if not self.options.dry_run:
@@ -1140,7 +1140,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                                   action='store_true', default=False)
         merge_parser.add_argument('--remove', help='remove merged gpxfiles',
                                   action='store_true', default=False)
-        merge_parser.add_argument('--partial-gpxfiles',
+        merge_parser.add_argument('--partial',
                                   help='merges two gpxfiles if one is part of the other',
                                   action='store_true', default=False)
         merge_parser.add_argument(
