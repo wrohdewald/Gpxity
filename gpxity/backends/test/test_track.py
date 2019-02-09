@@ -683,7 +683,11 @@ class TrackTests(BasicTest):
     def parse_objectnames(self, cases):
         """Helper for test_parse_objectname."""
         for string, expect_account_str, expect_backend, expect_ident in cases:
-            account, track_id = BackendBase.parse_objectname(string)
+            try:
+                account, track_id = BackendBase.parse_objectname(string)
+            except BaseException as exc:
+                self.logger.error('parse_objectname(%s) failed: %s', string, exc)
+                raise
             self.assertEqual(
                 str(account), expect_account_str, 'str(account) wrong in test case:{}'.format(string))
             self.assertEqual(

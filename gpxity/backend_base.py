@@ -113,6 +113,7 @@ class BackendBase:
         1. if name is an existing file or directory, or if name.gpx is an existing file, Backend will be Directory
         2. if ":" is not in name: Backend will be Directory, url=None, track_id=name without .gpx
         3. the part before the first ":" is used as key into accounts. Not case sensitive.
+        4. if 3. finds nothing and name does not end with ":", return DirectoryAccount
 
         Args:
             name: the full identifier for a GpxFile
@@ -121,27 +122,40 @@ class BackendBase:
             A tuple with account, track_id
 
         """
+
+        def is_directory(name):
+            """Treat name as DirectoryAccount.
+
+            Returns: DirectoryAccount and track_id
+
+            """
+            if os.path.isdir(name):
+                url = name
+                track_id = None
+            else:
+                url, track_id = os.path.split(name)
+                if not url and not os.path.exists(track_id):
+                    url = '.'
+                if track_id.endswith('.gpx'):
+                    track_id = track_id[:-4]
+            return DirectoryAccount(url), track_id
+
         assert name
         expanded = cls._find_local(name)
         if expanded:
-            if os.path.isdir(expanded):
-                url = expanded
-                track_id = None
-            else:
-                url, track_id = os.path.split(expanded)
-                if not url and not os.path.exists(track_id):
-                    url = '.'
-            account = DirectoryAccount(url)
+            account, track_id = is_directory(expanded)
         elif ':' not in name:
-            url, track_id = os.path.split(name)
-            if track_id.endswith('.gpx'):
-                track_id = track_id[:-4]
-            account = DirectoryAccount(url)
+            account, track_id = is_directory(name)
         else:
             _ = name.split(':')
             account_name = _[0]
             track_id = ':'.join(_[1:]) or None
-            account = Account(account_name)
+            try:
+                account = Account(account_name)
+            except KeyError:
+                if name.endswith(':'):
+                    raise
+                account, track_id = is_directory(name)
             # backend name in accounts is case insensitive, we want the exact name
             account.backend = cls.find_class(account.backend).__name__
         return account, track_id
