@@ -1220,9 +1220,9 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                                 action='store_true', default=False)
         fix_parser.add_argument('--id-from-account', help='use last known id for a gpxfile in account')
         fix_parser.add_argument(
-            '--simplify',
-            help='Reduce points. The new track may move MAX meters away from the original',
-            metavar='MAX', type=int, default=None)
+            '--simplify', metavar='MAX', type=int, default=None,
+            help="""Reduce points within segments. The new track may move MAX meters away from the original.
+                If you want to keep points around stops, apply split --stops first.""")
         fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
         fix_parser.add_argument(
             '--clear-times', help='Remove all point times', action='store_true', default=False)
