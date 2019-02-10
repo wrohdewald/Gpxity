@@ -22,6 +22,7 @@ import sys
 import datetime
 import calendar
 from collections import defaultdict
+import subprocess
 import logging
 import textwrap
 from contextlib import contextmanager
@@ -94,8 +95,16 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
 class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
     """Do not show all category choices."""
 
-    def __init__(self, prog, indent_increment=2, max_help_position=24, width=None):
-        super(MyHelpFormatter, self).__init__(prog, indent_increment=2, max_help_position=max_help_position, width=width)
+    columns = None
+
+    def __init__(self, prog, indent_increment=2, max_help_position=None, width=None):
+        if MyHelpFormatter.columns is None:
+            try:
+                MyHelpFormatter.columns = int(subprocess.run(
+                    ['stty', 'size'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.split()[1])
+            except BaseException:
+                MyHelpFormatter.columns = 80
+        super(MyHelpFormatter, self).__init__(prog, indent_increment=2, max_help_position=30, width=self.columns)
 
     @staticmethod
     @contextmanager
