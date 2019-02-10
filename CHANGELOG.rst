@@ -11,6 +11,7 @@ Changelog
   * gpxdo fix --unique  makes points unique
   * Gpx.split_segment_after()
   * gpxdo clear --untangle
+  * gpxdo help, gpxdo help ls
 
 1.6.0 release 2019-01-31
 ------------------------

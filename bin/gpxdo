@@ -390,6 +390,11 @@ class Utility:
             self.list_categories()
             return
 
+        if self.options.subparser_name == 'help':
+            # pylint: disable=protected-access
+            self.subparsers._name_parser_map[self.options.subcommand].print_help()
+            return
+
         logging.getLogger().setLevel(self.options.loglevel.upper())
         self.similar_to = None
         try:
@@ -1096,7 +1101,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
     def create_parser(self):
         """into self.options"""
-        # pylint: disable=too-many-statements, too-many-branches
+        # pylint: disable=too-many-statements, too-many-branches,too-many-locals
         parser = argparse.ArgumentParser(
             'gpxdo', formatter_class=MyHelpFormatter,
             epilog=self.help_epilog)
@@ -1308,6 +1313,11 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.add_common_args(fix_parser)
         self.add_multi_source(fix_parser)
 
+        help_parser = self.subparsers.add_parser(
+            'help', help="""Show specific help for a command""")
+        help_parser.add_argument(
+            'subcommand', nargs='?', choices=self.subparsers._name_parser_map.keys())  # pylint: disable=protected-access
+
         clear_parser = self.subparsers.add_parser(
             'clear', help="""Clear things. Please backup first!""",
             epilog=self.help_epilog, formatter_class=MyHelpFormatter)
@@ -1377,6 +1387,10 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.options = parser.parse_args()
 
         if self.options.list_categories:
+            return
+
+        if self.options.subparser_name == 'help':
+            self.options.loglevel = 'error'
             return
 
         if self.options.subparser_name == 'ls':
