@@ -994,29 +994,36 @@ class Utility:
     def add_common_args(parser, with_ranges=True):
         """Add common args to parser."""
         if with_ranges:
-            parser.add_argument('--first-date', help='Limit gpxfiles by date',
+            parser.add_argument('--first-date', help='Limit gpxfiles by date', metavar='DATE',
                                 type=lambda x: valid_date_argument(x, False), default=None)
-            parser.add_argument('--last-date', help='Limit gpxfiles by date',
+            parser.add_argument('--last-date', help='Limit gpxfiles by date', metavar='DATE',
                                 type=lambda x: valid_date_argument(x, True), default=None)
             parser.add_argument('--date', help='Limit gpxfiles by specific date',
                                 type=lambda x: valid_date_argument(x, False), default=None)
-            parser.add_argument('--min-points', help='Limit gpxfiles by minimal number of points',
-                                type=int, default=None)
-            parser.add_argument('--max-points', help='Limit gpxfiles by maximal number of points',
-                                type=int, default=None)
+            parser.add_argument('--min-points', help='Limit gpxfiles by minimal # of points',
+                                metavar='#', type=int, default=None)
+            parser.add_argument('--max-points', help='Limit gpxfiles by maximal # of points',
+                                metavar='#', type=int, default=None)
             parser.add_argument(
-                '--min-distance', help='Limit gpxfiles by minimal distance in km', type=int, default=None)
+                '--min-distance', metavar='km',
+                help='Limit gpxfiles by minimal distance', type=int, default=None)
             parser.add_argument(
-                '--max-distance', help='Limit gpxfiles by maximal distance in km', type=int, default=None)
-            parser.add_argument('--min-speed', help='Limit gpxfiles by minimal speed in km/h', type=int, default=None)
-            parser.add_argument('--max-speed', help='Limit gpxfiles by maximal speed in km/h', type=int, default=None)
-            parser.add_argument('--only-keywords', help='Limit gpxfiles by keywords', default=None)
+                '--max-distance', metavar='km',
+                help='Limit gpxfiles by maximal distance', type=int, default=None)
+            parser.add_argument(
+                '--min-speed', metavar='km/h',
+                help='Limit gpxfiles by minimal speed', type=int, default=None)
+            parser.add_argument(
+                '--max-speed', metavar='km/h',
+                help='Limit gpxfiles by maximal speed', type=int, default=None)
+            parser.add_argument(
+                '--only-keywords', metavar='WORDS', help='Limit gpxfiles by keywords', default=None)
             parser.add_argument('--only-category', help='Limit gpxfiles by category',
                                 default=None, choices=GpxFile.categories)
             parser.add_argument(
-                '--similar',
-                help='Limit gpxfiles by similarity to one of gpxfiles SIMILAR. '
-                'SIMILAR is a list of gpxfiles separated with a comma and no space. '
+                '--similar', metavar='GPX',
+                help='Limit gpxfiles by similarity to one out of GPX. '
+                'GPX is a list of gpxfiles separated with a comma and no space. '
                 'This will only work for gpxfile identifiers without comma.',
                 default=None)
 
@@ -1079,9 +1086,9 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         Returns: bool
 
         """
-        parts = [x.strip() for x in sort.split(',')]
+        parts = [x.strip().lower() for x in sort.split(',')]
         for part in parts:
-            if part not in cls.sort_choice:
+            if part.lower() not in cls.sort_choice:
                 raise argparse.ArgumentTypeError(
                     '--sort: {} is not in {}'.format(
                         part, ','.join(cls.sort_choice)))
@@ -1104,8 +1111,9 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument(
-            '--sort',
-            help="""sort by one ore more columns, separated by commas (no spaces allowed)""",
+            '--sort', metavar='COL', choices=self.sort_choice,
+            help="""sort by one ore more columns, separated by commas (no spaces allowed).
+                Valid values are the column titles.""",
             type=self.valid_sort_argument, default='identifier')
         ls_parser.add_argument('--total',
                                help="""Show a total line""",
@@ -1222,7 +1230,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             '--segments', help='Create one gpxfile for each segment. This is the default.',
             action='store_true', default=False)
         split_parser.add_argument(
-            '--stops', type=int,
+            '--stops', type=int, metavar='minutes',
             help="""BACKUP your gpxfiles first! This can destroy them!
             Whenever the time jumps back or more than X minutes into the future
             or when the distance speed between two points exceed 5km,
@@ -1264,12 +1272,16 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                                 action='store_true', default=False)
         fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
                                 action='store_true', default=False)
-        fix_parser.add_argument('--id-from-account', help='use last known id for a gpxfile in account')
         fix_parser.add_argument(
-            '--simplify', metavar='MAX', type=int, default=None,
-            help="""Reduce points within segments. The new track may move MAX meters away from the original.
+            '--id-from-account', metavar='ACCOUNT',
+            help='use last known id for a gpxfile in account')
+        fix_parser.add_argument(
+            '--simplify', metavar='meters', type=int, default=None,
+            help="""Reduce points within segments. The new track may move meters away from the original.
                 If you want to keep points around stops, apply split --stops first.""")
-        fix_parser.add_argument('--add-minutes', help='Add minutes to all times', type=int, default=None)
+        fix_parser.add_argument(
+            '--add-minutes', metavar='minutes',
+            help='Add MIN minutes to all times', type=int, default=None)
         fix_parser.add_argument(
             '--clear-times', help='Remove all point times', action='store_true', default=False)
         fix_parser.add_argument(
@@ -1280,7 +1292,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             help='Set time of first point, Does not change any other point',
             type=lambda x: valid_date_argument(x, False), default=None)
         fix_parser.add_argument(
-            '--set-last-time', help='Set time of last point, Does not change any other point',
+            '--set-last-time', metavar='TIME',
+            help='Set time of last point, Does not change any other point',
             type=lambda x: valid_date_argument(x, False), default=None)
         fix_parser.add_argument(
             '--add-times', help='Add a time to all points without',
