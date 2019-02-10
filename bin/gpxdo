@@ -24,6 +24,7 @@ import calendar
 from collections import defaultdict
 import logging
 import textwrap
+from contextlib import contextmanager
 
 try:
     import argcomplete
@@ -88,6 +89,42 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
     if last:
         result += last_delta
     return arg_date_str if return_raw else result
+
+
+class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Do not show all category choices."""
+
+    def __init__(self, prog, indent_increment=2, max_help_position=24, width=None):
+        super(MyHelpFormatter, self).__init__(prog, indent_increment=2, max_help_position=max_help_position, width=width)
+
+    @staticmethod
+    @contextmanager
+    def short_choices(action):
+        """Shorten choices to be displayed."""
+        old_choices = action.choices
+        try:
+            if action.choices[0] == GpxFile.categories[0]:
+                choices = list(action.choices)[:4]
+                choices = list(choices)
+                choices.append(' see gpxdo --list-categories')
+                action.choices = tuple(choices)
+        except BaseException:
+            pass
+        try:
+            yield
+        finally:
+            action.choices = old_choices
+
+    def _metavar_formatter(self, action, default_metavar):
+        """Override."""
+        with self.short_choices(action):
+            return super(MyHelpFormatter, self)._metavar_formatter(action, default_metavar)
+
+    def _expand_help(self, action):
+        """Override."""
+        with self.short_choices(action):
+            return super(MyHelpFormatter, self)._expand_help(action)
+
 
 class LsField:
     """Abstracts a column in the ls output."""
@@ -1045,7 +1082,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         """into self.options"""
         # pylint: disable=too-many-statements, too-many-branches
         parser = argparse.ArgumentParser(
-            'gpxdo', formatter_class=argparse.RawDescriptionHelpFormatter,
+            'gpxdo', formatter_class=MyHelpFormatter,
             epilog=self.help_epilog)
         parser.add_argument(
             '--list-categories', help='list all categories',
@@ -1055,7 +1092,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         ls_parser = self.subparsers.add_parser(
             'ls', help='list gpxfiles',
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         ls_parser.set_defaults(func=self.list_them)
         ls_parser.add_argument(
             '--sort',
@@ -1121,7 +1158,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             'cp', help="""
             copy gpxfiles. This can be much faster for remote backends because
             gpxfiles with the same points are not merged.""",
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         cp_parser.set_defaults(func=self.copy)
         cp_parser.add_argument(
             '--dry-run', help='only show what would change',
@@ -1134,7 +1171,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             'merge', help="""
             merge gpxfiles: If their trackpoints are identical, add metadata like name,
             description or keywords from source to destination""",
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         merge_parser.set_defaults(func=self.merge)
         merge_parser.add_argument('--dry-run', help='only show what would change',
                                   action='store_true', default=False)
@@ -1153,7 +1190,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         mv_parser = self.subparsers.add_parser(
             'mv', help='move sources to a destination backend',
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         mv_parser.set_defaults(func=self.move)
         self.add_common_args(mv_parser)
         self.add_multi_source(mv_parser)
@@ -1161,7 +1198,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         rm_parser = self.subparsers.add_parser(
             'rm', help='remove gpxfiles',
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         rm_parser.set_defaults(func=self.remove)
         rm_parser.add_argument('--dry-run', help='only show what would be removed',
                                action='store_true', default=False)
@@ -1170,7 +1207,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         split_parser = self.subparsers.add_parser(
             'split', help='split points at interesting places',
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         split_parser.set_defaults(func=self.split)
         split_parser.add_argument(
             '--segments', help='Create one gpxfile for each segment. This is the default.',
@@ -1186,7 +1223,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         join_parser = self.subparsers.add_parser(
             'join', help='join gpxfiles into one single gpxfile',
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         join_parser.set_defaults(func=self.join)
         join_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
         self.add_common_args(join_parser)
@@ -1196,7 +1233,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         diff_parser = self.subparsers.add_parser(
             'diff', help="""
             compare gpxfiles between source and destination""",
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         diff_parser.set_defaults(func=self.diff)
         self.add_common_args(diff_parser)
         self.add_multi_source(diff_parser, must_have=True)
@@ -1205,7 +1242,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         fix_parser = self.subparsers.add_parser(
             'fix', help="""try to fix some GPX format bugs in gpxfiles.
                 First BACKUP the gpxfiles! This can destroy them!""",
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         fix_parser.set_defaults(func=self.fix)
         fix_parser.add_argument(
             '--orux',
@@ -1251,7 +1288,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         clear_parser = self.subparsers.add_parser(
             'clear', help="""Clear things. Please backup first!""",
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         clear_parser.set_defaults(func=self.clear)
         clear_parser.add_argument(
             '--times', help='Remove all point times', action='store_true', default=False)
@@ -1285,7 +1322,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         dump_parser = self.subparsers.add_parser(
             'dump', help="""Show specific GPX values""",
-            epilog=self.help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         dump_parser.set_defaults(func=self.dump)
         dump_parser.add_argument(
             '--points', help='List detailled info about points',
