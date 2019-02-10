@@ -666,7 +666,7 @@ class Gpx(GPX):
             if name:
                 parts.append(name)
             if not self.default_country or place.country.lower() != self.default_country.lower():
-                parts.append(place.country)
+                parts.append(place.country or place.country_code)
             try:
                 point.name = ','.join(parts)
             except TypeError:
