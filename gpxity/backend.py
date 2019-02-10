@@ -436,6 +436,7 @@ class Backend(BackendBase):
         """Decouple and call the backend specific _read_all."""
         with self._decouple():
             self._read_all(gpxfile)
+            gpxfile.gpx.default_country = self.account.country
 
     def _read_all(self, gpxfile) ->None:
         """fill the gpxfile with all its data from source."""

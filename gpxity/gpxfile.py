@@ -244,6 +244,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
                 # TODO: unittest
                 self.__gpx.encode()
                 self.change_keywords(self.__gpx.real_keywords)
+        self.__gpx.default_country = self.backend.account.country if self.backend is not None else None
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`."""
@@ -1440,13 +1441,11 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         Args:
             track, segment, point: Indices into the respective arrays
-            default_country: suppress this one in the result
 
         Returns: A string
 
         """
-        country = self.backend.account.country if self.backend is not None else None
-        result, located = self.gpx.locate_point(track, segment, point, default_country=country)
+        result, located = self.gpx.locate_point(track, segment, point)
         if located:
             if self.backend is not None:
                 self.rewrite()

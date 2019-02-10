@@ -51,6 +51,9 @@ class Gpx(GPX):
             in the backend) or if the full gpxfile needs to be read.
         real_keywords: As decoded from keywords
         is_complete: False while we hold only metadata for the gpxfile.
+        default_country: This is automatically set when the Gpx is part
+            of a concrete Backend. Used for location names: the default country name
+            will not be added. This values comes from Account.country.
 
         category: As decoded from keywords, no translation done
         public: Decoded from keywords
@@ -77,6 +80,7 @@ class Gpx(GPX):
         self.keywords = Gpx.undefined_str
         self.time = Gpx.undefined_date
         self.__cached_speed = None
+        self.default_country = None
 
         self.real_keywords = list()
         self.category = Gpx.undefined_str
@@ -613,7 +617,7 @@ class Gpx(GPX):
                 return start_time_delta
         return None
 
-    def locate_point(self, track=0, segment=0, point=0, default_country=None):  # noqa
+    def locate_point(self, track=0, segment=0, point=0):
         """Determine name of place for point.
 
         Saves that in point.name for caching.
@@ -661,9 +665,15 @@ class Gpx(GPX):
                 name = place.address
             if name:
                 parts.append(name)
-            if not default_country or place.country.lower() != default_country.lower():
+            if not self.default_country or place.country.lower() != self.default_country.lower():
                 parts.append(place.country)
-            point.name = ','.join(parts)
+            try:
+                point.name = ','.join(parts)
+            except TypeError:
+                logging.error(
+                    'Parsing geo info: %r country=%r(default %r) -> %r',
+                    place.raw, place.country, self.default_country, parts)
+                raise
         return point.name, result
 
     @staticmethod
