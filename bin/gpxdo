@@ -1051,7 +1051,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             '--list-categories', help='list all categories',
             action='store_true', default=False)
 
-        self.subparsers = parser.add_subparsers()
+        self.subparsers = parser.add_subparsers(dest='subparser_name')
 
         ls_parser = self.subparsers.add_parser(
             'ls', help='list gpxfiles',
@@ -1320,7 +1320,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         if self.options.list_categories:
             return
 
-        if self.options.func == self.list_them:  # pylint: disable=comparison-with-callable
+        if self.options.subparser_name == 'ls':
             if self.options.long or self.options.all:
                 self.options.title = True
                 self.options.time = True
@@ -1347,13 +1347,13 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                 logging.error('--gap only works with --segments')
                 self.exit_code = 2
                 return
-        elif self.options.func == self.merge:  # pylint: disable=comparison-with-callable
+        elif self.options.subparser_name == 'merge':
             if not self.options.source:
                 self.options.source = [self.options.destination]
-        elif self.options.func == self.split:  # pylint: disable=comparison-with-callable
+        elif self.options.subparser_name == 'split':
             if not self.options.segments and not self.options.stops:
                 self.options.segments = True
-        elif self.options.func == self.fix:  # pylint: disable=comparison-with-callable
+        elif self.options.subparser_name == 'fix':
             exclusive = ('id_from_title', 'title_from_id', 'id_from_account')
             if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
                 logging.error('gpxdo: only one out of %s is allowed', ', '.join(exclusive).replace('_', '-'))
