@@ -453,16 +453,24 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         if self.__without_fences is not None:
             raise Exception('fenced() is already active')
-        self.__without_fences = self.__gpx
+        without_fences = dict()
         try:
-            for track in self.__gpx.tracks:
-                for segment in track.segments:
+            old_points = self.__gpx.get_track_points_no()
+            for track_idx, track in enumerate(self.__gpx.tracks):
+                for seg_idx, segment in enumerate(track.segments):
+                    without_fences[(track_idx, seg_idx)] = segment.points
                     segment.points = [x for x in segment.points if fences.outside(x)]
+            all_waypoints = self.__gpx.waypoints
             self.__gpx.waypoints = [x for x in self.__gpx.waypoints if fences.outside(x)]
             self._clear_similarity_cache()
+            new_points = self.__gpx.get_track_points_no()
+            if new_points < old_points:
+                logging.info('%s: Fencing removed %s points', self, old_points - new_points)
             yield
         finally:
-            self.__gpx = self.__without_fences
+            for (track_idx, seg_idx), points in without_fences.items():
+                self.__gpx.tracks[track_idx].segments[seg_idx].points = points
+            self.__gpx.waypoints = all_waypoints
             self._clear_similarity_cache()
             self.__without_fences = None
 
