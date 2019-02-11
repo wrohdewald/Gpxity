@@ -114,8 +114,8 @@ class TestBackends(BasicTest):
     def test_directory_backend(self):
         """Manipulate backend."""
         gpxfile = self.create_test_track()
-        with self.temp_backend(Directory) as directory1:
-            with self.temp_backend(Directory) as directory2:
+        with self.temp_directory() as directory1:
+            with self.temp_directory() as directory2:
                 saved = directory1.add(gpxfile)
                 self.assertBackendLength(directory1, 1)
                 self.assertEqual(saved.backend, directory1)
@@ -384,7 +384,7 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(Directory))
     def test_private(self):
         """Up- and download private gpxfiles."""
-        with self.temp_backend(Directory) as local:
+        with self.temp_directory() as local:
             # TODO: make cls outer loop and count for expensive cls
             gpxfile = self._get_track_from_test_file('test2')
             self.assertTrue(gpxfile.public)  # as defined in test2.gpx keywords
@@ -399,7 +399,7 @@ class TestBackends(BasicTest):
                         for _ in backend:
                             self.assertFalse(_.public)
                         backend2 = backend.clone()
-                        with self.temp_backend(Directory) as copy:
+                        with self.temp_directory() as copy:
                             for _ in copy.merge(backend2):
                                 self.logger.debug(_)
                             self.assertSameTracks(
@@ -417,8 +417,8 @@ class TestBackends(BasicTest):
         assert org_source_len >= 2
         org_sink_len = 2
         assert org_sink_len >= 2
-        with self.temp_backend(Directory, url='source', count=org_source_len) as source:
-            with self.temp_backend(Directory, url='sink', count=org_sink_len) as sink:
+        with self.temp_directory(url='source', count=org_source_len) as source:
+            with self.temp_directory(url='sink', count=org_sink_len) as sink:
                 for _ in list(sink)[1:]:
                     _.adjust_time(datetime.timedelta(hours=100))
 
@@ -455,7 +455,7 @@ class TestBackends(BasicTest):
     @skipIf(*disabled(Directory))
     def test_scan(self):
         """some tests about Backend.scan()."""
-        with self.temp_backend(Directory, count=5) as source:
+        with self.temp_directory(count=5) as source:
             backend2 = source.clone()
             gpxfile = self.create_test_track()
             backend2.add(gpxfile)
@@ -476,9 +476,9 @@ class TestBackends(BasicTest):
 
         for cls in Backend.all_backend_classes():
             with self.tst_backend(cls):
-                with self.temp_backend(Directory) as local_serverdirectory:
+                with self.temp_directory() as local_serverdirectory:
                     local_serverdirectory.account.config['id_method'] = 'counter'
-                    with self.temp_backend(Directory) as remote_serverdirectory:
+                    with self.temp_directory() as remote_serverdirectory:
                         remote_serverdirectory.account.config['id_method'] = 'counter'
                         with self.lifetrackserver(remote_serverdirectory.url):
                             with self.temp_backend(cls) as uplink:
@@ -551,14 +551,14 @@ class TestBackends(BasicTest):
     def test_directory(self):
         """directory creation/deletion."""
 
-        with self.temp_backend(Directory) as dir_a:
+        with self.temp_directory() as dir_a:
             self.assertTrue(dir_a.account.is_temporary)
             a_url = dir_a.url
             self.assertTrue(os.path.exists(a_url), a_url)
         self.assertFalse(os.path.exists(a_url), a_url)
 
         test_url = tempfile.mkdtemp()
-        with self.temp_backend(Directory, url=test_url) as dir_b:
+        with self.temp_directory(url=test_url) as dir_b:
             self.assertTrue(dir_b.url == test_url)
         self.assertTrue(os.path.exists(test_url), test_url)
         remove_directory(test_url)
@@ -675,7 +675,7 @@ class TestBackends(BasicTest):
             with self.tst_backend(cls):
                 with self.temp_backend(cls, clear_first=False, cleanup=False) as backend:
                     if cls is TrackMMT:
-                        with self.temp_backend(Directory) as serverdirectory:
+                        with self.temp_directory() as serverdirectory:
                             serverdirectory.account.config['id_method'] = 'counter'
                             with self.lifetrackserver(serverdirectory.url):
                                 check()

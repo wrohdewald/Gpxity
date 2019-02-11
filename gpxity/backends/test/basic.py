@@ -455,6 +455,19 @@ class BasicTest(unittest.TestCase):
                 tmp_backend.remove_all()
             tmp_backend.detach()
 
+    @contextmanager
+    def temp_directory(self, url=None, count=0,  # pylint: disable=too-many-arguments
+                       cleanup=True, clear_first=None, category=None,
+                       public: bool = None, test_name=None):
+        """Temp directory backend."""
+        tmp_backend = self.setup_backend(Directory, test_name, url, count, clear_first, category, public)
+        try:
+            yield tmp_backend
+        finally:
+            if cleanup:
+                tmp_backend.remove_all()
+            tmp_backend.detach()
+
     @classmethod
     def create_db_for_wptrackserver(cls):
         """Create the mysql database for the WPTrackserver tests."""

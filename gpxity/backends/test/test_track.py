@@ -46,14 +46,14 @@ class TrackTests(BasicTest):
         """test initialisation."""
         gpxfile = GpxFile()
         self.assertFalse(gpxfile.public)
-        with self.temp_backend(Directory) as backend:
+        with self.temp_directory() as backend:
             gpxfile = GpxFile()
             gpxfile._set_backend(backend)
             self.assertEqual(len(backend), 0)
             backend.add(gpxfile)
             self.assertEqual(len(backend), 1)
 
-        with self.temp_backend(Directory, count=2) as backend:
+        with self.temp_directory(count=2) as backend:
             backend.add(GpxFile())
             self.assertEqual(len(backend), 3)
 
@@ -62,7 +62,7 @@ class TrackTests(BasicTest):
         remove_directory(test_url)
         self.assertFalse(os.path.exists(test_url))
         try:
-            with self.temp_backend(Directory, url=test_url):
+            with self.temp_directory(url=test_url):
                 self.assertTrue(os.path.exists(test_url))
         finally:
             remove_directory(test_url)
@@ -70,7 +70,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_track_list(self):
         """test list of gpxfiles."""
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             self.assertEqual(len(directory), 0)
             gpxfile1 = GpxFile()
             directory.add(gpxfile1)
@@ -251,7 +251,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_save_dir(self):
         """Correct files?."""
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             os.chmod(directory.url, 0o555)
             gpxfile = self.create_test_track()
             if os.getuid() == 0:
@@ -269,7 +269,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_save(self):
         """save locally."""
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             dir2 = directory.clone()
             try:
                 gpxfile = self.create_test_track()
@@ -380,7 +380,7 @@ class TrackTests(BasicTest):
         """test __str__."""
         gpxfile = GpxFile()
         self.assertNotIn('id:', str(gpxfile))
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             gpxfile = GpxFile()
             gpxfile.title = 'Title'
             gpxfile.category = 'Running'
@@ -456,7 +456,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_symlinks(self):
         """Directory symlinks."""
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             source = os.path.join(directory.url, 'deadlink')
             target = 'deadtarget'
             target_path = os.path.join(directory.url, target)
@@ -470,7 +470,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_fs_encoding(self):
         """fs_encoding."""
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             gpxfile = GpxFile()
             directory.add(gpxfile)
             org_ident = gpxfile.id_in_backend
@@ -490,7 +490,7 @@ class TrackTests(BasicTest):
         try:
             sys.getfilesystemencoding = lambda: 'wrong'
             with self.assertRaises(Backend.BackendException) as context:
-                with self.temp_backend(Directory):
+                with self.temp_directory():
                     pass
             expect = (
                 'Backend Directory needs a unicode file system encoding,'
@@ -541,7 +541,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_in(self):
         """x in backend."""
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             gpxfile = GpxFile()
             directory.add(gpxfile).id_in_backend = '56'
             self.assertEqual(gpxfile.id_in_backend, '56')
@@ -554,7 +554,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_getitem(self):
         """backend[idx]."""
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             directory.scan(now=True)
             gpxfile = GpxFile()
             directory.add(gpxfile).id_in_backend = '56'
@@ -593,15 +593,15 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_header_changes(self):
         """Change fields loaded by gpxfile scan, before _load_full() is done."""
-        with self.temp_backend(Directory, count=1) as backend:
+        with self.temp_directory(count=1) as backend:
             backend2 = backend.clone()
             backend2[0].description = 'test'
             self.assertTrackFileContains(backend2[0], '<trk>')
-        with self.temp_backend(Directory, count=1) as backend:
+        with self.temp_directory(count=1) as backend:
             backend2 = Directory(DirectoryAccount(backend.url))
             backend2[0].title = 'test title'
             self.assertTrackFileContains(backend2[0], '<trk>')
-        with self.temp_backend(Directory, count=1) as backend:
+        with self.temp_directory(count=1) as backend:
             backend2 = Directory(DirectoryAccount(backend.url))
             backend2[0].category = backend2.supported_categories[2]
             self.assertTrackFileContains(backend2[0], '<trk>')
@@ -609,7 +609,7 @@ class TrackTests(BasicTest):
     @skipIf(*disabled(Directory))
     def test_remove_track(self):
         """If a backend has several identical gpxfiles, make sure we remove the right one."""
-        with self.temp_backend(Directory, count=1) as backend:
+        with self.temp_directory(count=1) as backend:
             gpxfile = backend[0]
             track_id = gpxfile.id_in_backend
             gpxfile2 = gpxfile.clone()
@@ -761,7 +761,7 @@ class TrackTests(BasicTest):
                 account = Account(fences=illegal)
 
         points = set(self._random_points())
-        with self.temp_backend(Directory) as directory:
+        with self.temp_directory() as directory:
             accounts = (
                 directory.account,
                 DirectoryAccount('.', fences=None),
