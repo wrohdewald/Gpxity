@@ -1431,12 +1431,14 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         clone = self.clone()
         self.remove()
         try:
-            for segment in clone.segments():
-                gpxfile = self.clone()
-                gpx_track = GPXTrack()
-                gpx_track.segments.append(segment)
-                gpxfile.gpx.tracks = [gpx_track]
-                backend.add(gpxfile)
+            for track_idx, track in enumerate(clone.gpx.tracks):
+                for seg_idx, segment in enumerate(track.segments):
+                    gpxfile = self.clone()
+                    gpx_track = GPXTrack()
+                    gpx_track.segments.append(segment)
+                    gpxfile.gpx.tracks = [gpx_track]
+                    gpxfile.id_in_backend = '{} Trk {} Seg {}'.format(self.id_in_backend, track_idx + 1, seg_idx + 1)
+                    backend.add(gpxfile)
         except BaseException as exc:
             logging.error('split:%s', exc)
             backend.add(clone)
