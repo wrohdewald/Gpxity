@@ -147,6 +147,8 @@
 <ele>32.50</ele>
 <time>2016-09-04T08:14:05Z</time>
 </trkpt>
+</trkseg>
+<trkseg>
 <trkpt lat="52.5194572" lon="13.3823083">
 <ele>32.50</ele>
 <time>2016-09-04T08:14:13Z</time>
@@ -191,6 +193,10 @@
 <ele>33.50</ele>
 <time>2016-09-04T08:16:09Z</time>
 </trkpt>
+</trkseg>
+</trk>
+<trk>
+<trkseg>
 <trkpt lat="52.5205752" lon="13.3852786">
 <ele>31.50</ele>
 <time>2016-09-04T08:16:23Z</time>

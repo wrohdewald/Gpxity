@@ -795,3 +795,28 @@ class TrackTests(BasicTest):
             self.assertEqual(
                 result,
                 all(positions_equal(*x, digits=10) for x in zip(points, enc_dec)), gpxfile)  # noqa
+
+    def test_split_segments(self):
+        """Test GpxFile.split_segments."""
+        # pylint: disable=too-many-locals
+        gpxfile = self._get_track_from_test_file('test')
+        expect_pointcount = gpxfile.gpx.get_track_points_no()
+        with self.assertRaises(Exception, msg='Exception: GpxFile.split_segments() needs a backend'):
+            gpxfile.split_segments()
+        with self.temp_directory() as directory:
+            directory.add(gpxfile)
+            gpxfile.split_segments()
+            filenames = list(sorted(directory._list_gpx()))
+            expect_ids = [gpxfile.id_in_backend]
+            points_found = 0
+            for track_idx, track in enumerate(gpxfile.gpx.tracks):
+                for seg_idx, segment in enumerate(track.segments):
+                    points_found += len(segment.points)
+                    seg_gpxfile_id = '{} Trk {} Seg {}'.format(gpxfile.id_in_backend, track_idx + 1, seg_idx + 1)
+                    expect_ids.append(seg_gpxfile_id)
+                    seg_gpxfile = directory[seg_gpxfile_id]
+                    seg_gpxfile_points = list(seg_gpxfile.points())
+                    for point_idx, point in enumerate(segment.points):
+                        self.assertTrue(positions_equal(point, seg_gpxfile_points[point_idx]))
+            self.assertEqual(points_found, expect_pointcount)
+            self.assertEqual(filenames, expect_ids)
