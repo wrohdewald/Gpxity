@@ -1428,8 +1428,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def split_segments(self):
         """Create separate gpxfiles for every track/segment."""
         backend = self.backend
+        if backend is None:
+            raise Exception('GpxFile.split_segments() needs a backend')
         clone = self.clone()
-        self.remove()
         try:
             for track_idx, track in enumerate(clone.gpx.tracks):
                 for seg_idx, segment in enumerate(track.segments):
