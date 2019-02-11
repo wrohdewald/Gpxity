@@ -512,9 +512,12 @@ class Backend(BackendBase):
         if gpxfile.backend is not self and gpxfile.backend is not None:
             # we do not want clone() loading the gpxfile because
             # that cannot be done with fences applied
+            had_ids = gpxfile.ids
+            had_ids.append(str(gpxfile))
             gpxfile._load_full()
             with gpxfile.fenced(self.account.fences):
                 new_gpxfile = gpxfile.clone()
+                new_gpxfile.ids = had_ids
         else:
             if any(x is gpxfile for x in self.__gpxfiles):
                 raise ValueError(
