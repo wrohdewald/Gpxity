@@ -496,8 +496,6 @@ class Gpx(GPX):
                         needs_break = True
                     elif point.time < prev_point.time:
                         needs_break = True
-                    elif point.distance_2d(prev_point) > 5000:
-                        needs_break = True
                     if needs_break:
                         result = True
                         new_segments.append(new_segment)
