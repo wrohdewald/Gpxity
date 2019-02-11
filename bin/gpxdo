@@ -1125,13 +1125,13 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                                action='store_true', default=False)
         ls_parser.add_argument('--segments', help='show tracks and segments',
                                action='store_true', default=False)
-        ls_parser.add_argument('--long', help='show most useful info',
+        ls_parser.add_argument('-l', '--long', help='show most useful info',
                                action='store_true', default=False)
-        ls_parser.add_argument('--all', help='show all available info',
+        ls_parser.add_argument('-a', '--all', help='show all available info',
                                action='store_true', default=False)
-        ls_parser.add_argument('--title', help='show the title',
+        ls_parser.add_argument('-t', '--title', help='show the title',
                                action='store_true', default=False)
-        ls_parser.add_argument('--category', help='show the category',
+        ls_parser.add_argument('-c', '--category', help='show the category',
                                action='store_true', default=False)
         ls_parser.add_argument('--ids', help='show the ids',
                                action='store_true', default=False)
@@ -1141,17 +1141,17 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                                action='store_true', default=False)
         ls_parser.add_argument('--gap', help='show minutes after a segment before the next one starts',
                                action='store_true', default=False)
-        ls_parser.add_argument('--distance', help='show the distance',
+        ls_parser.add_argument('-m', '--distance', help='show the distance',
                                action='store_true', default=False)
         ls_parser.add_argument('--location', help='show the starting location',
                                action='store_true', default=False)
-        ls_parser.add_argument('--points', help='show the number of points',
+        ls_parser.add_argument('-p', '--points', help='show the number of points',
                                action='store_true', default=False)
         ls_parser.add_argument('--status', help='show the status public/private',
                                action='store_true', default=False)
-        ls_parser.add_argument('--keywords', help='show the keywords',
+        ls_parser.add_argument('-k', '--keywords', help='show the keywords',
                                action='store_true', default=False)
-        ls_parser.add_argument('--description', help='show the description',
+        ls_parser.add_argument('-d', '--description', help='show the description',
                                action='store_true', default=False)
         ls_parser.add_argument('--speed', help='show the average speed',
                                action='store_true', default=False)
