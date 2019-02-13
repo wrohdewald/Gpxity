@@ -198,13 +198,15 @@ class WPTrackserver(Backend):
         return mod_gpx.GPXTrackPoint(
             latitude=float(row[0]),
             longitude=float(row[1]),
-            time=row[2] - time_delta)
+            time=row[2] - time_delta,
+            name=row[3])
 
     def _read_all(self, gpxfile) ->None:
         """Read the full gpxfile."""
         assert gpxfile.id_in_backend
         cursor = self.__exec_mysql(
-            'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [gpxfile.id_in_backend])
+            'select latitude,longitude,occurred,comment from wp_ts_locations where trip_id=%s',
+            [gpxfile.id_in_backend])
         gpxfile.add_points([self.__point(x) for x in cursor.fetchall()])
         gpxfile.gpx.is_complete = True
         self._db.rollback()
@@ -281,7 +283,7 @@ class WPTrackserver(Backend):
         args = [(
             gpxfile.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
             x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0,
-            "", 0.0) for x in points]
+            x.name or '', 0.0) for x in points]
         if args:
             self.__exec_mysql(cmd, args, many=True)
 
