@@ -1468,11 +1468,12 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         Args: segments: Also do that for the first point of each segment.
 
         """
-        self.locate_point()
-        if segments:
-            for track_idx, gpx_track in enumerate(self.gpx.tracks):
-                for seg_idx, _ in enumerate(gpx_track.segments):
-                    self.locate_point(track=track_idx, segment=seg_idx)
+        with self.batch_changes():
+            self.locate_point()
+            if segments:
+                for track_idx, gpx_track in enumerate(self.gpx.tracks):
+                    for seg_idx, _ in enumerate(gpx_track.segments):
+                        self.locate_point(track=track_idx, segment=seg_idx)
 
     def add_segment_waypoints(self):
         """Every segment start gets a waypoint.
