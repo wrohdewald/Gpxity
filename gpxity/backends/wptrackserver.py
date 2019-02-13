@@ -87,7 +87,7 @@ class WPTrackserver(Backend):
         try:
             result = MySQLdb.connect(
                 host=self.url, user=user, passwd=self.account.password, database=database,
-                autocommit=True, charset='utf8')
+                autocommit=False, charset='utf8')
             if self.__cached_db:
                 self.logger.info('reconnected to %s %s', self.url, database)
             else:
@@ -124,6 +124,7 @@ class WPTrackserver(Backend):
             if row is None:
                 raise Backend.BackendException('WPTrackserver: User {} is not known'.format(self.account.username))
             self.__cached_user_id = row[0]
+            self._db.rollback()
         return self.__cached_user_id
 
     def _encode_description(self, gpxfile):
@@ -183,6 +184,7 @@ class WPTrackserver(Backend):
         for _ in cursor.fetchall():
             gpxfile = self._found_gpxfile(str(int(_[0])), self._gpx_from_headers(_))
             gpxfile.distance = _[4] / 1000.0
+        self._db.rollback()
 
     @staticmethod
     def __point(row):
@@ -205,6 +207,7 @@ class WPTrackserver(Backend):
             'select latitude,longitude,occurred from wp_ts_locations where trip_id=%s', [gpxfile.id_in_backend])
         gpxfile.add_points([self.__point(x) for x in cursor.fetchall()])
         gpxfile.gpx.is_complete = True
+        self._db.rollback()
 
     @staticmethod
     def __needs_insert(cursor, ident) -> bool:
@@ -220,6 +223,8 @@ class WPTrackserver(Backend):
 
     def _save_header(self, gpxfile):
         """Write all header fields. May set gpxfile.id_in_backend.
+
+        Part of a mysql transaction.
 
         Be aware that the gpxfile may still have 0 points (all fenced away).
         Returns: The new id_in_backend.
@@ -263,6 +268,7 @@ class WPTrackserver(Backend):
         result = self._save_header(gpxfile)
         self.__exec_mysql('delete from wp_ts_locations where trip_id=%s', [int(result)])
         self.__write_points(gpxfile, gpxfile.points())
+        self._db.commit()
         return result
 
     def __write_points(self, gpxfile, points):
@@ -284,6 +290,7 @@ class WPTrackserver(Backend):
         self.__exec_mysql(cmd, [int(ident)])
         cmd = 'delete from wp_ts_tracks where id=%s'
         self.__exec_mysql(cmd, [int(ident)])
+        self._db.commit()
 
     def _change_ident(self, gpxfile, new_ident: str):
         """Change the id in the backend."""
@@ -297,10 +304,16 @@ class WPTrackserver(Backend):
                 'update wp_ts_tracks set id=%s where id=%s',
                 (new_ident, gpxfile.id_in_backend))
         except _mysql_exceptions.DataError as exc:
+            self._db.rollback()
             raise ValueError(str(exc))
-        self.__exec_mysql(
-            'update wp_ts_locations set trip_id=%s where trip_id=%s',
-            (new_ident, gpxfile.id_in_backend))
+        try:
+            self.__exec_mysql(
+                'update wp_ts_locations set trip_id=%s where trip_id=%s',
+                (new_ident, gpxfile.id_in_backend))
+            self._db.commit()
+        except BaseException:
+            self._db.rollback()
+            raise
 
         self.logger.info('%s: renamed %s to %s', self.account, gpxfile.id_in_backend, new_ident)
         gpxfile.id_in_backend = new_ident
@@ -346,6 +359,7 @@ class WPTrackserver(Backend):
         args = (gpxfile.distance * 1000, gpxfile.id_in_backend)
         self.__exec_mysql(cmd, args)
         self.__write_points(gpxfile, points)
+        self._db.commit()
 
     def __exec_mysql(self, cmd, args, many=False):
         """Wrapper.
