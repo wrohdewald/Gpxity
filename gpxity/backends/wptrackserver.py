@@ -277,10 +277,11 @@ class WPTrackserver(Backend):
         time_delta = utc_to_local_delta()  # WPTrackserver wants local time
         cmd = 'insert into wp_ts_locations(trip_id, latitude, longitude, altitude,' \
             ' occurred, speed, comment, heading)' \
-            ' values(%s, %s, %s, %s, %s, %s, "", 0.0)'
+            ' values(%s, %s, %s, %s, %s, %s, %s, %s)'
         args = [(
             gpxfile.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
-            x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0) for x in points]
+            x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0,
+            "", 0.0) for x in points]
         if args:
             self.__exec_mysql(cmd, args, many=True)
 
