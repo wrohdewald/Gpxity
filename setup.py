@@ -11,7 +11,7 @@ See LICENSE for details.
 """
 
 
-def readall(path) ->str:
+def readall(path):
     """explicitly close the file again.
 
     Returns:
