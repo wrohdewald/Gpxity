@@ -9,7 +9,6 @@
 # eval "$(register-python-argcomplete gpxdo)"
 # or see https://argcomplete.readthedocs.io/en/latest/
 
-
 """
 gpxdo is a command line tool making use of the Gpxity library.
 """
@@ -115,7 +114,7 @@ class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
             if action.choices[0] == GpxFile.categories[0]:
                 choices = list(action.choices)[:4]
                 choices = list(choices)
-                choices.append(' see gpxdo --list-categories')
+                choices.append(' see gpxdo show categories')
                 action.choices = tuple(choices)
         except BaseException:
             pass
@@ -303,8 +302,8 @@ class TotalRow(LsRow):
 
 
 class SubTotalRow(TotalRow):
-
     """A row with a subtotal"""
+
     def __init__(self, rows, mainsort, group_key):
         super(SubTotalRow, self).__init__(rows)
         self[mainsort] = group_key or ''
@@ -362,52 +361,131 @@ class HeaderRow(LsRow):
             self[field.head_ident] = field.header
 
 
-class Utility:
-    """this is where the work is done"""
+class SubCommand:
+    """The mother of all commands"""
 
-    def __init__(self, sphinx=False):
-        # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
-        self.exit_code = 0
-        self.options = None
-        self.subparsers = None
-        logging.basicConfig(format='%(message)s', stream=sys.stdout)
-        self.parser = self.create_parser()
-        if sphinx:
-            return
-        try:
-            argcomplete.autocomplete(self.parser)
-        except NameError:
-            pass
+    help_epilog = """
 
-        if len(sys.argv) < 2:
-            return
+source and destination arguments may be single
+gpxfiles or entire backend instances.
+Local files and directories are given as usual.
 
-        self.apply_parser(self.parser)
-        if self.exit_code:
-            return
+For all other backends, the syntax is:
+    * account: for all gpxfiles in a backend. Example:  g:
+    * account:track_id for one specific gpxfile in a backend. Example: g:1234
 
-        if self.options.list_categories:
-            self.list_categories()
-            return
+Available backends are Directory,MapMytracks, GPSIES, Openrunner, Mailer,WPTrackserver
 
-        if self.options.subparser_name == 'help':
-            # pylint: disable=protected-access
-            self.subparsers._name_parser_map[self.options.subcommand].print_help()
-            return
+The file $HOME/.config/Gpxity/accounts
+defines the account. Example: ::
 
-        logging.getLogger().setLevel(self.options.loglevel.upper())
+    Account g
+        Backend GPSIES
+        Username gpsies_username
+        Password xxxx
+
+Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13T15 or 2019
+
+"""
+
+    subparsers = None
+    name = None
+    options = None
+    sort_choice = (
+        'identifier', 'title', 'category', 'time', 'last-time', 'distance',
+        'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity')
+
+    def __init__(self, **kwargs):
+        self.name = self.__class__.__name__.replace('Command', '').lower()
+        self.cmd_parser = self.subparsers.add_parser(name=self.name, **kwargs)
+        self.cmd_parser.set_defaults(func=self.execute)
+        self.source_gpxfiles = None
         self.similar_to = None
-        try:
-            if hasattr(self.options, 'similar') and self.options.similar:
-                self.similar_to = [Backend.instantiate(x) for x in self.options.similar.split(',')]
-            self.source_gpxfiles = self.parse_sources()
-            self.destination_backend, self.destination_track_id = self.parse_destination()
-            self.options.func()
-        except Exception as _: # pylint: disable=broad-except
-            self.error(_)
+        self.destination_backend = None
+        self.destination_track_id = None
+        self.has_common_args = False
+        self.has_range_args = False
+        self.has_dry_run = False
+
+    @staticmethod
+    def error(msg, exit_code=None):
+        """Prints the error message.
+        Sets the process exit code.
+        With loglevel debug, re-raises the exception."""
+        logging.error(msg)
+        Main.exit_code = exit_code or 1
+        if logging.getLogger().level == logging.DEBUG:
+            raise msg
+
+    def match(self, gpxfile):
+        """Check against the selecting options. Does cheap check first."""
+        # pylint: disable=too-many-return-statements, too-many-branches
+        if self.options.first_date or self.options.last_date:
+            if gpxfile.first_time:
+                if self.options.first_date and gpxfile.first_time < self.options.first_date:
+                    return 'time {} is before {}'.format(gpxfile.first_time, self.options.first_date)
+                if self.options.last_date:
+                    if self.options.last_date.date() and gpxfile.first_time.date() > self.options.last_date.date():
+                        return 'time {} is after {}'.format(gpxfile.first_time, self.options.last_date)
+            else:
+                return 'has no time'
+        if self.options.min_distance and gpxfile.distance < self.options.min_distance:
+            return 'distance {} is below {}'.format(gpxfile.distance, self.options.min_distance)
+        if self.options.max_distance and gpxfile.distance > self.options.max_distance:
+            return 'distance {} is above {}'.format(gpxfile.distance, self.options.max_distance)
+        if self.options.min_speed and gpxfile.speed() < self.options.min_speed:
+            return 'Speed is below {}'.format(self.options.min_speed)
+        if self.options.max_speed and gpxfile.speed() > self.options.max_speed:
+            return 'Speed is above {}'.format(self.options.max_speed)
+        if self.options.min_points and gpxfile.gpx.get_track_points_no() < self.options.min_points:
+            return 'point count {} is below {}'.format(gpxfile.gpx.get_track_points_no(), self.options.min_points)
+        if self.options.max_points is not None and gpxfile.gpx.get_track_points_no() > self.options.max_points:
+            return 'point count {} is above {}'.format(gpxfile.gpx.get_track_points_no(), self.options.max_points)
+        if self.options.only_keywords and not self.options.only_keywords & set(gpxfile.keywords):
+            return 'keywords {} are not in {}'.format(','.join(self.options.only_keywords), ','.join(gpxfile.keywords))
+        if self.options.only_category and gpxfile.category not in self.options.only_category:
+            return '{} is different from {}'.format(','.join(self.options.only_category), ','.join(gpxfile.category))
+        if self.similar_to and gpxfile.similarity(self.similar_to) < 0.5:
+            return 'Similarity {:1.2f} with {} is too small'.format(
+                gpxfile.similarity(self.similar_to), ','.join(x.id_in_backend for x in self.similar_to))
+        return None
+
+    def dry_run(self):
+        """Add dry-run option."""
+        self.has_dry_run = True
+        self.cmd_parser.add_argument(
+            '--dry-run', help='only show what would be done',
+            action='store_true', default=False)
+
+    def destination_must_be_backend(self):
+        """If it is not, raise an exception."""
+        if self.destination_track_id:
+            raise Exception('Destination must not be a single gpxfile:{}'.format(self.options.destination))
+
+    def must_have_single_source(self):
+        """If there is not exactly one source gpxfile, raise an exception.
+
+        Returns: the gpxfile
+
+        """
+        if len(self.source_gpxfiles) != 1:
+            self.error('Only one source gpxfile is allowed because destination gpxfile id is given')
+            return None
+        return self.source_gpxfiles[0]
+
+    def destination_must_support_rename(self):
+        """True if so.
+
+        Returns: True if it does.
+
+        """
+        result = 'rename' in self.destination_backend.supported
+        if not result:
+            self.error('Destination backend does not support changing gpxfile ids')
+        return result
 
     def parse_sources(self):
-        """Parse options.source.
+        """Parse options.
 
         Returns: The list of source gpxfiles.
 
@@ -451,32 +529,144 @@ class Utility:
                 logging.debug('collecting gpxfiles from destination %s', result)
         return result
 
-    def must_have_single_source(self):
-        """If there is not exactly one source gpxfile, raise an exception.
+    def _prepare_options(self):
+        """Prepare commonly used values from options."""
+        # pylint: disable=too-many-branches
+        self.similar_to = None
+        options = self.options
+        if hasattr(options, 'similar') and options.similar:
+            self.similar_to = [Backend.instantiate(x) for x in options.similar.split(',')]
+        if hasattr(options, 'source'):
+            self.source_gpxfiles = self.parse_sources()
+        if hasattr(options, 'destination'):
+            self.destination_backend, self.destination_track_id = self.parse_destination()
 
-        Returns: the gpxfile
+        if self.has_common_args:
+            if self.has_dry_run and options.dry_run:
+                if options.loglevel != 'debug':
+                    options.loglevel = 'info'
+            logging.getLogger().setLevel(SubCommand.options.loglevel.upper())
 
-        """
-        if len(self.source_gpxfiles) != 1:
-            self.error('Only one source gpxfile is allowed because destination gpxfile id is given')
-            return None
-        return self.source_gpxfiles[0]
+        logging.getLogger().setLevel('DEBUG')  # TODO remove
 
-    def destination_must_be_backend(self):
-        """If it is not, raise an exception."""
-        if self.destination_track_id:
-            raise Exception('Destination must not be a single gpxfile:{}'.format(self.options.destination))
+        if self.has_range_args:
+            if options.only_keywords:
+                options.only_keywords = set(x.strip() for x in options.only_keywords.split(','))
+            if options.only_category:
+                options.only_category = set(x.strip() for x in options.only_category.split(','))
+            if options.date:
+                if options.first_date or options.last_date:
+                    logging.error('gpxdo: error: cannot have --date with --first-date or --last-date')
+                    Main.exit_code = 2
+                    return
+                options.first_date = valid_date_argument(options.date, last=False, return_raw=False)
+                options.last_date = valid_date_argument(options.date, last=True, return_raw=False)
+            else:
+                if options.first_date:
+                    options.first_date = valid_date_argument(options.first_date, last=False, return_raw=False)
+                if options.last_date:
+                    options.last_date = valid_date_argument(options.last_date, last=True, return_raw=False)
 
-    def destination_must_support_rename(self):
-        """True if so.
+        if not hasattr(options, 'copy'):
+            options.copy = False
 
-        Returns: True if it does.
+    def execute(self):
+        """Execute the subcommand."""
+        try:
+            self._prepare_options()
+            if Main.exit_code:
+                return
+            self._exec()
+        except Exception as _: # pylint: disable=broad-except
+            self.error(_)
 
-        """
-        result = 'rename' in self.destination_backend.supported
-        if not result:
-            self.error('Destination backend does not support changing gpxfile ids')
-        return result
+    def _exec(self):
+        """The concrete execution."""
+        raise NotImplementedError
+
+    def add_common_args(self, with_ranges=True):
+        """Add common args to parser."""
+        self.has_common_args = True
+        if with_ranges:
+            self.has_range_args = True
+            self.cmd_parser.add_argument(
+                '--first-date', help='Limit gpxfiles by date', metavar='DATE',
+                type=lambda x: valid_date_argument(x, False), default=None)
+            self.cmd_parser.add_argument(
+                '--last-date', help='Limit gpxfiles by date', metavar='DATE',
+                type=lambda x: valid_date_argument(x, True), default=None)
+            self.cmd_parser.add_argument(
+                '--date', help='Limit gpxfiles by specific date',
+                type=lambda x: valid_date_argument(x, False), default=None)
+            self.cmd_parser.add_argument(
+                '--min-points', help='Limit gpxfiles by minimal # of points',
+                metavar='#', type=int, default=None)
+            self.cmd_parser.add_argument(
+                '--max-points', help='Limit gpxfiles by maximal # of points',
+                metavar='#', type=int, default=None)
+            self.cmd_parser.add_argument(
+                '--min-distance', metavar='km',
+                help='Limit gpxfiles by minimal distance', type=int, default=None)
+            self.cmd_parser.add_argument(
+                '--max-distance', metavar='km',
+                help='Limit gpxfiles by maximal distance', type=int, default=None)
+            self.cmd_parser.add_argument(
+                '--min-speed', metavar='km/h',
+                help='Limit gpxfiles by minimal speed', type=int, default=None)
+            self.cmd_parser.add_argument(
+                '--max-speed', metavar='km/h',
+                help='Limit gpxfiles by maximal speed', type=int, default=None)
+            self.cmd_parser.add_argument(
+                '--only-keywords', metavar='WORDS', help='Limit gpxfiles by keywords', default=None)
+            self.cmd_parser.add_argument(
+                '--only-category', help='Limit gpxfiles by category',
+                default=None, choices=GpxFile.categories)
+            self.cmd_parser.add_argument(
+                '--similar', metavar='GPX',
+                help='Limit gpxfiles by similarity to one out of GPX. '
+                'GPX is a list of gpxfiles separated with a comma and no space. '
+                'This will only work for gpxfile identifiers without comma.',
+                default=None)
+
+        self.cmd_parser.add_argument(
+            '--loglevel', help='set the loglevel',
+            choices=('error', 'warning', 'info', 'debug'), default='error')
+
+    def add_multi_source(self, must_have=False):
+        """add --source for one or more gpxfiles or backends"""
+        self.cmd_parser.add_argument(
+            'source', help='one ore more gpxfiles or backends', nargs='+' if must_have else '*')
+
+    def add_destination(self):
+        """add --destination"""
+        self.cmd_parser.add_argument('destination', help='the destination backend')
+
+
+class TitleCommand(SubCommand):
+    """title."""
+
+    def __init__(self):
+        super(TitleCommand, self).__init__(help='set the title')
+        self.cmd_parser.add_argument('title', help='the new title')
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _exec(self):
+        """Sets the title."""
+        for _ in self.source_gpxfiles:
+            _.title = self.options.title
+            logging.info('set title %s for %s', self.options.title, _)
+
+class ShowCommand(SubCommand):
+    """show choices."""
+
+    def __init__(self):
+        super(ShowCommand, self).__init__(help='show things')
+        self.cmd_parser.add_argument('what', help='show', choices=('categories', ))
+
+    def _exec(self):
+        if self.options.what == 'categories':
+            self.list_categories()
 
     @staticmethod
     def list_categories():
@@ -493,81 +683,145 @@ class Utility:
             print('{internal:{width}} {backend_names}'.format(
                 width=max_width, internal=internal_name, backend_names=backend_names))
 
-    def error(self, msg, exit_code=None):
-        """Prints the error message.
-        Sets the process exit code.
-        With loglevel debug, re-raises the exception."""
-        logging.error(msg)
-        self.exit_code = exit_code or 1
-        if logging.getLogger().level == logging.DEBUG:
-            raise msg
 
-    def move(self):
-        """move gpx files.
-        We cannot just do merge() followed by remove() because
-        the source might have gotten new gpxfiles meanwhile, and
-        they would disappear for good."""
-        if self.destination_track_id:
-            self.rename_gpxfile()
-        else:
-            self.move_to_another_backend()
 
-    def move_to_another_backend(self):
-        """Move all source gpxfiles to another backend. Try to keep the id_in_backend."""
+
+class DescriptionCommand(SubCommand):
+    """description."""
+
+    def __init__(self):
+        super(DescriptionCommand, self).__init__(help='set the description')
+        self.cmd_parser.add_argument('description', help='the new description')
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _exec(self):
+        """Sets the description."""
         for _ in self.source_gpxfiles:
-            new_gpxfile = self.destination_backend.add(_)
-            if 'rename' in self.destination_backend.supported:
-                new_gpxfile.id_in_backend = _.id_in_backend
-            _.remove()
-            logging.info('moved %s to %s', _, new_gpxfile)
+            _.description = self.options.description
+            logging.info('set description %s for %s', self.options.description, _)
 
-    def rename_gpxfile(self):
-        """Rename a gpxfile."""
-        if self.destination_must_support_rename():
-            gpxfile = self.must_have_single_source()
-            if gpxfile.backend is not self.destination_backend:
-                new_gpxfile = self.destination_backend.add(gpxfile)
-                new_gpxfile.id_in_backend = self.destination_track_id
-            else:
-                gpxfile.id_in_backend = self.destination_track_id
 
-    def copy(self):
-        """Copy"""
-        if self.destination_track_id:
-            self.copy_gpxfile()
-        else:
-            self.copy_to_another_backend()
+class CategoryCommand(SubCommand):
+    """category."""
 
-    def copy_gpxfile(self):
-        """Copy a gpxfile, using a given target gpxfile id."""
-        if self.destination_must_support_rename():
-            gpxfile = self.must_have_single_source()
-            if self.options.dry_run:
-                logging.info(
-                    'copy %s to %s',
-                    gpxfile, GpxFile.identifier(self.destination_backend, self.destination_track_id))
-            else:
-                new_gpxfile = self.destination_backend.add(gpxfile)
-                new_gpxfile.id_in_backend = self.destination_track_id
+    def __init__(self):
+        super(CategoryCommand, self).__init__(help='set the category')
+        self.cmd_parser.add_argument('category', help='the new category', choices=GpxFile.categories)
+        self.add_common_args()
+        self.add_multi_source()
 
-    def copy_to_another_backend(self):
-        """Copy all sources to another backend."""
-        msg = self.destination_backend.merge(
-            self.source_gpxfiles, dry_run=self.options.dry_run, copy=True)
-        self.destination_backend.flush()
-        for _ in msg:
-            logging.info(_)
-
-    def remove(self):
-        """remove gpxfiles"""
+    def _exec(self):
+        """Sets the category."""
         for _ in self.source_gpxfiles:
-            if self.options.dry_run:
-                logging.info('would remove %s', _)
-            else:
-                _.remove()
-                logging.info('removed %s', _)
+            _.category = self.options.category
+            logging.info('set category %s for %s', self.options.category, _)
 
-    def split(self):
+
+class PrivateCommand(SubCommand):
+    """private."""
+
+    def __init__(self):
+        super(PrivateCommand, self).__init__(help='mark as private')
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _exec(self):
+        """Sets the status to private."""
+        for _ in self.source_gpxfiles:
+            _.public = False
+            logging.info('marked %s as private', _)
+
+
+class PublicCommand(SubCommand):
+    """public."""
+
+    def __init__(self):
+        super(PublicCommand, self).__init__(help='mark as public')
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _exec(self):
+        """Sets the status to private."""
+        for _ in self.source_gpxfiles:
+            _.public = True
+            logging.info('marked %s as public', _)
+
+
+class DiffCommand(SubCommand):
+    """diff."""
+
+    def __init__(self):
+        super(DiffCommand, self).__init__(
+            help="compare gpxfiles between source and destination",
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.add_common_args()
+        self.add_multi_source(must_have=True)
+        self.add_destination()
+
+    def _exec(self):
+        """Compare"""
+        def show_exclusive(side):
+            """shows gpxfiles appearing only on one side."""
+            backends = uniq(x.backend for x in side.exclusive)
+            for backend in backends:
+                logging.error('only in %s:', backend.account)
+                for _ in side.exclusive:
+                    if _.backend is backend:
+                        logging.error('    %s', _)
+                logging.error('')
+        if self.destination_track_id:
+            right_side = self.destination_backend[self.destination_track_id]
+        else:
+            right_side = self.destination_backend
+        differ = BackendDiff(self.source_gpxfiles, right_side)
+        show_exclusive(differ.left)
+        show_exclusive(differ.right)
+
+        backend_pairs = uniq((x.left.backend, x.right.backend) for x in differ.similar)
+
+        # pylint: disable=too-many-nested-blocks
+        for left, right in backend_pairs:
+            logging.error('Differences between %s and %s', left.account, right.account)
+            for pair in differ.similar:
+                if (pair.left.backend, pair.right.backend) == (left, right):
+                    _ = ''.join(x if x in pair.differences else ' ' for x in BackendDiff.diff_flags)
+                    logging.error('-%s  %s', _, pair.left)
+                    logging.error('+%s  %s', _, pair.right)
+                    for key, explain in pair.differences.items():
+                        if explain:
+                            _ = ''.join(x if x == key else ' ' for x in BackendDiff.diff_flags)
+                            for explain_line in explain:
+                                logging.error(' %s  %s', _, explain_line)
+                    logging.error('')
+
+
+class SplitCommand(SubCommand):
+    """split."""
+
+    def __init__(self):
+        super(SplitCommand, self).__init__(
+            help='split points at interesting places',
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+
+        self.cmd_parser.add_argument(
+            '--segments', help='Create one gpxfile for each segment. This is the default.',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--stops', type=int, metavar='minutes',
+            help="""BACKUP your gpxfiles first! This can destroy them!
+            Whenever the time jumps back or more than X minutes into the future
+            or when the distance speed between two points exceed 5km,
+            split into two segments at that point""")
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _prepare_options(self):
+        if not self.options.segments and not self.options.stops:
+            self.options.segments = True
+        super(SplitCommand, self)._prepare_options()
+
+    def _exec(self):
         """Split gpxfiles."""
         for _ in self.source_gpxfiles:
             if self.options.segments:
@@ -575,7 +829,20 @@ class Utility:
             else:
                 _.split_at_stops(self.options.stops)
 
-    def join(self):
+
+class JoinCommand(SubCommand):
+    """join."""
+
+    def __init__(self):
+        super(JoinCommand, self).__init__(
+            help='join gpxfiles into one single gpxfile',
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.cmd_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
+        self.add_common_args()
+        self.add_multi_source()
+        self.add_destination()
+
+    def _exec(self):
         """Join gpxfiles."""
         self.destination_must_be_backend()
         new_gpxfile = self.destination_backend.add(self.source_gpxfiles[0].clone())
@@ -587,6 +854,379 @@ class Utility:
             new_gpxfile.title = self.options.title
             new_gpxfile.id_in_backend = new_gpxfile.title
         new_gpxfile.rewrite()
+
+
+class FixCommand(SubCommand):
+    """fix."""
+
+    def __init__(self):
+        super(FixCommand, self).__init__(
+            help="""try to fix some GPX format bugs in gpxfiles.
+                First BACKUP the gpxfiles! This can destroy them!""",
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.cmd_parser.add_argument(
+            '--orux',
+            help="""BACKUP your gpxfiles first! This can destroy them!
+            Try to fix old oruxmaps bug where the date jumps back by one day""",
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--title-from-id', help='use id for title',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--id-from-title', help='use title for id, works only for Directory',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--id-from-time', help='use time for id, works only for Directory',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--id-from-account', metavar='ACCOUNT',
+            help='use last known id for a gpxfile in account')
+        self.cmd_parser.add_argument(
+            '--simplify', metavar='meters', type=int, default=None,
+            help="""Reduce points within segments. The new track may move meters away from the original.
+                If you want to keep points around stops, apply split --stops first.""")
+        self.cmd_parser.add_argument(
+            '--add-minutes', metavar='minutes',
+            help='Add MIN minutes to all times', type=int, default=None)
+        self.cmd_parser.add_argument(
+            '--clear-times', help='Remove all point times', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--clear-locations', default=False, action='store_true',
+            help='Remove all point locations (point.name). ls --location and cloear --untangle add them')
+        self.cmd_parser.add_argument(
+            '--set-first-time', metavar='TIME',
+            help='Set time of first point, Does not change any other point',
+            type=lambda x: valid_date_argument(x, False), default=None)
+        self.cmd_parser.add_argument(
+            '--set-last-time', metavar='TIME',
+            help='Set time of last point, Does not change any other point',
+            type=lambda x: valid_date_argument(x, False), default=None)
+        self.cmd_parser.add_argument(
+            '--add-times', help='Add a time to all points without',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--add-waypoints', default=False, help="""Gives every segment start a waypoint
+            like "Trk/Seg 2/5 place-name", removes such waypoints if they are no more segment starts""",
+            action='store_true')
+        self.cmd_parser.add_argument(
+            '--unique', default=False, action='store_true',
+            help="""Adjacent points with identical position time: The 2nd point gets 1 second added""")
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _prepare_options(self):
+        """Prepare options."""
+        options = self.options
+        exclusive = ('id_from_title', 'title_from_id', 'id_from_account')
+        if sum([bool(getattr(options, x)) for x in exclusive]) > 1:
+            logging.error('gpxdo: only one out of %s is allowed', ', '.join(exclusive).replace('_', '-'))
+            Main.exit_code = 2
+            return
+        if options.set_first_time:
+            options.set_first_time = valid_date_argument(
+                options.set_first_time, last=False, return_raw=False)
+        if options.set_last_time:
+            options.set_last_time = valid_date_argument(
+                options.set_last_time, last=False, return_raw=False)
+        super(FixCommand, self)._prepare_options()
+
+    def _exec(self):
+        """fix gpxfiles"""
+        # pylint: disable=too-many-branches
+        result_lines = []
+        for fix_gpxfile in self.source_gpxfiles:
+            if self.options.title_from_id:
+                fix_gpxfile.title = fix_gpxfile.id_in_backend
+            if self.options.id_from_title:
+                fix_gpxfile.id_in_backend = fix_gpxfile.title
+            elif self.options.id_from_account:
+                self._fix_id_from_account(fix_gpxfile)
+            elif self.options.id_from_time:
+                if fix_gpxfile.first_time:
+                    fix_gpxfile.id_in_backend = str(fix_gpxfile.first_time).replace(' ', '_')
+            if self.options.orux:
+                result_lines.extend(fix_gpxfile.fix_orux())
+            if self.options.set_first_time:
+                next(fix_gpxfile.points()).time = self.options.set_first_time
+                fix_gpxfile.rewrite()
+            if self.options.set_last_time:
+                fix_gpxfile.last_point().time = self.options.set_last_time
+                fix_gpxfile.rewrite()
+            if self.options.add_times:
+                fix_gpxfile.gpx.add_missing_times()
+                fix_gpxfile.rewrite()
+            if self.options.add_minutes:
+                fix_gpxfile.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
+            if self.options.simplify:
+                point_count = fix_gpxfile.gpx.get_track_points_no()
+                fix_gpxfile.gpx.simplify(self.options.simplify)
+                if fix_gpxfile.gpx.get_track_points_no() != point_count:
+                    logging.info(
+                        '%s: reduced points from %s to %s',
+                        fix_gpxfile, point_count, fix_gpxfile.gpx.get_track_points_no())
+                    fix_gpxfile.rewrite()
+            if self.options.add_waypoints:
+                fix_gpxfile.add_segment_waypoints()
+                fix_gpxfile.rewrite()
+            if self.options.unique:
+                if fix_gpxfile.gpx.remove_duplicate_points():
+                    fix_gpxfile.rewrite()
+        for _ in result_lines:
+            logging.error(_)
+
+    def _fix_id_from_account(self, fix_gpxfile):
+        """Set id from other account."""
+        logging.debug('gpxfile has ids %s', fix_gpxfile.ids)
+        for _ in fix_gpxfile.ids:
+            acc, ident = Backend.parse_objectname(_)
+            if str(acc) == self.options.id_from_account:
+                fix_gpxfile.id_in_backend = ident
+                break
+        else:
+            logging.info(
+                '--id-from-account: Account %s not found, gpxfile %s only has %s',
+                self.options.id_from_account, _, ','.join(fix_gpxfile.ids))
+
+
+class HelpCommand(SubCommand):
+    """help."""
+
+    def __init__(self):
+        super(HelpCommand, self).__init__(help="""Show specific help for a command""")
+        self.cmd_parser.add_argument(
+            'subcommand', nargs='?', choices=SubCommand.subparsers._name_parser_map.keys())  # pylint: disable=protected-access
+        logging.getLogger().setLevel('ERROR')
+
+    def _exec(self):
+        raise Exception("must not happen")
+
+
+class ClearCommand(SubCommand):
+    """clear."""
+
+    def __init__(self):
+        super(ClearCommand, self).__init__(
+            help="""Clear things. Please backup first!""",
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.cmd_parser.add_argument(
+            '--times', help='Remove all point times', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--locations', default=False,
+            help='Remove all point locations (point.name). ls --location adds them', action='store_true')
+        self.cmd_parser.add_argument(
+            '--segments', default=False,
+            help='Join all segments to a single segment', action='store_true')
+        self.cmd_parser.add_argument(
+            '--tracks', default=False, action='store_true',
+            help="""Join all tracks to a single track. Metadata from all but the first track is thrown away.
+                If metadata will be lost, it is printed and nothing is done. Repeat with --force.""")
+        self.cmd_parser.add_argument(
+            '--untangle', action='store_true', default=False,
+            help="""Locate and untangle rest poins: Remove their erratic local movements""")
+        self.cmd_parser.add_argument(
+            '--force', default=False, action='store_true',
+            help='Executes --tracks even if metadata will be lost')
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _exec(self):
+        """Clear things."""
+        for fix_gpxfile in self.source_gpxfiles:
+            if self.options.times:
+                for point in fix_gpxfile.points():
+                    point.time = None
+                fix_gpxfile.rewrite()
+            if self.options.locations:
+                for point in fix_gpxfile.points():
+                    point.name = None
+                fix_gpxfile.rewrite()
+            if self.options.segments:
+                for track in fix_gpxfile.gpx.tracks:
+                    for segment in track.segments[1:]:
+                        track.segments[0].points.extend(segment.points)
+                    track.segments = track.segments[:1]
+                fix_gpxfile.rewrite()
+            if self.options.tracks:
+                for line in fix_gpxfile.join_tracks(force=self.options.force):
+                    print(line)
+            if self.options.untangle:
+                lines = fix_gpxfile.untangle(
+                    force=self.options.force)
+                for line in lines:
+                    print(fix_gpxfile, ':', line)
+
+class KeywordCommand(SubCommand):
+    """keywords."""
+
+    def __init__(self):
+        super(KeywordCommand, self).__init__(
+            help="""add keywords. A keyword preceded with - will be removed. Examples: \n
+                keywords A,-B
+                keywords -- -A""")
+        self.dry_run()
+        self.cmd_parser.add_argument('keywords', help='keywords separated by commas')
+
+    def _exec(self):
+        """add/remove a list of keywords"""
+        for _ in self.source_gpxfiles:
+            old_kw = _.keywords
+            _.change_keywords(self.options.keywords, dry_run=self.options.dry_run)
+            logging.info('%s: %s --> %s', _, old_kw, _.keywords)
+
+class DumpCommand(SubCommand):
+    """dump."""
+
+    def __init__(self):
+        super(DumpCommand, self).__init__(
+            help="""Show specific GPX values""",
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.cmd_parser.add_argument(
+            '--points', help='List detailled info about points',
+            action='store_true', default=False)
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _exec(self):
+        """Dump data."""
+        result_lines = []
+        for _ in self.source_gpxfiles:
+            result_lines.append('------- {} -------'.format(_))
+            if self.options.points:
+                for point0, point1 in pairs(_.points()):
+                    result_lines.append(
+                        '{} -- {}: time={} distance={} speed={}'.format(
+                            point0, point1, point1.time - point0.time,
+                            point1.distance_3d(point0), point1.spointeed_between(point0)))
+
+        for _ in result_lines:
+            logging.error(_)
+
+
+class LsCommand(SubCommand):
+    """ls."""
+
+    def __init__(self):
+        super(LsCommand, self).__init__(
+            help='list gpxfiles',
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.cmd_parser.add_argument(
+            '--sort', metavar='COL', choices=self.sort_choice,
+            help="""sort by one ore more columns, separated by commas (no spaces allowed).
+                Valid values are the column titles.""",
+            type=self.valid_sort_argument, default='identifier')
+        self.cmd_parser.add_argument(
+            '--total', help="""Show a total line""", action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--segments', help='show tracks and segments', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-l', '--long', help='show most useful info', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-a', '--all', help='show all available info', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-t', '--title', help='show the title', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-c', '--category', help='show the category', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--ids', help='show the ids', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--time', help='show the time', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--last-time', help='show the last time', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--gap', help='show minutes after a segment before the next one starts',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-m', '--distance', help='show the distance', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--location', help='show the starting location', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-p', '--points', help='show the number of points', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--status', help='show the status public/private', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-k', '--keywords', help='show the keywords', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '-d', '--description', help='show the description', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--speed', help='show the average speed', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--moving-speed', help='show the average speed in motion', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--duration', help='show the entire duration', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--similarity', help='show the similarity', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--warnings', help='show warnings', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--locate', action='append',
+            help='the name of a place. --locate can be repeated. '
+            'Find gpxfiles touching all locations, order by best match')
+        self.cmd_parser.add_argument(
+            '--max-away', type=float, default=100,
+            help="""to be used with --locate: show only gpxfiles which are not more than MAX_AWAY
+                kilometers farther away from given places.
+                The distance to all places is added to one value and the compared with MAX_AWAY.
+                Default is 100km.""")
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _prepare_options(self):
+        """Prepare options."""
+        options = SubCommand.options
+        if options.long or options.all:
+            options.title = True
+            options.time = True
+            options.category = True
+            options.keywords = True
+            options.distance = True
+            options.status = True
+            if options.all:
+                options.segments = True
+                options.total = True
+                options.warnings = True
+                options.speed = True
+                options.moving_speed = True
+                options.duration = True
+                options.description = True
+                options.points = True
+                options.moving_speed = True
+                options.ids = True
+        if not options.source:
+            options.source = ['.']
+        if options.locate and options.sort != 'identifier':
+            logging.error('gpxdo: --locate implies an order, do not use --sort')
+        if options.gap and not options.segments:
+            logging.error('--gap only works with --segments')
+            Main.exit_code = 2
+        if options.sort:
+            options.sort = options.sort.replace('-', '_')
+        super(LsCommand, self)._prepare_options()
+
+    @classmethod
+    def valid_sort_argument(cls, sort):
+        """Use this in the parser.
+
+        Returns: bool
+
+        """
+        parts = [x.strip().lower() for x in sort.split(',')]
+        for part in parts:
+            if part.lower() not in cls.sort_choice:
+                raise argparse.ArgumentTypeError(
+                    '--sort: {} is not in {}'.format(
+                        part, ','.join(cls.sort_choice)))
+        return ','.join(parts)
+
+    @staticmethod
+    def get_last_time(gpxfile):
+        """Get the last time without date or empty string.
+
+        Returns: A string
+
+        """
+        if gpxfile.last_time:
+            return str(gpxfile.last_time.time())
+        return ''
 
     def __fill_groups(self, rows, mainsort):
         """Returns groups containing matching rows."""
@@ -621,18 +1261,7 @@ class Utility:
                     yield groupkey
                     seen.add(groupkey)
 
-    @staticmethod
-    def get_last_time(gpxfile):
-        """Get the last time without date or empty string.
-
-        Returns: A string
-
-        """
-        if gpxfile.last_time:
-            return str(gpxfile.last_time.time())
-        return ''
-
-    def list_them(self):
+    def _exec(self):
         """list gpxfiles"""
         # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 
@@ -764,160 +1393,123 @@ class Utility:
         for line in all_lines:
             line.print_row()
 
-    def _fix_id_from_account(self, fix_gpxfile):
-        """Set id from other account."""
-        logging.debug('gpxfile has ids %s', fix_gpxfile.ids)
-        for _ in fix_gpxfile.ids:
-            acc, ident = Backend.parse_objectname(_)
-            if str(acc) == self.options.id_from_account:
-                fix_gpxfile.id_in_backend = ident
-                break
+
+class RmCommand(SubCommand):
+    """rm."""
+
+    def __init__(self):
+        super(RmCommand, self).__init__(
+            help='remove gpxfiles',
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.dry_run()
+        self.add_common_args()
+        self.add_multi_source()
+
+    def _exec(self):
+        """remove gpxfiles"""
+        for _ in self.source_gpxfiles:
+            if self.options.dry_run:
+                logging.info('would remove %s', _)
+            else:
+                _.remove()
+                logging.info('removed %s', _)
+
+
+class CpCommand(SubCommand):
+    """cp."""
+
+    def __init__(self):
+        super(CpCommand, self).__init__(
+            help="""
+            copy gpxfiles. This can be much faster for remote backends because
+            gpxfiles with the same points are not merged.""",
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.dry_run()
+        self.add_common_args()
+        self.add_multi_source()
+        self.add_destination()
+
+    def _exec(self):
+        """Copy"""
+        if self.destination_track_id:
+            self.copy_gpxfile()
         else:
-            logging.info(
-                '--id-from-account: Account %s not found, gpxfile %s only has %s',
-                self.options.id_from_account, _, ','.join(fix_gpxfile.ids))
+            self.copy_to_another_backend()
 
-    def fix(self):
-        """fix gpxfiles"""
-        # pylint: disable=too-many-branches
-        result_lines = []
-        for fix_gpxfile in self.source_gpxfiles:
-            if self.options.title_from_id:
-                fix_gpxfile.title = fix_gpxfile.id_in_backend
-            if self.options.id_from_title:
-                fix_gpxfile.id_in_backend = fix_gpxfile.title
-            elif self.options.id_from_account:
-                self._fix_id_from_account(fix_gpxfile)
-            elif self.options.id_from_time:
-                if fix_gpxfile.first_time:
-                    fix_gpxfile.id_in_backend = str(fix_gpxfile.first_time).replace(' ', '_')
-            if self.options.orux:
-                result_lines.extend(fix_gpxfile.fix_orux())
-            if self.options.set_first_time:
-                next(fix_gpxfile.points()).time = self.options.set_first_time
-                fix_gpxfile.rewrite()
-            if self.options.set_last_time:
-                fix_gpxfile.last_point().time = self.options.set_last_time
-                fix_gpxfile.rewrite()
-            if self.options.add_times:
-                fix_gpxfile.gpx.add_missing_times()
-                fix_gpxfile.rewrite()
-            if self.options.add_minutes:
-                fix_gpxfile.adjust_time(datetime.timedelta(minutes=self.options.add_minutes))
-            if self.options.simplify:
-                point_count = fix_gpxfile.gpx.get_track_points_no()
-                fix_gpxfile.gpx.simplify(self.options.simplify)
-                if fix_gpxfile.gpx.get_track_points_no() != point_count:
-                    logging.info(
-                        '%s: reduced points from %s to %s',
-                        fix_gpxfile, point_count, fix_gpxfile.gpx.get_track_points_no())
-                    fix_gpxfile.rewrite()
-            if self.options.add_waypoints:
-                fix_gpxfile.add_segment_waypoints()
-                fix_gpxfile.rewrite()
-            if self.options.unique:
-                if fix_gpxfile.gpx.remove_duplicate_points():
-                    fix_gpxfile.rewrite()
-        for _ in result_lines:
-            logging.error(_)
+    def copy_gpxfile(self):
+        """Copy a gpxfile, using a given target gpxfile id."""
+        if self.destination_must_support_rename():
+            gpxfile = self.must_have_single_source()
+            if self.options.dry_run:
+                logging.info(
+                    'copy %s to %s',
+                    gpxfile, GpxFile.identifier(self.destination_backend, self.destination_track_id))
+            else:
+                new_gpxfile = self.destination_backend.add(gpxfile)
+                new_gpxfile.id_in_backend = self.destination_track_id
 
-    def clear(self):
-        """Clear things."""
-        for fix_gpxfile in self.source_gpxfiles:
-            if self.options.times:
-                for point in fix_gpxfile.points():
-                    point.time = None
-                fix_gpxfile.rewrite()
-            if self.options.locations:
-                for point in fix_gpxfile.points():
-                    point.name = None
-                fix_gpxfile.rewrite()
-            if self.options.segments:
-                for track in fix_gpxfile.gpx.tracks:
-                    for segment in track.segments[1:]:
-                        track.segments[0].points.extend(segment.points)
-                    track.segments = track.segments[:1]
-                fix_gpxfile.rewrite()
-            if self.options.tracks:
-                for line in fix_gpxfile.join_tracks(force=self.options.force):
-                    print(line)
-            if self.options.untangle:
-                lines = fix_gpxfile.untangle(
-                    force=self.options.force)
-                for line in lines:
-                    print(fix_gpxfile, ':', line)
+    def copy_to_another_backend(self):
+        """Copy all sources to another backend."""
+        msg = self.destination_backend.merge(
+            self.source_gpxfiles, dry_run=self.options.dry_run, copy=True)
+        self.destination_backend.flush()
+        for _ in msg:
+            logging.info(_)
 
-    def dump(self):
-        """Dump data."""
-        result_lines = []
-        for _ in self.source_gpxfiles:
-            result_lines.append('------- {} -------'.format(_))
-            if self.options.points:
-                for point0, point1 in pairs(_.points()):
-                    result_lines.append(
-                        '{} -- {}: time={} distance={} speed={}'.format(
-                            point0, point1, point1.time - point0.time,
-                            point1.distance_3d(point0), point1.spointeed_between(point0)))
 
-        for _ in result_lines:
-            logging.error(_)
+class MergeCommand(SubCommand):
+    """merge."""
 
-    def keyword(self):
-        """add/remove a list of keywords"""
-        for _ in self.source_gpxfiles:
-            old_kw = _.keywords
-            _.change_keywords(self.options.keywords, dry_run=self.options.dry_run)
-            logging.info('%s: %s --> %s', _, old_kw, _.keywords)
+    def __init__(self):
+        super(MergeCommand, self).__init__(
+            help="""
+            merge gpxfiles: If their trackpoints are identical, add metadata like name,
+            description or keywords from source to destination""",
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.dry_run()
+        self.cmd_parser.add_argument(
+            '--remove', help='remove merged gpxfiles', action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--partial', help='merges two gpxfiles if one is part of the other',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
+            '--copy', help='If the target is a backend, do not look for similar gpxfile. '
+            'Just copy. This is much faster for remote backends.',
+            action='store_true', default=False)
+        self.add_common_args()
+        self.add_multi_source()
+        self.add_destination()
 
-    def title(self):
-        """Sets the title."""
-        for _ in self.source_gpxfiles:
-            _.title = self.options.title
-            logging.info('set title %s for %s', self.options.title, _)
+    def _prepare_options(self):
+        """Prepare options."""
+        options = self.options
+        if not options.source:
+            options.source = [options.destination]
+        super(MergeCommand, self)._prepare_options()
 
-    def description(self):
-        """Sets the description."""
-        for _ in self.source_gpxfiles:
-            _.description = self.options.description
-            logging.info('set description %s for %s', self.options.description, _)
-
-    def category(self):
-        """Sets the category."""
-        for _ in self.source_gpxfiles:
-            _.category = self.options.category
-            logging.info('set category %s for %s', self.options.category, _)
-
-    def set_public(self, value=True):
-        """Sets the status."""
-        for _ in self.source_gpxfiles:
-            _.public = value
-            logging.info('set status %s for %s', 'public' if value else 'private', _)
-
-    def set_private(self):
-        """Sets the status."""
-        self.set_public(False)
-
-    def merge(self):
+    def _exec(self):
         """Merge"""
         if any(x.backend is self.destination_backend and x.id_in_backend == self.destination_track_id
                for x in self.source_gpxfiles):
             if not self.options.remove:  # pylint: disable=comparison-with-callable
                 msg = 'CAUTION: merging something with itself does nothing. Did you forget --remove?'
                 if len(self.options.source) == 1:
-                    self.exit_code = 2
+                    Main.exit_code = 2
                     raise Exception(msg)
                 else:
                     logging.error(msg)
         if not self.destination_track_id:
             msg = self.destination_backend.merge(
-                self.source_gpxfiles, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
+                self.source_gpxfiles, remove=self.options.remove,
+                dry_run=self.options.dry_run, copy=self.options.copy,
                 partial=self.options.partial)
         else:
             msg = list()
             for _ in self.source_gpxfiles:
                 try:
                     msg.extend(self.destination_backend[self.destination_track_id].merge(
-                        _, remove=self.options.remove, dry_run=self.options.dry_run, copy=self.options.copy,
+                        _, remove=self.options.remove, dry_run=self.options.dry_run,
+                        copy=self.options.copy,
                         partial=self.options.partial))
                 except GpxFile.CannotMerge as exc:
                     msg.append(str(exc))
@@ -926,547 +1518,120 @@ class Utility:
         for _ in msg:
             logging.info(_)
 
-    def diff(self):
-        """Compare"""
-        def show_exclusive(side):
-            """shows gpxfiles appearing only on one side."""
-            backends = uniq(x.backend for x in side.exclusive)
-            for backend in backends:
-                logging.error('only in %s:', backend.account)
-                for _ in side.exclusive:
-                    if _.backend is backend:
-                        logging.error('    %s', _)
-                logging.error('')
+
+class MvCommand(SubCommand):
+    """mv."""
+
+    def __init__(self):
+        super(MvCommand, self).__init__(
+            help='move sources to a destination backend',
+            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+        self.dry_run()
+        self.add_common_args()
+        self.add_multi_source()
+        self.add_destination()
+
+    def _exec(self):
+        """move gpx files.
+        We cannot just do merge() followed by remove() because
+        the source might have gotten new gpxfiles meanwhile, and
+        they would disappear for good."""
         if self.destination_track_id:
-            right_side = self.destination_backend[self.destination_track_id]
+            self.rename_gpxfile()
         else:
-            right_side = self.destination_backend
-        differ = BackendDiff(self.source_gpxfiles, right_side)
-        show_exclusive(differ.left)
-        show_exclusive(differ.right)
+            self.move_to_another_backend()
 
-        backend_pairs = uniq((x.left.backend, x.right.backend) for x in differ.similar)
+    def move_to_another_backend(self):
+        """Move all source gpxfiles to another backend. Try to keep the id_in_backend."""
+        for _ in self.source_gpxfiles:
+            new_gpxfile = self.destination_backend.add(_)
+            if 'rename' in self.destination_backend.supported:
+                new_gpxfile.id_in_backend = _.id_in_backend
+            _.remove()
+            logging.info('moved %s to %s', _, new_gpxfile)
 
-        # pylint: disable=too-many-nested-blocks
-        for left, right in backend_pairs:
-            logging.error('Differences between %s and %s', left.account, right.account)
-            for pair in differ.similar:
-                if (pair.left.backend, pair.right.backend) == (left, right):
-                    _ = ''.join(x if x in pair.differences else ' ' for x in BackendDiff.diff_flags)
-                    logging.error('-%s  %s', _, pair.left)
-                    logging.error('+%s  %s', _, pair.right)
-                    for key, explain in pair.differences.items():
-                        if explain:
-                            _ = ''.join(x if x == key else ' ' for x in BackendDiff.diff_flags)
-                            for explain_line in explain:
-                                logging.error(' %s  %s', _, explain_line)
-                    logging.error('')
-
-    def match(self, gpxfile):
-        """Check against the selecting options. Does cheap check first."""
-        # pylint: disable=too-many-return-statements, too-many-branches
-        if self.options.first_date or self.options.last_date:
-            if gpxfile.first_time:
-                if self.options.first_date and gpxfile.first_time < self.options.first_date:
-                    return 'time {} is before {}'.format(gpxfile.first_time, self.options.first_date)
-                if self.options.last_date:
-                    if self.options.last_date.date() and gpxfile.first_time.date() > self.options.last_date.date():
-                        return 'time {} is after {}'.format(gpxfile.first_time, self.options.last_date)
+    def rename_gpxfile(self):
+        """Rename a gpxfile."""
+        if self.destination_must_support_rename():
+            gpxfile = self.must_have_single_source()
+            if gpxfile.backend is not self.destination_backend:
+                new_gpxfile = self.destination_backend.add(gpxfile)
+                new_gpxfile.id_in_backend = self.destination_track_id
             else:
-                return 'has no time'
-        if self.options.min_distance and gpxfile.distance < self.options.min_distance:
-            return 'distance {} is below {}'.format(gpxfile.distance, self.options.min_distance)
-        if self.options.max_distance and gpxfile.distance > self.options.max_distance:
-            return 'distance {} is above {}'.format(gpxfile.distance, self.options.max_distance)
-        if self.options.min_speed and gpxfile.speed() < self.options.min_speed:
-            return 'Speed is below {}'.format(self.options.min_speed)
-        if self.options.max_speed and gpxfile.speed() > self.options.max_speed:
-            return 'Speed is above {}'.format(self.options.max_speed)
-        if self.options.min_points and gpxfile.gpx.get_track_points_no() < self.options.min_points:
-            return 'point count {} is below {}'.format(gpxfile.gpx.get_track_points_no(), self.options.min_points)
-        if self.options.max_points is not None and gpxfile.gpx.get_track_points_no() > self.options.max_points:
-            return 'point count {} is above {}'.format(gpxfile.gpx.get_track_points_no(), self.options.max_points)
-        if self.options.only_keywords and not self.options.only_keywords & set(gpxfile.keywords):
-            return 'keywords {} are not in {}'.format(','.join(self.options.only_keywords), ','.join(gpxfile.keywords))
-        if self.options.only_category and gpxfile.category not in self.options.only_category:
-            return '{} is different from {}'.format(','.join(self.options.only_category), ','.join(gpxfile.category))
-        if self.similar_to and gpxfile.similarity(self.similar_to) < 0.5:
-            return 'Similarity {:1.2f} with {} is too small'.format(
-                gpxfile.similarity(self.similar_to), ','.join(x.id_in_backend for x in self.similar_to))
-        return None
+                gpxfile.id_in_backend = self.destination_track_id
+
+
+class Main:
+    """this is where the work is done"""
+
+    # pylint: disable=too-few-public-methods
+
+    exit_code = 0
+
+    def __init__(self, sphinx=False):
+        # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
+        Main.exit_code = 0
+        logging.basicConfig(format='%(message)s', stream=sys.stdout)
+        self.parser = self.create_parser()
+        if sphinx:
+            return
+        try:
+            argcomplete.autocomplete(self.parser)
+        except NameError:
+            pass
+
+        if len(sys.argv) < 2:
+            return
+
+        SubCommand.options = self.parser.parse_args()
+        if Main.exit_code:
+            return
+
+        if SubCommand.options.subparser_name == 'help':
+            if SubCommand.options.subcommand is None:
+                self.parser.print_help()
+            else:
+                SubCommand.subparsers._name_parser_map[
+                    SubCommand.options.subcommand].print_help()  # pylint: disable=protected-access
+            return
+
+        SubCommand.options.func()
 
     @staticmethod
-    def add_common_args(parser, with_ranges=True):
-        """Add common args to parser."""
-        if with_ranges:
-            parser.add_argument('--first-date', help='Limit gpxfiles by date', metavar='DATE',
-                                type=lambda x: valid_date_argument(x, False), default=None)
-            parser.add_argument('--last-date', help='Limit gpxfiles by date', metavar='DATE',
-                                type=lambda x: valid_date_argument(x, True), default=None)
-            parser.add_argument('--date', help='Limit gpxfiles by specific date',
-                                type=lambda x: valid_date_argument(x, False), default=None)
-            parser.add_argument('--min-points', help='Limit gpxfiles by minimal # of points',
-                                metavar='#', type=int, default=None)
-            parser.add_argument('--max-points', help='Limit gpxfiles by maximal # of points',
-                                metavar='#', type=int, default=None)
-            parser.add_argument(
-                '--min-distance', metavar='km',
-                help='Limit gpxfiles by minimal distance', type=int, default=None)
-            parser.add_argument(
-                '--max-distance', metavar='km',
-                help='Limit gpxfiles by maximal distance', type=int, default=None)
-            parser.add_argument(
-                '--min-speed', metavar='km/h',
-                help='Limit gpxfiles by minimal speed', type=int, default=None)
-            parser.add_argument(
-                '--max-speed', metavar='km/h',
-                help='Limit gpxfiles by maximal speed', type=int, default=None)
-            parser.add_argument(
-                '--only-keywords', metavar='WORDS', help='Limit gpxfiles by keywords', default=None)
-            parser.add_argument('--only-category', help='Limit gpxfiles by category',
-                                default=None, choices=GpxFile.categories)
-            parser.add_argument(
-                '--similar', metavar='GPX',
-                help='Limit gpxfiles by similarity to one out of GPX. '
-                'GPX is a list of gpxfiles separated with a comma and no space. '
-                'This will only work for gpxfile identifiers without comma.',
-                default=None)
-
-        parser.add_argument(
-            '--loglevel', help='set the loglevel',
-            choices=('none', 'debug', 'info', 'warning', 'error'), default='none')
-        return parser
-
-    @staticmethod
-    def add_multi_source(parser, must_have=False):
-        """add --source for one or more gpxfiles or backends"""
-        parser.add_argument('source', help='one ore more gpxfiles or backends', nargs='+' if must_have else '*')
-
-    @staticmethod
-    def add_destination(parser):
-        """add --destination"""
-        parser.add_argument('destination', help='the destination backend')
-
-    help_epilog = """
-
-source and destination arguments may be single
-gpxfiles or entire backend instances.
-Local files and directories are given as usual.
-
-For all other backends, the syntax is:
-    * account: for all gpxfiles in a backend. Example:  g:
-    * account:track_id for one specific gpxfile in a backend. Example: g:1234
-
-Available backends are Directory,MapMytracks, GPSIES, Openrunner, Mailer,WPTrackserver
-
-The file $HOME/.config/Gpxity/accounts
-defines the account. Example: ::
-
-    Account g
-        Backend GPSIES
-        Username gpsies_username
-        Password xxxx
-
-Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13T15 or 2019
-
-"""
-    sort_choice = (
-        'identifier', 'title', 'category', 'time', 'last-time', 'distance',
-        'points', 'keywords', 'status', 'speed', 'moving-speed', 'duration', 'similarity')
-
-    def define_attr_parser(self, cmd, helptext, func, arg_name=None, arg_help=None, choices=None):
-        """Common code for defining a command for attributes"""
-        result = self.subparsers.add_parser(cmd, help=helptext)
-        result.set_defaults(func=func)
-        if arg_name:
-            result.add_argument(arg_name, help=arg_help, choices=choices)
-        self.add_common_args(result)
-        self.add_multi_source(result)
-        return result
-
-    @classmethod
-    def valid_sort_argument(cls, sort):
-        """Use ths in create_parser.
-
-        Returns: bool
-
-        """
-        parts = [x.strip().lower() for x in sort.split(',')]
-        for part in parts:
-            if part.lower() not in cls.sort_choice:
-                raise argparse.ArgumentTypeError(
-                    '--sort: {} is not in {}'.format(
-                        part, ','.join(cls.sort_choice)))
-        return ','.join(parts)
-
-    def create_parser(self):
-        """into self.options"""
+    def create_parser():
+        """into SubCommand.options"""
         # pylint: disable=too-many-statements, too-many-branches,too-many-locals
-        parser = argparse.ArgumentParser(
+        result = argparse.ArgumentParser(
             'gpxdo', formatter_class=MyHelpFormatter,
-            epilog=self.help_epilog)
-        parser.add_argument(
-            '--list-categories', help='list all categories',
-            action='store_true', default=False)
+            epilog=SubCommand.help_epilog)
 
-        self.subparsers = parser.add_subparsers(dest='subparser_name')
+        SubCommand.subparsers = result.add_subparsers(dest='subparser_name')
 
-        ls_parser = self.subparsers.add_parser(
-            'ls', help='list gpxfiles',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        ls_parser.set_defaults(func=self.list_them)
-        ls_parser.add_argument(
-            '--sort', metavar='COL', choices=self.sort_choice,
-            help="""sort by one ore more columns, separated by commas (no spaces allowed).
-                Valid values are the column titles.""",
-            type=self.valid_sort_argument, default='identifier')
-        ls_parser.add_argument('--total',
-                               help="""Show a total line""",
-                               action='store_true', default=False)
-        ls_parser.add_argument('--segments', help='show tracks and segments',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-l', '--long', help='show most useful info',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-a', '--all', help='show all available info',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-t', '--title', help='show the title',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-c', '--category', help='show the category',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--ids', help='show the ids',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--time', help='show the time',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--last-time', help='show the last time',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--gap', help='show minutes after a segment before the next one starts',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-m', '--distance', help='show the distance',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--location', help='show the starting location',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-p', '--points', help='show the number of points',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--status', help='show the status public/private',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-k', '--keywords', help='show the keywords',
-                               action='store_true', default=False)
-        ls_parser.add_argument('-d', '--description', help='show the description',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--speed', help='show the average speed',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--moving-speed', help='show the average speed in motion',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--duration', help='show the entire duration',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--similarity', help='show the similarity',
-                               action='store_true', default=False)
-        ls_parser.add_argument('--warnings', help='show warnings',
-                               action='store_true', default=False)
-        ls_parser.add_argument(
-            '--locate', action='append',
-            help='the name of a place. --locate can be repeated. '
-            'Find gpxfiles touching all locations, order by best match')
-        ls_parser.add_argument(
-            '--max-away', type=float, default=100,
-            help="""to be used with --locate: show only gpxfiles which are not more than MAX_AWAY
-                kilometers farther away from given places.
-                The distance to all places is added to one value and the compared with MAX_AWAY.
-                Default is 100km.""")
-        self.add_common_args(ls_parser)
-        self.add_multi_source(ls_parser)
-
-        cp_parser = self.subparsers.add_parser(
-            'cp', help="""
-            copy gpxfiles. This can be much faster for remote backends because
-            gpxfiles with the same points are not merged.""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        cp_parser.set_defaults(func=self.copy)
-        cp_parser.add_argument(
-            '--dry-run', help='only show what would change',
-            action='store_true', default=False)
-        self.add_common_args(cp_parser)
-        self.add_multi_source(cp_parser)
-        self.add_destination(cp_parser)
-
-        merge_parser = self.subparsers.add_parser(
-            'merge', help="""
-            merge gpxfiles: If their trackpoints are identical, add metadata like name,
-            description or keywords from source to destination""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        merge_parser.set_defaults(func=self.merge)
-        merge_parser.add_argument('--dry-run', help='only show what would change',
-                                  action='store_true', default=False)
-        merge_parser.add_argument('--remove', help='remove merged gpxfiles',
-                                  action='store_true', default=False)
-        merge_parser.add_argument('--partial',
-                                  help='merges two gpxfiles if one is part of the other',
-                                  action='store_true', default=False)
-        merge_parser.add_argument(
-            '--copy', help='If the target is a backend, do not look for similar gpxfile. '
-            'Just copy. This is much faster for remote backends.',
-            action='store_true', default=False)
-        self.add_common_args(merge_parser)
-        self.add_multi_source(merge_parser)
-        self.add_destination(merge_parser)
-
-        mv_parser = self.subparsers.add_parser(
-            'mv', help='move sources to a destination backend',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        mv_parser.set_defaults(func=self.move)
-        self.add_common_args(mv_parser)
-        self.add_multi_source(mv_parser)
-        self.add_destination(mv_parser)
-
-        rm_parser = self.subparsers.add_parser(
-            'rm', help='remove gpxfiles',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        rm_parser.set_defaults(func=self.remove)
-        rm_parser.add_argument('--dry-run', help='only show what would be removed',
-                               action='store_true', default=False)
-        self.add_common_args(rm_parser)
-        self.add_multi_source(rm_parser)
-
-        split_parser = self.subparsers.add_parser(
-            'split', help='split points at interesting places',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        split_parser.set_defaults(func=self.split)
-        split_parser.add_argument(
-            '--segments', help='Create one gpxfile for each segment. This is the default.',
-            action='store_true', default=False)
-        split_parser.add_argument(
-            '--stops', type=int, metavar='minutes',
-            help="""BACKUP your gpxfiles first! This can destroy them!
-            Whenever the time jumps back or more than X minutes into the future
-            or when the distance speed between two points exceed 5km,
-            split into two segments at that point""")
-        self.add_common_args(split_parser)
-        self.add_multi_source(split_parser)
-
-        join_parser = self.subparsers.add_parser(
-            'join', help='join gpxfiles into one single gpxfile',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        join_parser.set_defaults(func=self.join)
-        join_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
-        self.add_common_args(join_parser)
-        self.add_multi_source(join_parser)
-        self.add_destination(join_parser)
-
-        diff_parser = self.subparsers.add_parser(
-            'diff', help="""
-            compare gpxfiles between source and destination""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        diff_parser.set_defaults(func=self.diff)
-        self.add_common_args(diff_parser)
-        self.add_multi_source(diff_parser, must_have=True)
-        self.add_destination(diff_parser)
-
-        fix_parser = self.subparsers.add_parser(
-            'fix', help="""try to fix some GPX format bugs in gpxfiles.
-                First BACKUP the gpxfiles! This can destroy them!""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        fix_parser.set_defaults(func=self.fix)
-        fix_parser.add_argument(
-            '--orux',
-            help="""BACKUP your gpxfiles first! This can destroy them!
-            Try to fix old oruxmaps bug where the date jumps back by one day""",
-            action='store_true', default=False)
-        fix_parser.add_argument('--title-from-id', help='use id for title',
-                                action='store_true', default=False)
-        fix_parser.add_argument('--id-from-title', help='use title for id, works only for Directory',
-                                action='store_true', default=False)
-        fix_parser.add_argument('--id-from-time', help='use time for id, works only for Directory',
-                                action='store_true', default=False)
-        fix_parser.add_argument(
-            '--id-from-account', metavar='ACCOUNT',
-            help='use last known id for a gpxfile in account')
-        fix_parser.add_argument(
-            '--simplify', metavar='meters', type=int, default=None,
-            help="""Reduce points within segments. The new track may move meters away from the original.
-                If you want to keep points around stops, apply split --stops first.""")
-        fix_parser.add_argument(
-            '--add-minutes', metavar='minutes',
-            help='Add MIN minutes to all times', type=int, default=None)
-        fix_parser.add_argument(
-            '--clear-times', help='Remove all point times', action='store_true', default=False)
-        fix_parser.add_argument(
-            '--clear-locations', default=False, action='store_true',
-            help='Remove all point locations (point.name). ls --location and cloear --untangle add them')
-        fix_parser.add_argument(
-            '--set-first-time', metavar='TIME',
-            help='Set time of first point, Does not change any other point',
-            type=lambda x: valid_date_argument(x, False), default=None)
-        fix_parser.add_argument(
-            '--set-last-time', metavar='TIME',
-            help='Set time of last point, Does not change any other point',
-            type=lambda x: valid_date_argument(x, False), default=None)
-        fix_parser.add_argument(
-            '--add-times', help='Add a time to all points without',
-            action='store_true', default=False)
-        fix_parser.add_argument(
-            '--add-waypoints', default=False, help="""Gives every segment start a waypoint
-            like "Trk/Seg 2/5 place-name", removes such waypoints if they are no more segment starts""",
-            action='store_true')
-        fix_parser.add_argument(
-            '--unique', default=False, action='store_true',
-            help="""Adjacent points with identical position time: The 2nd point gets 1 second added""")
-        self.add_common_args(fix_parser)
-        self.add_multi_source(fix_parser)
-
-        help_parser = self.subparsers.add_parser(
-            'help', help="""Show specific help for a command""")
-        help_parser.add_argument(
-            'subcommand', nargs='?', choices=self.subparsers._name_parser_map.keys())  # pylint: disable=protected-access
-
-        clear_parser = self.subparsers.add_parser(
-            'clear', help="""Clear things. Please backup first!""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        clear_parser.set_defaults(func=self.clear)
-        clear_parser.add_argument(
-            '--times', help='Remove all point times', action='store_true', default=False)
-        clear_parser.add_argument(
-            '--locations', default=False,
-            help='Remove all point locations (point.name). ls --location adds them', action='store_true')
-        clear_parser.add_argument(
-            '--segments', default=False,
-            help='Join all segments to a single segment', action='store_true')
-        clear_parser.add_argument(
-            '--tracks', default=False, action='store_true',
-            help="""Join all tracks to a single track. Metadata from all but the first track is thrown away.
-                If metadata will be lost, it is printed and nothing is done. Repeat with --force.""")
-        clear_parser.add_argument(
-            '--untangle', action='store_true', default=False,
-            help="""Locate and untangle rest poins: Remove their erratic local movements""")
-        clear_parser.add_argument(
-            '--force', default=False, action='store_true',
-            help='Executes --tracks even if metadata will be lost')
-        self.add_common_args(clear_parser)
-        self.add_multi_source(clear_parser)
-
-        keyword_parser = self.define_attr_parser(
-            'keywords', helptext="""add keywords. A keyword preceded with - will be removed. Examples: \n
-                keywords A,-B
-                keywords -- -A""",
-            func=self.keyword,
-            arg_name='keywords', arg_help='keywords separated by commas')
-        keyword_parser.add_argument('--dry-run', help='only show what would be done',
-                                    action='store_true', default=False)
-
-        dump_parser = self.subparsers.add_parser(
-            'dump', help="""Show specific GPX values""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        dump_parser.set_defaults(func=self.dump)
-        dump_parser.add_argument(
-            '--points', help='List detailled info about points',
-            action='store_true', default=False)
-        self.add_common_args(dump_parser)
-        self.add_multi_source(dump_parser)
-
-        self.define_attr_parser(
-            'title', helptext='set the title', func=self.title,
-            arg_name='title', arg_help='the new title')
-
-        self.define_attr_parser(
-            'description', helptext='set the description', func=self.description,
-            arg_name='description', arg_help='the new description')
-
-        self.define_attr_parser(
-            'category', helptext='set the category', func=self.category,
-            arg_name='category', arg_help='the new category',
-            choices=GpxFile.categories)
-
-        self.define_attr_parser(
-            'public', helptext='set the status to public', func=self.set_public)
-        self.define_attr_parser(
-            'private', helptext='set the status to private', func=self.set_private)
-        return parser
-
-    def apply_parser(self, parser):
-        """Prepare parsed options for usage."""
-        # pylint: disable=too-many-branches,too-many-statements
-        self.options = parser.parse_args()
-
-        if self.options.list_categories:
-            return
-
-        if self.options.subparser_name == 'help':
-            self.options.loglevel = 'error'
-            return
-
-        if self.options.subparser_name == 'ls':
-            if self.options.long or self.options.all:
-                self.options.title = True
-                self.options.time = True
-                self.options.category = True
-                self.options.keywords = True
-                self.options.distance = True
-                self.options.status = True
-                if self.options.all:
-                    self.options.segments = True
-                    self.options.total = True
-                    self.options.warnings = True
-                    self.options.speed = True
-                    self.options.moving_speed = True
-                    self.options.duration = True
-                    self.options.description = True
-                    self.options.points = True
-                    self.options.moving_speed = True
-                    self.options.ids = True
-            if not self.options.source:
-                self.options.source = ['.']
-            if self.options.locate and self.options.sort != 'identifier':
-                logging.error('gpxdo: --locate implies an order, do not use --sort')
-            if self.options.gap and not self.options.segments:
-                logging.error('--gap only works with --segments')
-                self.exit_code = 2
-                return
-        elif self.options.subparser_name == 'merge':
-            if not self.options.source:
-                self.options.source = [self.options.destination]
-        elif self.options.subparser_name == 'split':
-            if not self.options.segments and not self.options.stops:
-                self.options.segments = True
-        elif self.options.subparser_name == 'fix':
-            exclusive = ('id_from_title', 'title_from_id', 'id_from_account')
-            if sum([bool(getattr(self.options, x)) for x in exclusive]) > 1:
-                logging.error('gpxdo: only one out of %s is allowed', ', '.join(exclusive).replace('_', '-'))
-                self.exit_code = 2
-                return
-            if self.options.set_first_time:
-                self.options.set_first_time = valid_date_argument(
-                    self.options.set_first_time, last=False, return_raw=False)
-            if self.options.set_last_time:
-                self.options.set_last_time = valid_date_argument(
-                    self.options.set_last_time, last=False, return_raw=False)
-        if self.options.only_keywords:
-            self.options.only_keywords = set(x.strip() for x in self.options.only_keywords.split(','))
-        if self.options.only_category:
-            self.options.only_category = set(x.strip() for x in self.options.only_category.split(','))
-        if not hasattr(self.options, 'copy'):
-            self.options.copy = False
-        if self.options.date:
-            if self.options.first_date or self.options.last_date:
-                logging.error('gpxdo: error: cannot have --date with --first-date or --last-date')
-                self.exit_code = 2
-                return
-            self.options.first_date = valid_date_argument(self.options.date, last=False, return_raw=False)
-            self.options.last_date = valid_date_argument(self.options.date, last=True, return_raw=False)
-        else:
-            if self.options.first_date:
-                self.options.first_date = valid_date_argument(self.options.first_date, last=False, return_raw=False)
-            if self.options.last_date:
-                self.options.last_date = valid_date_argument(self.options.last_date, last=True, return_raw=False)
-        if hasattr(self.options, 'sort'):
-            self.options.sort = self.options.sort.replace('-', '_')
-        if hasattr(self.options, 'dry_run') and self.options.dry_run:
-            if self.options.loglevel != 'debug':
-                self.options.loglevel = 'info'
-        if self.options.loglevel == 'none':
-            self.options.loglevel = 'error'
+        LsCommand()
+        CpCommand()
+        MergeCommand()
+        MvCommand()
+        RmCommand()
+        TitleCommand()
+        KeywordCommand()
+        DescriptionCommand()
+        CategoryCommand()
+        PublicCommand()
+        PrivateCommand()
+        SplitCommand()
+        JoinCommand()
+        DiffCommand()
+        FixCommand()
+        HelpCommand()
+        ClearCommand()
+        DumpCommand()
+        ShowCommand()
+        return result
 
 def parser_for_sphinx():
     """Used by sphinx."""
-    return Utility(sphinx=True).parser
+    return Main(sphinx=True).parser
 
 if __name__ == '__main__':
-    sys.exit(Utility().exit_code)
+    Main()
+    sys.exit(Main.exit_code)
