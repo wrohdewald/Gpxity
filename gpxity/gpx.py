@@ -544,6 +544,11 @@ class Gpx(GPX):
                     elif point.time < prev_point.time:
                         needs_break = True
                     if needs_break:
+                        if len(new_segment.points) == 1:
+                            needs_break = False
+                        elif point.distance_2d(prev_point) > 50:
+                            needs_break = False
+                    if needs_break:
                         result = True
                         new_segments.append(new_segment)
                         new_segment = GPXTrackSegment()
