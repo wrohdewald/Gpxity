@@ -403,9 +403,11 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.similar_to = None
         self.destination_backend = None
         self.destination_track_id = None
-        self.has_common_args = False
-        self.has_range_args = False
+        self.has_select_args = False
         self.has_dry_run = False
+        self.cmd_parser.add_argument(
+            '--loglevel', help='set the loglevel',
+            choices=('error', 'warning', 'info', 'debug'), default='error')
 
     @staticmethod
     def error(msg, exit_code=None):
@@ -541,15 +543,12 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         if hasattr(options, 'destination'):
             self.destination_backend, self.destination_track_id = self.parse_destination()
 
-        if self.has_common_args:
-            if self.has_dry_run and options.dry_run:
-                if options.loglevel != 'debug':
-                    options.loglevel = 'info'
-            logging.getLogger().setLevel(SubCommand.options.loglevel.upper())
+        if self.has_dry_run and options.dry_run:
+            if options.loglevel != 'debug':
+                options.loglevel = 'info'
+        logging.getLogger().setLevel(SubCommand.options.loglevel.upper())
 
-        logging.getLogger().setLevel('DEBUG')  # TODO remove
-
-        if self.has_range_args:
+        if self.has_select_args:
             if options.only_keywords:
                 options.only_keywords = set(x.strip() for x in options.only_keywords.split(','))
             if options.only_category:
@@ -584,53 +583,47 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         """The concrete execution."""
         raise NotImplementedError
 
-    def add_select_args(self, with_ranges=True):
+    def add_select_args(self):
         """Add common args to parser."""
-        self.has_common_args = True
-        if with_ranges:
-            self.has_range_args = True
-            self.cmd_parser.add_argument(
-                '--first-date', help='Limit gpxfiles by date', metavar='DATE',
-                type=lambda x: valid_date_argument(x, False), default=None)
-            self.cmd_parser.add_argument(
-                '--last-date', help='Limit gpxfiles by date', metavar='DATE',
-                type=lambda x: valid_date_argument(x, True), default=None)
-            self.cmd_parser.add_argument(
-                '--date', help='Limit gpxfiles by specific date',
-                type=lambda x: valid_date_argument(x, False), default=None)
-            self.cmd_parser.add_argument(
-                '--min-points', help='Limit gpxfiles by minimal # of points',
-                metavar='#', type=int, default=None)
-            self.cmd_parser.add_argument(
-                '--max-points', help='Limit gpxfiles by maximal # of points',
-                metavar='#', type=int, default=None)
-            self.cmd_parser.add_argument(
-                '--min-distance', metavar='km',
-                help='Limit gpxfiles by minimal distance', type=int, default=None)
-            self.cmd_parser.add_argument(
-                '--max-distance', metavar='km',
-                help='Limit gpxfiles by maximal distance', type=int, default=None)
-            self.cmd_parser.add_argument(
-                '--min-speed', metavar='km/h',
-                help='Limit gpxfiles by minimal speed', type=int, default=None)
-            self.cmd_parser.add_argument(
-                '--max-speed', metavar='km/h',
-                help='Limit gpxfiles by maximal speed', type=int, default=None)
-            self.cmd_parser.add_argument(
-                '--only-keywords', metavar='WORDS', help='Limit gpxfiles by keywords', default=None)
-            self.cmd_parser.add_argument(
-                '--only-category', help='Limit gpxfiles by category',
-                default=None, choices=GpxFile.categories)
-            self.cmd_parser.add_argument(
-                '--similar', metavar='GPX',
-                help='Limit gpxfiles by similarity to one out of GPX. '
-                'GPX is a list of gpxfiles separated with a comma and no space. '
-                'This will only work for gpxfile identifiers without comma.',
-                default=None)
-
+        self.has_select_args = True
         self.cmd_parser.add_argument(
-            '--loglevel', help='set the loglevel',
-            choices=('error', 'warning', 'info', 'debug'), default='error')
+            '--first-date', help='Limit gpxfiles by date', metavar='DATE',
+            type=lambda x: valid_date_argument(x, False), default=None)
+        self.cmd_parser.add_argument(
+            '--last-date', help='Limit gpxfiles by date', metavar='DATE',
+            type=lambda x: valid_date_argument(x, True), default=None)
+        self.cmd_parser.add_argument(
+            '--date', help='Limit gpxfiles by specific date',
+            type=lambda x: valid_date_argument(x, False), default=None)
+        self.cmd_parser.add_argument(
+            '--min-points', help='Limit gpxfiles by minimal # of points',
+            metavar='#', type=int, default=None)
+        self.cmd_parser.add_argument(
+            '--max-points', help='Limit gpxfiles by maximal # of points',
+            metavar='#', type=int, default=None)
+        self.cmd_parser.add_argument(
+            '--min-distance', metavar='km',
+            help='Limit gpxfiles by minimal distance', type=int, default=None)
+        self.cmd_parser.add_argument(
+            '--max-distance', metavar='km',
+            help='Limit gpxfiles by maximal distance', type=int, default=None)
+        self.cmd_parser.add_argument(
+            '--min-speed', metavar='km/h',
+            help='Limit gpxfiles by minimal speed', type=int, default=None)
+        self.cmd_parser.add_argument(
+            '--max-speed', metavar='km/h',
+            help='Limit gpxfiles by maximal speed', type=int, default=None)
+        self.cmd_parser.add_argument(
+            '--only-keywords', metavar='WORDS', help='Limit gpxfiles by keywords', default=None)
+        self.cmd_parser.add_argument(
+            '--only-category', help='Limit gpxfiles by category',
+            default=None, choices=GpxFile.categories)
+        self.cmd_parser.add_argument(
+            '--similar', metavar='GPX',
+            help='Limit gpxfiles by similarity to one out of GPX. '
+            'GPX is a list of gpxfiles separated with a comma and no space. '
+            'This will only work for gpxfile identifiers without comma.',
+            default=None)
 
     def add_multi_source(self, must_have=False):
         """add --source for one or more gpxfiles or backends"""
