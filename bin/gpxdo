@@ -538,11 +538,6 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         options = self.options
         if hasattr(options, 'similar') and options.similar:
             self.similar_to = [Backend.instantiate(x) for x in options.similar.split(',')]
-        if hasattr(options, 'source'):
-            self.source_gpxfiles = self.parse_sources()
-        if hasattr(options, 'destination'):
-            self.destination_backend, self.destination_track_id = self.parse_destination()
-
         if self.has_dry_run and options.dry_run:
             if options.loglevel != 'debug':
                 options.loglevel = 'info'
@@ -568,6 +563,11 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
         if not hasattr(options, 'copy'):
             options.copy = False
+        if hasattr(options, 'source'):
+            self.source_gpxfiles = self.parse_sources()
+        if hasattr(options, 'destination'):
+            self.destination_backend, self.destination_track_id = self.parse_destination()
+
 
     def execute(self):
         """Execute the subcommand."""
