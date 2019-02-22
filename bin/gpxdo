@@ -584,7 +584,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         """The concrete execution."""
         raise NotImplementedError
 
-    def add_common_args(self, with_ranges=True):
+    def add_select_args(self, with_ranges=True):
         """Add common args to parser."""
         self.has_common_args = True
         if with_ranges:
@@ -648,7 +648,7 @@ class TitleCommand(SubCommand):
     def __init__(self):
         super(TitleCommand, self).__init__(help='set the title')
         self.cmd_parser.add_argument('title', help='the new title')
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -692,7 +692,7 @@ class DescriptionCommand(SubCommand):
     def __init__(self):
         super(DescriptionCommand, self).__init__(help='set the description')
         self.cmd_parser.add_argument('description', help='the new description')
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -708,7 +708,7 @@ class CategoryCommand(SubCommand):
     def __init__(self):
         super(CategoryCommand, self).__init__(help='set the category')
         self.cmd_parser.add_argument('category', help='the new category', choices=GpxFile.categories)
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -723,7 +723,7 @@ class PrivateCommand(SubCommand):
 
     def __init__(self):
         super(PrivateCommand, self).__init__(help='mark as private')
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -738,7 +738,7 @@ class PublicCommand(SubCommand):
 
     def __init__(self):
         super(PublicCommand, self).__init__(help='mark as public')
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -755,7 +755,7 @@ class DiffCommand(SubCommand):
         super(DiffCommand, self).__init__(
             help="compare gpxfiles between source and destination",
             epilog=self.help_epilog, formatter_class=MyHelpFormatter)
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source(must_have=True)
         self.add_destination()
 
@@ -813,7 +813,7 @@ class SplitCommand(SubCommand):
             Whenever the time jumps back or more than X minutes into the future
             or when the distance speed between two points exceed 5km,
             split into two segments at that point""")
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _prepare_options(self):
@@ -838,7 +838,7 @@ class JoinCommand(SubCommand):
             help='join gpxfiles into one single gpxfile',
             epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         self.cmd_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
         self.add_destination()
 
@@ -911,7 +911,7 @@ class FixCommand(SubCommand):
         self.cmd_parser.add_argument(
             '--unique', default=False, action='store_true',
             help="""Adjacent points with identical position time: The 2nd point gets 1 second added""")
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _prepare_options(self):
@@ -1026,7 +1026,7 @@ class ClearCommand(SubCommand):
         self.cmd_parser.add_argument(
             '--force', default=False, action='store_true',
             help='Executes --tracks even if metadata will be lost')
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -1083,7 +1083,7 @@ class DumpCommand(SubCommand):
         self.cmd_parser.add_argument(
             '--points', help='List detailled info about points',
             action='store_true', default=False)
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -1167,7 +1167,7 @@ class LsCommand(SubCommand):
                 kilometers farther away from given places.
                 The distance to all places is added to one value and the compared with MAX_AWAY.
                 Default is 100km.""")
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _prepare_options(self):
@@ -1402,7 +1402,7 @@ class RmCommand(SubCommand):
             help='remove gpxfiles',
             epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         self.dry_run()
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
 
     def _exec(self):
@@ -1425,7 +1425,7 @@ class CpCommand(SubCommand):
             gpxfiles with the same points are not merged.""",
             epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         self.dry_run()
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
         self.add_destination()
 
@@ -1476,7 +1476,7 @@ class MergeCommand(SubCommand):
             '--copy', help='If the target is a backend, do not look for similar gpxfile. '
             'Just copy. This is much faster for remote backends.',
             action='store_true', default=False)
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
         self.add_destination()
 
@@ -1527,7 +1527,7 @@ class MvCommand(SubCommand):
             help='move sources to a destination backend',
             epilog=self.help_epilog, formatter_class=MyHelpFormatter)
         self.dry_run()
-        self.add_common_args()
+        self.add_select_args()
         self.add_multi_source()
         self.add_destination()
 
