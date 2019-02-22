@@ -24,6 +24,7 @@ from collections import defaultdict
 import subprocess
 import logging
 import textwrap
+import statistics
 from contextlib import contextmanager
 import curses
 
@@ -42,10 +43,11 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import GpxFile, Directory, Backend, BackendDiff, Locate
+from gpxity import GpxFile, Memory, Directory, Backend, BackendDiff, Locate
 from gpxity.util import uniq, collect_gpxfiles, pairs, ColorStreamHandler
 from gpxity.util import utc_datetime, local_datetime
 from gpxity.gpx import Gpx
+from gpxity import MemoryAccount
 
 def __last_month_day(date):
     """Return last day of month.
@@ -134,6 +136,52 @@ class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
         """Override."""
         with self.short_choices(action):
             return super(MyHelpFormatter, self)._expand_help(action)
+
+
+class GpxFileValidator:
+    """Validate a GpxFile. Has it really been done?"""
+
+    # pylint: disable=too-few-public-methods
+    def __init__(self, gpxfile, against=None):
+        self.gpxfile = gpxfile
+        self.against = against
+
+    def rows(self):
+        """Free text rows with validation info.
+
+        Returns: list(FreeTextRow)
+
+        """
+        result = list()
+        mem = Memory(MemoryAccount(str(self.gpxfile.backend.account)))
+        memtrk = mem.add(self.gpxfile)
+        memtrk.gpx.clear_segments()
+        memtrk.split_at_stops(1)
+        memtrk.split_segments()
+        speeds = [x.moving_speed() for x in mem]
+        speed_standard_deviation = round(statistics.pstdev(speeds), 2)
+        if speed_standard_deviation > 2:
+            is_ok = 'OK'
+            level = logging.INFO
+        else:
+            is_ok = 'too small'
+            level = logging.ERROR
+        result.append(GpxFileFreeTextRow(level, 'standard deviation of speed {} is {}'.format(
+            speed_standard_deviation, is_ok)))
+
+        if self.against is not None:
+            similarity = mem[0].similarity([self.against])
+            level = logging.ERROR
+            if similarity > 0.8:
+                is_ok = 'very high'
+            elif similarity < 0.3:
+                is_ok = 'very low'
+            else:
+                is_ok = 'normal'
+                level = logging.INFO
+            result.append(GpxFileFreeTextRow(level, 'similarity {} is {}'.format(similarity, is_ok)))
+
+        return result
 
 
 class LsField:
@@ -1177,8 +1225,13 @@ class LsCommand(SubCommand):
                 kilometers farther away from given places.
                 The distance to all places is added to one value and the compared with MAX_AWAY.
                 Default is 100km.""")
+        self.cmd_parser.add_argument(
+            '--validate-against', metavar='ROUTE',
+            help='Check if the track has really been done against the predefined ROUTE',
+            default=None)
         self.add_select_args()
         self.add_multi_source()
+        self.against = None
 
     def _prepare_options(self):
         """Prepare options."""
@@ -1210,6 +1263,9 @@ class LsCommand(SubCommand):
             Main.exit_code = 2
         if options.sort:
             options.sort = options.sort.replace('-', '_')
+        if self.options.validate_against:
+            self.against = Backend.instantiate(self.options.validate_against)
+
         super(LsCommand, self)._prepare_options()
 
     @classmethod
@@ -1281,7 +1337,6 @@ class LsCommand(SubCommand):
                 # GpxFile() objects for each segment without connection to backend.
                 gpxfile.add_locations(segments=self.options.segments)
 
-
         list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.gpxdo_identifier),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
@@ -1312,7 +1367,7 @@ class LsCommand(SubCommand):
         if 'moving_speed' in LsRow.visible_headers():
             LsRow.find_by_head_ident('moving_duration').is_needed = True
             LsRow.find_by_head_ident('moving_distance').is_needed = True
-        if self.options.segments:
+        if self.options.segments or self.options.validate_against:
             LsField(False, 'track', lambda x: x).is_needed = True
 
         if self.options.warnings:
@@ -1372,7 +1427,8 @@ class LsCommand(SubCommand):
                             seg_lines.append(segment_line)
                     if len(seg_lines) > 1:
                         group_lines.extend(seg_lines)
-
+                if self.against:
+                    group_lines.extend(GpxFileValidator(line['track'], against=self.against).rows())
             if self.options.total and mainsort in ('category', 'time', 'status'):
                 total_line = SubTotalRow(group_tracks, mainsort, group_key)
                 group_lines.append(total_line)
@@ -1600,8 +1656,8 @@ class Main:
             if SubCommand.options.subcommand is None:
                 self.parser.print_help()
             else:
-                SubCommand.subparsers._name_parser_map[
-                    SubCommand.options.subcommand].print_help()  # pylint: disable=protected-access
+                SubCommand.subparsers._name_parser_map[  # pylint: disable=protected-access
+                    SubCommand.options.subcommand].print_help()
             return
 
         SubCommand.options.func()
