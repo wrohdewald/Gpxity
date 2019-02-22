@@ -397,7 +397,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
 
     def __init__(self, **kwargs):
         self.name = self.__class__.__name__.replace('Command', '').lower()
-        self.cmd_parser = self.subparsers.add_parser(name=self.name, **kwargs)
+        self.cmd_parser = self.subparsers.add_parser(name=self.name, formatter_class=MyHelpFormatter, **kwargs)
         self.cmd_parser.set_defaults(func=self.execute)
         self.source_gpxfiles = None
         self.similar_to = None
@@ -747,7 +747,7 @@ class DiffCommand(SubCommand):
     def __init__(self):
         super(DiffCommand, self).__init__(
             help="compare gpxfiles between source and destination",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.add_select_args()
         self.add_multi_source(must_have=True)
         self.add_destination()
@@ -795,7 +795,7 @@ class SplitCommand(SubCommand):
     def __init__(self):
         super(SplitCommand, self).__init__(
             help='split points at interesting places',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
 
         self.cmd_parser.add_argument(
             '--segments', help='Create one gpxfile for each segment. This is the default.',
@@ -829,7 +829,7 @@ class JoinCommand(SubCommand):
     def __init__(self):
         super(JoinCommand, self).__init__(
             help='join gpxfiles into one single gpxfile',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.cmd_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
         self.add_select_args()
         self.add_multi_source()
@@ -856,7 +856,7 @@ class FixCommand(SubCommand):
         super(FixCommand, self).__init__(
             help="""try to fix some GPX format bugs in gpxfiles.
                 First BACKUP the gpxfiles! This can destroy them!""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.cmd_parser.add_argument(
             '--orux',
             help="""BACKUP your gpxfiles first! This can destroy them!
@@ -1000,7 +1000,7 @@ class ClearCommand(SubCommand):
     def __init__(self):
         super(ClearCommand, self).__init__(
             help="""Clear things. Please backup first!""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.cmd_parser.add_argument(
             '--times', help='Remove all point times', action='store_true', default=False)
         self.cmd_parser.add_argument(
@@ -1072,7 +1072,7 @@ class DumpCommand(SubCommand):
     def __init__(self):
         super(DumpCommand, self).__init__(
             help="""Show specific GPX values""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.cmd_parser.add_argument(
             '--points', help='List detailled info about points',
             action='store_true', default=False)
@@ -1101,7 +1101,7 @@ class LsCommand(SubCommand):
     def __init__(self):
         super(LsCommand, self).__init__(
             help='list gpxfiles',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.cmd_parser.add_argument(
             '--sort', metavar='COL', choices=self.sort_choice,
             help="""sort by one ore more columns, separated by commas (no spaces allowed).
@@ -1393,7 +1393,7 @@ class RmCommand(SubCommand):
     def __init__(self):
         super(RmCommand, self).__init__(
             help='remove gpxfiles',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.dry_run()
         self.add_select_args()
         self.add_multi_source()
@@ -1416,7 +1416,7 @@ class CpCommand(SubCommand):
             help="""
             copy gpxfiles. This can be much faster for remote backends because
             gpxfiles with the same points are not merged.""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.dry_run()
         self.add_select_args()
         self.add_multi_source()
@@ -1458,7 +1458,7 @@ class MergeCommand(SubCommand):
             help="""
             merge gpxfiles: If their trackpoints are identical, add metadata like name,
             description or keywords from source to destination""",
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.dry_run()
         self.cmd_parser.add_argument(
             '--remove', help='remove merged gpxfiles', action='store_true', default=False)
@@ -1518,7 +1518,7 @@ class MvCommand(SubCommand):
     def __init__(self):
         super(MvCommand, self).__init__(
             help='move sources to a destination backend',
-            epilog=self.help_epilog, formatter_class=MyHelpFormatter)
+            epilog=self.help_epilog)
         self.dry_run()
         self.add_select_args()
         self.add_multi_source()
