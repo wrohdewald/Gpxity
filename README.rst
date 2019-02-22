@@ -17,6 +17,7 @@ The library currently implements those backends:
     few MMT commands (just what oruxmaps uses for uploading)
   * :class:`~gpxity.backends.wptrackserver.WPTrackserver`: For the Wordpress plugin Trackserver
   * :class:`~gpxity.backends.mailer.Mailer`: Mails gpxfiles
+  * :class:`~gpxity.backends.memory.Memory`: Keep everything in RAM only
 
 Some backends might not support everything Gxpity wants and you will get the
 exception NotImplementedError().

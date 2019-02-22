@@ -12,6 +12,7 @@ Changelog
   * Gpx.split_segment_after()
   * gpxdo clear --untangle
   * gpxdo help, gpxdo help ls
+  * new backend Memory
 
 1.6.0 release 2019-01-31
 ------------------------

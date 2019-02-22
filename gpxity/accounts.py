@@ -15,7 +15,7 @@ import tempfile
 
 from gpxpy.geo import Location
 
-__all__ = ['Account', 'DirectoryAccount']
+__all__ = ['Account', 'DirectoryAccount', 'MemoryAccount']
 
 
 class Fences:  # pylint: disable=too-few-public-methods
@@ -330,3 +330,49 @@ class DirectoryAccount(Account):
         if self.name == '/':
             return '/'
         return self.name + '/'
+
+
+class MemoryAccount(Account):
+
+    """This will only use kwargs for configuration.
+
+    Args:
+        kwargs: Additional parameters added to the account. They have precedence.
+
+    Attributes:
+        name: The name of the account
+        config: A dict with all config values
+        backend: The name of the backend class
+        is_temporary: True for temporary directories.
+        fences: The backend will never write points within fences.
+            You can define any number of fences separated by spaces. Every fence is a circle.
+            It has the form Lat/Long/meter.
+            Lat and Long are the center position in decimal degrees, meter is the radius.
+        prefix (str):  Class attribute, may be changed. The default prefix for
+            temporary directories. Default value is :literal:`gpxity.`
+
+    """
+
+    # pylint: disable=too-few-public-methods
+
+    counter = 0
+
+    def __init__(self, name=None, **kwargs):  # pylint: disable=super-init-not-called
+        """Create an Account."""
+        self.config = dict()
+        self.config['backend'] = 'Memory'
+        for key, value in kwargs.items():
+            self.config[key.lower()] = value
+        if name is None:
+            name = 'in_memory_{}'.format(MemoryAccount.counter)
+            MemoryAccount.counter += 1
+        self.name = name
+        self._resolve_fences()
+
+    def __repr__(self):
+        """For debugging output.
+
+        Returns: the str
+
+        """
+        return 'MemoryAccount({})'.format(self.name) + ':'

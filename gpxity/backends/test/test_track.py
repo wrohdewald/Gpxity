@@ -28,7 +28,7 @@ from .basic import BasicTest, disabled
 from ... import GpxFile, Backend, Account, DirectoryAccount
 from ...backend_base import BackendBase
 from ...gpx import Gpx
-from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver
+from .. import Directory, MMT, GPSIES, Mailer, TrackMMT, WPTrackserver, Memory
 from .. import Openrunner
 from ...util import repr_timespan, positions_equal, remove_directory
 
@@ -271,13 +271,14 @@ class TrackTests(BasicTest):
         """save locally."""
         with self.temp_directory() as directory:
             dir2 = directory.clone()
+            self.assertEqual(len(dir2), len(directory))
             try:
                 gpxfile = self.create_test_track()
                 directory.add(gpxfile)
                 self.assertEqual(len(directory), 1)
                 aclone = gpxfile.clone()
                 self.assertEqualTracks(gpxfile, aclone)
-
+                dir2.scan()
                 self.assertEqual(len(dir2), 1)
 
                 gpxfile2 = gpxfile.clone()
@@ -676,7 +677,7 @@ class TrackTests(BasicTest):
     def test_all_backend_classes(self):
         """Test Backend.all_backend_classes."""
         all_classes = [x.__name__ for x in Backend.all_backend_classes()]
-        expected = [Directory, GPSIES, MMT, Mailer, Openrunner, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, MMT, Mailer, Memory, Openrunner, TrackMMT, WPTrackserver]
         expected = [x.__name__ for x in expected if not x.is_disabled()]
         self.assertEqual(all_classes, expected)
 
@@ -738,9 +739,7 @@ class TrackTests(BasicTest):
 
     def test_parse_objectname_other(self):
         """Test Backend.parse_objectname for other than Directory."""
-        for cls in Backend.all_backend_classes():
-            if cls is Directory:
-                continue
+        for cls in Backend.all_backend_classes(exclude=[Memory, Directory]):
             acc_name = cls.__name__.lower() + '_unittest'
             cases = (
                 (acc_name + ':', acc_name + ':', cls.__name__, None),

@@ -5,6 +5,7 @@
 
 """define things that should be visible to the user."""
 
+from .memory import *
 from .directory import *
 from .mmt import *
 from .gpsies import *

@@ -73,3 +73,12 @@ gpxity.backends.wptrackserver module
     :undoc-members:
     :show-inheritance:
     :exclude-members: load_full, skip_test
+
+gpxity.backends.memory module
+-----------------------------
+
+.. automodule:: gpxity.backends.memory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: load_full, prefix, skip_test

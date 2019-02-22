@@ -19,7 +19,8 @@ from .version import *
 
 __all__ = [
     'Gpx', 'GpxFile', 'Fences', 'Lifetrack', 'Locate', 'Directory', 'GPSIES', 'MMT', 'TrackMMT', 'Openrunner',
-    'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION', 'Account', 'DirectoryAccount']
+    'BackendDiff', 'WPTrackserver', 'Mailer', 'VERSION', 'Account', 'DirectoryAccount',
+    'Memory', 'MemoryAccount']
 
 
 def prepare_backends():

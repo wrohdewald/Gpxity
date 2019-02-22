@@ -16,8 +16,8 @@ import tempfile
 from unittest import skipIf
 
 from .basic import BasicTest, disabled
-from .. import Directory, MMT, GPSIES, TrackMMT, Mailer, WPTrackserver, Openrunner
-from ... import GpxFile, Lifetrack, Backend, Account, DirectoryAccount
+from .. import Memory, Directory, MMT, GPSIES, TrackMMT, Mailer, WPTrackserver, Openrunner
+from ... import GpxFile, Lifetrack, Backend, Account, MemoryAccount, DirectoryAccount
 from ...util import remove_directory
 
 # pylint: disable=attribute-defined-outside-init
@@ -55,6 +55,10 @@ class TestBackends(BasicTest):
             'own_categories',
             'write_add_keywords', 'write_remove_keywords', 'write_category',
             'write_description', 'write_public', 'write_title'}
+        expect_unsupported[Memory] = {
+            'own_categories',
+            'write_add_keywords', 'write_remove_keywords', 'write_category',
+            'write_description', 'write_public', 'write_title'}
         for cls in Backend.all_backend_classes():
             with self.tst_backend(cls):
                 self.assertTrue(
@@ -69,7 +73,7 @@ class TestBackends(BasicTest):
     def test_all_backends(self):
         """Check if Backend.all_backend_classes works."""
         backends = Backend.all_backend_classes()
-        expected = [Directory, GPSIES, MMT, Mailer, Openrunner, TrackMMT, WPTrackserver]
+        expected = [Directory, GPSIES, MMT, Mailer, Memory, Openrunner, TrackMMT, WPTrackserver]
         expected = [x for x in expected if not x.is_disabled()]
         self.assertEqual(backends, expected)
 
@@ -77,7 +81,9 @@ class TestBackends(BasicTest):
         """Test access with Account=None."""
         for cls in Backend.all_backend_classes():
             with self.tst_backend(cls):
-                if cls is Directory:
+                if cls is Memory:
+                    backend = cls(MemoryAccount())
+                elif cls is Directory:
                     backend = cls(DirectoryAccount())
                 else:
                     backend = cls(Account())
@@ -148,7 +154,7 @@ class TestBackends(BasicTest):
 
     def test_open_wrong_username(self):
         """Open backends with username missing in Account."""
-        for cls in Backend.all_backend_classes(exclude=[Directory, Mailer, TrackMMT, Openrunner]):
+        for cls in Backend.all_backend_classes(exclude=[Memory, Directory, Mailer, TrackMMT, Openrunner]):
             # Openrunner allows arbitrary user names
             with self.tst_backend(cls):
                 with self.assertRaises(cls.BackendException):
@@ -156,11 +162,10 @@ class TestBackends(BasicTest):
 
     def test_open_wrong_password(self):
         """Open backends with wrong password."""
-        for cls in Backend.all_backend_classes(needs={'scan'}):
+        for cls in Backend.all_backend_classes(needs={'scan'}, exclude=[Directory, Memory]):
             with self.tst_backend(cls):
-                if not issubclass(cls, Directory):
-                    with self.assertRaises(cls.BackendException):
-                        self.setup_backend(cls, test_name='wrong_password').scan(now=True)
+                with self.assertRaises(cls.BackendException):
+                    self.setup_backend(cls, test_name='wrong_password').scan(now=True)
 
     @skipIf(*disabled(Directory))
     def test_match(self):
@@ -474,7 +479,7 @@ class TestBackends(BasicTest):
             life.update(points[50:])
             life.end()
 
-        for cls in Backend.all_backend_classes():
+        for cls in Backend.all_backend_classes(needs={'write'}):
             with self.tst_backend(cls):
                 with self.temp_directory() as local_serverdirectory:
                     local_serverdirectory.account.config['id_method'] = 'counter'
@@ -749,6 +754,9 @@ class TestBackends(BasicTest):
             elif cls is WPTrackserver:
                 failing = ('', 'a', '/', 19, True, False, 5.0, '2147483648')
                 working = ('8', '17', '2147483647')
+            elif cls is Memory:
+                failing = ('', 19, True, False, 5.0)
+                working = ('8', '17', '2147483647', '.', '/', 'ä')
             else:
                 raise Exception('untested class {}'.format(cls))
             with self.tst_backend(cls):

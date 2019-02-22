@@ -392,6 +392,7 @@ class Backend(BackendBase):
             unsaved = [x for x in self.__gpxfiles if x.id_in_backend is None]
             if self.__match is not None:
                 for gpxfile in unsaved:
+                    # side effect: raises exception if no match
                     self.matches(gpxfile, 'scan')
             self.__gpxfiles = unsaved
             if 'scan' in self.supported:

@@ -28,8 +28,8 @@ import gpxpy
 from gpxpy.gpx import GPXTrackPoint
 from gpxpy.geo import LocationDelta
 
-from ... import GpxFile, Backend, Account, DirectoryAccount
-from .. import Mailer, WPTrackserver, Directory, GPSIES, Openrunner, MMT
+from ... import GpxFile, Backend, Account, MemoryAccount, DirectoryAccount
+from .. import Memory, Mailer, WPTrackserver, Directory, GPSIES, Openrunner, MMT
 from ...util import remove_directory
 from ...gpx import Gpx
 
@@ -356,7 +356,9 @@ class BasicTest(unittest.TestCase):
         if isinstance(category, int):
             category = cls_.decode_category(cls_.supported_categories[category])
 
-        if cls_ is Directory:
+        if cls_ is Memory:
+            account = MemoryAccount()
+        elif cls_ is Directory:
             account = DirectoryAccount(url)
         else:
             assert url is None
