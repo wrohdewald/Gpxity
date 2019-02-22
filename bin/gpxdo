@@ -745,9 +745,7 @@ class DiffCommand(SubCommand):
     """diff."""
 
     def __init__(self):
-        super(DiffCommand, self).__init__(
-            help="compare gpxfiles between source and destination",
-            epilog=self.help_epilog)
+        super(DiffCommand, self).__init__(help='compare gpxfiles between source and destination')
         self.add_select_args()
         self.add_multi_source(must_have=True)
         self.add_destination()
@@ -793,9 +791,7 @@ class SplitCommand(SubCommand):
     """split."""
 
     def __init__(self):
-        super(SplitCommand, self).__init__(
-            help='split points at interesting places',
-            epilog=self.help_epilog)
+        super(SplitCommand, self).__init__(help='split points at interesting places')
 
         self.cmd_parser.add_argument(
             '--segments', help='Create one gpxfile for each segment. This is the default.',
@@ -828,8 +824,7 @@ class JoinCommand(SubCommand):
 
     def __init__(self):
         super(JoinCommand, self).__init__(
-            help='join gpxfiles into one single gpxfile',
-            epilog=self.help_epilog)
+            help='join gpxfiles into one single gpxfile')
         self.cmd_parser.add_argument('--title', help='Title and id for the new gpxfile', default=None)
         self.add_select_args()
         self.add_multi_source()
@@ -855,8 +850,7 @@ class FixCommand(SubCommand):
     def __init__(self):
         super(FixCommand, self).__init__(
             help="""try to fix some GPX format bugs in gpxfiles.
-                First BACKUP the gpxfiles! This can destroy them!""",
-            epilog=self.help_epilog)
+                First BACKUP the gpxfiles! This can destroy them!""")
         self.cmd_parser.add_argument(
             '--orux',
             help="""BACKUP your gpxfiles first! This can destroy them!
@@ -998,9 +992,7 @@ class ClearCommand(SubCommand):
     """clear."""
 
     def __init__(self):
-        super(ClearCommand, self).__init__(
-            help="""Clear things. Please backup first!""",
-            epilog=self.help_epilog)
+        super(ClearCommand, self).__init__(help='Clear things. Please backup first!')
         self.cmd_parser.add_argument(
             '--times', help='Remove all point times', action='store_true', default=False)
         self.cmd_parser.add_argument(
@@ -1070,9 +1062,7 @@ class DumpCommand(SubCommand):
     """dump."""
 
     def __init__(self):
-        super(DumpCommand, self).__init__(
-            help="""Show specific GPX values""",
-            epilog=self.help_epilog)
+        super(DumpCommand, self).__init__(help='Show specific GPX values')
         self.cmd_parser.add_argument(
             '--points', help='List detailled info about points',
             action='store_true', default=False)
@@ -1099,9 +1089,7 @@ class LsCommand(SubCommand):
     """ls."""
 
     def __init__(self):
-        super(LsCommand, self).__init__(
-            help='list gpxfiles',
-            epilog=self.help_epilog)
+        super(LsCommand, self).__init__(help='list gpxfiles')
         self.cmd_parser.add_argument(
             '--sort', metavar='COL', choices=self.sort_choice,
             help="""sort by one ore more columns, separated by commas (no spaces allowed).
@@ -1391,9 +1379,7 @@ class RmCommand(SubCommand):
     """rm."""
 
     def __init__(self):
-        super(RmCommand, self).__init__(
-            help='remove gpxfiles',
-            epilog=self.help_epilog)
+        super(RmCommand, self).__init__(help='remove gpxfiles')
         self.dry_run()
         self.add_select_args()
         self.add_multi_source()
@@ -1415,8 +1401,7 @@ class CpCommand(SubCommand):
         super(CpCommand, self).__init__(
             help="""
             copy gpxfiles. This can be much faster for remote backends because
-            gpxfiles with the same points are not merged.""",
-            epilog=self.help_epilog)
+            gpxfiles with the same points are not merged.""")
         self.dry_run()
         self.add_select_args()
         self.add_multi_source()
@@ -1457,8 +1442,7 @@ class MergeCommand(SubCommand):
         super(MergeCommand, self).__init__(
             help="""
             merge gpxfiles: If their trackpoints are identical, add metadata like name,
-            description or keywords from source to destination""",
-            epilog=self.help_epilog)
+            description or keywords from source to destination""")
         self.dry_run()
         self.cmd_parser.add_argument(
             '--remove', help='remove merged gpxfiles', action='store_true', default=False)
@@ -1516,9 +1500,7 @@ class MvCommand(SubCommand):
     """mv."""
 
     def __init__(self):
-        super(MvCommand, self).__init__(
-            help='move sources to a destination backend',
-            epilog=self.help_epilog)
+        super(MvCommand, self).__init__(help='move sources to a destination backend')
         self.dry_run()
         self.add_select_args()
         self.add_multi_source()
