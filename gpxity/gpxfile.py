@@ -971,6 +971,8 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """
         if self is other:
             return True
+        if not self.points_equal(other, digits=5):
+            return False
         return self.key() == other.key()
 
     def __lt__(self, other) ->bool:
