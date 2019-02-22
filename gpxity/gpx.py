@@ -1002,3 +1002,10 @@ class Gpx(GPX):
                 delattr(_, 'speed_after')
                 delattr(_, 'weight')
             delattr(self, 'all_points')
+
+    def clear_segments(self):
+        """For each track, combine all segments into one."""
+        for track in self.tracks:
+            for segment in track.segments[1:]:
+                track.segments[0].points.extend(segment.points)
+            track.segments = track.segments[:1]

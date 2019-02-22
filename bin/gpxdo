@@ -1026,10 +1026,7 @@ class ClearCommand(SubCommand):
                     point.name = None
                 fix_gpxfile.rewrite()
             if self.options.segments:
-                for track in fix_gpxfile.gpx.tracks:
-                    for segment in track.segments[1:]:
-                        track.segments[0].points.extend(segment.points)
-                    track.segments = track.segments[:1]
+                fix_gpxfile.gpx.clear_segments()
                 fix_gpxfile.rewrite()
             if self.options.tracks:
                 for line in fix_gpxfile.join_tracks(force=self.options.force):
