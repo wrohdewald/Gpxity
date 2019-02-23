@@ -133,7 +133,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         # to the backend.
         self.__header_cache = dict()
 
-        self._similarity_others = weakref.WeakValueDictionary()
+        self._similarity_others = weakref.WeakValueDictionary()  # other Gpxfiles pointing back to us
         self._similarities = dict()
         self.__without_fences = None  # used by context manager "fenced()"
         self.gpx = gpx
@@ -286,10 +286,12 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     def _clear_similarity_cache(self):
         """Clear similarities cache, also in the other similar gpxfiles."""
-        for other in self._similarity_others.values():
-            del other._similarity_others[id(self)]
+        for other in list(self._similarity_others.values()):
+            if id(self) in other._similarity_others:
+                del other._similarity_others[id(self)]
             # TODO: unittest where other does not exist anymore
-            del other._similarities[id(self)]
+            if id(self) in other._similarities:
+                del other._similarities[id(self)]
         self._similarity_others = weakref.WeakValueDictionary()
         self._similarities = dict()
 
