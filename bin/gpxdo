@@ -159,9 +159,12 @@ class LsField:
 
     def total(self, rows):
         """Returns True if this field is summable"""
+        result = ''
         if self.type_ in (int, float, datetime.timedelta):
-            return sum([x[self.head_ident] for x in rows], self.type_())
-        return ''
+            result = sum([x[self.head_ident] for x in rows], self.type_())
+            if self.head_ident == 'similarity':
+                result /= len(rows)
+        return result
 
     def zero(self):
         """Returns a zero value"""
