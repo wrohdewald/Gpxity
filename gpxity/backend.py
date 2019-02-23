@@ -482,16 +482,10 @@ class Backend(BackendBase):
         No gpxfile already existing in this backend will be overwritten.
         If  :attr:`GpxFile.id_in_backend <gpxity.gpxfile.GpxFile.id_in_backend>`
         is not given, the backend will create a unique value. If it is given,
-        the backend will raise an exception with the exception of
-        :class:`~gpxity.backends.directory.Directory` which will append
-        a number to make it unique.
+        the backend will try to use it or create a new value at its discretion.
 
         Note that some backends may reject a gpxfile if it is very
         similar to an existing gpxfile even if it belongs to some other user.
-
-        If :attr:`GpxFile.id_in_backend <gpxity.gpxfile.GpxFile.id_in_backend>` is given,
-        the Backend may use it or not. Some always assign it themselves like
-        :class:`~gpxity.backends.mmt.MMT`.
 
         If the gpxfile object is already in the list of gpxfiles, raise ValueError.
 
@@ -518,6 +512,11 @@ class Backend(BackendBase):
             with gpxfile.fenced(self.account.fences):
                 new_gpxfile = gpxfile.clone()
                 new_gpxfile.ids = had_ids
+                try:
+                    self._check_id_legal(gpxfile.id_in_backend)
+                    new_gpxfile.id_in_backend = gpxfile.id_in_backend
+                except ValueError:
+                    pass
         else:
             if any(x is gpxfile for x in self.__gpxfiles):
                 raise ValueError(
@@ -542,16 +541,6 @@ class Backend(BackendBase):
                 new_gpxfile.id_in_backend = None
                 new_gpxfile._set_backend(None)
             raise
-
-    def _new_ident(self, gpxfile) ->str:
-        """Create an id for gpxfile.
-
-        Returns:
-            The new ident. If the backend does not
-            create an ident in advance, return None. Such
-            backends will return a new ident after writing.
-
-        """
 
     def _rewrite(self, gpxfile, changes):
         """Rewrite the full gpxfile.

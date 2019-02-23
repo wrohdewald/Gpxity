@@ -296,19 +296,19 @@ class TrackTests(BasicTest):
                 self.assertEqual(len(directory), 2)
                 self.assertEqual(len(dir2), 3)
                 directory.scan()  # we changed it through dir2
-                self.assertEqual(len(directory), 4)
+                self.assertEqual(len(directory), 3)
                 dir2.scan()
-                self.assertEqual(len(directory), 4)
+                self.assertEqual(len(directory), 3)
                 title = 'whatevertitle'
                 for _ in dir2:
                     _.id_in_backend = title
                 trunk = os.path.join(directory.url, title)
-                expected_names = [trunk + x + '.gpx' for x in ('.1', '.2', '.3', '')]
+                expected_names = [trunk + x + '.gpx' for x in ('.1', '.2', '')]
                 files = sorted(
                     os.path.join(directory.url, x)
                     for x in os.listdir(directory.url) if x.endswith('.gpx'))
                 self.assertEqual(files, expected_names)
-                self.assertEqual(len(dir2), 4)
+                self.assertEqual(len(dir2), 3)
                 directory.scan()
                 dir2.merge(directory, remove=True)
                 self.assertEqual(len(dir2), 1)
