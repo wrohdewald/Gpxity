@@ -157,9 +157,11 @@ class LsField:
         self.max_length = 0
         LsRow.fields.append(self)
 
-    def is_summable(self):
+    def total(self, rows):
         """Returns True if this field is summable"""
-        return self.type_ in (int, float, datetime.timedelta)
+        if self.type_ in (int, float, datetime.timedelta):
+            return sum([x[self.head_ident] for x in rows], self.type_())
+        return ''
 
     def zero(self):
         """Returns a zero value"""
@@ -285,11 +287,7 @@ class TotalRow(LsRow):
     def __init__(self, rows):
         super(TotalRow, self).__init__()
         for field in LsRow.needed_fields():
-            if field.is_summable():
-                for _ in rows:
-                    self[field.head_ident] += _[field.head_ident]
-            elif self[field.head_ident] == field.zero():
-                self[field.head_ident] = ''
+            self[field.head_ident] = field.total(rows)
         for speed_ident, duration_ident, distance_ident in (
                 ('speed', 'duration', 'distance'), ('moving_speed', 'moving_duration', 'moving_distance')):
             if speed_ident in self:
