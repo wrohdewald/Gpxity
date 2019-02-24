@@ -540,8 +540,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         # pylint: disable=too-many-branches
         self.similar_to = None
         options = self.options
-        if hasattr(options, 'similar') and options.similar:
-            self.similar_to = [Backend.instantiate(x) for x in options.similar.split(',')]
+        if hasattr(options, 'only_similar') and options.only_similar:
+            self.similar_to = [Backend.instantiate(x) for x in options.only_similar.split(',')]
         if self.has_dry_run and options.dry_run:
             if options.loglevel != 'debug':
                 options.loglevel = 'info'
@@ -623,7 +623,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             '--only-category', help='Limit gpxfiles by category',
             default=None, choices=GpxFile.categories)
         self.cmd_parser.add_argument(
-            '--similar', metavar='GPX',
+            '--only-similar', metavar='GPX',
             help='Limit gpxfiles by similarity to one out of GPX. '
             'GPX is a list of gpxfiles separated with a comma and no space. '
             'This will only work for gpxfile identifiers without comma.',
