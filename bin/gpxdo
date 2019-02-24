@@ -451,7 +451,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             return 'keywords {} are not in {}'.format(','.join(self.options.only_keywords), ','.join(gpxfile.keywords))
         if self.options.only_category and gpxfile.category not in self.options.only_category:
             return '{} is different from {}'.format(','.join(self.options.only_category), ','.join(gpxfile.category))
-        if self.similar_to and gpxfile.similarity(self.similar_to) < 0.5:
+        if self.similar_to and gpxfile.similarity(self.similar_to) < self.options.min_similarity:
             return 'Similarity {:1.2f} with {} is too small'.format(
                 gpxfile.similarity(self.similar_to), ','.join(x.id_in_backend for x in self.similar_to))
         return None
@@ -628,6 +628,9 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
             'GPX is a list of gpxfiles separated with a comma and no space. '
             'This will only work for gpxfile identifiers without comma.',
             default=None)
+        self.cmd_parser.add_argument(
+            '--min-similarity', type=float, default=0.5, metavar='LEVEL',
+            help='Limit gpxfiles by minimal LEVEL of similarity. 0 is minimum value, 1 is identity. Default is 0.5')
 
     def add_multi_source(self, must_have=False):
         """add --source for one or more gpxfiles or backends"""
