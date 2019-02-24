@@ -279,9 +279,9 @@ class LsRow(dict):
             _ = field.format_raw(self[field.head_ident])
             right = '>' if field.type_ in (int, float) else ''
             raw_fields.append('{value:{right}{width}}'.format(right=right, width=field.max_length, value=_))
-        logging.error(LsField.separator.join(raw_fields))
+        print(LsField.separator.join(raw_fields))
         for _ in self.continuations:
-            logging.error(_)
+            print(_)
 
 
 class TotalRow(LsRow):
@@ -502,7 +502,7 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
                 try:
                     sources.append(Backend.instantiate(_))
                 except FileNotFoundError as exc:
-                    print(exc)
+                    logging.error(exc)
 
             gpxfiles = collect_gpxfiles(sources)
             for gpxfile in gpxfiles:
@@ -1031,12 +1031,12 @@ class ClearCommand(SubCommand):
                 fix_gpxfile.rewrite()
             if self.options.tracks:
                 for line in fix_gpxfile.join_tracks(force=self.options.force):
-                    print(line)
+                    logging.info(line)
             if self.options.untangle:
                 lines = fix_gpxfile.untangle(
                     force=self.options.force)
                 for line in lines:
-                    print(fix_gpxfile, ':', line)
+                    logging.info('%s: %s', fix_gpxfile, line)
 
 class KeywordCommand(SubCommand):
     """keywords."""
