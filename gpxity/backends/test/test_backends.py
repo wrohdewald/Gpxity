@@ -110,7 +110,7 @@ class TestBackends(BasicTest):
             with self.tst_backend(cls):
                 with self.temp_backend(cls) as backend:
                     gpxfile = GpxFile()
-                    if cls in (MMT, TrackMMT, GPSIES, Openrunner):
+                    if cls in (MMT, TrackMMT, GPSIES, Openrunner, WPTrackserver):
                         with self.assertRaises(cls.BackendException):
                             backend.add(gpxfile)
                     else:
@@ -762,6 +762,7 @@ class TestBackends(BasicTest):
             with self.tst_backend(cls):
                 with self.temp_backend(cls) as backend:
                     gpxfile = GpxFile()
+                    gpxfile.add_points(self._random_points(count=1))
                     backend.add(gpxfile)
                     orig_id = gpxfile.id_in_backend
                     for _ in failing:

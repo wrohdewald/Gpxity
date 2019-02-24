@@ -234,27 +234,31 @@ class WPTrackserver(Backend):
         """
         description = self._encode_description(gpxfile)
         title = gpxfile.title[:self._max_length['title']]
-        # 1970-01-01 01:00:00 does not work. This is the local time but the minimal value 1970-01-01 ... is UTC
-        track_time = gpxfile.first_time or Gpx.undefined_date
+        if gpxfile.gpx.get_track_points_no() == 0:
+            raise self.BackendException(
+                'WPTrackserver: _save_header called, but we have no points in {}'.format(gpxfile))
+        if not gpxfile.first_time:
+            raise self.BackendException(
+                'WPTrackserver: _save_header gets no first_time in {}'.format(gpxfile))
         track_distance = gpxfile.distance * 1000
         cursor = self._db.cursor()
         if self.__needs_insert(cursor, gpxfile.id_in_backend):
             if gpxfile.id_in_backend is None:
                 cmd = 'insert into wp_ts_tracks(user_id,name,created,comment,distance,source)' \
                     ' values(%s,%s,%s,%s,%s,%s)'
-                args = (self._user_id, title, track_time, description, track_distance, '')
+                args = (self._user_id, title, gpxfile.first_time, description, track_distance, '')
                 cursor = self.__exec_mysql(cmd, args)
                 gpxfile.id_in_backend = str(int(cursor.lastrowid))
             else:
                 self.__exec_mysql(
                     'insert into wp_ts_tracks(id,user_id,name,created,comment,distance,source) '
                     ' values(%s,%s,%s,%s,%s,%s,%s)',
-                    (gpxfile.id_in_backend, self._user_id, title, track_time, description, track_distance, ''))
+                    (gpxfile.id_in_backend, self._user_id, title, gpxfile.first_time, description, track_distance, ''))
                 self.logger.error('wptrackserver wrote missing header with id=%s', gpxfile.id_in_backend)
         else:
             self.__exec_mysql(
                 'update wp_ts_tracks set name=%s,created=%s,comment=%s,distance=%s where id=%s',
-                (title, track_time, description, track_distance, gpxfile.id_in_backend))
+                (title, gpxfile.first_time, description, track_distance, gpxfile.id_in_backend))
         return gpxfile.id_in_backend
 
     def _write_all(self, gpxfile) ->str:
@@ -344,6 +348,7 @@ class WPTrackserver(Backend):
             new_ident: New gpxfile id
 
         """
+        assert points
         new_ident = self._save_header(gpxfile)
         self._lifetrack_update(gpxfile, points)
         return new_ident
