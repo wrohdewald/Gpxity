@@ -1453,6 +1453,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         Saves that in point.name for caching. If backend.account.country is given,
         add the country name only if it is different.
+        If no such point exists, just do nothing and return "nowhere"
 
         Args:
             track, segment, point: Indices into the respective arrays
@@ -1460,7 +1461,10 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         Returns: A string
 
         """
-        result, located = self.gpx.locate_point(track, segment, point)
+        try:
+            result, located = self.gpx.locate_point(track, segment, point)
+        except IndexError:
+            return 'nowhere'
         if located:
             if self.backend is not None:
                 self.rewrite()
