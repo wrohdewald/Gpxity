@@ -116,6 +116,32 @@ class TestBackends(BasicTest):
                         with self.assertRaises(cls.BackendException):
                             backend.add(gpxfile)
 
+    def test_rewrite_empty(self):
+        """Remove all points and rewrite a gpxfile."""
+
+        def check(cls):
+            """The real check."""
+            backend.add(gpxfile)
+            gpxfile.gpx.tracks[0].segments[0].points = list()
+            if backend.accepts_zero_points:
+                gpxfile.rewrite()
+            else:
+                with self.assertRaises(cls.BackendException):
+                    gpxfile.rewrite()
+
+        for cls in Backend.all_backend_classes(needs={'write'}):
+            with self.tst_backend(cls):
+                with self.temp_backend(cls) as backend:
+                    gpxfile = GpxFile()
+                    gpxfile.add_points(self._random_points(count=1))
+                    if cls is TrackMMT:
+                        with self.temp_directory() as serverdirectory:
+                            serverdirectory.account.config['id_method'] = 'counter'
+                            with self.lifetrackserver(serverdirectory.url):
+                                check(cls)
+                    else:
+                        check(cls)
+
     @skipIf(*disabled(Directory))
     def test_directory_backend(self):
         """Manipulate backend."""
@@ -486,10 +512,9 @@ class TestBackends(BasicTest):
             life.update_trackers(points[50:])
             life.end()
 
-        fence_variants = (('', 2), ('0/0/5000000000', 1))
-        fence_variants = (('0/0/5000000000', 1), )
+        fence_variants = (None, '0/0/5000000000',)
 
-        for fence_variant, expect_gpxfiles in fence_variants:
+        for fence_variant in fence_variants:
             fences = Fences(fence_variant)
             for cls in Backend.all_backend_classes(needs={'write'}):
                 with self.tst_backend(cls, subtest='fences:{}'.format(fence_variant or 'None')):
@@ -507,17 +532,27 @@ class TestBackends(BasicTest):
                                     self.assertBackendLength(local_serverdirectory, 2)
                                     local_ids = [x.id_in_backend for x in local_serverdirectory]
                                     self.assertEqual(local_ids, ['1', '2'])
-                                    if cls is TrackMMT:
+                                    if cls is TrackMMT and not fences:
                                         remote_serverdirectory.scan()
                                         self.assertSameTracks(local_serverdirectory, remote_serverdirectory)
                                     elif cls is Mailer:
+                                        self.logger.debug('uplink.history:')
+                                        for _ in uplink.history:
+                                            self.logger.debug('    %s', _)
+                                        mails_per_track = 2 if fences else 3
                                         self.assertEqual(
-                                            len(uplink.history), 3 * expect_gpxfiles,
+                                            len(uplink.history), 2 * mails_per_track,
                                             'Mailer.history: {}'.format(uplink.history))
-                                        for _ in range(expect_gpxfiles):
-                                            self.assertIn('Lifetracking starts', uplink.history[_ * 3])
-                                            self.assertIn('Lifetracking continues', uplink.history[_ * 3 + 1])
-                                            self.assertIn('Lifetracking ends', uplink.history[_ * 3 + 2])
+                                        for _ in range(2):
+                                            self.assertIn('Lifetracking starts', uplink.history[_ * mails_per_track])
+                                            if mails_per_track == 2:
+                                                self.assertIn(
+                                                    'Lifetracking ends', uplink.history[_ * mails_per_track + 1])
+                                            else:
+                                                self.assertIn(
+                                                    'Lifetracking continues', uplink.history[_ * mails_per_track + 1])
+                                                self.assertIn(
+                                                    'Lifetracking ends', uplink.history[_ * mails_per_track + 2])
                                     else:
                                         uplink.scan()
                                         if uplink.accepts_zero_points:
