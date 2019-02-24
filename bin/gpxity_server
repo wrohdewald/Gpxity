@@ -381,8 +381,8 @@ class MMTHandler(BaseHTTPRequestHandler):
             for _ in same_ip_done_trackers:
                 if _.sender_ip in trackers:
                     del trackers[_.sender_ip]
-                if _.formatted_ids() in trackers:
-                    del trackers[_.formatted_ids()]
+                if _.tracker_id() in trackers:
+                    del trackers[_.tracker_id()]
             trackers[sender_ip] = result
         return result
 
@@ -402,7 +402,7 @@ class MMTHandler(BaseHTTPRequestHandler):
                     del trackers[sender_ip]
                     tracker = None
                 else:
-                    parsed['activity_id'] = tracker.formatted_ids()
+                    parsed['activity_id'] = tracker.tracker_id()
         elif 'activity_id' in parsed:
             _ = parsed['activity_id']
             if _ == "0":
@@ -422,7 +422,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             logging.error(
                 '%s: No tracker found for IP=%s and activity_id=%s in %s',
                 request, sender_ip, parsed.get('activity_id'),
-                ', '.join('{}:{}'.format(k, v.formatted_ids()) for k, v in trackers.items()))
+                ', '.join('{}:{}'.format(k, v.tracker_id()) for k, v in trackers.items()))
         return tracker
 
     def xml_start_activity(self, parsed) ->str:
@@ -449,13 +449,13 @@ class MMTHandler(BaseHTTPRequestHandler):
             # and Oruxmaps does so too.
             category = parsed.get('activity', MMT.supported_categories[0]).capitalize()
             tracker.start(points, title, public, category)
-            self.server.trackers[tracker.formatted_ids()] = tracker
+            self.server.trackers[tracker.tracker_id()] = tracker
         else:
             tracker.update_trackers(points)
         logging.info(
             'Starting %s, remote software: %s version %s',
             tracker, parsed.get('source'), parsed.get('version'))
-        return '<type>activity_started</type><activity_id>{}</activity_id>'.format(tracker.formatted_ids())
+        return '<type>activity_started</type><activity_id>{}</activity_id>'.format(tracker.tracker_id())
 
     def xml_update_activity(self, parsed) ->str:
         """Get new points.
@@ -468,7 +468,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         tracker = self.find_tracker(parsed)
         if tracker is None:
             tracker = self._new_tracker(parsed)
-            self.server.trackers[tracker.formatted_ids()] = tracker
+            self.server.trackers[tracker.tracker_id()] = tracker
 
         tracker.update_trackers(self.parse_points(parsed['points']))
         if tracker.done:

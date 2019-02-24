@@ -111,7 +111,7 @@ class Lifetrack:
         self.targets = [LifetrackTarget(target, use_id) for target, use_id in zip(target_backends, ids)]
         self.done = False
 
-    def formatted_ids(self) ->str:
+    def tracker_id(self) ->str:
         """One string holding all backend ids.
 
         Returns: that string or None.
@@ -141,7 +141,7 @@ class Lifetrack:
                 _.gpxfile.category = category
                 _.started = _.gpxfile.id_in_backend is not None
         self.update_trackers(points)
-        return self.formatted_ids()
+        return self.tracker_id()
 
     def update_trackers(self, points):
         """Start or update lifetrack.
@@ -164,7 +164,7 @@ class Lifetrack:
         self.done = True
 
     def __str__(self):  # noqa
-        return 'Lifetrack({}{})'.format(self.formatted_ids(), ' done' if self.done else '')
+        return 'Lifetrack({}{})'.format(self.tracker_id(), ' done' if self.done else '')
 
     def __repr__(self):  # noqa
         return str(self)
