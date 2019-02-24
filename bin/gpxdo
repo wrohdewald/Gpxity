@@ -25,6 +25,7 @@ import subprocess
 import logging
 import textwrap
 from contextlib import contextmanager
+import curses
 
 try:
     import argcomplete
@@ -42,7 +43,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
 from gpxity import GpxFile, Directory, Backend, BackendDiff, Locate
-from gpxity.util import uniq, collect_gpxfiles, pairs
+from gpxity.util import uniq, collect_gpxfiles, pairs, ColorStreamHandler
 from gpxity.gpx import Gpx
 
 def __last_month_day(date):
@@ -279,9 +280,9 @@ class LsRow(dict):
             _ = field.format_raw(self[field.head_ident])
             right = '>' if field.type_ in (int, float) else ''
             raw_fields.append('{value:{right}{width}}'.format(right=right, width=field.max_length, value=_))
-        print(LsField.separator.join(raw_fields))
+        print(LsField.separator.join(raw_fields), end='\r\n')
         for _ in self.continuations:
-            print(_)
+            print(_, end='\r\n')
 
 
 class TotalRow(LsRow):
@@ -409,6 +410,8 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         self.cmd_parser.add_argument(
             '--loglevel', help='set the loglevel',
             choices=('error', 'warning', 'info', 'debug'), default='error')
+        self.cmd_parser.add_argument(
+            '--nocolors', help='do not use colors', action='store_true', default=False)
 
     @staticmethod
     def error(msg, exit_code=None):
@@ -1544,7 +1547,12 @@ class Main:
     def __init__(self, sphinx=False):
         # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
         Main.exit_code = 0
-        logging.basicConfig(format='%(message)s', stream=sys.stdout)
+        # Initialize environment
+        curses.setupterm()
+        if '--nocolors' in sys.argv:
+            logging.basicConfig(format='%(message)s')
+        else:
+            logging.basicConfig(format='%(message)s', handlers=[ColorStreamHandler()])
         self.parser = self.create_parser()
         if sphinx:
             return

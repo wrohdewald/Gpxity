@@ -10,12 +10,51 @@ import os
 import datetime
 import time
 import logging
+import curses
 from math import isclose
 
 from gpxpy.geo import length as gpx_length
 
 __all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_gpxfile', 'collect_gpxfiles',
-           'positions_equal', 'pairs', 'add_speed', 'utc_to_local_delta']
+           'positions_equal', 'pairs', 'add_speed', 'utc_to_local_delta', 'ColorStreamHandler']
+
+
+
+class ColorStreamHandler(logging.Handler):
+    """Color logging."""
+
+    def __init__(self, use_colors=True):
+        logging.Handler.__init__(self)
+        self.use_colors = use_colors
+
+        # Get the foreground color attribute for this environment
+        self.fcap = curses.tigetstr('setaf')
+
+        # Get the normal attribute
+        self.normal_color = curses.tigetstr('sgr0').decode("utf-8")
+
+        # Get + Save the color sequences
+        colors = (
+            (logging.INFO, curses.COLOR_GREEN),
+            (logging.DEBUG, curses.COLOR_BLUE),
+            (logging.WARNING, curses.COLOR_YELLOW),
+            (logging.ERROR, curses.COLOR_RED),
+            (logging.CRITICAL, curses.COLOR_BLACK))
+        self.colors = {x[0]: curses.tparm(self.fcap, x[1]).decode('utf-8') for x in colors}
+
+    def color(self, msg, level):
+        """Color the message according to logging level."""
+        try:
+            return self.colors[level] + msg + self.normal_color
+        except BaseException:
+            return msg
+
+    def emit(self, record):
+        """Output the message."""
+        msg = self.format(record)
+        if self.use_colors:
+            msg = self.color(msg, record.levelno)
+        print(msg + '\r')
 
 
 class Duration:
