@@ -15,7 +15,7 @@ import tempfile
 
 from gpxpy.geo import Location
 
-__all__ = ['Account', 'DirectoryAccount', 'MemoryAccount']
+__all__ = ['Fences', 'Account', 'DirectoryAccount', 'MemoryAccount']
 
 
 class Fences:  # pylint: disable=too-few-public-methods
@@ -33,6 +33,7 @@ class Fences:  # pylint: disable=too-few-public-methods
 
     def __init__(self, config_str: str):
         """init."""
+        self.string = config_str or 'None'
         self.circles = list()
         if config_str is not None:
             for fence in config_str.split(' '):
@@ -55,6 +56,13 @@ class Fences:  # pylint: disable=too-few-public-methods
 
         """
         return all(point.distance_2d(x[0]) > x[1] for x in self.circles)
+
+    def __str__(self):
+        """The string."""
+        return self.string
+
+    def __repr__(self):
+        return 'Fences({})'.format(str(self))
 
 
 class Accounts:
