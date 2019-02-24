@@ -80,6 +80,7 @@ class Backend(BackendBase):
         point_precision: The precision supported by this backend. We are never more precise than 6.
             That is the digits after the decimal separator.
         supported_categories: The categories supported by this backend. The first one is used as default.
+        accepts_zero_points: True if the Backend accepts a GpxFile without Points
 
     """
 
@@ -111,6 +112,8 @@ class Backend(BackendBase):
     _timeout = None
 
     __all_backends = dict()
+
+    accepts_zero_points = False
 
     # It is important that we have only one global session
     # because gpsies.com seems to have several servers and their

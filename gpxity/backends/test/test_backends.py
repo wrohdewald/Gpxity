@@ -110,11 +110,11 @@ class TestBackends(BasicTest):
             with self.tst_backend(cls):
                 with self.temp_backend(cls) as backend:
                     gpxfile = GpxFile()
-                    if cls in (MMT, TrackMMT, GPSIES, Openrunner, WPTrackserver):
+                    if backend.accepts_zero_points:
+                        self.assertIsNotNone(backend.add(gpxfile))
+                    else:
                         with self.assertRaises(cls.BackendException):
                             backend.add(gpxfile)
-                    else:
-                        self.assertIsNotNone(backend.add(gpxfile))
 
     @skipIf(*disabled(Directory))
     def test_directory_backend(self):
@@ -474,13 +474,20 @@ class TestBackends(BasicTest):
         def track():
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
             points = self._random_points(100)
-            life.start(points[:50], category=uplink.decode_category(uplink.supported_categories[0]))
+            ids = life.start(
+                points[:50],
+                category=uplink.decode_category(uplink.supported_categories[0])).split('----')
+            self.assertNotEqual(ids[0], 'None', '----'.join(ids))
+            if uplink.accepts_zero_points:
+                self.assertNotEqual(ids[1], 'None', '----'.join(ids))
+            else:
+                self.assertEqual(ids[1], 'None', '----'.join(ids))
             time.sleep(7)
             life.update_trackers(points[50:])
             life.end()
 
-        fence_variants = (('', 2), ('0/0/5000000000', 0))
-        fence_variants = (('0/0/5000000000', 0), )
+        fence_variants = (('', 2), ('0/0/5000000000', 1))
+        fence_variants = (('0/0/5000000000', 1), )
 
         for fence_variant, expect_gpxfiles in fence_variants:
             fences = Fences(fence_variant)
@@ -497,9 +504,9 @@ class TestBackends(BasicTest):
                                     track()
                                     track()
                                     local_serverdirectory.scan()
-                                    self.assertBackendLength(local_serverdirectory, expect_gpxfiles)
+                                    self.assertBackendLength(local_serverdirectory, 2)
                                     local_ids = [x.id_in_backend for x in local_serverdirectory]
-                                    self.assertEqual(local_ids, ['1', '2'][:expect_gpxfiles])
+                                    self.assertEqual(local_ids, ['1', '2'])
                                     if cls is TrackMMT:
                                         remote_serverdirectory.scan()
                                         self.assertSameTracks(local_serverdirectory, remote_serverdirectory)
@@ -513,7 +520,8 @@ class TestBackends(BasicTest):
                                             self.assertIn('Lifetracking ends', uplink.history[_ * 3 + 2])
                                     else:
                                         uplink.scan()
-                                        self.assertSameTracks(local_serverdirectory, uplink)
+                                        if uplink.accepts_zero_points:
+                                            self.assertSameTracks(local_serverdirectory, uplink)
 
     def test_backend_dirty(self):
         """gpxfile1._dirty."""

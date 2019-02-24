@@ -48,14 +48,14 @@ class LifetrackTarget:
                 raise Exception('Lifetrack.update_tracker needs points')
         new_ident = None
         points = self._prepare_points(points)
-        if not points:
-            return None
         self.gpxfile.add_points(points)
         if not self.started:
             # TODO: a unittest where points are empty here because of fences
-            new_ident = self.backend._lifetrack_start(self.gpxfile, points)
-            self.gpxfile.id_in_backend = new_ident
-            self.started = True
+            if points or self.backend.accepts_zero_points:
+                new_ident = self.backend._lifetrack_start(self.gpxfile, points)
+                assert new_ident
+                self.gpxfile.id_in_backend = new_ident
+                self.started = True
         elif points:
             self.backend._lifetrack_update(self.gpxfile, points)
         assert self.gpxfile.id_in_backend
@@ -106,6 +106,7 @@ class Lifetrack:
             ids = [None] * len(target_backends)
         elif isinstance(ids, str):
             ids = ids.split('----')
+            ids = [x if x != 'None' else None for x in ids]
         self.sender_ip = sender_ip
         self.targets = [LifetrackTarget(target, use_id) for target, use_id in zip(target_backends, ids)]
         self.done = False
@@ -117,14 +118,14 @@ class Lifetrack:
 
         """
         try:
-            return '----'.join(x.gpxfile.id_in_backend for x in self.targets)
+            return '----'.join(x.gpxfile.id_in_backend or 'None' for x in self.targets)
         except TypeError:
             return None
 
     def start(self, points, title=None, public=None, category=None):
         """Start lifetracking.
 
-        Returns: The new id_in_backend
+        Returns: All id_in_backend joined by '----'
 
         """
         if title is None:

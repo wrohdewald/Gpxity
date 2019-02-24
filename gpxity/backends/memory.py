@@ -34,6 +34,7 @@ class Memory(Backend):
     # pylint: disable=abstract-method
 
     test_is_expensive = False
+    accepts_zero_points = True
 
     def __init__(self, account=None):
         """See class docstring."""

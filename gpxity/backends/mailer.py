@@ -85,7 +85,7 @@ class MailQueue:
         return result
 
     def send(self):
-        """Actually send the mail if there are any points."""
+        """Actually send the mail."""
         if not self.gpxfiles:
             return
         if self.disabled:
@@ -152,6 +152,7 @@ class Mailer(Backend):  # pylint: disable=abstract-method
     id_count = 0
 
     test_is_expensive = False
+    accepts_zero_points = True
 
     def __init__(self, account):
         """See class docstring."""
