@@ -37,7 +37,8 @@ class LifetrackTarget:
         """Update lifetrack into a specific gpxfile.
 
         Returns:
-            the new id_in_backend if not yet started else None
+            the new id_in_backend if not yet started else None.
+            If the backend fences away all points, also return None.
 
         """
         if not points:
@@ -47,6 +48,8 @@ class LifetrackTarget:
                 raise Exception('Lifetrack.update_tracker needs points')
         new_ident = None
         points = self._prepare_points(points)
+        if not points:
+            return None
         self.gpxfile.add_points(points)
         if not self.started:
             # TODO: a unittest where points are empty here because of fences
@@ -61,10 +64,10 @@ class LifetrackTarget:
         return new_ident
 
     def end(self):
-        """End lifetracking for a specific backend."""
-        if not self.started:
-            raise Exception('Lifetrack not yet started')
-        self.backend._lifetrack_end(self.gpxfile)
+        """End lifetracking for a specific backend.
+        Because of fencing, lifetracking may not even have started."""
+        if self.gpxfile.point_list():
+            self.backend._lifetrack_end(self.gpxfile)
 
     def _prepare_points(self, points):
         """Round points and remove those within fences.

@@ -17,7 +17,7 @@ from unittest import skipIf
 
 from .basic import BasicTest, disabled
 from .. import Memory, Directory, MMT, GPSIES, TrackMMT, Mailer, WPTrackserver, Openrunner
-from ... import GpxFile, Lifetrack, Backend, Account, MemoryAccount, DirectoryAccount
+from ... import GpxFile, Lifetrack, Backend, Account, MemoryAccount, DirectoryAccount, Fences
 from ...util import remove_directory
 
 # pylint: disable=attribute-defined-outside-init
@@ -479,36 +479,41 @@ class TestBackends(BasicTest):
             life.update_trackers(points[50:])
             life.end()
 
-        for cls in Backend.all_backend_classes(needs={'write'}):
-            with self.tst_backend(cls):
-                with self.temp_directory() as local_serverdirectory:
-                    local_serverdirectory.account.config['id_method'] = 'counter'
-                    with self.temp_directory() as remote_serverdirectory:
-                        remote_serverdirectory.account.config['id_method'] = 'counter'
-                        with self.lifetrackserver(remote_serverdirectory.url):
-                            with self.temp_backend(cls) as uplink:
-                                track()
-                                track()
-                                local_serverdirectory.scan()
-                                self.assertBackendLength(local_serverdirectory, 2)
-                                local_ids = [x.id_in_backend for x in local_serverdirectory]
-                                self.assertEqual(local_ids, ['1', '2'])
-                                if cls is TrackMMT:
-                                    remote_serverdirectory.scan()
-                                    self.assertSameTracks(local_serverdirectory, remote_serverdirectory)
-                                elif cls is Mailer:
-                                    self.assertEqual(
-                                        len(uplink.history), 6,
-                                        'Mailer.history: {}'.format(uplink.history))
-                                    self.assertIn('Lifetracking starts', uplink.history[0])
-                                    self.assertIn('Lifetracking continues', uplink.history[1])
-                                    self.assertIn('Lifetracking ends', uplink.history[2])
-                                    self.assertIn('Lifetracking starts', uplink.history[3])
-                                    self.assertIn('Lifetracking continues', uplink.history[4])
-                                    self.assertIn('Lifetracking ends', uplink.history[5])
-                                else:
-                                    uplink.scan()
-                                    self.assertSameTracks(local_serverdirectory, uplink)
+        fence_variants = (('', 2), ('0/0/5000000000', 0))
+        fence_variants = (('0/0/5000000000', 0), )
+
+        for fence_variant, expect_gpxfiles in fence_variants:
+            fences = Fences(fence_variant)
+            for cls in Backend.all_backend_classes(needs={'write'}):
+                with self.tst_backend(cls, subtest='fences:{}'.format(fence_variant or 'None')):
+                    with self.temp_directory() as local_serverdirectory:
+                        local_serverdirectory.account.config['id_method'] = 'counter'
+                        with self.temp_directory() as remote_serverdirectory:
+                            remote_serverdirectory.account.config['id_method'] = 'counter'
+                            with self.lifetrackserver(remote_serverdirectory.url):
+                                with self.temp_backend(cls) as uplink:
+                                    uplink.account.fences = fences
+                                    local_serverdirectory.account.fences = fences
+                                    track()
+                                    track()
+                                    local_serverdirectory.scan()
+                                    self.assertBackendLength(local_serverdirectory, expect_gpxfiles)
+                                    local_ids = [x.id_in_backend for x in local_serverdirectory]
+                                    self.assertEqual(local_ids, ['1', '2'][:expect_gpxfiles])
+                                    if cls is TrackMMT:
+                                        remote_serverdirectory.scan()
+                                        self.assertSameTracks(local_serverdirectory, remote_serverdirectory)
+                                    elif cls is Mailer:
+                                        self.assertEqual(
+                                            len(uplink.history), 3 * expect_gpxfiles,
+                                            'Mailer.history: {}'.format(uplink.history))
+                                        for _ in range(expect_gpxfiles):
+                                            self.assertIn('Lifetracking starts', uplink.history[_ * 3])
+                                            self.assertIn('Lifetracking continues', uplink.history[_ * 3 + 1])
+                                            self.assertIn('Lifetracking ends', uplink.history[_ * 3 + 2])
+                                    else:
+                                        uplink.scan()
+                                        self.assertSameTracks(local_serverdirectory, uplink)
 
     def test_backend_dirty(self):
         """gpxfile1._dirty."""
