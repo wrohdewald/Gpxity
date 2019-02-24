@@ -92,9 +92,11 @@ class BasicTest(unittest.TestCase):
         logging.shutdown()
 
     @contextmanager
-    def tst_backend(self, backend_cls):  # noqa pylint: disable=arguments-differ
+    def tst_backend(self, backend_cls, subtest=None):  # noqa pylint: disable=arguments-differ
         """With pytest, subTest does not do much. At least print the name."""
         _ = '---------- subTest {}: {} '.format(self.id().split('.')[-1], backend_cls.__name__)
+        if subtest:
+            _ += subtest + ' '
         _ += '-' * (80 - len(_))
         self.logger.debug(_)
         yield super(BasicTest, self).subTest(' ' + backend_cls.__name__)
