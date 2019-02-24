@@ -98,6 +98,14 @@ class Gpx(GPX):
             # TODO: encode the , to something else
             all_kw.append('Id:{}'.format(_))
         self.keywords = ', '.join(all_kw) or None
+        if self.get_track_points_no():
+            first_point = next(self.points())
+            if first_point.time:
+                self.time = first_point.time
+        if self.name == Gpx.undefined_str:
+            self.name = ''
+        if self.description == Gpx.undefined_str:
+            self.description = ''
 
     def decode(self):
         """Extract real_keywords, category, public,ids from keywords."""
