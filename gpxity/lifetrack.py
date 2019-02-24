@@ -33,7 +33,7 @@ class LifetrackTarget:
         assert self.gpxfile.backend is None, 'TrackerTarget.gpxfile {} has backend {}'.format(
             self.gpxfile, self.gpxfile.backend)
 
-    def update(self, points) ->str:
+    def update_tracker(self, points) ->str:
         """Update lifetrack into a specific gpxfile.
 
         Returns:
@@ -44,7 +44,7 @@ class LifetrackTarget:
             if not self.started:
                 raise Exception('Lifetrack needs initial points')
             else:
-                raise Exception('Lifetrack.update needs points')
+                raise Exception('Lifetrack.update_tracker needs points')
         new_ident = None
         points = self._prepare_points(points)
         self.gpxfile.add_points(points)
@@ -149,7 +149,7 @@ class Lifetrack:
 
         """
         for _ in self.targets:
-            _.update(points)
+            _.update_tracker(points)
 
     def end(self):
         """End lifetrack.

@@ -451,7 +451,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             tracker.start(points, title, public, category)
             self.server.trackers[tracker.formatted_ids()] = tracker
         else:
-            tracker.update(points)
+            tracker.update_tracker(points)
         logging.info(
             'Starting %s, remote software: %s version %s',
             tracker, parsed.get('source'), parsed.get('version'))

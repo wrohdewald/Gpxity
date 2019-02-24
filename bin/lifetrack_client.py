@@ -64,7 +64,7 @@ class Main:
             life.start(all_points[:5])
             for point in all_points[5:]:
                 time.sleep(random.randrange(10))
-                life.update([point])
+                life.update_tracker([point])
             time.sleep(random.randrange(10))
             life.end()
         except Exception as _:  # pylint: disable=broad-except
