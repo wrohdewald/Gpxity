@@ -422,7 +422,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             logging.error(
                 '%s: No tracker found for IP=%s and activity_id=%s in %s',
                 request, sender_ip, parsed.get('activity_id'),
-                ', '.join('{}:{}'.format(k, v.formatted_ids().replace('----', '->')) for k, v in trackers.items()))
+                ', '.join('{}:{}'.format(k, v.formatted_ids()) for k, v in trackers.items()))
         return tracker
 
     def xml_start_activity(self, parsed) ->str:
