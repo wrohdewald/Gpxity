@@ -213,7 +213,7 @@ class Account:
         path = os.path.expanduser(filename or Account.path)
         lookup_name = name.split(':')[0]
         self.config = Accounts.lookup(path, lookup_name)
-        if self.backend is None:
+        if not self.backend:
             raise Exception('Account({}, {}, {}) defines no Backend'.format(name, filename, kwargs))
         for key, value in kwargs.items():
             self.config[key.lower()] = value

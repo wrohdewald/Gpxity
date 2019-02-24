@@ -165,7 +165,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def __encode_gpx(self):
         """Put values into gpx. See __decode_gpx."""
         self.__gpx.encode()
-        if self.backend is not None:
+        if self.backend:
             self.__gpx.category = self.backend.encode_category(self.__gpx.category)
 
     @property
@@ -239,12 +239,12 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         old_backend = self.__backend
         self.__backend = value
         if self.__gpx.keywords:
-            if old_backend is None or old_backend.__class__ != value.__class__:
+            if not old_backend or old_backend.__class__ != value.__class__:
                 # encode keywords for the new backend
                 # TODO: unittest
                 self.__gpx.encode()
                 self.change_keywords(self.__gpx.real_keywords)
-        self.__gpx.default_country = self.backend.account.country if self.backend is not None else None
+        self.__gpx.default_country = self.backend.account.country if self.backend else None
 
     def rewrite(self) ->None:
         """Call this after you directly manipulated  :attr:`gpx`."""
@@ -308,7 +308,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """
         self._load_full()
         result = GpxFile(gpx=self.gpx.clone())
-        if self.backend is not None:
+        if self.backend:
             result.__ids.insert(0, str(self))
         return result
 
@@ -326,7 +326,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """
         if 'gpx' in self.__dirty:
             self.__decode_gpx()
-        if self.backend is None:
+        if not self.backend:
             self._clear_dirty()
         if not self.__dirty:
             return
@@ -349,7 +349,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         If the gpxfile is not coupled with a backend, raise an Exception.
 
         """
-        if self.backend is None:
+        if not self.backend:
             raise Exception('{}: Removing needs a backend'.format(self))
         self.backend.remove(self.id_in_backend)
 
@@ -487,13 +487,13 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         """
         from_backend = self.__backend
-        prev_value = from_backend._decoupled if from_backend is not None else None
-        if from_backend is not None:
+        prev_value = from_backend._decoupled if from_backend else None
+        if from_backend:
             from_backend._decoupled = True
         try:
             yield
         finally:
-            if from_backend is not None:
+            if from_backend:
                 from_backend._decoupled = prev_value
 
     @property
@@ -507,9 +507,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             True if we are decoupled
 
         """
-        if self.backend is None:
-            return True
-        return self.backend._decoupled
+        if self.backend:
+            return self.backend._decoupled
+        return True
 
     @contextmanager
     def batch_changes(self):
@@ -545,9 +545,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self._load_full()
         if self.__gpx.category == Gpx.undefined_str:
             return self.categories[0]
-        if self.backend is None:
-            return self.__gpx.category
-        return self.backend.decode_category(self.__gpx.category)
+        if self.backend:
+            return self.backend.decode_category(self.__gpx.category)
+        return self.__gpx.category
 
     def __default_category(self) ->str:
         """The default for either an unsaved gpxfile or for the corresponding backend.
@@ -555,9 +555,9 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         Returns: The category
 
         """
-        if self.backend is None:
-            return self.categories[0]
-        return self.backend.decode_category(self.backend.supported_categories[0])
+        if self.backend:
+            return self.backend.decode_category(self.backend.supported_categories[0])
+        return self.categories[0]
 
     @category.setter
     def category(self, value: str):
@@ -588,7 +588,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         Returns: True for success
 
         """
-        if (self.backend is not None and self.id_in_backend and not self.__gpx.is_complete
+        if (self.backend and self.id_in_backend and not self.__gpx.is_complete
                 and not self.__is_decoupled and 'scan' in self.backend.supported):  # noqa
             self.backend._read_all_decoupled(self)
 
@@ -613,7 +613,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             A value out of GpxFile.categories
 
         """
-        return self.backend.decode_category(value) if self.backend is not None else value
+        return self.backend.decode_category(value) if self.backend else value
 
     @staticmethod
     def _round_points(points):
@@ -783,7 +783,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
                 pairs.append((True, _))
         for _ in pairs:
             self._check_keyword(_[1])
-        if self.backend is not None:
+        if self.backend:
             pairs = [(x[0], self.backend._encode_keyword(x[1])) for x in pairs]
         adding = {x[1] for x in pairs if x[0]}
         removing = {x[1] for x in pairs if not x[0]}
@@ -1432,7 +1432,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def split_segments(self):
         """Create separate gpxfiles for every track/segment."""
         backend = self.backend
-        if backend is None:
+        if not backend:
             raise Exception('GpxFile.split_segments() needs a backend')
         clone = self.clone()
         try:
@@ -1466,7 +1466,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         except IndexError:
             return 'nowhere'
         if located:
-            if self.backend is not None:
+            if self.backend:
                 self.rewrite()
         return result
 

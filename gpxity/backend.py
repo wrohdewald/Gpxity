@@ -389,7 +389,7 @@ class Backend(BackendBase):
         """
         if not self._gpxfiles_fully_listed and not self._decoupled:
             self._gpxfiles_fully_listed = True
-            unsaved = [x for x in self.__gpxfiles if x.id_in_backend is None]
+            unsaved = [x for x in self.__gpxfiles if not x.id_in_backend]
             if self.__match is not None:
                 for gpxfile in unsaved:
                     # side effect: raises exception if no match
@@ -504,7 +504,7 @@ class Backend(BackendBase):
         if self._decoupled:
             raise Exception('A backend cannot save() while being decoupled. This is probably a bug in gpxity.')
         self.matches(gpxfile, 'add')
-        if gpxfile.backend is not self and gpxfile.backend is not None:
+        if gpxfile.backend is not self and gpxfile.backend:
             # we do not want clone() loading the gpxfile because
             # that cannot be done with fences applied
             had_ids = gpxfile.ids
@@ -732,7 +732,7 @@ class Backend(BackendBase):
         if tracks_with_this_id:
             assert len(tracks_with_this_id) == 1
             track_with_this_id = tracks_with_this_id[0]
-            if track_with_this_id.backend is None:
+            if not track_with_this_id.backend:
                 # we actually replace the unsaved gpxfile with the new one
                 del self.__gpxfiles[track_with_this_id]
         if gpxfile.id_in_backend is not None and any(
@@ -775,6 +775,17 @@ class Backend(BackendBase):
         """
         self._scan()
         return iter(self.__gpxfiles)
+
+    def __bool__(self):
+        """Always return True.
+        A programmer (myself included) may be tempted
+        to say :literal:`if gpxfile.backend:` for checking if the
+        GpxFile has a backend assigned. But without __bool__
+        that would do len(backend) wich scans the - possibly remote - backend.Backend
+
+        Returns: True
+        """
+        return True
 
     def __eq__(self, other) ->bool:  # TODO: use str
         """True if both backends have the same gpxfiles.

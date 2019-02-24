@@ -30,7 +30,7 @@ class LifetrackTarget:
             self.gpxfile = GpxFile()
             self.gpxfile.id_in_backend = use_id
         self.started = False
-        assert self.gpxfile.backend is None, 'TrackerTarget.gpxfile {} has backend {}'.format(
+        assert not self.gpxfile.backend, 'TrackerTarget.gpxfile {} has backend {}'.format(
             self.gpxfile, self.gpxfile.backend)
 
     def update_tracker(self, points) ->str:
@@ -59,7 +59,7 @@ class LifetrackTarget:
         elif points:
             self.backend._lifetrack_update(self.gpxfile, points)
         assert self.gpxfile.id_in_backend
-        assert self.gpxfile.backend is None, 'LifetrackTarget.gpxfile {} has backend {}'.format(
+        assert not self.gpxfile.backend, 'LifetrackTarget.gpxfile {} has backend {}'.format(
             self.gpxfile, self.gpxfile.backend)
         return new_ident
 
