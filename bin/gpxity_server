@@ -564,7 +564,7 @@ def create_parser():
         choices=('debug', 'info', 'warning', 'error'), default='error')
     parser.add_argument(
         'target',
-        help='backends who should receive the data. The first one must be a local directory',
+        help='backends who should receive the data. The first one must be Directory',
         nargs='+')
     return parser
 

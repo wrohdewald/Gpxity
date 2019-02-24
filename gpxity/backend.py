@@ -485,6 +485,9 @@ class Backend(BackendBase):
         is not given, the backend will create a unique value. If it is given,
         the backend will try to use it or create a new value at its discretion.
 
+        Some Backends will not accept a gpxfile without Points. Only Directory
+        is granted to handle a gpxfile wihout points.
+
         Note that some backends may reject a gpxfile if it is very
         similar to an existing gpxfile even if it belongs to some other user.
 
