@@ -476,7 +476,7 @@ class TestBackends(BasicTest):
             points = self._random_points(100)
             life.start(points[:50], category=uplink.decode_category(uplink.supported_categories[0]))
             time.sleep(7)
-            life.update(points[50:])
+            life.update_trackers(points[50:])
             life.end()
 
         for cls in Backend.all_backend_classes(needs={'write'}):

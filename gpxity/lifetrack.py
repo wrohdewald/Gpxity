@@ -136,10 +136,10 @@ class Lifetrack:
                 _.gpxfile.public = public
                 _.gpxfile.category = category
                 _.started = _.gpxfile.id_in_backend is not None
-        self.update(points)
+        self.update_trackers(points)
         return self.formatted_ids()
 
-    def update(self, points):
+    def update_trackers(self, points):
         """Start or update lifetrack.
 
         If the backend does not support lifetrack, this just saves the gpxfile in the backend.

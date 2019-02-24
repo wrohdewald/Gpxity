@@ -451,7 +451,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             tracker.start(points, title, public, category)
             self.server.trackers[tracker.formatted_ids()] = tracker
         else:
-            tracker.update_tracker(points)
+            tracker.update_trackers(points)
         logging.info(
             'Starting %s, remote software: %s version %s',
             tracker, parsed.get('source'), parsed.get('version'))
@@ -470,7 +470,7 @@ class MMTHandler(BaseHTTPRequestHandler):
             tracker = self._new_tracker(parsed)
             self.server.trackers[tracker.formatted_ids()] = tracker
 
-        tracker.update(self.parse_points(parsed['points']))
+        tracker.update_trackers(self.parse_points(parsed['points']))
         if tracker.done:
             logging.error('update_activity: %s was already stopped', tracker)
         return updated
