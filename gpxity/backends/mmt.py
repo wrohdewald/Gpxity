@@ -766,7 +766,7 @@ class MMT(Backend):
             super(MMT, self)._lifetrack_update(gpxfile, points)
             return
         if MMT._current_lifetrack != gpxfile:
-            raise Exception('update: MMT only accepts one simultaneous lifetracker per username')
+            raise Exception('lifetrack_update: MMT only accepts one simultaneous lifetracker per username')
         self.__post(
             request='update_activity', activity_id=gpxfile.id_in_backend,
             points=self.__formatted_lifetrack_points(points),
