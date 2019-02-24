@@ -471,7 +471,7 @@ class TestBackends(BasicTest):
     def test_lifetrack(self):
         """test life tracking against a local server."""
 
-        def gpxfile():
+        def track():
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
             points = self._random_points(100)
             life.start(points[:50], category=uplink.decode_category(uplink.supported_categories[0]))
@@ -487,8 +487,8 @@ class TestBackends(BasicTest):
                         remote_serverdirectory.account.config['id_method'] = 'counter'
                         with self.lifetrackserver(remote_serverdirectory.url):
                             with self.temp_backend(cls) as uplink:
-                                gpxfile()
-                                gpxfile()
+                                track()
+                                track()
                                 local_serverdirectory.scan()
                                 self.assertBackendLength(local_serverdirectory, 2)
                                 local_ids = [x.id_in_backend for x in local_serverdirectory]
