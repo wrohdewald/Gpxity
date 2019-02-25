@@ -88,6 +88,21 @@ class Gpx(GPX):
         self.ids = list()
         self.is_complete = False
 
+    def clone(self):
+        """Clone.
+
+        Returns: Gpx
+
+        """
+        result = super(Gpx, self).clone()
+        result.default_country = self.default_country
+        result.real_keywords = self.real_keywords[:]
+        result.category = self.category
+        result.public = self.public
+        result.ids = self.ids[:]
+        result.is_complete = self.is_complete
+        return result
+
     def encode(self):
         """Set keywords from real_keywords, category, public, ids."""
         all_kw = self.real_keywords[:]  # Make sure not to change the orignal
