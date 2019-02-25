@@ -366,7 +366,7 @@ class TestBackends(BasicTest):
 
         is not always as trivial as it should be."""
 
-    @skipIf(True, "enable manully if needed")
+    @skipIf(True, "enable manually if needed")
     def test_download_many_from_mmt(self):
         """Download many tracks."""
         many = 150
