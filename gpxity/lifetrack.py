@@ -50,7 +50,6 @@ class LifetrackTarget:
         points = self._prepare_points(points)
         self.gpxfile.add_points(points)
         if not self.started:
-            # TODO: a unittest where points are empty here because of fences
             if points or self.backend.accepts_zero_points:
                 new_ident = self.backend._lifetrack_start(self.gpxfile, points)
                 assert new_ident
@@ -58,7 +57,6 @@ class LifetrackTarget:
                 self.started = True
         elif points:
             self.backend._lifetrack_update(self.gpxfile, points)
-        assert self.gpxfile.id_in_backend
         assert not self.gpxfile.backend, 'LifetrackTarget.gpxfile {} has backend {}'.format(
             self.gpxfile, self.gpxfile.backend)
         return new_ident
@@ -66,7 +64,7 @@ class LifetrackTarget:
     def end(self):
         """End lifetracking for a specific backend.
         Because of fencing, lifetracking may not even have started."""
-        if self.gpxfile.point_list():
+        if self.gpxfile.point_list() or self.backend.accepts_zero_points:
             self.backend._lifetrack_end(self.gpxfile)
 
     def _prepare_points(self, points):
