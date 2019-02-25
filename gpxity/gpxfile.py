@@ -239,7 +239,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         old_backend = self.__backend
         self.__backend = value
         if self.__gpx.keywords:
-            if not old_backend or old_backend.__class__ != value.__class__:
+            if old_backend and old_backend.__class__ != value.__class__:
                 # encode keywords for the new backend
                 # TODO: unittest
                 self.__gpx.encode()
