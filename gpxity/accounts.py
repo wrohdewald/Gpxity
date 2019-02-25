@@ -64,6 +64,13 @@ class Fences:  # pylint: disable=too-few-public-methods
     def __repr__(self):
         return 'Fences({})'.format(str(self))
 
+    def __bool__(self):
+        """True if we actually fence.
+
+        Returns: Result
+        """
+        return bool(self.circles)
+
 
 class Accounts:
 
