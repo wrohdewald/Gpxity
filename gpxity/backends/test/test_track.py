@@ -50,6 +50,8 @@ class TrackTests(BasicTest):
             gpxfile = GpxFile()
             gpxfile._set_backend(backend)
             self.assertEqual(len(backend), 0)
+            with gpxfile._decouple():
+                gpxfile._set_backend(None)
             backend.add(gpxfile)
             self.assertEqual(len(backend), 1)
 

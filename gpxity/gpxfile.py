@@ -234,6 +234,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
     def _set_backend(self, value):
         """To be used only by backend implementations."""
         assert self.__is_decoupled
+        assert value is not self.__backend
         if self.__backend:
             self.__backend._check_id_legal(self.id_in_backend)
         old_backend = self.__backend
