@@ -641,6 +641,11 @@ Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13
         """add --destination"""
         self.cmd_parser.add_argument('destination', help='the destination backend')
 
+    def add_force_arg(self):
+        """Add --force"""
+        self.cmd_parser.add_argument(
+            '--force', default=False, action='store_true',
+            help='Force execution')
 
 class TitleCommand(SubCommand):
     """title."""
@@ -1015,9 +1020,7 @@ class ClearCommand(SubCommand):
         self.cmd_parser.add_argument(
             '--untangle', action='store_true', default=False,
             help="""Locate and untangle rest poins: Remove their erratic local movements""")
-        self.cmd_parser.add_argument(
-            '--force', default=False, action='store_true',
-            help='Executes --tracks even if metadata will be lost')
+        self.add_force_arg()
         self.add_select_args()
         self.add_multi_source()
 
