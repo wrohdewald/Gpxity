@@ -234,9 +234,6 @@ class WPTrackserver(Backend):
         """
         description = self._encode_description(gpxfile)
         title = gpxfile.title[:self._max_length['title']]
-        if gpxfile.gpx.get_track_points_no() == 0:
-            raise self.BackendException(
-                'WPTrackserver: _save_header called, but we have no points in {}'.format(gpxfile))
         if not gpxfile.first_time:
             raise self.BackendException(
                 'WPTrackserver: _save_header gets no first_time in {}'.format(gpxfile))

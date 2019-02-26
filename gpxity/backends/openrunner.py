@@ -643,8 +643,6 @@ class Openrunner(Backend):
             The new id_in_backend
 
         """
-        if not gpxfile.gpx.get_track_points_no():
-            raise self.BackendException('Openrunner does not accept a gpxfile without trackpoints:{}'.format(gpxfile))
         points = list(gpxfile.points())
         data = {
             'route[activity]': self._legal_categories_numbers[self.encode_category(gpxfile.category)],

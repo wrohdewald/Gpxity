@@ -687,8 +687,6 @@ class MMT(Backend):
             The new id_in_backend
 
         """
-        if not gpxfile.gpx.get_track_points_no():
-            raise self.BackendException('MMT does not accept a gpxfile without trackpoints:{}'.format(gpxfile))
         response = self.__post(
             request='upload_activity', gpx_file=gpxfile.xml(),
             status='public' if gpxfile.public else 'private',

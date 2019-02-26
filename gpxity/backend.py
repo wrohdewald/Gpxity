@@ -533,6 +533,7 @@ class Backend(BackendBase):
         try:
             with self._decouple():
                 new_gpxfile._set_backend(self)
+                self.__check_empty(gpxfile)
                 self._write_all(new_gpxfile)
             self._append(new_gpxfile)
             gpxfile._clear_dirty()
@@ -548,6 +549,16 @@ class Backend(BackendBase):
                 new_gpxfile.id_in_backend = None
                 new_gpxfile._set_backend(None)
             raise
+
+    def __check_empty(self, gpxfile):
+        """Check if the track is empty but the backend needs points.
+
+        May raise an exception.
+        """
+        if not self.accepts_zero_points and gpxfile.gpx.get_track_points_no() == 0:
+            raise self.BackendException(
+                '{} does not accept GpxFile without points: {}'.format(
+                    self.__class__.__name__, gpxfile))
 
     def _rewrite(self, gpxfile, changes):
         """Rewrite the full gpxfile.
@@ -565,6 +576,7 @@ class Backend(BackendBase):
         self.matches(gpxfile, '_rewrite')
         if needs_full_save:
             with gpxfile.fenced(self.account.fences):
+                self.__check_empty(gpxfile)
                 new_id = self._write_all(gpxfile)
             gpxfile.id_in_backend = new_id
         else:
