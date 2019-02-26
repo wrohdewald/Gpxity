@@ -500,14 +500,9 @@ class TestBackends(BasicTest):
         def track():
             life = Lifetrack('127.0.0.1', [local_serverdirectory, uplink])
             points = self._random_points(100)
-            ids = life.start(
+            life.start(
                 points[:50],
-                category=uplink.decode_category(uplink.supported_categories[0])).split('----')
-            self.assertNotEqual(ids[0], 'None', '----'.join(ids))
-            if uplink.accepts_zero_points:
-                self.assertNotEqual(ids[1], 'None', '----'.join(ids))
-            else:
-                self.assertEqual(ids[1], 'None', '----'.join(ids))
+                category=uplink.decode_category(uplink.supported_categories[0]))
             time.sleep(7)
             life.update_trackers(points[50:])
             life.end()

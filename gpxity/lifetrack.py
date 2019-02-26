@@ -12,6 +12,7 @@ import datetime
 import logging
 
 from .gpxfile import GpxFile
+from .backend_base import BackendBase
 
 __all__ = ['Lifetrack']
 
@@ -96,43 +97,47 @@ class Lifetrack:
     Args:
         sender_ip: The IP of the client.
         target_backends (list): Those gpxfiles will receive the lifetracking data.
-        ids (list(str)): If given, use as id_in_backend. One for every backend.
-            May be list(str) or str
+        tracker _id: The id for this Lifetrack instance.
 
     Attributes:
         done: Will be True after end() has been called.
-        ids (str): The ids of all backends joined by '----'.
 
     """
 
-    def __init__(self, sender_ip, target_backends, ids=None):
+    def __init__(self, sender_ip, target_backends, tracker_id: str = None):
         """See class docstring."""
         assert sender_ip is not None
-        if ids is None:
-            ids = [None] * len(target_backends)
-        elif isinstance(ids, str):
-            ids = ids.split('----')
-            ids = [x if x != 'None' else None for x in ids]
         self.sender_ip = sender_ip
-        self.targets = [LifetrackTarget(target, use_id) for target, use_id in zip(target_backends, ids)]
+        main_target = LifetrackTarget(target_backends[0], tracker_id)
+        self.targets = [main_target]
+        other_ids = set(main_target.gpxfile.ids)
+        for other_backend in target_backends[1:]:
+            for try_this in other_ids:
+                acc, ident = BackendBase.parse_objectname(try_this)
+                if str(acc) == str(other_backend.account):
+                    self.targets.append(LifetrackTarget(other_backend, ident))
+                    break
+            else:
+                self.targets.append(LifetrackTarget(other_backend, None))
+
         logging.debug('Lifetrack initially tracking into %s', ', '.join(x.identifier() for x in self.targets))
         self.done = False
 
     def tracker_id(self) ->str:
-        """One string holding all backend ids.
+        """Identify this Lifetrack instance.
 
-        Returns: that string or None.
+        Returns: str
 
         """
         try:
-            return '----'.join(x.gpxfile.id_in_backend or 'None' for x in self.targets)
-        except TypeError:
-            return None
+            return self.targets[0].gpxfile.id_in_backend
+        except BaseException as exc:
+            logging.debug('tracker_id said %s', exc)
 
     def start(self, points, title=None, public=None, category=None):
         """Start lifetracking.
 
-        Returns: All id_in_backend joined by '----'
+        Returns: The id for this tracker to be given to the client
 
         """
         if title is None:
@@ -162,6 +167,19 @@ class Lifetrack:
         for _ in self.targets:
             _.update_tracker(points)
 
+        # All secondary targets must be linked to the primary one.
+        # Only the primary target is granted to exist when tracking starts.
+        main_target = self.targets[0]
+        main = main_target.backend[main_target.gpxfile.id_in_backend]
+        with main.batch_changes():
+            for secondary in self.targets[1:]:
+                if secondary.started:
+                    secondary_id = secondary.identifier()
+                    if secondary_id not in main.ids:
+                        new_ids = main.ids
+                        new_ids.append(secondary_id)
+                        main.ids = new_ids
+
     def end(self):
         """End lifetrack.
 
@@ -171,7 +189,8 @@ class Lifetrack:
         self.done = True
 
     def __str__(self):  # noqa
-        return 'Lifetrack({}{})'.format(self.tracker_id(), ' done' if self.done else '')
+        return 'Lifetrack({} plus {}: {})'.format(
+            self.tracker_id(), self.targets[0].gpxfile.ids, ' done' if self.done else '')
 
     def __repr__(self):  # noqa
         return str(self)

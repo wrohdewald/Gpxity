@@ -373,7 +373,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         Returns: The new object
 
         """
-        result = Lifetrack(self.client_ip(), self.server.targets, ids=parsed.get('activity_id'))
+        result = Lifetrack(self.client_ip(), self.server.targets, tracker_id=parsed.get('activity_id'))
         if result is not None:
             sender_ip = self.client_ip()
             trackers = self.server.trackers
