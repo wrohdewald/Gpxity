@@ -1409,6 +1409,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self._load_full()
             self.__gpx.ids = cleaned
             self.__gpx.encode()
+            self._dirty = 'gpx'
 
     @staticmethod
     def __clean_ids(original):
