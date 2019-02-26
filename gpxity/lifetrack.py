@@ -21,8 +21,9 @@ class LifetrackTarget:
 
     """A single target of a lifetracking instance."""
 
-    def __init__(self, backend, use_id=None):
+    def __init__(self, lifetrack, backend, use_id=None):
         """See class docstring."""
+        self.lifetrack = lifetrack
         self.backend = backend
         if use_id in backend:
             existing_track = backend[use_id]
@@ -35,6 +36,11 @@ class LifetrackTarget:
         assert not self.gpxfile.backend, 'TrackerTarget.gpxfile {} has backend {}'.format(
             self.gpxfile, self.gpxfile.backend)
 
+    @property
+    def tracker_id(self):
+        """For messages."""
+        return self.lifetrack.targets[0].gpxfile.id_in_backend
+
     def update_tracker(self, points) ->str:
         """Update lifetrack into a specific gpxfile.
 
@@ -45,9 +51,9 @@ class LifetrackTarget:
         """
         if not points:
             if not self.started:
-                raise Exception('Lifetrack needs initial points')
+                raise Exception('Lifetrack {} needs initial points'.format(self.tracker_id))
             else:
-                raise Exception('Lifetrack.update_tracker needs points')
+                raise Exception('Lifetrack {}: update_tracker needs points'.format(self.tracker_id))
         new_ident = None
         points = self._prepare_points(points)
         self.gpxfile.add_points(points)
@@ -56,7 +62,7 @@ class LifetrackTarget:
                 new_ident = self.backend._lifetrack_start(self.gpxfile, points)
                 assert new_ident
                 self.gpxfile.id_in_backend = new_ident
-                logging.debug('Lifetrack now also tracks into %s', self.identifier())
+                logging.info('Lifetrack %s tracks into %s', self.tracker_id, self.identifier())
                 self.started = True
         elif points:
             self.backend._lifetrack_update(self.gpxfile, points)
@@ -79,7 +85,9 @@ class LifetrackTarget:
         """
         result = [x for x in points if self.backend.account.fences.outside(x)]
         if len(result) < len(points):
-            self.backend.logger.debug("Fences removed %d out of %d points", len(points) - len(result), len(points))
+            self.backend.logger.debug(
+                "Target %s Fences removed %d out of %d points",
+                self.backend.account, len(points) - len(result), len(points))
         self.gpxfile._round_points(result)
         return result
 
@@ -108,19 +116,17 @@ class Lifetrack:
         """See class docstring."""
         assert sender_ip is not None
         self.sender_ip = sender_ip
-        main_target = LifetrackTarget(target_backends[0], tracker_id)
+        main_target = LifetrackTarget(self, target_backends[0], tracker_id)
         self.targets = [main_target]
         other_ids = set(main_target.gpxfile.ids)
         for other_backend in target_backends[1:]:
             for try_this in other_ids:
                 acc, ident = BackendBase.parse_objectname(try_this)
                 if str(acc) == str(other_backend.account):
-                    self.targets.append(LifetrackTarget(other_backend, ident))
+                    self.targets.append(LifetrackTarget(self, other_backend, ident))
                     break
             else:
-                self.targets.append(LifetrackTarget(other_backend, None))
-
-        logging.debug('Lifetrack initially tracking into %s', ', '.join(x.identifier() for x in self.targets))
+                self.targets.append(LifetrackTarget(self, other_backend, None))
         self.done = False
 
     def tracker_id(self) ->str:
