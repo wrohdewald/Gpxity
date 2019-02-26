@@ -1546,3 +1546,19 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self.rewrite()
             result = [str(self) + ':' + x for x in result]
         return result
+
+    def refence(self, force=False):
+        """Re-apply fences. They might now be more restrictive.
+
+        Returns:A list of strings describing what happens/would happen
+
+        """
+        self._load_full()
+        logging.debug('Ich bin refence, %s illegale', self._illegal_points)
+        result = []
+        if self._illegal_points:
+            result.append('Removing {} points within fences'.format(self._illegal_points))
+            if force:
+                with self.fenced(self.backend.account.fences):
+                    self.rewrite()
+        return result
