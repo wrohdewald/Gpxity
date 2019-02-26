@@ -16,7 +16,7 @@ from math import isclose
 from gpxpy.geo import length as gpx_length
 
 __all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_gpxfile', 'collect_gpxfiles',
-           'positions_equal', 'pairs', 'add_speed', 'utc_to_local_delta', 'ColorStreamHandler']
+           'positions_equal', 'pairs', 'add_speed', 'utc_datetime', 'local_datetime', 'ColorStreamHandler']
 
 
 
@@ -215,3 +215,19 @@ def utc_to_local_delta():
 
     """
     return datetime.timedelta(seconds=time.localtime().tm_gmtoff)
+
+def local_datetime(utc):
+    """Convert UTC datetime to local datetime.
+
+    Returns: datetime
+
+    """
+    return utc + utc_to_local_delta()
+
+def utc_datetime(local):
+    """Convert local datetime to UTC datetime.
+
+    Returns: datetime
+
+    """
+    return local - utc_to_local_delta()

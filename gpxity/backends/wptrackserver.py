@@ -25,7 +25,7 @@ from gpxpy import gpx as mod_gpx
 
 from ..backend import Backend
 from ..gpx import Gpx
-from ..util import add_speed, utc_to_local_delta
+from ..util import add_speed, utc_datetime, local_datetime
 
 try:
     import MySQLdb
@@ -194,11 +194,10 @@ class WPTrackserver(Backend):
             The point
 
         """
-        time_delta = utc_to_local_delta()  # WPTrackserver wants local time
         return mod_gpx.GPXTrackPoint(
             latitude=float(row[0]),
             longitude=float(row[1]),
-            time=row[2] - time_delta,
+            time=utc_datetime(row[2]),
             name=row[3])
 
     def _read_all(self, gpxfile) ->None:
@@ -277,13 +276,12 @@ class WPTrackserver(Backend):
     def __write_points(self, gpxfile, points):
         """save points in the gpxfile."""
         points = list(points)
-        time_delta = utc_to_local_delta()  # WPTrackserver wants local time
         cmd = 'insert into wp_ts_locations(trip_id, latitude, longitude, altitude,' \
             ' occurred, speed, comment, heading)' \
             ' values(%s, %s, %s, %s, %s, %s, %s, %s)'
         args = [(
             gpxfile.id_in_backend, x.latitude, x.longitude, x.elevation or 0.0,
-            x.time + time_delta, x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0,
+            local_datetime(x.time), x.gpxity_speed if hasattr(x, 'gpxity_speed') else 0.0,
             x.name or '', 0.0) for x in points]
         if args:
             self.__exec_mysql(cmd, args, many=True)
