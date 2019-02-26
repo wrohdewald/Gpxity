@@ -442,7 +442,7 @@ class Backend(BackendBase):
             self._read_all(gpxfile)
             gpxfile.gpx.default_country = self.account.country
             points_read = gpxfile.gpx.get_track_points_no()
-            with gpxfile.fenced(self.account.fences):
+            with gpxfile.fenced():
                 fenced_points = gpxfile.gpx.get_track_points_no()
             gpxfile._illegal_points = points_read - fenced_points
 
@@ -521,7 +521,7 @@ class Backend(BackendBase):
             had_ids = gpxfile.ids
             had_ids.append(str(gpxfile))
             gpxfile._load_full()
-            with gpxfile.fenced(self.account.fences):
+            with gpxfile.fenced():
                 new_gpxfile = gpxfile.clone()
                 new_gpxfile.ids = had_ids
                 try:
@@ -583,7 +583,7 @@ class Backend(BackendBase):
 
         self.matches(gpxfile, '_rewrite')
         if needs_full_save:
-            with gpxfile.fenced(self.account.fences):
+            with gpxfile.fenced():
                 self.__check_empty(gpxfile)
                 new_id = self._write_all(gpxfile)
             gpxfile.id_in_backend = new_id

@@ -452,13 +452,16 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self._dirty = 'description'
 
     @contextmanager
-    def fenced(self, fences):
+    def fenced(self, fences=None):
+        # TODO: fences=None uses self.backend.account.fences
         """Suppress points in fences.
 
         While this context manager is running, suppressed points are
         not visible.
 
         """
+        if fences is None:
+            fences = self.backend.account.fences
         if not fences:
             yield
             return
@@ -1560,6 +1563,6 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         if self._illegal_points:
             result.append('Removing {} points within fences'.format(self._illegal_points))
             if force:
-                with self.fenced(self.backend.account.fences):
+                with self.fenced():
                     self.rewrite()
         return result
