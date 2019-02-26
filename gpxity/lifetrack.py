@@ -9,6 +9,7 @@
 # pylint: disable=protected-access
 
 import datetime
+import logging
 
 from .gpxfile import GpxFile
 
@@ -54,6 +55,7 @@ class LifetrackTarget:
                 new_ident = self.backend._lifetrack_start(self.gpxfile, points)
                 assert new_ident
                 self.gpxfile.id_in_backend = new_ident
+                logging.debug('Lifetrack now also tracks into %s', self.identifier())
                 self.started = True
         elif points:
             self.backend._lifetrack_update(self.gpxfile, points)
@@ -80,6 +82,12 @@ class LifetrackTarget:
         self.gpxfile._round_points(result)
         return result
 
+    def identifier(self):
+        """Like GpxFile.identifier.
+
+        But here the GpxFile has no backend!
+        """
+        return '{}{}'.format(self.backend.account, self.gpxfile.id_in_backend)
 
 class Lifetrack:
 
@@ -107,6 +115,7 @@ class Lifetrack:
             ids = [x if x != 'None' else None for x in ids]
         self.sender_ip = sender_ip
         self.targets = [LifetrackTarget(target, use_id) for target, use_id in zip(target_backends, ids)]
+        logging.debug('Lifetrack initially tracking into %s', ', '.join(x.identifier() for x in self.targets))
         self.done = False
 
     def tracker_id(self) ->str:
