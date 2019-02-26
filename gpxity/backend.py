@@ -441,6 +441,10 @@ class Backend(BackendBase):
         with self._decouple():
             self._read_all(gpxfile)
             gpxfile.gpx.default_country = self.account.country
+            points_read = gpxfile.gpx.get_track_points_no()
+            with gpxfile.fenced(self.account.fences):
+                fenced_points = gpxfile.gpx.get_track_points_no()
+            gpxfile._illegal_points = points_read - fenced_points
 
     def _read_all(self, gpxfile) ->None:
         """fill the gpxfile with all its data from source."""
@@ -513,6 +517,7 @@ class Backend(BackendBase):
         if gpxfile.backend is not self and gpxfile.backend:
             # we do not want clone() loading the gpxfile because
             # that cannot be done with fences applied
+            gpxfile._illegal_points = 0  # when copying a GpxFile, it is OK to lose points
             had_ids = gpxfile.ids
             had_ids.append(str(gpxfile))
             gpxfile._load_full()

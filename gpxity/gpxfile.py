@@ -126,6 +126,10 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         self.__backend = None
         self.__cached_time = None
         self.__cached_distance = None
+        # those are read from the backend but writing them to the same
+        # backend would fence them away. We want to avoid simple
+        # in-place operations removing positions.
+        self._illegal_points = None
 
         # __header_cache holds all attributes that are set while gpx is None.
         # After gpx is given, if an attribute is not set in gpx, remove it from __header_cache
@@ -237,6 +241,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         assert value is not self.__backend
         if self.__backend:
             self.__backend._check_id_legal(self.id_in_backend)
+            self._illegal_points = 0  # when copying or moving a GpxFile, it is OK to lose points
         old_backend = self.__backend
         self.__backend = value
         if self.__gpx.keywords:
@@ -275,6 +280,10 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         """See dirty.getter."""
         if not isinstance(value, str):
             raise Exception('_dirty only receives str')
+        if self._illegal_points:
+            raise Exception(
+                'Cannot modify {}: Fences removed {} points while reading from backend. '
+                'Use gpxdo fix --refence'.format(self, self._illegal_points))
         if value == 'gpx':
             if self.__without_fences is not None:
                 raise Exception(
@@ -459,6 +468,8 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         without_fences = dict()
         try:
             old_points = self.__gpx.get_track_points_no()
+            old_illegals = self._illegal_points
+            self._illegal_points = 0
             for track_idx, track in enumerate(self.__gpx.tracks):
                 for seg_idx, segment in enumerate(track.segments):
                     without_fences[(track_idx, seg_idx)] = segment.points
@@ -476,6 +487,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             self.__gpx.waypoints = all_waypoints
             self._clear_similarity_cache()
             self.__without_fences = None
+            self._illegal_points = old_illegals
 
     @contextmanager
     def _decouple(self):
