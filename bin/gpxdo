@@ -332,13 +332,27 @@ class SegmentRow(LsRow):
 class FreeTextRow(LsRow):
     """A line with unformatted text"""
 
-    def __init__(self, text):
+    def __init__(self, level, text):
         super(FreeTextRow, self).__init__()
+        self.level = level
         self.text = text
 
     def print_row(self):
         """Show the row."""
-        logging.error(self.text)
+        self._do_print(self.text)
+
+    def _do_print(self, text):
+        """This one can be overridden in child classes."""
+        logging.log(self.level, text)
+
+
+class GpxFileFreeTextRow(FreeTextRow):
+    """A line with unformatted text, left aligned to within a GxpFile."""
+
+    def _do_print(self, text):
+        """Show the row."""
+        super(GpxFileFreeTextRow, self)._do_print(' ' * LsRow.fields[1].x_position + text)
+
 
 class SeparatorRow(LsRow):
     """A separator line for use before or after totals"""
@@ -1379,7 +1393,7 @@ class LsCommand(SubCommand):
             for span1, span2 in pairs(time_sorted):
                 if span1['time'] and span1['duration'] and span2['time']:
                     if span2['time'] < span1['time'] + span1['duration']:
-                        row = FreeTextRow('{} and {} have overlapping times'.format(
+                        row = FreeTextRow(logging.ERROR, '{} and {} have overlapping times'.format(
                             span1['identifier'], span2['identifier']))
                         all_lines.append(row)
 
