@@ -365,7 +365,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @property
     def first_time(self) ->datetime.datetime:
-        """datetime.datetime: start time of gpxfile.
+        """datetime.datetime: start time of gpxfile in UTC.
 
         For a simpler implementation of backends, notably :class:`~gpxity.backends.mmt.MMT`
         we ignore gpx.time. Instead we return the time of the earliest track point.
@@ -715,7 +715,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
     @property
     def last_time(self) ->datetime.datetime:
-        """The last time we received.
+        """The last time we received in UTC.
 
         Returns:
             The last time we received so far. If none, return None.

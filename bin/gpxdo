@@ -44,6 +44,7 @@ if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
 # pylint: disable=wrong-import-position
 from gpxity import GpxFile, Directory, Backend, BackendDiff, Locate
 from gpxity.util import uniq, collect_gpxfiles, pairs, ColorStreamHandler
+from gpxity.util import utc_datetime, local_datetime
 from gpxity.gpx import Gpx
 
 def __last_month_day(date):
@@ -89,7 +90,7 @@ def valid_date_argument(arg_date_str, last: bool, return_raw: bool = True):
                             raise argparse.ArgumentTypeError(msg)
     if last:
         result += last_delta
-    return arg_date_str if return_raw else result
+    return arg_date_str if return_raw else utc_datetime(result)
 
 
 class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
@@ -387,6 +388,7 @@ defines the account. Example: ::
         Password xxxx
 
 Dates are expected as YYYY-MM-DDThh:mm:ss or any abbreviation like in 2019-02-13T15 or 2019
+Times are always local time. GPX and most backend store UTC, this is translated by gpxdo.
 
 """
 
@@ -1219,7 +1221,7 @@ class LsCommand(SubCommand):
 
         """
         if gpxfile.last_time:
-            return str(gpxfile.last_time.time())
+            return str(local_datetime(gpxfile.last_time).time())
         return ''
 
     def __fill_groups(self, rows, mainsort):
@@ -1269,7 +1271,7 @@ class LsCommand(SubCommand):
         list(LsField(*x) for x in (
             (True, 'Identifier', lambda x: x.gpxdo_identifier),
             (self.options.title, 'Title', lambda x: x.title if x.title else '', '{:.40}'),
-            (self.options.time, 'Time', lambda x: x.first_time, '{}', datetime.datetime),
+            (self.options.time, 'Time', lambda x: local_datetime(x.first_time), '{}', datetime.datetime),
             (self.options.last_time, 'Last time', self.get_last_time),
             (self.options.gap, 'Gap', str, '{}m'),
             (self.options.category, 'Category', lambda x: x.category),
