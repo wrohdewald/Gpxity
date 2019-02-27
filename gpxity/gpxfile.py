@@ -614,7 +614,8 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         If no track is allocated yet and points is not an empty list, allocates a track.
 
         Args:
-            points (list(GPXTrackPoint): The points to be added
+            points (list(GPXTrackPoint):
+                The points to be added
 
         """
         if points:

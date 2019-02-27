@@ -326,10 +326,10 @@ class TrackTests(BasicTest):
         points = self._random_points(count=point_count)
         gpxfile.add_points(points)
         self.assertEqual(gpxfile.gpx.get_track_points_no(), point_count)
-        with self.assertRaises(Exception):
-            gpxfile.add_points(points)
-        gpxfile.add_points(points[:-1])
-        self.assertEqual(gpxfile.gpx.get_track_points_no(), point_count * 2 - 1)
+        gpxfile.add_points(points)
+        points.extend(self._random_points(count=10))
+        gpxfile.add_points(points)
+        self.assertEqual(gpxfile.gpx.get_track_points_no(), point_count * 3 + 10)
 
     def test_points_equal(self):
         """test GpxFile.points_equal."""

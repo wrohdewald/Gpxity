@@ -185,13 +185,9 @@ class Gpx(GPX):
         return round(gpx_length(list(self.points())) / 1000, 3)
 
     def add_points(self, points):
-        """Just add points."""
+        """Just add points. Silently ignore points which are allready in this Gpx."""
         if points:
-            if self.tracks:
-                # make sure the same points are not added twice
-                _ = self.tracks[-1].segments[-1]
-                assert points != _.points[-len(points):]
-            else:
+            if not self.tracks:
                 self.tracks.append(GPXTrack())
                 self.tracks[0].segments.append(GPXTrackSegment())
             self.tracks[-1].segments[-1].points.extend(points)

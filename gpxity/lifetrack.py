@@ -76,8 +76,17 @@ class LifetrackTarget:
         if self.gpxfile.point_list() or self.backend.accepts_zero_points:
             self.backend._lifetrack_end(self.gpxfile)
 
+    @staticmethod
+    def __point_tuple(point):
+        """For use in  a set.
+
+        Returns: a tuple
+
+        """
+        return (point.latitude, point.longitude, point.time)
+
     def _prepare_points(self, points):
-        """Round points and remove those within fences.
+        """Round points. Remove those within fences and duplicates.
 
         Returns (list):
             The prepared points
@@ -89,7 +98,11 @@ class LifetrackTarget:
                 "Target %s Fences removed %d out of %d points",
                 self.backend.account, len(points) - len(result), len(points))
         self.gpxfile._round_points(result)
-        return result
+        have = {self.__point_tuple(x) for x in self.gpxfile.point_list()[-len(points) * 2:]}
+        result2 = [x for x in result if self.__point_tuple(x) not in have]
+        if len(result) > len(result2):
+            logging.info('Target %s ignored %s resent points', self.backend.account, len(result) - len(result2))
+        return result2
 
     def identifier(self):
         """Like GpxFile.identifier.
