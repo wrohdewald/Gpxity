@@ -109,7 +109,6 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
         self.result['title'] = None
         self.result['description'] = None
         self.result['category'] = None
-        self.result['category_from_title'] = None
         self.result['category_3'] = None
         self.result['public'] = None
         self.result['tags'] = dict()  # key: name, value: id
@@ -137,11 +136,9 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
             self.result['category'] = attributes['data-activity']
         elif tag == 'span' and attributes['class'] == 'privacy-status':
             self.seeing_status = True
-        elif tag == 'title':
-            self.seeing_category = True
-        elif tag == 'h2' and attributes['id'] == 'gpxfile-title':
+        elif tag == 'h2' and attributes['id'] == 'track-title':
             self.seeing_title = True
-        elif tag == 'p' and attributes['id'] == 'gpxfile-desc':
+        elif tag == 'p' and attributes['id'] == 'track-desc':
             self.seeing_description = True
         elif tag == 'a' and attributes['class'] == 'tag-link' and attributes['rel'] == 'tag':
             assert attributes['id'].startswith('tag-')
@@ -155,13 +152,6 @@ class ParseMMTTrack(HTMLParser):  # pylint: disable=abstract-method
             self.result['title'] = data.strip()
         if self.seeing_description:
             self.result['description'] = html.unescape(data.strip())
-        if self.seeing_category:
-            try:
-                _ = data.split('|')[1].split('@')[0].strip()
-                self.result['category_from_title'] = ' '.join(_.split(' ')[:-2])
-            except BaseException:
-                self.backend.logger.warning('%s: Cannot parse %s', self.backend, data)
-                self.result['category_from_title'] = ''
         if self.seeing_status:
             self.result['public'] = data.strip() != 'Only you can see this activity'
         if self.seeing_tag:
