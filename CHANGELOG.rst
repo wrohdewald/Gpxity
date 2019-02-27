@@ -14,6 +14,7 @@ Changelog
   * gpxdo help, gpxdo help ls
   * new backend Memory
   * gpxdo with colors
+  * gpxdo ls --validate-against discovers treating
 
 1.6.0 release 2019-01-31
 ------------------------
