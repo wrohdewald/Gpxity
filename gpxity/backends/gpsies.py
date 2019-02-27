@@ -498,8 +498,6 @@ class GPSIES(Backend):
                 break
         if not new_ident:
             raise self.BackendException('No fileId= found in response')
-        if gpxfile.id_in_backend and gpxfile.id_in_backend != new_ident:
-            self._remove_ident(gpxfile.id_in_backend)
         gpxfile.id_in_backend = new_ident
         return new_ident
 

@@ -573,6 +573,7 @@ class Backend(BackendBase):
 
         Used only by GpxFile when things change.
 
+        If this changes track.id_in_backend, the GpxFile with the old id_backend is removed.
         """
         assert gpxfile.backend is self
         assert self._has_item(gpxfile.id_in_backend), '{}: its id_in_backend {} is not in {}'.format(
@@ -585,7 +586,10 @@ class Backend(BackendBase):
         if needs_full_save:
             with gpxfile.fenced():
                 self.__check_empty(gpxfile)
+                old_id = gpxfile.id_in_backend
                 new_id = self._write_all(gpxfile)
+                if old_id and old_id != new_id:
+                    self._remove_ident(old_id)
             gpxfile.id_in_backend = new_id
         else:
             for change in changes:

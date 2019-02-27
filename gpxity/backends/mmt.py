@@ -694,7 +694,6 @@ class MMT(Backend):
         new_ident = response.find('id').text
         if not new_ident:
             raise self.BackendException('No id found in response')
-        old_ident = gpxfile.id_in_backend
         gpxfile.id_in_backend = new_ident
         # the caller will do the above too, never mind
         if 'write_title' in self.supported:
@@ -702,8 +701,6 @@ class MMT(Backend):
         # MMT can add several keywords at once
         if gpxfile.keywords and 'write_add_keywords' in self.supported:
             self._write_add_keywords(gpxfile, ', '.join(gpxfile.keywords))
-        if old_ident:
-            self._remove_ident(old_ident)
         gpxfile.id_in_backend = new_ident
         return new_ident
 

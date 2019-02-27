@@ -678,10 +678,6 @@ class Openrunner(Backend):
         new_ident = str(json['id'])
         if not new_ident:
             raise self.BackendException('No id found in response')
-        old_ident = gpxfile.id_in_backend
-        gpxfile.id_in_backend = new_ident
-        if old_ident:
-            self._remove_ident(old_ident)
         gpxfile.id_in_backend = new_ident
         return new_ident
 
