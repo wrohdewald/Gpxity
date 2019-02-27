@@ -1559,7 +1559,6 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         """
         self._load_full()
-        logging.debug('Ich bin refence, %s illegale', self._illegal_points)
         result = []
         if self._illegal_points:
             result.append('Removing {} points within fences'.format(self._illegal_points))
