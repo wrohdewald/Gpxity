@@ -133,7 +133,10 @@ class TestBackends(BasicTest):
             with self.tst_backend(cls):
                 with self.temp_backend(cls) as backend:
                     gpxfile = GpxFile()
-                    gpxfile.add_points(self._random_points(count=1))
+                    # some backends may refuse tracks without title right away
+                    # gpsies even refuses fuzzy titles
+                    gpxfile.title = 'Hamburg Berlin test writing empty tracks'
+                    gpxfile.add_points(self._random_points(count=20))
                     if cls is TrackMMT:
                         with self.temp_directory() as serverdirectory:
                             serverdirectory.account.config['id_method'] = 'counter'
