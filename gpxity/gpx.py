@@ -642,7 +642,7 @@ class Gpx(GPX):
                 return start_time_delta
         return None
 
-    def locate_point(self, track=0, segment=0, point=0):
+    def locate_point(self, track=0, segment=0, point=0):  # noqa
         """Determine name of place for point.
 
         Saves that in point.name for caching.

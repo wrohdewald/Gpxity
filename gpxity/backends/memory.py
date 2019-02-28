@@ -29,6 +29,7 @@ class Memory(Backend):
         Account: If its url is unset, this will create a temporary
             directory named :attr:`prefix`.X where X are some random characters.
             It will be removed in __exit__ / detach.
+
     """
 
     # pylint: disable=abstract-method
@@ -59,7 +60,11 @@ class Memory(Backend):
         """Nothing to do, _list already read everything."""
 
     def _write_all(self, gpxfile) ->str:
-        """Just do nothing but give an id_in_backend if needed."""
+        """Just do nothing but give an id_in_backend if needed.
+
+        Returns: The new id_in_backend.
+
+        """
         if gpxfile.id_in_backend is None:
             gpxfile.id_in_backend = self._new_id_from(str(id(gpxfile)))
         self.__my_storage[gpxfile.id_in_backend] = gpxfile.gpx.clone()

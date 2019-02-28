@@ -560,6 +560,7 @@ class Backend(BackendBase):
         """Check if the track is empty but the backend needs points.
 
         May raise an exception.
+
         """
         if not self.accepts_zero_points and gpxfile.gpx.get_track_points_no() == 0:
             raise self.BackendException(
@@ -572,6 +573,7 @@ class Backend(BackendBase):
         Used only by GpxFile when things change.
 
         If this changes track.id_in_backend, the GpxFile with the old id_backend is removed.
+
         """
         assert gpxfile.backend is self
         assert self._has_item(gpxfile.id_in_backend), '{}: its id_in_backend {} is not in {}'.format(
@@ -805,13 +807,15 @@ class Backend(BackendBase):
         return iter(self.__gpxfiles)
 
     def __bool__(self):
-        """Always return True.
+        """Return True always.
+
         A programmer (myself included) may be tempted
         to say :literal:`if gpxfile.backend:` for checking if the
         GpxFile has a backend assigned. But without __bool__
         that would do len(backend) wich scans the - possibly remote - backend.Backend
 
         Returns: True
+
         """
         return True
 

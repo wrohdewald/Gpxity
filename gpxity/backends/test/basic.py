@@ -324,7 +324,7 @@ class BasicTest(unittest.TestCase):
             data = trackfile.read()
         self.assertIn(string, data, msg)
 
-    def setup_backend(  # pylint: disable=too-many-arguments
+    def setup_backend(  # noqa pylint: disable=too-many-arguments
             self, cls_, test_name: str = None, url: str = None, count: int = 0,
             clear_first: bool = None, category: str = None,
             public: bool = None):

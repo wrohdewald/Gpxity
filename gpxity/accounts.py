@@ -57,17 +57,17 @@ class Fences:  # pylint: disable=too-few-public-methods
         """
         return all(point.distance_2d(x[0]) > x[1] for x in self.circles)
 
-    def __str__(self):
-        """The string."""
+    def __str__(self):  # noqa
         return self.string
 
-    def __repr__(self):
+    def __repr__(self):  # noqa
         return 'Fences({})'.format(str(self))
 
     def __bool__(self):
         """True if we actually fence.
 
         Returns: Result
+
         """
         return bool(self.circles)
 

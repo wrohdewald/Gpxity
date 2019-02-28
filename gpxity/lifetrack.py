@@ -38,7 +38,11 @@ class LifetrackTarget:
 
     @property
     def tracker_id(self):
-        """For messages."""
+        """For messages.
+
+        Returns: The id for this tracker.
+
+        """
         return self.lifetrack.targets[0].gpxfile.id_in_backend
 
     def update_tracker(self, points) ->str:
@@ -98,18 +102,20 @@ class LifetrackTarget:
                 "Target %s Fences removed %d out of %d points",
                 self.backend.account, len(points) - len(result), len(points))
         self.gpxfile._round_points(result)
-        have = {self.__point_tuple(x) for x in self.gpxfile.point_list()[-len(points) * 2:]}
+        have = {self.__point_tuple(x) for x in self.gpxfile.point_list()[-len(points) * 2:]}  # noqa
         result2 = [x for x in result if self.__point_tuple(x) not in have]
         if len(result) > len(result2):
             logging.info('Target %s ignored %s resent points', self.backend.account, len(result) - len(result2))
         return result2
 
     def identifier(self):
-        """Like GpxFile.identifier.
+        """Like GpxFile.identifier. But here the GpxFile has no backend.
 
-        But here the GpxFile has no backend!
+        Returns: str
+
         """
         return '{}{}'.format(self.backend.account, self.gpxfile.id_in_backend)
+
 
 class Lifetrack:
 
