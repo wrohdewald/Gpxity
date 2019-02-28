@@ -117,10 +117,11 @@ class Gpx(GPX):
             first_point = next(self.points())
             if first_point.time:
                 self.time = first_point.time
-        if self.name == Gpx.undefined_str:
-            self.name = ''
-        if self.description == Gpx.undefined_str:
-            self.description = ''
+        if self.is_complete:
+            if self.name == Gpx.undefined_str:
+                self.name = ''
+            if self.description == Gpx.undefined_str:
+                self.description = ''
 
     def decode(self):
         """Extract real_keywords, category, public,ids from keywords."""
