@@ -23,10 +23,9 @@ class ColorStreamHandler(logging.Handler):
 
     """Color logging."""
 
-    def __init__(self, use_colors=True):
+    def __init__(self):
         """init."""
         logging.Handler.__init__(self)
-        self.use_colors = use_colors
 
         # Get the foreground color attribute for this environment
         self.fcap = curses.tigetstr('setaf')
@@ -55,8 +54,7 @@ class ColorStreamHandler(logging.Handler):
     def emit(self, record):
         """Output the message."""
         msg = self.format(record)
-        if self.use_colors:
-            msg = self.color(msg, record.levelno)
+        msg = self.color(msg, record.levelno)
         print(msg + '\r')
 
 

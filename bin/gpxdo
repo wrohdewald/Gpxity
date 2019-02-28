@@ -1632,11 +1632,15 @@ class Main:
         # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
         Main.exit_code = 0
         # Initialize environment
-        curses.setupterm()
         if '--nocolors' in sys.argv:
             logging.basicConfig(format='%(message)s')
         else:
-            logging.basicConfig(format='%(message)s', handlers=[ColorStreamHandler()])
+            try:
+                curses.setupterm()
+                logging.basicConfig(format='%(message)s', handlers=[ColorStreamHandler()])
+            except curses.error:
+                logging.basicConfig(format='%(message)s')
+
         self.parser = self.create_parser()
         if sphinx:
             return
