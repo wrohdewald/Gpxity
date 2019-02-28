@@ -19,11 +19,12 @@ __all__ = ['Duration', 'repr_timespan', 'uniq', 'remove_directory', 'is_gpxfile'
            'positions_equal', 'pairs', 'add_speed', 'utc_datetime', 'local_datetime', 'ColorStreamHandler']
 
 
-
 class ColorStreamHandler(logging.Handler):
+
     """Color logging."""
 
     def __init__(self, use_colors=True):
+        """init."""
         logging.Handler.__init__(self)
         self.use_colors = use_colors
 
@@ -40,10 +41,12 @@ class ColorStreamHandler(logging.Handler):
             (logging.WARNING, curses.COLOR_YELLOW),
             (logging.ERROR, curses.COLOR_RED),
             (logging.CRITICAL, curses.COLOR_BLACK))
-        self.colors = {x[0]: curses.tparm(self.fcap, x[1]).decode('utf-8') for x in colors}
+        self.colors = {x[0]: curses.tparm(self.fcap, x[1]).decode('utf-8') for x in colors}  # noqa
 
     def color(self, msg, level):
-        """Color the message according to logging level."""
+        """Color the message according to logging level.
+
+        Returns: The colored message."""
         try:
             return self.colors[level] + msg + self.normal_color
         except BaseException:
