@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.7.0 release 2019-02-xx
+1.7.0 release 2019-02-27
 ------------------------
 
   * rename Track to GpxFile
@@ -15,6 +15,7 @@ Changelog
   * new backend Memory
   * gpxdo with colors
   * gpxdo ls --validate-against discovers treating
+  * gpxity_server is more stable
 
 1.6.0 release 2019-01-31
 ------------------------
