@@ -176,7 +176,7 @@ class WPTrackserver(Backend):
         self._decode_description(result, row[3].replace('\r', ''))
         return result
 
-    def _load_gpxfile_headers(self):
+    def _list(self):
         """."""
         cmd = 'select id,created,name,comment,distance from wp_ts_tracks where user_id=%s'
         args = (self._user_id, )  # noqa

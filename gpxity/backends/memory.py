@@ -50,13 +50,13 @@ class Memory(Backend):
         result.__my_storage = self.__my_storage
         return result
 
-    def _load_gpxfile_headers(self):
+    def _list(self):
         """get all gpxfiles for this user."""
         for key, value in self.__my_storage.items():
             self._found_gpxfile(key, value)
 
     def _read(self, gpxfile):
-        """Nothing to do, _load_gpxfile_headers already read everything."""
+        """Nothing to do, _list already read everything."""
 
     def _write_all(self, gpxfile) ->str:
         """Just do nothing but give an id_in_backend if needed."""

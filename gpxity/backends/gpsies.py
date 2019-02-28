@@ -394,7 +394,7 @@ class GPSIES(Backend):
                     'GPSIES: _edit fails to change gpxfile {}: {}'.format(gpxfile, msg))
             time.sleep(2)
 
-    def _load_gpxfile_headers(self):
+    def _list(self):
         """get all gpxfiles for this user."""
     #    return
         response = self.__post('trackList', data={'username': self._get_author()})

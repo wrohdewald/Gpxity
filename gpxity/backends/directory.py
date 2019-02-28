@@ -298,7 +298,7 @@ class Directory(Backend):
                         GpxFile.identifier(self, ident))
         return result
 
-    def _load_gpxfile_headers(self):
+    def _list(self):
         """get all gpxfiles for this user."""
         self._symlinks = defaultdict(list)
         self._load_symlinks()

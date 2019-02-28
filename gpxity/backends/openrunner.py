@@ -592,7 +592,7 @@ class Openrunner(Backend):
                 pass
             raise cls.BackendException('Openrunner gave us an unknown gpxfile type {}'.format(value))
 
-    def _load_gpxfile_headers(self):
+    def _list(self):
         """get all gpxfiles for this user."""
         if self.account.password:
             response = self.__get(action='user/myroute')

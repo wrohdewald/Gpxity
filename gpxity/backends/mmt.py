@@ -585,7 +585,7 @@ class MMT(Backend):
         """
         return _convert_time(self.__post(request='get_time').find('server_time').text)
 
-    def _load_gpxfile_headers(self):
+    def _list(self):
         """get all gpxfiles for this user."""
         while True:
             old_len = self.real_len()

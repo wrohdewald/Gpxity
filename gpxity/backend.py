@@ -255,7 +255,7 @@ class Backend(BackendBase):
             # map internal names to more user friendly ones. See doc for
             # Backend.supported.
             '_change_ident': 'rename',
-            '_load_gpxfile_headers': 'scan',
+            '_list': 'scan',
             '_remove_ident': 'remove',
             '_write_all': 'write'}
         cls.supported = set()
@@ -402,11 +402,11 @@ class Backend(BackendBase):
                 match_function = self.__match
                 self.__match = None
                 try:
-                    # _load_gpxfile_headers loads ALL gpxfiles, match will be
+                    # _list loads ALL gpxfiles, match will be
                     # applied in a second loop. This way the Backend implementations
                     # do not have to worry about the match code.
                     with self._decouple():
-                        self._load_gpxfile_headers()
+                        self._list()
                 finally:
                     self.__match = match_function
             if self.__match is not None:
@@ -428,7 +428,7 @@ class Backend(BackendBase):
         self._append(result)
         return result
 
-    def _load_gpxfile_headers(self):
+    def _list(self):
         """Load all gpxfile headers and append them to the backend.
 
         The gpxfiles will not be loaded if possible.
