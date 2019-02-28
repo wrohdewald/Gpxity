@@ -412,13 +412,11 @@ class Backend(BackendBase):
             if self.__match is not None:
                 self.__gpxfiles = [x for x in self.__gpxfiles if self.matches(x)]
 
-    def _found_gpxfile(self, ident: str, gpx=None):
-        """Create an empty gpxfile for ident and inserts it into this backend.
+    def _found_gpxfile(self, ident: str, gpx):
+        """Create an empty gpxfile for ident and insert it into this backend.
 
         Returns:
             the new gpxfile
-
-        # TODO: Do I still need the result? Try not to
 
         """
         result = GpxFile(gpx)

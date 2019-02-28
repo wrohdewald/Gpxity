@@ -601,7 +601,7 @@ class Openrunner(Backend):
         page_parser = ParseOpenrunnerList()
         page_parser.feed(response.text)
         for raw_data in page_parser.result['gpxfiles']:
-            gpxfile = self._found_gpxfile(raw_data.track_id)
+            gpxfile = self._found_gpxfile(raw_data.track_id, Gpx())
             gpxfile.title = raw_data.title
             gpxfile.time = raw_data.time
             if raw_data.distance:
