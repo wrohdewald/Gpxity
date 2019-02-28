@@ -200,7 +200,7 @@ class WPTrackserver(Backend):
             time=utc_datetime(row[2]),
             name=row[3])
 
-    def _read_all(self, gpxfile) ->None:
+    def _read(self, gpxfile) ->None:
         """Read the full gpxfile."""
         assert gpxfile.id_in_backend
         cursor = self.__exec_mysql(

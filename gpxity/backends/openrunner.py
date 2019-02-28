@@ -609,7 +609,7 @@ class Openrunner(Backend):
             if raw_data.category:
                 gpxfile.category = self.decode_category(raw_data.category)
 
-    def _read_all(self, gpxfile):
+    def _read(self, gpxfile):
         """Get the entire gpxfile."""
         response = self.__get(action='route/{}'.format(gpxfile.id_in_backend))
         route = response.json()['route']

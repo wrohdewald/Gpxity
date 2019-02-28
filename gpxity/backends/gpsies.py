@@ -374,7 +374,7 @@ class GPSIES(Backend):
         ctr = 0
         while True:
             self.__post('editTrack', data, gpxfile=gpxfile)
-            self._read_all(copy)
+            self._read(copy)
             if gpxfile.description != copy.description:
                 msg = 'description: {} -> {}'.format(copy.description, gpxfile.description)
             elif gpxfile.title != copy.title:
@@ -431,7 +431,7 @@ class GPSIES(Backend):
         page_parser.feed(response.text)
         gpxfile.category = self.decode_category(page_parser.category)
 
-    def _read_all(self, gpxfile):
+    def _read(self, gpxfile):
         """get the entire gpxfile. For gpies, we only need the gpx file."""
         data = {'fileId': gpxfile.id_in_backend, 'keepOriginalTimestamps': 'true'}
         response = self.__post('download', data=data, gpxfile=gpxfile)

@@ -306,7 +306,7 @@ class Directory(Backend):
             gpx = self._gpx_from_headers(_)
             self._found_gpxfile(_, gpx)
 
-    def _read_all(self, gpxfile):
+    def _read(self, gpxfile):
         """fill the gpxfile with all its data from source."""
         with open(self.gpx_path(gpxfile.id_in_backend), encoding='utf-8') as in_file:
             gpxfile.gpx = Gpx.parse(in_file.read())

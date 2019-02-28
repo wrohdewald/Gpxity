@@ -437,16 +437,16 @@ class Backend(BackendBase):
         raise NotImplementedError()
 
     def _read_all_decoupled(self, gpxfile) ->None:
-        """Decouple and call the backend specific _read_all."""
+        """Decouple and call the backend specific _read."""
         with self._decouple():
-            self._read_all(gpxfile)
+            self._read(gpxfile)
             gpxfile.gpx.default_country = self.account.country
             points_read = gpxfile.gpx.get_track_points_no()
             with gpxfile.fenced():
                 fenced_points = gpxfile.gpx.get_track_points_no()
             gpxfile._illegal_points = points_read - fenced_points
 
-    def _read_all(self, gpxfile) ->None:
+    def _read(self, gpxfile) ->None:
         """fill the gpxfile with all its data from source."""
         raise NotImplementedError()
 

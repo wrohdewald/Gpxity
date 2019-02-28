@@ -55,7 +55,7 @@ class Memory(Backend):
         for key, value in self.__my_storage.items():
             self._found_gpxfile(key, value)
 
-    def _read_all(self, gpxfile):
+    def _read(self, gpxfile):
         """Nothing to do, _load_gpxfile_headers already read everything."""
 
     def _write_all(self, gpxfile) ->str:
