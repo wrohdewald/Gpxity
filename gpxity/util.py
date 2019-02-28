@@ -216,6 +216,7 @@ def utc_to_local_delta():
     """
     return datetime.timedelta(seconds=time.localtime().tm_gmtoff)
 
+
 def local_datetime(utc):
     """Convert UTC datetime to local datetime.
 
@@ -223,6 +224,7 @@ def local_datetime(utc):
 
     """
     return utc + utc_to_local_delta()
+
 
 def utc_datetime(local):
     """Convert local datetime to UTC datetime.
