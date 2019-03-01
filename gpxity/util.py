@@ -224,7 +224,7 @@ def local_datetime(utc):
     Returns: datetime
 
     """
-    return utc + utc_to_local_delta()
+    return utc + utc_to_local_delta() if utc else None
 
 
 def utc_datetime(local):
@@ -233,4 +233,4 @@ def utc_datetime(local):
     Returns: datetime
 
     """
-    return local - utc_to_local_delta()
+    return local - utc_to_local_delta() if local else None
