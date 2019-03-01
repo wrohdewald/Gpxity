@@ -1,0 +1,94 @@
+Account MMT_unittest
+	Backend MMT
+	Username xxxx
+	Password xxxx
+
+Account MMT_gpxstoragemany_unittest
+	Backend MMT
+	Username xxxx
+	Password xxxx
+
+Account MMT_gpxity2_unittest
+	Backend MMT
+	Username xxxx
+	Password xxxx
+
+Account Directory_unittest
+	Backend Directory
+
+Account ServerDirectory_unittest
+	backend ServerDirectory
+
+Account Mailer_unittest
+	Backend Mailer
+	Mailfrom wr
+	Url test@test.test
+	Interval 2
+	Port 25
+
+Account GPSIES_unittest
+	Username xxxx
+	Backend GPSIES
+	Password xxxx
+
+Account WPTrackserver_unittest
+	Username gpxitytest
+	Backend WPTrackserver
+	Password pwd
+	Mysql root@gpxitytest_db
+
+Account WPTrackserver_wrong_username_unittest
+	Username gpxitytest
+	Password wrong
+	Backend WPTrackserver
+	Mysql wrong@gpxitytest_db
+
+Account WPTrackserver_wrong_password_unittest
+	Backend WPTrackserver
+	Password xxx
+	Username gpxitytest
+	Mysql wrong@gpxitytest_db
+
+Account ServerDirectory
+	Backend ServerDirectory
+	Username mmtserver
+	Url /tmp/serverdirectory_test
+
+Account TrackMMT_unittest
+	Backend TrackMMT
+	Url http://localhost:12398
+	Username gpxitytest
+	Password gpxitytestpw
+
+Account Openrunner_unittest
+	Backend Openrunner
+	Username xxxx
+	Password xxxx
+
+Account gpsies_wrong_username_unittest
+	Backend GPSIES
+	Username fdafdsa
+
+Account mmt_wrong_username_unittest
+	Backend MMT
+	Username fdasfdsa
+	Password wrong
+
+Account mmt_wrong_password_unittest
+	Backend MMT
+	Username gpxitytest
+	Password wrong
+
+Account gpsies_wrong_password_unittest
+	Backend GPSIES
+	Username xxxx
+	Password wrong
+
+Account Openrunner_wrong_username_unittest
+	Backend Openrunner
+	Username fdasfdsafdasf
+
+Account Openrunner_wrong_password_unittest
+	Backend Openrunner
+	Username xxxx
+	Password wrong
