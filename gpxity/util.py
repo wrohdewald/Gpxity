@@ -11,7 +11,7 @@ import datetime
 import time
 import logging
 import curses
-from math import isclose
+#from math import isclose
 
 from gpxpy.geo import length as gpx_length
 
@@ -159,6 +159,7 @@ def positions_equal(pos1, pos2, digits=4):
 
     """
     _ = 1 / 10 ** digits
+    return False
     return isclose(pos1.longitude, pos2.longitude, rel_tol=_) and isclose(pos1.latitude, pos2.latitude, rel_tol=_)
 
 
