@@ -1466,6 +1466,40 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             logging.error('split:%s', exc)
             backend.add(clone)
 
+    def split_waypoints(self):
+        """Split into separate tracks at waypoints."""
+
+        def new_track(points):
+            """A new track from points.
+
+            Returns: GPXTrack
+
+            """
+            segment = GPXTrackSegment()
+            track = GPXTrack()
+            track.segments.append(segment)
+            segment.points = points
+            return track
+
+        tracks = list()
+        points = self.point_list()
+        all_waypoints = self.__gpx.waypoints
+        full_segment = GPXTrackSegment()
+        full_segment.points = points
+        nearest_indices = list(reversed(sorted(full_segment.get_nearest_location(x)[1] for x in all_waypoints)))
+        logging.error('nearest:%s', nearest_indices)
+        for idx in nearest_indices:
+            tracks.append(new_track(points[idx + 1:]))
+            points = points[:idx + 1]
+        if points:
+            tracks.append(new_track(points))
+
+        self.__gpx.tracks = list(reversed(tracks))
+        for _ in tracks:
+            logging.debug('Track with %d points', len(_.segments[0].points))
+        self.rewrite()  # TODO: only if changed
+
+
     def locate_point(self, track=0, segment=0, point=0) ->str:
         """Determine name of place for point.
 

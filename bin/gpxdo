@@ -873,6 +873,9 @@ class SplitCommand(SubCommand):
             '--segments', help='Create one gpxfile for each segment. This is the default.',
             action='store_true', default=False)
         self.cmd_parser.add_argument(
+            '--waypoints', help='Split into tracks at waypoints',
+            action='store_true', default=False)
+        self.cmd_parser.add_argument(
             '--stops', type=int, metavar='minutes',
             help="""BACKUP your gpxfiles first! This can destroy them!
             Whenever the time jumps back or more than X minutes into the future
@@ -882,7 +885,7 @@ class SplitCommand(SubCommand):
         self.add_multi_source()
 
     def _prepare_options(self):
-        if not self.options.segments and not self.options.stops:
+        if not self.options.segments and not self.options.stops and not self.options.waypoints:
             self.options.segments = True
         super(SplitCommand, self)._prepare_options()
 
@@ -891,6 +894,8 @@ class SplitCommand(SubCommand):
         for _ in self.source_gpxfiles:
             if self.options.segments:
                 _.split_segments()
+            elif self.options.waypoints:
+                _.split_waypoints()
             else:
                 _.split_at_stops(self.options.stops)
 

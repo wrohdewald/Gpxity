@@ -1,6 +1,10 @@
 Changelog
 =========
 
+  * gpxdo split --waypoints
+
+
+
 1.7.0 release 2019-02-27
 ------------------------
 
