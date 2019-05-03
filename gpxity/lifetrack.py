@@ -56,8 +56,7 @@ class LifetrackTarget:
         if not points:
             if not self.started:
                 raise Exception('Lifetrack {} needs initial points'.format(self.tracker_id))
-            else:
-                raise Exception('Lifetrack {}: update_tracker needs points'.format(self.tracker_id))
+            raise Exception('Lifetrack {}: update_tracker needs points'.format(self.tracker_id))
         new_ident = None
         points = self._prepare_points(points)
         self.gpxfile.add_points(points)
@@ -156,7 +155,7 @@ class Lifetrack:
         """
         try:
             return self.targets[0].gpxfile.id_in_backend
-        except BaseException as exc:
+        except BaseException as exc:  # pylint: disable=broad-except
             logging.debug('tracker_id said %s', exc)
 
     def start(self, points, title=None, public=None, category=None):

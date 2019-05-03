@@ -11,7 +11,7 @@ import datetime
 import time
 import logging
 import curses
-#from math import isclose
+from math import isclose
 
 from gpxpy.geo import length as gpx_length
 
@@ -48,7 +48,7 @@ class ColorStreamHandler(logging.Handler):
         Returns: The colored message."""
         try:
             return self.colors[level] + msg + self.normal_color
-        except BaseException:
+        except Exception:  # pylint: disable=broad-except
             return msg
 
     def emit(self, record):
@@ -148,7 +148,7 @@ def collect_gpxfiles(sources):
     return result
 
 
-def positions_equal(pos1, pos2, digits=4):
+def positions_equal(pos1, pos2, digits=4):  # pylint: disable=unused-argument
     """Check if both points have the same position.
 
     Args:
@@ -159,7 +159,6 @@ def positions_equal(pos1, pos2, digits=4):
 
     """
     _ = 1 / 10 ** digits
-    return False
     return isclose(pos1.longitude, pos2.longitude, rel_tol=_) and isclose(pos1.latitude, pos2.latitude, rel_tol=_)
 
 

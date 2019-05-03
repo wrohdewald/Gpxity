@@ -1462,7 +1462,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
                     gpxfile.gpx.tracks = [gpx_track]
                     gpxfile.id_in_backend = '{} Trk {} Seg {}'.format(self.id_in_backend, track_idx + 1, seg_idx + 1)
                     backend.add(gpxfile)
-        except BaseException as exc:
+        except BaseException as exc:  # pylint: disable=broad-except
             logging.error('split:%s', exc)
             backend.add(clone)
 

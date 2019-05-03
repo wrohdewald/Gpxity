@@ -295,8 +295,7 @@ class MMT(Backend):
             if 'You are now logged in.' not in response.text:
                 raise self.BackendException('Login as {} / {} failed, I got {}'.format(
                     author, self.account.password, response.text))
-            else:
-                cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
+            cookies = requests.utils.dict_from_cookiejar(self._session[ident].cookies)
             self._session[ident].cookies = requests.utils.cookiejar_from_dict(cookies)
         return self._session[ident]
 

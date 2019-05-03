@@ -105,7 +105,7 @@ class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
             try:
                 MyHelpFormatter.columns = int(subprocess.run(
                     ['stty', 'size'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.split()[1])
-            except BaseException:
+            except BaseException:  # pylint: disable=broad-except
                 MyHelpFormatter.columns = 80
         super(MyHelpFormatter, self).__init__(prog, indent_increment=2, max_help_position=30, width=self.columns)
 
@@ -120,7 +120,7 @@ class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
                 choices = list(choices)
                 choices.append(' see gpxdo show categories')
                 action.choices = tuple(choices)
-        except BaseException:
+        except BaseException:  # pylint: disable=broad-except
             pass
         try:
             yield
@@ -1558,8 +1558,7 @@ class MergeCommand(SubCommand):
                 if len(self.options.source) == 1:
                     Main.exit_code = 2
                     raise Exception(msg)
-                else:
-                    logging.error(msg)
+                logging.error(msg)
         if not self.destination_track_id:
             msg = self.destination_backend.merge(
                 self.source_gpxfiles, remove=self.options.remove,

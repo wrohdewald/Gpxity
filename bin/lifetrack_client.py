@@ -35,7 +35,7 @@ _ = os.path.dirname(sys.path[0] or sys.path[1])
 if os.path.exists(os.path.join(_, 'gpxity', '__init__.py')):
     sys.path.insert(0, _)
 # pylint: disable=wrong-import-position
-from gpxity import GpxFile, Lifetrack, Backend, Directory, MMT, GPSIES, TrackMMT  # noqa
+from gpxity import GpxFile, Lifetrack, Backend # noqa
 
 
 class Main:
@@ -64,7 +64,7 @@ class Main:
             life.start(all_points[:5])
             for point in all_points[5:]:
                 time.sleep(random.randrange(10))
-                life.update_tracker([point])
+                life.update_trackers([point])
             time.sleep(random.randrange(10))
             life.end()
         except Exception as _:  # pylint: disable=broad-except
