@@ -215,7 +215,7 @@ class ParseOpenrunnerList(HTMLParser):  # pylint: disable=abstract-method
             elif self.column == 7:
                 self.gpxfile.distance = float(data)
             elif self.column == 10:
-                self.gpxfile.time = datetime.datetime.strptime(data, '%d-%m-%Y')
+                self.gpxfile.time = datetime.datetime.strptime(data, '%d-%m-%Y').replace(tzinfo=datetime.timezone.utc)
                 self.result['gpxfiles'].append(self.gpxfile)
 
 
@@ -621,7 +621,8 @@ class Openrunner(Backend):
         gpx.keywords = route['keyword']
         gpxfile.gpx = gpx
         # the date format seems to depend on the language. fr would be %d-%m-%Y
-        gpxfile.time = datetime.datetime.strptime(route['updatedDate'], '%Y/%m/%d')
+        gpxfile.time = datetime.datetime.strptime(
+            route['updatedDate'], '%Y/%m/%d').replace(tzinfo=datetime.timezone.utc)
         gpxfile.public = not route['private']
         gpxfile.category = self.decode_category(route['activity'])
 

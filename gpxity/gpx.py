@@ -69,7 +69,7 @@ class Gpx(GPX):
     # pylint: disable=too-many-instance-attributes
 
     undefined_str = '__UXNXDXEXFXIXNXEXD__'
-    undefined_date = datetime.datetime(year=1970, month=1, day=3, hour=1)
+    undefined_date = datetime.datetime(year=1970, month=1, day=3, hour=1, tzinfo=datetime.timezone.utc)
     _seg_wpt_prefix = 'Trk/Seg '
 
     def __init__(self):
@@ -171,9 +171,14 @@ class Gpx(GPX):
 
         """
         try:
-            return next(self.points()).time
+            result = next(self.points()).time
+            if result:
+                assert result.tzinfo, 'first point time has no tzinfo:{}'.format(result)
         except StopIteration:
-            return self.time
+            result = self.time
+            if result:
+                assert result.tzinfo, 'gpx.time has no tzinfo:{}'.format(result)
+        return result
 
     @property
     def distance(self) ->float:
@@ -219,7 +224,22 @@ class Gpx(GPX):
                 result.name = ''
             if result.description is None:
                 result.description = ''
+        result._add_missing_tzinfo()  # pylint: disable=protected-access
         return result
+
+    def _add_missing_tzinfo(self):
+        """Add missing tzinfo to all times.
+
+        Gpxpy does not always set it but python3.7.3 disallows mixing times with and without tzinfo.
+
+        """
+        if self.time:
+            if not self.time.tzinfo:
+                self.time = self.time.replace(tzinfo=datetime.timezone.utc)
+        for _ in self.points():
+            if _.time:
+                if not _.time.tzinfo:
+                    _.time = _.time.replace(tzinfo=datetime.timezone.utc)
 
     def workaround_for_gpxpy_issue_140(self):
         """Remove empty gpx extension elements.
@@ -266,6 +286,8 @@ class Gpx(GPX):
 
             The last time we received so far. If none, return None."""
         _ = self.last_point()
+        if _ and _.time:
+            assert _.time.tzinfo, _
         return _.time if _ else None
 
     def speed(self, points=None) ->float:

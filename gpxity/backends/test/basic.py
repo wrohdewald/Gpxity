@@ -153,10 +153,14 @@ class BasicTest(unittest.TestCase):
         # pylint: disable=too-many-locals
         result = cls._get_track_from_test_file('test')
         if start_time is not None:
+            if not start_time.tzinfo:
+                start_time = start_time.replace(tzinfo=datetime.timezone.utc)
             result.adjust_time(start_time - result.first_time)
         last_point = result.last_point()
         if end_time is None:
             end_time = last_point.time + datetime.timedelta(hours=10, seconds=idx)
+        if not end_time.tzinfo:
+            end_time = end_time.replace(tzinfo=datetime.timezone.utc)
         new_point = GPXTrackPoint(
             latitude=last_point.latitude, longitude=last_point.longitude + 0.001, time=end_time)
         _ = gpxpy.geo.LocationDelta(distance=1000, angle=360 * idx / count)
@@ -194,7 +198,7 @@ class BasicTest(unittest.TestCase):
             A random datetime
 
         """
-        end = datetime.datetime.now().replace(microsecond=0)
+        end = datetime.datetime.now().replace(microsecond=0, tzinfo=datetime.timezone.utc)
         start = end - datetime.timedelta(days=10)
         delta = end - start
         int_delta = (delta.days * 24 * 60 * 60) + delta.seconds

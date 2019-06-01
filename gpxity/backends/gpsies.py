@@ -171,7 +171,8 @@ class ParseGPSIESList(HTMLParser):  # pylint: disable=abstract-method
             elif self.column == 5:
                 if self.gpxfile not in self.result['gpxfiles']:
                     data = data.replace('Last change:: ', '')  # gpsies has changed
-                    self.gpxfile.time = datetime.datetime.strptime(data, '%m/%d/%y')
+                    self.gpxfile.time = datetime.datetime.strptime(
+                        data, '%m/%d/%y').replace(tzinfo=datetime.timezone.utc)
                     self.result['gpxfiles'].append(self.gpxfile)
 
 

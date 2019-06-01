@@ -210,7 +210,7 @@ class TestBackends(BasicTest):
             Returns:
                 None if match else an error message
             """
-            if gpxfile.first_time < datetime.datetime(year=2016, month=9, day=5):
+            if gpxfile.first_time < datetime.datetime(year=2016, month=9, day=5, tzinfo=datetime.timezone.utc):
                 return 'time {} is before {}'.format(gpxfile.first_time, '2016-09-05')
             return None
 

@@ -69,7 +69,7 @@ class TrackingMessage:
     """
 
     def __init__(self, command, from_ip, parsed, result, response):
-        self.time = datetime.datetime.now()
+        self.time = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc)
         self.command = command
         self.from_ip = from_ip
         self.parsed = parsed
@@ -328,7 +328,7 @@ class MMTHandler(BaseHTTPRequestHandler):
         result = list()
         for idx in range(0, len(values), 4):
             try:
-                time = datetime.datetime.utcfromtimestamp(float(values[idx + 3]))
+                time = datetime.datetime.utcfromtimestamp(float(values[idx + 3])).replace(tzinfo=datetime.timezone.utc)
             except ValueError:
                 logging.error('Point has illegal time stamp %s', str(values))
                 time = 0

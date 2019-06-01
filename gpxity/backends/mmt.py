@@ -59,7 +59,7 @@ def _convert_time(raw_time) ->datetime.datetime:
         The datetime
 
     """
-    return datetime.datetime.utcfromtimestamp(float(raw_time))
+    return datetime.datetime.utcfromtimestamp(float(raw_time)).replace(tzinfo=datetime.timezone.utc)
 
 
 class ParseMMTCategories(HTMLParser):  # pylint: disable=abstract-method

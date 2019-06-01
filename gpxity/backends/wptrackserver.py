@@ -21,6 +21,8 @@ last part of the strings will be thrown away silently when writing into the data
 
 # pylint: disable=protected-access
 
+import datetime
+
 from gpxpy import gpx as mod_gpx
 
 from ..backend import Backend
@@ -171,7 +173,7 @@ class WPTrackserver(Backend):
 
         """
         result = Gpx()
-        result.time = row[1]
+        result.time = row[1].replace(tzinfo=datetime.timezone.utc)
         result.name = row[2]
         self._decode_description(result, row[3].replace('\r', ''))
         return result

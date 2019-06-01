@@ -233,4 +233,8 @@ def utc_datetime(local):
     Returns: datetime
 
     """
-    return local - utc_to_local_delta() if local else None
+    result = local - utc_to_local_delta() if local else None
+    if result:
+        if not result.tzinfo:
+            result = result.replace(tzinfo=datetime.timezone.utc)
+    return result
