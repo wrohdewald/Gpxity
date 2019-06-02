@@ -21,6 +21,8 @@ from lxml import etree
 from gpxpy import gpx as mod_gpx
 from gpxpy import parse as gpxpy_parse
 from gpxpy.geo import length as gpx_length, Location
+from gpxpy.geo import simplify_polyline
+
 import geocoder
 from geocoder.location import Location as Geocoder_location
 
@@ -1056,3 +1058,21 @@ class Gpx(GPX):
             for segment in track.segments[1:]:
                 track.segments[0].points.extend(segment.points)
             track.segments = track.segments[:1]
+
+    def simplify(self, max_distance=None):
+        """Just like gpxpy does. But if we get a strin gending with 'p', reduce to that point number."""
+        try:
+            max_distance = float(max_distance)
+            super(Gpx, self).simplify(max_distance)
+        except ValueError:
+            for trk_idx, track in enumerate(self.tracks):
+                for seg_idx, segment in enumerate(track.segments):
+                    points = segment.points
+                    _ = 0.5
+                    while len(points) > int(max_distance[:-1]):
+                        _ *= 1.1
+                        points = simplify_polyline(segment.points[:], max_distance=_)
+                    if _ > 0.5:
+                        logging.info('Trk/Seg %s/%s: maximal deviation is %.02f meters, reduced from %s to %s points',
+                                     trk_idx, seg_idx, _, len(segment.points), len(points))
+                    segment.points = points

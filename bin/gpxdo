@@ -950,8 +950,10 @@ class FixCommand(SubCommand):
             '--id-from-account', metavar='ACCOUNT',
             help='use last known id for a gpxfile in account')
         self.cmd_parser.add_argument(
-            '--simplify', metavar='meters', type=int, default=None,
+            '--simplify', metavar='meters', default=None,
             help="""Reduce points within segments. The new track may move meters away from the original.
+                If the parameter ends with a 'p', it is not taken as meters but points. All segments are
+                reduced to the given maximal value for points.
                 If you want to keep points around stops, apply split --stops first.""")
         self.cmd_parser.add_argument(
             '--add-minutes', metavar='minutes',
