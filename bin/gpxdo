@@ -1132,6 +1132,8 @@ class KeywordsCommand(SubCommand):
                 keywords -- -A""")
         self.dry_run()
         self.cmd_parser.add_argument('keywords', help='keywords separated by commas')
+        self.add_select_args()
+        self.add_multi_source()
 
     def _exec(self):
         """add/remove a list of keywords"""
