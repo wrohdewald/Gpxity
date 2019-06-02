@@ -1450,7 +1450,7 @@ class LsCommand(SubCommand):
                     all_lines.append(SubTotalRow(track_groups[group_key], mainsort, group_key or 'No keyword'))
 
         if self.options.warnings:
-            time_sorted = sorted(all_rows, key=lambda x: x['time'])
+            time_sorted = sorted(all_rows, key=lambda x: (bool(x['time']), x['time']))
             for span1, span2 in pairs(time_sorted):
                 if span1['time'] and span1['duration'] and span2['time']:
                     if span2['time'] < span1['time'] + span1['duration']:
