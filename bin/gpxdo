@@ -1122,11 +1122,11 @@ class ClearCommand(SubCommand):
                 for line in lines:
                     logging.info('%s: %s', fix_gpxfile, line)
 
-class KeywordCommand(SubCommand):
+class KeywordsCommand(SubCommand):
     """keywords."""
 
     def __init__(self):
-        super(KeywordCommand, self).__init__(
+        super(KeywordsCommand, self).__init__(
             help="""add keywords. A keyword preceded with - will be removed. Examples: \n
                 keywords A,-B
                 keywords -- -A""")
@@ -1686,7 +1686,7 @@ class Main:
         MvCommand()
         RmCommand()
         TitleCommand()
-        KeywordCommand()
+        KeywordsCommand()
         DescriptionCommand()
         CategoryCommand()
         PublicCommand()
