@@ -380,8 +380,10 @@ class MMTHandler(BaseHTTPRequestHandler):
             same_ip_done_trackers = [x for x in trackers.values() if x.sender_ip == result.sender_ip and x.done]
             for _ in same_ip_done_trackers:
                 if _.sender_ip in trackers:
+                    logging.info('IP {}: Deleting stale done tracker {}'.format(_.sender_ip, trackers[_.sender_ip]))
                     del trackers[_.sender_ip]
                 if _.tracker_id() in trackers:
+                    logging.info('id {}: Deleting stale done tracker {}'.format(_.tracker_id(), trackers[_.tracker_id()]))
                     del trackers[_.tracker_id()]
             trackers[sender_ip] = result
         return result
@@ -408,9 +410,10 @@ class MMTHandler(BaseHTTPRequestHandler):
             if _ == "0":
                 raise KeyError("activity_id 0 is illegal")
             tracker = trackers.get(_)
-            if tracker:
+            if tracker and sender_ip not in trackers:
                 # the sender IP may have changed, we need this for standard stop_activity
                 # without activity_id
+                logging.info('{} now receiving from IP {}'.format(tracker, sender_ip))
                 trackers[sender_ip] = tracker
         elif request == 'stop_activity':
             # The standard mapmytracks protocol does not include activity_id in stop_activity, but GPS Forwarder does.
@@ -467,6 +470,11 @@ class MMTHandler(BaseHTTPRequestHandler):
         updated = '<type>activity_updated</type>'
         tracker = self.find_tracker(parsed)
         if tracker is None:
+            logging.info('update_activity {} from {}/{} found no tracker'.format(
+                parsed,
+                self.client_ip(),
+                self.client_address[0]))
+            logging.info('   ' + 'I have no known trackers' if not self.server.trackers else ','.join(self.server.trackers.values()))
             tracker = self._new_tracker(parsed)
             self.server.trackers[tracker.tracker_id()] = tracker
 
@@ -525,6 +533,7 @@ class LifeServerMMT(HTTPServer):
         self.start_second = datetime.datetime.now().timestamp()
         self.trackers = dict()
         self.history = list()
+        logging.info('gpxity_server started')
 
     @staticmethod
     def define_logger(options):
