@@ -83,7 +83,8 @@ class BackendBase:
         for _ in cls.all_backend_classes():
             if _.__name__.lower() == name.lower():
                 return _
-        raise Exception('find_class failed for {}'.format(name))
+        raise Exception('find_class failed for {} in {}'.format(
+            name, ','.join(x.__name__.lower() for x in cls.all_backend_classes())))
 
     @classmethod
     def _find_local(cls, name: str) ->str:
