@@ -1010,7 +1010,7 @@ class FixCommand(SubCommand):
             if self.options.title_from_id:
                 fix_gpxfile.title = fix_gpxfile.id_in_backend
             if self.options.id_from_title:
-                fix_gpxfile.id_in_backend = fix_gpxfile.title
+                fix_gpxfile.id_in_backend = fix_gpxfile.title.strip()
             elif self.options.id_from_account:
                 self._fix_id_from_account(fix_gpxfile)
             elif self.options.id_from_time:
