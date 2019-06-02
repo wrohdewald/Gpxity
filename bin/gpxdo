@@ -1138,7 +1138,8 @@ class KeywordsCommand(SubCommand):
         for _ in self.source_gpxfiles:
             old_kw = _.keywords
             _.change_keywords(self.options.keywords, dry_run=self.options.dry_run)
-            logging.info('%s: %s --> %s', _, old_kw, _.keywords)
+            if old_kw != _.keywords:
+                logging.info('%s: %s --> %s', _, old_kw, _.keywords)
 
 class DumpCommand(SubCommand):
     """dump."""
