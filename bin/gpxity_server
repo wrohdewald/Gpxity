@@ -374,18 +374,17 @@ class MMTHandler(BaseHTTPRequestHandler):
 
         """
         result = Lifetrack(self.client_ip(), self.server.targets, tracker_id=parsed.get('activity_id'))
-        if result is not None:
-            sender_ip = self.client_ip()
-            trackers = self.server.trackers
-            same_ip_done_trackers = [x for x in trackers.values() if x.sender_ip == result.sender_ip and x.done]
-            for _ in same_ip_done_trackers:
-                if _.sender_ip in trackers:
-                    logging.info('IP {}: Deleting stale done tracker {}'.format(_.sender_ip, trackers[_.sender_ip]))
-                    del trackers[_.sender_ip]
-                if _.tracker_id() in trackers:
-                    logging.info('id {}: Deleting stale done tracker {}'.format(_.tracker_id(), trackers[_.tracker_id()]))
-                    del trackers[_.tracker_id()]
-            trackers[sender_ip] = result
+        sender_ip = self.client_ip()
+        trackers = self.server.trackers
+        same_ip_done_trackers = [x for x in trackers.values() if x.sender_ip == result.sender_ip and x.done]
+        for _ in same_ip_done_trackers:
+            if _.sender_ip in trackers:
+                logging.info('IP {}: Deleting stale done tracker {}'.format(_.sender_ip, trackers[_.sender_ip]))
+                del trackers[_.sender_ip]
+            if _.tracker_id() in trackers:
+                logging.info('id {}: Deleting stale done tracker {}'.format(_.tracker_id(), trackers[_.tracker_id()]))
+                del trackers[_.tracker_id()]
+        trackers[sender_ip] = result
         return result
 
     def find_tracker(self, parsed):
