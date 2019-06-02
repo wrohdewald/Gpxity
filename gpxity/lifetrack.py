@@ -133,6 +133,7 @@ class Lifetrack:
     def __init__(self, sender_ip, target_backends, tracker_id: str = None):
         """See class docstring."""
         assert sender_ip is not None
+        self.done = False
         self.sender_ip = sender_ip
         main_target = LifetrackTarget(self, target_backends[0], tracker_id)
         self.targets = [main_target]
@@ -145,7 +146,6 @@ class Lifetrack:
                     break
             else:
                 self.targets.append(LifetrackTarget(self, other_backend, None))
-        self.done = False
 
     def tracker_id(self) ->str:
         """Identify this Lifetrack instance.
@@ -213,8 +213,8 @@ class Lifetrack:
         self.done = True
 
     def __str__(self):  # noqa
-        return 'Lifetrack({} plus {}: {})'.format(
-            self.tracker_id(), self.targets[0].gpxfile.ids, ' done' if self.done else '')
+        return 'Lifetrack({} plus {}{})'.format(
+            self.tracker_id(), self.targets[0].gpxfile.ids, ': done' if self.done else '')
 
     def __repr__(self):  # noqa
         return str(self)
