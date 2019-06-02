@@ -750,6 +750,7 @@ class TrackTests(BasicTest):
             self.parse_objectnames(cases)
             break
 
+    @skipIf(*disabled(Directory))
     def test_fences(self):
         """Test fences."""
 
@@ -797,6 +798,7 @@ class TrackTests(BasicTest):
                 result,
                 all(positions_equal(*x, digits=10) for x in zip(points, enc_dec)), gpxfile)  # noqa
 
+    @skipIf(*disabled(Directory))
     def test_split_segments(self):
         """Test GpxFile.split_segments."""
         # pylint: disable=too-many-locals

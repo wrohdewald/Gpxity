@@ -116,6 +116,7 @@ class TestBackends(BasicTest):
                         with self.assertRaises(cls.BackendException):
                             backend.add(gpxfile)
 
+    @skipIf(*disabled(Directory))
     def test_rewrite_empty(self):
         """Remove all points and rewrite a gpxfile."""
 
