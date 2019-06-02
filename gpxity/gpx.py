@@ -491,9 +491,11 @@ class Gpx(GPX):
         # We do not use points_hash because we want to abort as soon as we know
         # they are different.
         if self.get_track_points_no() != other.get_track_points_no():
+            logging.debug('Pointcount %s != %s', self.get_track_points_no(), other.get_track_points_no())
             return False
         for _, (point1, point2) in enumerate(zip(self.points(), other.points())):
             if not positions_equal(point1, point2, digits):
+                logging.debug('Point #%s: %s != %s', _, point1, point2)
                 return False
         return True
 

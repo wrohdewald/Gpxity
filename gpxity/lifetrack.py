@@ -138,13 +138,17 @@ class Lifetrack:
         main_target = LifetrackTarget(self, target_backends[0], tracker_id)
         self.targets = [main_target]
         other_ids = set(main_target.gpxfile.ids)
+        logging.info('Lifetrack.init for %s found other_ids %s', main_target.identifier(), other_ids)
         for other_backend in target_backends[1:]:
             for try_this in other_ids:
+                logging.info('try_this %s', try_this)
                 acc, ident = BackendBase.parse_objectname(try_this)
                 if str(acc) == str(other_backend.account):
                     self.targets.append(LifetrackTarget(self, other_backend, ident))
                     break
             else:
+                logging.info('%s: found no existing track for %s in main ids %s',
+                             self, other_backend, other_ids)
                 self.targets.append(LifetrackTarget(self, other_backend, None))
 
     def tracker_id(self) ->str:

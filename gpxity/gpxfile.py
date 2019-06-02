@@ -655,7 +655,11 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         self._load_full()
         if self.__is_decoupled:
             # if Backend._write_all() calls this, everything is already encoded in __gpx
+            logging.info('Gpxfile.xml with encode: has ids %s in keywords %s', self.__gpx.ids, self.__gpx.keywords)
             self.__encode_gpx()   # TODO: should not be necessary
+        else:
+            logging.info('Gpxfile.xml() without encode: has ids %s in keywords %s',
+                         self.__gpx.ids, self.__gpx.keywords)
         return self.__gpx.xml()
 
     @property

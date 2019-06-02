@@ -292,6 +292,7 @@ class Directory(Backend):
             if head:
                 try:
                     result = Gpx.parse(head, is_complete=False)
+                    self.logger.info('Incompletely parsed %s', result)
                 except GPXXMLSyntaxException:
                     self.logger.info(
                         '%s: GpxFile metadata cannot be extracted, there is too much',
