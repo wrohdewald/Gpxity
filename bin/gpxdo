@@ -569,7 +569,7 @@ Times are always local time. GPX and most backend store UTC, this is translated 
                 try:
                     sources.append(Backend.instantiate(_))
                 except FileNotFoundError as exc:
-                    logging.error(exc)
+                    self.error(exc)
 
             gpxfiles = collect_gpxfiles(sources)
             for gpxfile in gpxfiles:
