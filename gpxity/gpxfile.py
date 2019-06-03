@@ -841,15 +841,19 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             add -= have
             remove &= have
         new = sorted((have | add) - remove)
-        if not dry_run and self.keywords != new:
+        if new == self.keywords:
+            return self.keywords
+
+        logging.info('%s: Keywords: %s -> %s', self, self.keywords, new)
+        if not dry_run:
             self.__gpx.real_keywords = new
             with self.batch_changes():
                 if remove:
                     self._dirty = 'remove_keywords{}{}'.format(BackendBase._dirty_separator, ', '.join(remove))
                 if add:
                     self._dirty = 'add_keywords{}{}'.format(BackendBase._dirty_separator, ', '.join(add))
-        assert new == self.keywords, (
-            'change_keywords failed. Expected: {}, got: {}'.format(new, self.keywords))
+            assert new == self.keywords, (
+                'change_keywords failed. Expected: {}, got: {}'.format(new, self.keywords))
         return new
 
     def speed(self) ->float:
