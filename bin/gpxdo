@@ -490,13 +490,13 @@ Times are always local time. GPX and most backend store UTC, this is translated 
     def match(self, gpxfile):
         """Check against the selecting options. Does cheap check first."""
         # pylint: disable=too-many-return-statements, too-many-branches
-        if self.options.first_date or self.options.last_date:
+        if self.options.min_date or self.options.max_date:
             if gpxfile.first_time:
-                if self.options.first_date and gpxfile.first_time < self.options.first_date:
-                    return 'time {} is before {}'.format(gpxfile.first_time, self.options.first_date)
-                if self.options.last_date:
-                    if self.options.last_date.date() and gpxfile.first_time.date() > self.options.last_date.date():
-                        return 'time {} is after {}'.format(gpxfile.first_time, self.options.last_date)
+                if self.options.min_date and gpxfile.first_time < self.options.min_date:
+                    return 'time {} is before {}'.format(gpxfile.first_time, self.options.min_date)
+                if self.options.max_date:
+                    if self.options.max_date.date() and gpxfile.first_time.date() > self.options.max_date.date():
+                        return 'time {} is after {}'.format(gpxfile.first_time, self.options.max_date)
             else:
                 return 'has no time'
         if self.options.min_distance and gpxfile.distance < self.options.min_distance:
@@ -617,17 +617,17 @@ Times are always local time. GPX and most backend store UTC, this is translated 
             if options.only_category:
                 options.only_category = set(x.strip() for x in options.only_category.split(','))
             if options.date:
-                if options.first_date or options.last_date:
-                    logging.error('gpxdo: error: cannot have --date with --first-date or --last-date')
+                if options.min_date or options.max_date:
+                    logging.error('gpxdo: error: cannot have --date with --min-date or --max-date')
                     Main.exit_code = 2
                     return
-                options.first_date = valid_date_argument(options.date, last=False, return_raw=False)
-                options.last_date = valid_date_argument(options.date, last=True, return_raw=False)
+                options.min_date = valid_date_argument(options.date, last=False, return_raw=False)
+                options.max_date = valid_date_argument(options.date, last=True, return_raw=False)
             else:
-                if options.first_date:
-                    options.first_date = valid_date_argument(options.first_date, last=False, return_raw=False)
-                if options.last_date:
-                    options.last_date = valid_date_argument(options.last_date, last=True, return_raw=False)
+                if options.min_date:
+                    options.min_date = valid_date_argument(options.min_date, last=False, return_raw=False)
+                if options.max_date:
+                    options.max_date = valid_date_argument(options.max_date, last=True, return_raw=False)
 
         if not hasattr(options, 'copy'):
             options.copy = False
@@ -655,10 +655,10 @@ Times are always local time. GPX and most backend store UTC, this is translated 
         """Add common args to parser."""
         self.has_select_args = True
         self.cmd_parser.add_argument(
-            '--first-date', help='Limit gpxfiles by date', metavar='DATE',
+            '--min-date', help='Limit gpxfiles by date', metavar='DATE',
             type=lambda x: valid_date_argument(x, False), default=None)
         self.cmd_parser.add_argument(
-            '--last-date', help='Limit gpxfiles by date', metavar='DATE',
+            '--max-date', help='Limit gpxfiles by date', metavar='DATE',
             type=lambda x: valid_date_argument(x, True), default=None)
         self.cmd_parser.add_argument(
             '--date', help='Limit gpxfiles by specific date',
