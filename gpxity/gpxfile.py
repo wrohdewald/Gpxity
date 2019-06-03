@@ -1475,7 +1475,7 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             backend.add(clone)
 
     def split_waypoints(self):
-        """Split into separate tracks at waypoints."""
+        """Split into separate tracks at waypoints."""  # noqa
 
         def new_track(points):
             """A new track from points.
@@ -1506,7 +1506,6 @@ class GpxFile:  # pylint: disable=too-many-public-methods
         for _ in tracks:
             logging.debug('Track with %d points', len(_.segments[0].points))
         self.rewrite()  # TODO: only if changed
-
 
     def locate_point(self, track=0, segment=0, point=0) ->str:
         """Determine name of place for point.
