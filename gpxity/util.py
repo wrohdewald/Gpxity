@@ -201,11 +201,12 @@ def add_speed(points, window: int = 2):
 def pairs(seq):
     """Return a list of all adjacent elements."""
     # pylint: disable=stop-iteration-return
-    iterable = iter(seq)
-    prev = next(iterable)
-    for _ in iterable:
-        yield prev, _
-        prev = _
+    if seq:
+        iterable = iter(seq)
+        prev = next(iterable)
+        for _ in iterable:
+            yield prev, _
+            prev = _
 
 
 def utc_to_local_delta():
