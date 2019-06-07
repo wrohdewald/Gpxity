@@ -12,6 +12,8 @@ import os
 import sys
 import datetime
 import tempfile
+import logging
+import signal
 
 from collections import defaultdict
 
@@ -37,12 +39,17 @@ class Backup:
 
     def __init__(self, gpxfile):
         """See class docstring."""
+        logging.debug('Backup(%s)', gpxfile)
+        self.killed = False
+        self.old_sigint = signal.signal(signal.SIGINT, self._handler)
+        self.old_sigterm = signal.signal(signal.SIGTERM, self._handler)
         self.gpxfile = gpxfile
         self.old_id = gpxfile.id_in_backend
         self.old_pathname = None
         if self.old_id is not None:
             self.old_pathname = gpxfile.backend.gpx_path(self.old_id)
             if os.path.exists(self.old_pathname):
+                logging.debug('Backup: renamed %s to %s', self.old_id, self.old_id + '.old')
                 os.rename(self.old_pathname, self.old_pathname + '.old')
 
     def __enter__(self):
@@ -56,22 +63,34 @@ class Backup:
 
     def __exit__(self, exc_type, exc_value, trback):
         """See class docstring."""
-        if exc_value:
+        if exc_value or self.killed:
             self.undo_rename()
             with self.gpxfile._decouple():
                 self.gpxfile.id_in_backend = self.old_id
+            if self.killed:
+                sys.exit(0)
         else:
             if self.old_pathname is not None:
                 if os.path.exists(self.old_pathname + '.old'):
                     os.remove(self.old_pathname + '.old')
+        logging.debug('Backup(%s) done', self.gpxfile)
+        signal.signal(signal.SIGINT, self.old_sigint)
+        signal.signal(signal.SIGTERM, self.old_sigterm)
 
     def undo_rename(self):
         """if something failed, undo change of file name and restore old file."""
         if self.old_pathname is not None:
             if os.path.exists(self.old_pathname):
+                logging.debug('Backup: undo rename: remove %s', self.old_pathname)
                 os.remove(self.old_pathname)
             if os.path.exists(self.old_pathname + '.old'):
+                logging.debug('Backup: restore original: rename %s to %s', self.old_pathname + '.old', self.old_pathname)
                 os.rename(self.old_pathname + '.old', self.old_pathname)
+
+    def _handler(self, signum, frame):
+        """Handles SIGTERM/SIGINT."""
+        logging.error("Received SIGINT or SIGTERM! Restoring: %s -> %s", self.old_id + '.old', self.old_id)
+        self.killed = True
 
 
 class Directory(Backend):
