@@ -703,7 +703,7 @@ Times are always local time. GPX and most backend store UTC, this is translated 
 
     def add_destination(self):
         """add --destination"""
-        self.cmd_parser.add_argument('destination', help='the destination backend')
+        self.cmd_parser.add_argument('destination', help='the destination')
 
     def add_force_arg(self):
         """Add --force"""
