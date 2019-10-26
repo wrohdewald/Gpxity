@@ -220,7 +220,7 @@ class LsField:
         """Returns a zero value"""
         if self.type_ is not None:
             if self.type_ is datetime.datetime:
-                return datetime.datetime(year=1970, month=1, day=1)
+                return datetime.datetime(year=1970, month=1, day=1).replace(tzinfo=datetime.timezone.utc)
             return self.type_()
         return ''
 
