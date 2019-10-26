@@ -217,7 +217,11 @@ class Gpx(GPX):
             indata = indata.read()
         if indata:
             # gpxpy.gpx has no classmethod constructor. This should be simpler.
-            gpx = gpxpy_parse(indata)
+            try:
+                gpx = gpxpy_parse(indata)
+            except GPXXMLSyntaxException as exc:
+                logging.error('GPX Syntax error in %s: %s', indata, exc)
+                raise
             for _ in gpx.__slots__:
                 setattr(result, _, getattr(gpx, _))
             result.workaround_for_gpxpy_issue_140()
