@@ -988,6 +988,9 @@ class FixCommand(SubCommand):
         self.cmd_parser.add_argument(
             '--refence', default=False, action='store_true',
             help="""Re-apply fences, they might now be more restrictive. Use --force if you are sure.""")
+        self.cmd_parser.add_argument(
+            '--revert', default=False, action='store_true',
+            help="""Revert direction.""")
         self.add_force_arg()
         self.add_select_args()
         self.add_multi_source()
@@ -1051,6 +1054,10 @@ class FixCommand(SubCommand):
                     fix_gpxfile.rewrite()
             if self.options.refence:
                 result_lines.extend(fix_gpxfile.refence(force=self.options.force))
+            if self.options.revert:
+                fix_gpxfile.gpx.revert_direction()
+                fix_gpxfile.rewrite()
+
         for _ in result_lines:
             logging.error(_)
 

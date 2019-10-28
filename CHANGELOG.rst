@@ -3,6 +3,7 @@ Changelog
 
   * gpxdo split --waypoints
   * gpxdo split --points
+  * gpxdo fix --revert
 
 
 

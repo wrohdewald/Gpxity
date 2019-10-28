@@ -1084,3 +1084,30 @@ class Gpx(GPX):
                         logging.info('Trk/Seg %s/%s: maximal deviation is %.02f meters, reduced from %s to %s points',
                                      trk_idx, seg_idx, _, len(segment.points), len(points))
                     segment.points = points
+
+    def revert_direction(self):
+        """Revert the direction of the track. Reverts track/segment order and points within."""
+        for _ in self.points():
+            if not _.time:
+                # TODO: generalize
+                raise Exception('revert_direction: All points must have a time')
+        self.tracks = list(reversed(self.tracks))
+        for track in self.tracks:
+            track.segments = list(reversed(track.segments))
+            for segment in track.segments:
+                old_point_times = [x.time for x in segment.points]
+                segment.points = list(reversed(segment.points))
+                seglen = len(segment.points)
+
+                # switch start and end time
+                _ = segment.points[0].time
+                segment.points[0].time = segment.points[-1].time
+                segment.points[-1].time = _
+
+                # calculate intermediate time
+                for idx, point in enumerate(segment.points[1:-1]):
+                    print('idx:', idx)
+                    time1 = old_point_times[seglen-idx-2]
+                    time2 = old_point_times[seglen-idx-1]
+                    timedelta = time2 - time1
+                    point.time = segment.points[idx].time + timedelta
