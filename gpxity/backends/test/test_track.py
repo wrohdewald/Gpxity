@@ -622,9 +622,9 @@ class TrackTests(BasicTest):
 
     def test_header_data(self):
         """Test usage of GpxFile._header_data."""
-        # TODO: still needed?
         gpxfile = GpxFile()
         gpx_track = self.create_test_track()
+        gpxfile.gpx.is_complete = False
         gpxfile.distance = 5000
         self.assertEqual(gpxfile.distance, 5000)
         gpxfile.gpx = Gpx.parse(gpx_track.xml())

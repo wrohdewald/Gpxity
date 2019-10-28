@@ -535,9 +535,6 @@ class Backend(BackendBase):
             new_gpxfile = gpxfile
         try:
             with self._decouple():
-                if not new_gpxfile.backend:
-                    # a Gpx is complete by definition if it was not connected with a Backend
-                    new_gpxfile.gpx.is_complete = True
                 new_gpxfile._set_backend(self)
                 self.__check_empty(gpxfile)
                 self._write_all(new_gpxfile)
@@ -626,6 +623,7 @@ class Backend(BackendBase):
         if gpxfile.id_in_backend:
             self._remove_ident(gpxfile.id_in_backend)
         with self._decouple():
+            gpxfile.gpx.is_complete = True  # we do not care about partially loaded GpxFile when deleting it
             gpxfile._set_backend(None)
             try:
                 self.__gpxfiles = [x for x in self.__gpxfiles if x.id_in_backend != gpxfile.id_in_backend]

@@ -324,6 +324,7 @@ class Directory(Backend):
         self._load_symlinks()
         for _ in self._list_gpx():
             gpx = self._gpx_from_headers(_)
+            gpx.is_complete = False
             self._found_gpxfile(_, gpx)
 
     def _read(self, gpxfile):

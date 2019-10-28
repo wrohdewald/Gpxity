@@ -414,6 +414,7 @@ class GPSIES(Backend):
             page_parser.feed(response.text)
         for raw_data in page_parser.result['gpxfiles']:
             gpx = Gpx()
+            gpx.is_complete = False
             gpx.name = raw_data.title
             gpx.time = raw_data.time
             public = raw_data.public

@@ -597,6 +597,7 @@ class MMT(Backend):
             for _ in chunk:
                 raw_data = MMTRawTrack(_)
                 gpx = Gpx()
+                gpx.is_complete = False
                 gpx.name = raw_data.title
                 gpx.time = raw_data.time
                 gpxfile = self._found_gpxfile(raw_data.track_id, gpx)

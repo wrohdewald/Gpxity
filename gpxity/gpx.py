@@ -52,7 +52,8 @@ class Gpx(GPX):
             the wanted value is already known (by loading the list of tracks
             in the backend) or if the full gpxfile needs to be read.
         real_keywords: As decoded from keywords
-        is_complete: False while we hold only metadata for the gpxfile.
+        is_complete: False while we hold only metadata for the gpxfile. __init__ sets it to True,
+            callers loading only metadata must switch it to False and back to True when the full data is loaded.
         default_country: This is automatically set when the Gpx is part
             of a concrete Backend. Used for location names: the default country name
             will not be added. This values comes from Account.country.
@@ -88,7 +89,7 @@ class Gpx(GPX):
         self.category = Gpx.undefined_str
         self.public = Gpx.undefined_str
         self.ids = list()
-        self.is_complete = False
+        self.is_complete = True
 
     def clone(self):
         """Clone.
@@ -264,6 +265,7 @@ class Gpx(GPX):
         Returns: The xml string.
 
         """
+        assert self.is_complete, 'Not complete: {}'.format(str(self))
         result = super(Gpx, self).to_xml()
         result = result.replace('</trkpt><', '</trkpt>\n<')
         result = result.replace('<copyright ></copyright>', '')   # gpxviewer does not accept such illegal xml

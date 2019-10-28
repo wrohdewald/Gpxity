@@ -185,6 +185,7 @@ class WPTrackserver(Backend):
         cursor = self.__exec_mysql(cmd, args)
         for _ in cursor.fetchall():
             gpxfile = self._found_gpxfile(str(int(_[0])), self._gpx_from_headers(_))
+            gpxfile.gpx.is_complete = False
             gpxfile.distance = _[4] / 1000.0
         self._db.rollback()
 
@@ -205,6 +206,7 @@ class WPTrackserver(Backend):
     def _read(self, gpxfile) ->None:
         """Read the full gpxfile."""
         assert gpxfile.id_in_backend
+        assert not gpxfile.gpx.is_complete
         cursor = self.__exec_mysql(
             'select latitude,longitude,occurred,comment from wp_ts_locations where trip_id=%s',
             [gpxfile.id_in_backend])
@@ -346,6 +348,8 @@ class WPTrackserver(Backend):
 
         """
         assert points
+        assert gpxfile.gpx.is_complete
+        gpxfile.gpx.encode()
         new_ident = self._save_header(gpxfile)
         self._lifetrack_update(gpxfile, points)
         return new_ident

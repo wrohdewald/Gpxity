@@ -35,6 +35,7 @@ class LifetrackTarget:
         self.started = False
         assert not self.gpxfile.backend, 'TrackerTarget.gpxfile {} has backend {}'.format(
             self.gpxfile, self.gpxfile.backend)
+        assert self.gpxfile.gpx.is_complete
 
     @property
     def tracker_id(self):
