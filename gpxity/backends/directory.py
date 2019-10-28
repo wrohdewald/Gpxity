@@ -23,74 +23,7 @@ from .. import Backend, GpxFile, DirectoryAccount
 from ..util import remove_directory
 from ..gpx import Gpx
 
-__all__ = ['Directory', 'Backup']
-
-
-class Backup:
-
-    """A context manager making a backup of the gpx file.
-
-    If an exception happened, restore the backup.
-    Otherwise, remove it again.
-
-    """
-
-    # pylint: disable=too-few-public-methods
-
-    def __init__(self, gpxfile):
-        """See class docstring."""
-        logging.debug('Backup(%s)', gpxfile)
-        self.killed = False
-        self.old_sigint = signal.signal(signal.SIGINT, self._handler)
-        self.old_sigterm = signal.signal(signal.SIGTERM, self._handler)
-        self.gpxfile = gpxfile
-        self.old_id = gpxfile.id_in_backend
-        self.old_pathname = None
-        if self.old_id is not None:
-            self.old_pathname = gpxfile.backend.gpx_path(self.old_id)
-            if os.path.exists(self.old_pathname):
-                logging.debug('Backup: renamed %s to %s', self.old_id, self.old_id + '.old')
-                os.rename(self.old_pathname, self.old_pathname + '.old')
-
-    def __enter__(self):
-        """See class docstring.
-
-        Returns:
-            self
-
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_value, trback):
-        """See class docstring."""
-        if exc_value or self.killed:
-            self.undo_rename()
-            with self.gpxfile._decouple():
-                self.gpxfile.id_in_backend = self.old_id
-            if self.killed:
-                sys.exit(0)
-        else:
-            if self.old_pathname is not None:
-                if os.path.exists(self.old_pathname + '.old'):
-                    os.remove(self.old_pathname + '.old')
-        logging.debug('Backup(%s) done', self.gpxfile)
-        signal.signal(signal.SIGINT, self.old_sigint)
-        signal.signal(signal.SIGTERM, self.old_sigterm)
-
-    def undo_rename(self):
-        """if something failed, undo change of file name and restore old file."""
-        if self.old_pathname is not None:
-            if os.path.exists(self.old_pathname):
-                logging.debug('Backup: undo rename: remove %s', self.old_pathname)
-                os.remove(self.old_pathname)
-            if os.path.exists(self.old_pathname + '.old'):
-                logging.debug('Backup: restore original: rename %s to %s', self.old_pathname + '.old', self.old_pathname)
-                os.rename(self.old_pathname + '.old', self.old_pathname)
-
-    def _handler(self, signum, frame):
-        """Handles SIGTERM/SIGINT."""
-        logging.error("Received SIGINT or SIGTERM! Restoring: %s -> %s", self.old_id + '.old', self.old_id)
-        self.killed = True
+__all__ = ['Directory']
 
 
 class Directory(Backend):
@@ -399,14 +332,6 @@ class Directory(Backend):
         if link_name not in self._symlinks[ident]:
             self._symlinks[ident].append(link_name)
 
-    def _set_filetime(self, gpxfile):
-        """Set the file modification time to gpxfile start time.
-        If the gpxfile has no start time, do nothing."""
-        time = gpxfile.first_time
-        if time:
-            _ = self.gpx_path(gpxfile.id_in_backend)
-            os.utime(_, (time.timestamp(), time.timestamp()))
-
     def _change_ident(self, gpxfile, new_ident: str):
         """Change the id in the backend. Make it unique if needed."""
         assert gpxfile.id_in_backend != new_ident
@@ -429,11 +354,19 @@ class Directory(Backend):
         """
         new_ident = self._new_ident(gpxfile)
 
-        with Backup(gpxfile):
-            gpxfile.id_in_backend = new_ident
-            with open(self.gpx_path(new_ident), 'w', encoding='utf-8') as out_file:
-                out_file.write(gpxfile.xml())
-            self._set_filetime(gpxfile)
+        gpxfile.id_in_backend = new_ident
+        new_path = self.gpx_path(new_ident)
+        tmp_path = new_path + '.new'
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        with open(tmp_path, 'w', encoding='utf-8') as out_file:
+            out_file.write(gpxfile.xml())
+        time = gpxfile.first_time
+        if time:
+            os.utime(tmp_path, (time.timestamp(), time.timestamp()))
+        os.replace(tmp_path, new_path)
+        logging.debug('written %s', new_path)
+        self.dump_ids('_write_all after os.replace', new_ident)
         return new_ident
 
     def detach(self):
