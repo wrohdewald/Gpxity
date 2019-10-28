@@ -149,6 +149,7 @@ class WPTrackserver(Backend):
             while kw_parts and len(result) > max_length:
                 kw_parts = kw_parts[:-1]
                 result = fmt_result()
+        assert 'UXNX' not in result
         return result[:max_length]
 
     @classmethod
