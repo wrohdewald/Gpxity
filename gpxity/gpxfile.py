@@ -1507,6 +1507,37 @@ class GpxFile:  # pylint: disable=too-many-public-methods
             logging.debug('Track with %d points', len(_.segments[0].points))
         self.rewrite()  # TODO: only if changed
 
+    def split_points(self, max_points):
+        """Split into separate segments every # points."""  # noqa
+
+        def new_segment(points):
+            """A new track from points.
+
+            Returns: GPXTrackSegment
+
+            """
+            segment = GPXTrackSegment()
+            segment.points = points
+            return segment
+
+        changed = False
+        for track in self.gpx.tracks:
+            logging.debug('splitting track with {} segments every {} points'.format(len(track.segments), max_points))
+            segments = list()
+            for segment in track.segments:
+                logging.debug('segment points: {}'.format(len(segment.points)))
+                if len(segment.points) > max_points:
+                    changed = True
+                    all_points = segment.points[:]
+                    logging.debug('all_points: {}'.format(len(all_points)))
+                    while len(all_points) > 0:
+                        logging.error('new segment with %d points' % max_points)
+                        segments.append(new_segment(all_points[:max_points]))
+                        all_points = all_points[max_points:]
+                    track.segments = segments
+        if changed:
+            self.rewrite()
+
     def locate_point(self, track=0, segment=0, point=0) ->str:
         """Determine name of place for point.
 
