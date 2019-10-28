@@ -240,8 +240,9 @@ class LsField:
         if self.field_fmt == 'duration':
             hours = value.seconds // 3600
             minutes = (value.seconds - hours * 3600) // 60
+            seconds = value.seconds - minutes * 60 - hours * 3600
             hours += value.days * 24
-            return '{:3}:{:02}'.format(hours, minutes)
+            return '{:3}:{:02}:{:02}'.format(hours, minutes, seconds)
         if self.field_fmt == 'warnings':
             return LsField.separator.join(value)
         return self.field_fmt.format(value)
