@@ -282,6 +282,11 @@ class Gpx(GPX):
         result = result.replace('>\n        <time>', '><time>')
         result = result.replace('>\n        <name>', '><name>')
         result = result.replace('\n\n', '\n')
+
+        # Mapsource cannot parse <bounds ... ></bounds> but that is what to_xml creates
+        # we want <bounds ... />
+        result = result.replace('>\n    </bounds>', ' />')
+
         if not result.endswith('\n'):
             result += '\n'
         return result
