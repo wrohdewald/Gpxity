@@ -230,6 +230,7 @@ class Directory(Backend):
         Returns: Gpx
 
         """
+        self.dump_ids('_gpx_from_headers', ident)
         result = Gpx()
         with open(self.gpx_path(ident), encoding='utf8') as raw_file:
             data = raw_file.read(100000)
@@ -262,6 +263,7 @@ class Directory(Backend):
 
     def _read(self, gpxfile):
         """fill the gpxfile with all its data from source."""
+        self.dump_ids('_read', gpxfile.id_in_backend)
         with open(self.gpx_path(gpxfile.id_in_backend), encoding='utf-8') as in_file:
             gpxfile.gpx = Gpx.parse(in_file.read())
 
@@ -368,6 +370,14 @@ class Directory(Backend):
         logging.debug('written %s', new_path)
         self.dump_ids('_write_all after os.replace', new_ident)
         return new_ident
+
+    def dump_ids(self, prefix, ident):
+        """For debugging show the IDs found in a file."""
+        if self.logger.isEnabledFor(logging.DEBUG):
+            with open(self.gpx_path(ident), 'r', encoding='utf-8') as written_file:
+                for line in written_file:
+                    if 'Id:' in line:
+                        self.logger.debug('%s: ident:%s ID-Line:%s', prefix, ident, line)
 
     def detach(self):
         """also remove temporary directory."""
