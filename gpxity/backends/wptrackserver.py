@@ -143,13 +143,15 @@ class WPTrackserver(Backend):
                 gpxfile.description, self._keywords_marker, ', '.join(kw_parts))
 
         max_length = self._max_length['description']
+        if gpxfile.gpx.keywords == Gpx.undefined_str:
+            kw_parts = ['']
         kw_parts = gpxfile.gpx.keywords.split(', ')  # they already included encoded Category:  etc
         result = fmt_result()
         if len(result) > max_length:
             while kw_parts and len(result) > max_length:
                 kw_parts = kw_parts[:-1]
                 result = fmt_result()
-        assert 'UXNX' not in result
+        assert 'UXNX' not in result, kw_parts
         return result[:max_length]
 
     @classmethod

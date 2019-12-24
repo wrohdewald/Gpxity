@@ -510,6 +510,8 @@ class TestBackends(BasicTest):
             time.sleep(7)
             life.update_trackers(points[50:])
             life.end()
+            for target in life.targets:
+                self.assertNotIn('UNDEFINED', target.gpxfile.xml())
 
         fence_variants = (None, '0/0/5000000000',)
 
