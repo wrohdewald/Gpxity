@@ -304,6 +304,7 @@ class Directory(Backend):
             # make sure there is no dead symlink with our wanted name.
             self._load_symlinks(by_month_dir)
         name = gpxfile.title or ident
+        name += '.gpx'
         return self._make_path_unique(os.path.join(by_month_dir, self._sanitize_name(name)))
 
     def _new_ident(self, gpxfile):

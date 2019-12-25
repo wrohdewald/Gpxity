@@ -4,6 +4,7 @@ Changelog
   * gpxdo split --waypoints
   * gpxdo split --points
   * gpxdo fix --revert
+  * Directory backend: the symlink files now also end with .gpx
 
 
 
