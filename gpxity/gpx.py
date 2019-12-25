@@ -775,7 +775,7 @@ class Gpx(GPX):
         Returns: True if a change happened
 
         """
-        if any(x.name.startswith(self._seg_wpt_prefix) for x in self.waypoints):
+        if any(x.name.startswith(self._seg_wpt_prefix) for x in self.waypoints if x.name is not None):
             return self.add_segment_waypoints()
         return False
 
