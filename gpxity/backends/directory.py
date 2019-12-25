@@ -303,7 +303,7 @@ class Directory(Backend):
 
         """
         ident = gpxfile.id_in_backend
-        time = datetime.datetime.fromtimestamp(os.path.getmtime(self.gpx_path(ident)))
+        time = gpxfile.first_time or datetime.datetime.fromtimestamp(os.path.getmtime(self.gpx_path(ident)))
         by_month_dir = os.path.join(self.url, '{}'.format(time.year), '{:02}'.format(time.month))  # noqa
         if not os.path.exists(by_month_dir):
             os.makedirs(by_month_dir)
