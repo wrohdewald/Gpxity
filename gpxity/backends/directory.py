@@ -264,8 +264,15 @@ class Directory(Backend):
     def _read(self, gpxfile):
         """fill the gpxfile with all its data from source."""
         self.dump_ids('_read', gpxfile.id_in_backend)
-        with open(self.gpx_path(gpxfile.id_in_backend), encoding='utf-8') as in_file:
-            gpxfile.gpx = Gpx.parse(in_file.read())
+        read_filename = self.gpx_path(gpxfile.id_in_backend)
+        with open(read_filename, encoding='utf-8') as in_file:
+            try:
+                gpxfile.gpx = Gpx.parse(in_file.read())
+            except GPXXMLSyntaxException:
+                self.logger.error(
+                    '%s cannot be parsed',
+                    read_filename)
+                raise
 
     def _remove_symlinks(self, ident: str):
         """Remove its symlinks, empty symlink parent directories."""
