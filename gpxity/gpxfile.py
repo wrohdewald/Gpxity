@@ -1522,16 +1522,16 @@ class GpxFile:  # pylint: disable=too-many-public-methods
 
         changed = False
         for track in self.gpx.tracks:
-            logging.debug('splitting track with {} segments every {} points'.format(len(track.segments), max_points))
+            logging.debug('splitting track with %s segments every %s points', len(track.segments), max_points)
             segments = list()
             for segment in track.segments:
-                logging.debug('segment points: {}'.format(len(segment.points)))
+                logging.debug('segment points: %s', len(segment.points))
                 if len(segment.points) > max_points:
                     changed = True
                     all_points = segment.points[:]
-                    logging.debug('all_points: {}'.format(len(all_points)))
+                    logging.debug('all_points: %s', len(all_points))
                     while len(all_points) > 0:
-                        logging.error('new segment with %d points' % max_points)
+                        logging.error('new segment with %d points', max_points)
                         segments.append(new_segment(all_points[:max_points]))
                         all_points = all_points[max_points:]
                     track.segments = segments

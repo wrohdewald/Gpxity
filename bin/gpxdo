@@ -104,7 +104,8 @@ class MyHelpFormatter(argparse.RawDescriptionHelpFormatter):
         if MyHelpFormatter.columns is None:
             try:
                 MyHelpFormatter.columns = int(subprocess.run(
-                    ['stty', 'size'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.split()[1])
+                    ['stty', 'size'], stdout=subprocess.PIPE,
+                    check=True, stderr=subprocess.DEVNULL).stdout.split()[1])
             except BaseException:  # pylint: disable=broad-except
                 MyHelpFormatter.columns = 80
         super(MyHelpFormatter, self).__init__(prog, indent_increment=2, max_help_position=30, width=self.columns)
@@ -887,7 +888,8 @@ class SplitCommand(SubCommand):
         self.add_multi_source()
 
     def _prepare_options(self):
-        if not self.options.segments and not self.options.stops and not self.options.waypoints and not self.options.points:
+        if (not self.options.segments and not self.options.stops
+                and not self.options.waypoints and not self.options.points):
             self.options.segments = True
         super(SplitCommand, self)._prepare_options()
 

@@ -13,7 +13,6 @@ import sys
 import datetime
 import tempfile
 import logging
-import signal
 
 from collections import defaultdict
 
