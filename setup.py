@@ -31,6 +31,7 @@ setup(
     version=version,
     setup_requires=['setuptools_scm'],
     description='A uniform interface to GPX services like mapmytracks or gpsies',
+    long_description_content_type = 'text/x-rst',
     long_description=readall('README.rst') + '\n\n' + readall('CHANGELOG.rst'),
     url='https://github.com/wrohdewald/Gpxity',
     author='Wolfgang Rohdewald',
