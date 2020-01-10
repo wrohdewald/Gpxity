@@ -1,9 +1,25 @@
 Changelog
 =========
 
+1.7.2 release 2020-01-10
+------------------------
+
   * gpxdo split --waypoints
   * gpxdo split --points
+  * gpxdo fix --simplify now allows specifying a max point size
   * gpxdo fix --revert
+  * gpxdo keywords --dry-run now delivers output
+  * gpxdo ls for an empty directory showed an unwanted internal error message
+  * gpxdo ls failed for files without time in metadata
+  * gpxdo ls: show duration with seconds
+  * gpxdo: rename first-date and last-date to min-date and max-date
+  * Parsing gpx: show helpful info for syntax error
+  * mapsource does not understand <bounds ...></bounds>
+  * Directory: symlinked files now also end with .gpx
+  * Parsing gpx: accept waypoints without name
+  * if a .gpx file cannot be parsed, also show its file name
+  * Symlinks got their time from gpx file last modification, now it is gpx.first_time
+  * updated lifetrack_client to current gpxity library and allow using a GPS mouse
   * Directory backend: the symlink files now also end with .gpx
 
 
