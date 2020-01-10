@@ -32,7 +32,6 @@ from ..util import add_speed, utc_datetime, local_datetime
 try:
     import MySQLdb
     HAVE_MYSQL = True
-    import _mysql_exceptions
 except ImportError:
     HAVE_MYSQL = False
 
@@ -95,7 +94,7 @@ class WPTrackserver(Backend):
             else:
                 self.logger.info('connected to %s %s', self.url, database)
             return result
-        except _mysql_exceptions.Error as exc:
+        except MySQLdb._exceptions.Error as exc:
             raise Backend.BackendException(
                 '{}: host={} user={} passwd={} database={}'.format(
                     exc, self.url, user, self.account.password, database))
@@ -312,7 +311,7 @@ class WPTrackserver(Backend):
             self.__exec_mysql(
                 'update wp_ts_tracks set id=%s where id=%s',
                 (new_ident, gpxfile.id_in_backend))
-        except _mysql_exceptions.DataError as exc:
+        except MySQLdb._exceptions.DataError as exc:
             self._db.rollback()
             raise ValueError(str(exc))
         try:
@@ -390,14 +389,14 @@ class WPTrackserver(Backend):
         def do_it():
             try:
                 execute(cmd, args)
-            except _mysql_exceptions.Error as exception:
+            except MySQLdb._exceptions.Error as exception:
                 logit("MySQL Error: {} for".format(exception))
                 raise
         cursor = self._db.cursor()
         execute = cursor.executemany if many else cursor.execute
         try:
             do_it()
-        except _mysql_exceptions.OperationalError:
+        except MySQLdb._exceptions.OperationalError:
             # timeout disconnected
             self.__connect_mysql()
             do_it()

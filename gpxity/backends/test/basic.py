@@ -19,7 +19,6 @@ from subprocess import Popen, PIPE
 import logging
 try:
     import MySQLdb
-    import _mysql_exceptions
 except ImportError:
     pass
 
@@ -487,7 +486,7 @@ class BasicTest(unittest.TestCase):
                     autocommit=True, charset='utf8',
                     sql_mode='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION')
                 break
-            except _mysql_exceptions.OperationalError:
+            except MySQLdb._exceptions.OperationalError:
                 # wait until the docker instance is ready
                 count += 1
                 if count > 50:
