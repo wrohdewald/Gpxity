@@ -8,16 +8,16 @@ Find the documentation here: https://gpxity.readthedocs.io/en/latest/
 
 The library currently implements those backends:
 
-  * :class:`~gpxity.backends.directory.Directory`: Directory for .gpx files on an accessible file system
-  * :class:`~gpxity.backends.server_directory.ServerDirectory`: Directory suited for server implementations
-  * :class:`~gpxity.backends.gpsies.GPSIES`: For gpxfiles on https://gpsies.com
-  * :class:`~gpxity.backends.openrunner.Openrunner`: For gpxfiles on https://openrunner.com
-  * :class:`~gpxity.backends.mmt.MMT`: For gpxfiles on http://mapmytracks.com
-  * :class:`~gpxity.backends.trackmmt.TrackMMT`: For gpxfiles on a very simple server emulating a
+  * Directory for .gpx files on an accessible file system
+  * Directory suited for server implementations
+  * For gpxfiles on https://gpsies.com
+  * For gpxfiles on https://openrunner.com
+  * For gpxfiles on http://mapmytracks.com
+  * For gpxfiles on a very simple server emulating a
     few MMT commands (just what oruxmaps uses for uploading)
-  * :class:`~gpxity.backends.wptrackserver.WPTrackserver`: For the Wordpress plugin Trackserver
-  * :class:`~gpxity.backends.mailer.Mailer`: Mails gpxfiles
-  * :class:`~gpxity.backends.memory.Memory`: Keep everything in RAM only
+  * For the Wordpress plugin Trackserver
+  * Mails gpxfiles
+  * Keep everything in RAM only
 
 Some backends might not support everything Gxpity wants and you will get the
 exception NotImplementedError().
